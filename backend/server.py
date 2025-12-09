@@ -225,7 +225,11 @@ async def startup_db():
             "rfc": "",
             "email": "",
             "sitio_web": "",
-            "mensaje_pie": "¡Gracias por su compra!"
+            "mensaje_pie": "¡Gracias por su compra!",
+            "mostrar_info_cliente": False,
+            "mostrar_comentarios": False,
+            "logo_email": None,
+            "logo_impreso": None
         }
         await db.configuraciones.insert_one(config_negocio)
 
@@ -270,7 +274,11 @@ async def get_config(current_user: dict = Depends(get_current_user)):
             "rfc": "",
             "email": "",
             "sitio_web": "",
-            "mensaje_pie": "¡Gracias por su compra!"
+            "mensaje_pie": "¡Gracias por su compra!",
+            "mostrar_info_cliente": False,
+            "mostrar_comentarios": False,
+            "logo_email": None,
+            "logo_impreso": None
         }
     return {
         "cabecera": config.get("cabecera", ""),
@@ -280,7 +288,11 @@ async def get_config(current_user: dict = Depends(get_current_user)):
         "rfc": config.get("rfc", ""),
         "email": config.get("email", ""),
         "sitio_web": config.get("sitio_web", ""),
-        "mensaje_pie": config.get("mensaje_pie", "¡Gracias por su compra!")
+        "mensaje_pie": config.get("mensaje_pie", "¡Gracias por su compra!"),
+        "mostrar_info_cliente": config.get("mostrar_info_cliente", False),
+        "mostrar_comentarios": config.get("mostrar_comentarios", False),
+        "logo_email": config.get("logo_email"),
+        "logo_impreso": config.get("logo_impreso")
     }
 
 @app.put("/api/config")
