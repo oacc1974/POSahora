@@ -36,6 +36,7 @@ app.add_middleware(
 )
 
 class TicketConfig(BaseModel):
+    cabecera: Optional[str] = None
     nombre_negocio: str
     direccion: Optional[str] = None
     telefono: Optional[str] = None
@@ -164,6 +165,7 @@ async def startup_db():
         
         config_negocio = {
             "_id": org_id,
+            "cabecera": "",
             "nombre_negocio": "Mi Negocio",
             "direccion": "",
             "telefono": "",
@@ -208,6 +210,7 @@ async def get_config(current_user: dict = Depends(get_current_user)):
     config = await db.configuraciones.find_one({"_id": current_user["organizacion_id"]})
     if not config:
         return {
+            "cabecera": "",
             "nombre_negocio": "Mi Negocio",
             "direccion": "",
             "telefono": "",
@@ -217,6 +220,7 @@ async def get_config(current_user: dict = Depends(get_current_user)):
             "mensaje_pie": "¡Gracias por su compra!"
         }
     return {
+        "cabecera": config.get("cabecera", ""),
         "nombre_negocio": config.get("nombre_negocio", "Mi Negocio"),
         "direccion": config.get("direccion", ""),
         "telefono": config.get("telefono", ""),
