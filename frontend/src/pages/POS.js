@@ -134,9 +134,33 @@ export default function POS() {
     }
   };
 
+  const handleAbrirCaja = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_URL}/api/caja/abrir`,
+        { monto_inicial: parseFloat(montoInicial) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCajaActiva(response.data);
+      setShowAperturaCaja(false);
+      setMontoInicial('');
+      toast.success('Caja abierta correctamente. ¡Puedes comenzar a vender!');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Error al abrir caja');
+    }
+  };
+
   const handleCheckout = async () => {
     if (cart.length === 0) {
       toast.error('El carrito está vacío');
+      return;
+    }
+
+    if (!cajaActiva) {
+      toast.error('Debes abrir una caja antes de realizar ventas');
+      setShowAperturaCaja(true);
       return;
     }
 
@@ -159,9 +183,10 @@ export default function POS() {
       toast.success(`Factura ${response.data.numero} creada correctamente`);
       setCart([]);
       fetchProductos();
+      verificarCaja();
       printInvoice(response.data);
     } catch (error) {
-      toast.error('Error al procesar la venta');
+      toast.error(error.response?.data?.detail || 'Error al procesar la venta');
     } finally {
       setLoading(false);
     }
