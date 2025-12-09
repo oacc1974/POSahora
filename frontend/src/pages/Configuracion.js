@@ -14,6 +14,7 @@ export default function Configuracion() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
+    cabecera: '',
     nombre_negocio: '',
     direccion: '',
     telefono: '',
