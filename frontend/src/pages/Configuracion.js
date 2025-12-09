@@ -17,6 +17,9 @@ export default function Configuracion() {
     nombre_negocio: '',
     direccion: '',
     telefono: '',
+    rfc: '',
+    email: '',
+    sitio_web: '',
     mensaje_pie: '',
   });
 
@@ -160,6 +163,9 @@ export default function Configuracion() {
               <p className="font-bold">{formData.nombre_negocio || 'Mi Negocio'}</p>
               {formData.direccion && <p className="text-xs">{formData.direccion}</p>}
               {formData.telefono && <p className="text-xs">Tel: {formData.telefono}</p>}
+              {formData.rfc && <p className="text-xs">RFC: {formData.rfc}</p>}
+              {formData.email && <p className="text-xs">{formData.email}</p>}
+              {formData.sitio_web && <p className="text-xs">{formData.sitio_web}</p>}
             </div>
             <div className="border-t border-dashed border-slate-300 my-2" />
             <p className="text-xs">Producto Ejemplo x1 ........... $10.00</p>
