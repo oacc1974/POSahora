@@ -168,6 +168,12 @@ export default function POS() {
         .footer { margin-top: 15px; text-align: center; font-size: 11px; }
       `);
       printWindow.document.write('</style></head><body>');
+      if (config.cabecera) {
+        printWindow.document.write('<div style="text-align:center; margin-bottom: 10px;">');
+        printWindow.document.write(`<p style="font-size: 11px;">${config.cabecera}</p>`);
+        printWindow.document.write('</div>');
+        printWindow.document.write('<div class="divider"></div>');
+      }
       printWindow.document.write('<div class="header">');
       printWindow.document.write(`<h1>${config.nombre_negocio || 'Mi Negocio'}</h1>`);
       if (config.direccion) {
