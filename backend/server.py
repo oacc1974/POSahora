@@ -117,7 +117,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except JWTError:
         raise credentials_exception
     
-    user = await db.usuarios.find_one({"_id": user_id}, {"_id": 0})
+    user = await db.usuarios.find_one({"_id": user_id})
     if user is None:
         raise credentials_exception
     return user
@@ -143,7 +143,7 @@ async def startup_db():
 
 @app.post("/api/login")
 async def login(user_login: UserLogin):
-    user = await db.usuarios.find_one({"username": user_login.username}, {"_id": 0})
+    user = await db.usuarios.find_one({"username": user_login.username})
     if not user or not verify_password(user_login.password, user["password"]):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     
