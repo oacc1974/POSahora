@@ -35,11 +35,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class TicketConfig(BaseModel):
+    nombre_negocio: str
+    direccion: Optional[str] = None
+    telefono: Optional[str] = None
+    mensaje_pie: Optional[str] = "¡Gracias por su compra!"
+
 class UserCreate(BaseModel):
     nombre: str
     username: str
     password: str
-    es_admin: bool = False
+    rol: str  # propietario, administrador, cajero
 
 class UserLogin(BaseModel):
     username: str
@@ -49,7 +55,9 @@ class UserResponse(BaseModel):
     id: str
     nombre: str
     username: str
-    es_admin: bool
+    rol: str
+    organizacion_id: str
+    creado_por: Optional[str] = None
     creado: str
 
 class ProductCreate(BaseModel):
@@ -57,7 +65,6 @@ class ProductCreate(BaseModel):
     precio: float
     codigo_barras: Optional[str] = None
     descripcion: Optional[str] = None
-    stock: int = 0
 
 class ProductResponse(BaseModel):
     id: str
@@ -65,8 +72,7 @@ class ProductResponse(BaseModel):
     precio: float
     codigo_barras: Optional[str] = None
     descripcion: Optional[str] = None
-    stock: int
-    usuario_id: str
+    organizacion_id: str
     creado: str
 
 class InvoiceItem(BaseModel):
@@ -87,6 +93,7 @@ class InvoiceResponse(BaseModel):
     total: float
     vendedor: str
     vendedor_nombre: str
+    organizacion_id: str
     fecha: str
 
 def verify_password(plain_password, hashed_password):
@@ -122,24 +129,42 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise credentials_exception
     return user
 
-async def get_admin_user(current_user: dict = Depends(get_current_user)):
-    if not current_user.get("es_admin"):
-        raise HTTPException(status_code=403, detail="No tienes permisos de administrador")
+async def get_propietario_or_admin(current_user: dict = Depends(get_current_user)):
+    if current_user.get("rol") not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permisos para gestionar productos")
+    return current_user
+
+async def get_propietario_user(current_user: dict = Depends(get_current_user)):
+    if current_user.get("rol") != "propietario":
+        raise HTTPException(status_code=403, detail="Solo el propietario puede gestionar usuarios")
     return current_user
 
 @app.on_event("startup")
 async def startup_db():
     admin_exists = await db.usuarios.find_one({"username": "admin"})
     if not admin_exists:
+        import uuid
+        org_id = str(uuid.uuid4())
         admin_user = {
             "_id": "admin",
-            "nombre": "Administrador",
+            "nombre": "Administrador Principal",
             "username": "admin",
             "password": get_password_hash("admin*88"),
-            "es_admin": True,
+            "rol": "propietario",
+            "organizacion_id": org_id,
+            "creado_por": None,
             "creado": datetime.now(timezone.utc).isoformat()
         }
         await db.usuarios.insert_one(admin_user)
+        
+        config_negocio = {
+            "_id": org_id,
+            "nombre_negocio": "Mi Negocio",
+            "direccion": "",
+            "telefono": "",
+            "mensaje_pie": "¡Gracias por su compra!"
+        }
+        await db.configuraciones.insert_one(config_negocio)
 
 @app.post("/api/login")
 async def login(user_login: UserLogin):
@@ -155,7 +180,8 @@ async def login(user_login: UserLogin):
             "id": user["_id"],
             "nombre": user["nombre"],
             "username": user["username"],
-            "es_admin": user["es_admin"]
+            "rol": user["rol"],
+            "organizacion_id": user["organizacion_id"]
         }
     }
 
@@ -165,28 +191,63 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "id": current_user["_id"],
         "nombre": current_user["nombre"],
         "username": current_user["username"],
-        "es_admin": current_user["es_admin"]
+        "rol": current_user["rol"],
+        "organizacion_id": current_user["organizacion_id"]
     }
 
+@app.get("/api/config")
+async def get_config(current_user: dict = Depends(get_current_user)):
+    config = await db.configuraciones.find_one({"_id": current_user["organizacion_id"]})
+    if not config:
+        return {
+            "nombre_negocio": "Mi Negocio",
+            "direccion": "",
+            "telefono": "",
+            "mensaje_pie": "¡Gracias por su compra!"
+        }
+    return {
+        "nombre_negocio": config.get("nombre_negocio", "Mi Negocio"),
+        "direccion": config.get("direccion", ""),
+        "telefono": config.get("telefono", ""),
+        "mensaje_pie": config.get("mensaje_pie", "¡Gracias por su compra!")
+    }
+
+@app.put("/api/config")
+async def update_config(config: TicketConfig, current_user: dict = Depends(get_propietario_user)):
+    await db.configuraciones.update_one(
+        {"_id": current_user["organizacion_id"]},
+        {"$set": config.model_dump()},
+        upsert=True
+    )
+    return {"message": "Configuración actualizada"}
+
 @app.get("/api/usuarios", response_model=List[UserResponse])
-async def get_usuarios(current_user: dict = Depends(get_admin_user)):
-    usuarios = await db.usuarios.find({}, {"password": 0}).to_list(1000)
+async def get_usuarios(current_user: dict = Depends(get_propietario_user)):
+    usuarios = await db.usuarios.find(
+        {"organizacion_id": current_user["organizacion_id"]},
+        {"password": 0}
+    ).to_list(1000)
     return [
         UserResponse(
             id=u["_id"],
             nombre=u["nombre"],
             username=u["username"],
-            es_admin=u["es_admin"],
+            rol=u["rol"],
+            organizacion_id=u["organizacion_id"],
+            creado_por=u.get("creado_por"),
             creado=u["creado"]
         )
         for u in usuarios
     ]
 
 @app.post("/api/usuarios", response_model=UserResponse)
-async def create_usuario(user: UserCreate, current_user: dict = Depends(get_admin_user)):
+async def create_usuario(user: UserCreate, current_user: dict = Depends(get_propietario_user)):
     existing = await db.usuarios.find_one({"username": user.username})
     if existing:
         raise HTTPException(status_code=400, detail="El username ya existe")
+    
+    if user.rol not in ["administrador", "cajero"]:
+        raise HTTPException(status_code=400, detail="Solo puedes crear usuarios con rol administrador o cajero")
     
     import uuid
     user_id = str(uuid.uuid4())
@@ -195,7 +256,9 @@ async def create_usuario(user: UserCreate, current_user: dict = Depends(get_admi
         "nombre": user.nombre,
         "username": user.username,
         "password": get_password_hash(user.password),
-        "es_admin": user.es_admin,
+        "rol": user.rol,
+        "organizacion_id": current_user["organizacion_id"],
+        "creado_por": current_user["_id"],
         "creado": datetime.now(timezone.utc).isoformat()
     }
     await db.usuarios.insert_one(new_user)
@@ -204,14 +267,23 @@ async def create_usuario(user: UserCreate, current_user: dict = Depends(get_admi
         id=user_id,
         nombre=user.nombre,
         username=user.username,
-        es_admin=user.es_admin,
+        rol=user.rol,
+        organizacion_id=current_user["organizacion_id"],
+        creado_por=current_user["_id"],
         creado=new_user["creado"]
     )
 
 @app.delete("/api/usuarios/{user_id}")
-async def delete_usuario(user_id: str, current_user: dict = Depends(get_admin_user)):
-    if user_id == "admin":
-        raise HTTPException(status_code=400, detail="No se puede eliminar el usuario admin principal")
+async def delete_usuario(user_id: str, current_user: dict = Depends(get_propietario_user)):
+    if user_id == current_user["_id"]:
+        raise HTTPException(status_code=400, detail="No puedes eliminarte a ti mismo")
+    
+    user_to_delete = await db.usuarios.find_one({"_id": user_id})
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    if user_to_delete["organizacion_id"] != current_user["organizacion_id"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para eliminar este usuario")
     
     result = await db.usuarios.delete_one({"_id": user_id})
     if result.deleted_count == 0:
@@ -221,7 +293,7 @@ async def delete_usuario(user_id: str, current_user: dict = Depends(get_admin_us
 
 @app.get("/api/productos", response_model=List[ProductResponse])
 async def get_productos(current_user: dict = Depends(get_current_user)):
-    productos = await db.productos.find({"usuario_id": current_user["_id"]}).to_list(1000)
+    productos = await db.productos.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
     return [
         ProductResponse(
             id=p["_id"],
@@ -229,8 +301,7 @@ async def get_productos(current_user: dict = Depends(get_current_user)):
             precio=p["precio"],
             codigo_barras=p.get("codigo_barras"),
             descripcion=p.get("descripcion"),
-            stock=p["stock"],
-            usuario_id=p["usuario_id"],
+            organizacion_id=p["organizacion_id"],
             creado=p["creado"]
         )
         for p in productos
@@ -240,7 +311,7 @@ async def get_productos(current_user: dict = Depends(get_current_user)):
 async def get_producto_by_barcode(codigo: str, current_user: dict = Depends(get_current_user)):
     producto = await db.productos.find_one({
         "codigo_barras": codigo,
-        "usuario_id": current_user["_id"]
+        "organizacion_id": current_user["organizacion_id"]
     })
     if not producto:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
@@ -251,13 +322,12 @@ async def get_producto_by_barcode(codigo: str, current_user: dict = Depends(get_
         precio=producto["precio"],
         codigo_barras=producto.get("codigo_barras"),
         descripcion=producto.get("descripcion"),
-        stock=producto["stock"],
-        usuario_id=producto["usuario_id"],
+        organizacion_id=producto["organizacion_id"],
         creado=producto["creado"]
     )
 
 @app.post("/api/productos", response_model=ProductResponse)
-async def create_producto(product: ProductCreate, current_user: dict = Depends(get_current_user)):
+async def create_producto(product: ProductCreate, current_user: dict = Depends(get_propietario_or_admin)):
     import uuid
     product_id = str(uuid.uuid4())
     
@@ -267,8 +337,7 @@ async def create_producto(product: ProductCreate, current_user: dict = Depends(g
         "precio": product.precio,
         "codigo_barras": product.codigo_barras,
         "descripcion": product.descripcion,
-        "stock": product.stock,
-        "usuario_id": current_user["_id"],
+        "organizacion_id": current_user["organizacion_id"],
         "creado": datetime.now(timezone.utc).isoformat()
     }
     await db.productos.insert_one(new_product)
@@ -279,14 +348,16 @@ async def create_producto(product: ProductCreate, current_user: dict = Depends(g
         precio=product.precio,
         codigo_barras=product.codigo_barras,
         descripcion=product.descripcion,
-        stock=product.stock,
-        usuario_id=current_user["_id"],
+        organizacion_id=current_user["organizacion_id"],
         creado=new_product["creado"]
     )
 
 @app.put("/api/productos/{product_id}", response_model=ProductResponse)
-async def update_producto(product_id: str, product: ProductCreate, current_user: dict = Depends(get_current_user)):
-    existing = await db.productos.find_one({"_id": product_id, "usuario_id": current_user["_id"]})
+async def update_producto(product_id: str, product: ProductCreate, current_user: dict = Depends(get_propietario_or_admin)):
+    existing = await db.productos.find_one({
+        "_id": product_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
     if not existing:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     
@@ -294,8 +365,7 @@ async def update_producto(product_id: str, product: ProductCreate, current_user:
         "nombre": product.nombre,
         "precio": product.precio,
         "codigo_barras": product.codigo_barras,
-        "descripcion": product.descripcion,
-        "stock": product.stock
+        "descripcion": product.descripcion
     }
     
     await db.productos.update_one({"_id": product_id}, {"$set": updated_product})
@@ -306,14 +376,16 @@ async def update_producto(product_id: str, product: ProductCreate, current_user:
         precio=product.precio,
         codigo_barras=product.codigo_barras,
         descripcion=product.descripcion,
-        stock=product.stock,
-        usuario_id=current_user["_id"],
+        organizacion_id=current_user["organizacion_id"],
         creado=existing["creado"]
     )
 
 @app.delete("/api/productos/{product_id}")
-async def delete_producto(product_id: str, current_user: dict = Depends(get_current_user)):
-    result = await db.productos.delete_one({"_id": product_id, "usuario_id": current_user["_id"]})
+async def delete_producto(product_id: str, current_user: dict = Depends(get_propietario_or_admin)):
+    result = await db.productos.delete_one({
+        "_id": product_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     
@@ -324,13 +396,16 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
     import uuid
     invoice_id = str(uuid.uuid4())
     
-    counter = await db.contadores.find_one({"_id": "factura"})
+    counter = await db.contadores.find_one({"_id": f"factura_{current_user['organizacion_id']}"})
     if not counter:
         numero = 1
-        await db.contadores.insert_one({"_id": "factura", "seq": 1})
+        await db.contadores.insert_one({"_id": f"factura_{current_user['organizacion_id']}", "seq": 1})
     else:
         numero = counter["seq"] + 1
-        await db.contadores.update_one({"_id": "factura"}, {"$set": {"seq": numero}})
+        await db.contadores.update_one(
+            {"_id": f"factura_{current_user['organizacion_id']}"},
+            {"$set": {"seq": numero}}
+        )
     
     numero_factura = f"FAC-{numero:06d}"
     
@@ -341,15 +416,10 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         "total": invoice.total,
         "vendedor": current_user["_id"],
         "vendedor_nombre": current_user["nombre"],
+        "organizacion_id": current_user["organizacion_id"],
         "fecha": datetime.now(timezone.utc).isoformat()
     }
     await db.facturas.insert_one(new_invoice)
-    
-    for item in invoice.items:
-        await db.productos.update_one(
-            {"_id": item.producto_id},
-            {"$inc": {"stock": -item.cantidad}}
-        )
     
     return InvoiceResponse(
         id=invoice_id,
@@ -358,12 +428,18 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         total=invoice.total,
         vendedor=current_user["_id"],
         vendedor_nombre=current_user["nombre"],
+        organizacion_id=current_user["organizacion_id"],
         fecha=new_invoice["fecha"]
     )
 
 @app.get("/api/facturas", response_model=List[InvoiceResponse])
 async def get_facturas(current_user: dict = Depends(get_current_user)):
-    facturas = await db.facturas.find({"vendedor": current_user["_id"]}).sort("fecha", -1).to_list(1000)
+    query = {"organizacion_id": current_user["organizacion_id"]}
+    
+    if current_user["rol"] == "cajero":
+        query["vendedor"] = current_user["_id"]
+    
+    facturas = await db.facturas.find(query).sort("fecha", -1).to_list(1000)
     return [
         InvoiceResponse(
             id=f["_id"],
@@ -372,6 +448,7 @@ async def get_facturas(current_user: dict = Depends(get_current_user)):
             total=f["total"],
             vendedor=f["vendedor"],
             vendedor_nombre=f["vendedor_nombre"],
+            organizacion_id=f["organizacion_id"],
             fecha=f["fecha"]
         )
         for f in facturas
@@ -379,27 +456,31 @@ async def get_facturas(current_user: dict = Depends(get_current_user)):
 
 @app.get("/api/dashboard")
 async def get_dashboard(current_user: dict = Depends(get_current_user)):
-    total_productos = await db.productos.count_documents({"usuario_id": current_user["_id"]})
+    total_productos = await db.productos.count_documents({"organizacion_id": current_user["organizacion_id"]})
     
-    facturas = await db.facturas.find({"vendedor": current_user["_id"]}).to_list(1000)
+    facturas_query = {"organizacion_id": current_user["organizacion_id"]}
+    if current_user["rol"] == "cajero":
+        facturas_query["vendedor"] = current_user["_id"]
+    
+    facturas = await db.facturas.find(facturas_query).to_list(1000)
     total_ventas = len(facturas)
     total_ingresos = sum(f["total"] for f in facturas)
     
-    productos_bajo_stock = await db.productos.count_documents({
-        "usuario_id": current_user["_id"],
-        "stock": {"$lte": 5}
-    })
+    total_empleados = 0
+    if current_user["rol"] == "propietario":
+        total_empleados = await db.usuarios.count_documents({"organizacion_id": current_user["organizacion_id"]}) - 1
     
     return {
         "total_productos": total_productos,
         "total_ventas": total_ventas,
         "total_ingresos": total_ingresos,
-        "productos_bajo_stock": productos_bajo_stock,
+        "total_empleados": total_empleados,
         "facturas_recientes": [
             {
                 "id": f["_id"],
                 "numero": f["numero"],
                 "total": f["total"],
+                "vendedor_nombre": f["vendedor_nombre"],
                 "fecha": f["fecha"]
             }
             for f in facturas[:5]
