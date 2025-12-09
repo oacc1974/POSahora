@@ -11,6 +11,7 @@ import {
   Store,
   Menu,
   X,
+  Wallet,
 } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -33,6 +34,13 @@ export default function Layout({ children, user, onLogout }) {
       href: '/',
       icon: LayoutDashboard,
       testId: 'nav-dashboard',
+      show: true,
+    },
+    {
+      name: 'Caja',
+      href: '/caja',
+      icon: Wallet,
+      testId: 'nav-caja',
       show: true,
     },
     {
