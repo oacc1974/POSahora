@@ -292,10 +292,24 @@ export default function POS() {
     <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-8rem)] gap-4 lg:gap-6" data-testid="pos-page">
       <div className="flex-1 flex flex-col order-2 lg:order-1">
         <div className="mb-4 lg:mb-6">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
-            Punto de Venta
-          </h1>
-          <p className="text-sm md:text-base text-slate-600">Selecciona productos para la venta</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
+                Punto de Venta
+              </h1>
+              <p className="text-sm md:text-base text-slate-600">Selecciona productos para la venta</p>
+            </div>
+            {cajaActiva && (
+              <div className="hidden md:block px-4 py-2 bg-green-100 border border-green-300 rounded-lg">
+                <p className="text-xs text-green-700 font-medium">
+                  Caja Abierta
+                </p>
+                <p className="text-sm font-mono font-bold text-green-900">
+                  ${cajaActiva.monto_final.toFixed(2)}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 mb-4 lg:mb-6">
