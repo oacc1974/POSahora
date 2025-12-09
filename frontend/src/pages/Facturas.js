@@ -36,6 +36,19 @@ export default function Facturas() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const config = configResponse.data;
+      
+      let clienteData = null;
+      if (invoice.cliente_id) {
+        try {
+          const clienteResponse = await axios.get(
+            `${API_URL}/api/clientes/buscar/${invoice.cliente_id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          clienteData = clienteResponse.data;
+        } catch (error) {
+          console.error('Error loading client:', error);
+        }
+      }
 
       const printWindow = window.open('', '', 'height=600,width=400');
       printWindow.document.write('<html><head><title>Factura</title>');
