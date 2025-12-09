@@ -29,47 +29,69 @@ export default function Facturas() {
     }
   };
 
-  const printInvoice = (invoice) => {
-    const printWindow = window.open('', '', 'height=600,width=400');
-    printWindow.document.write('<html><head><title>Factura</title>');
-    printWindow.document.write('<style>');
-    printWindow.document.write(`
-      body { font-family: monospace; padding: 20px; }
-      h1 { text-align: center; font-size: 18px; }
-      .header { text-align: center; margin-bottom: 20px; }
-      .item { display: flex; justify-content: space-between; margin: 5px 0; }
-      .total { border-top: 2px solid #000; margin-top: 10px; padding-top: 10px; font-weight: bold; }
-      .footer { margin-top: 20px; text-align: center; }
-    `);
-    printWindow.document.write('</style></head><body>');
-    printWindow.document.write('<div class="header">');
-    printWindow.document.write('<h1>FACTURA</h1>');
-    printWindow.document.write(`<p>Número: ${invoice.numero}</p>`);
-    printWindow.document.write(
-      `<p>Fecha: ${new Date(invoice.fecha).toLocaleString('es-ES')}</p>`
-    );
-    printWindow.document.write(
-      `<p>Vendedor: ${invoice.vendedor_nombre}</p>`
-    );
-    printWindow.document.write('</div>');
-    printWindow.document.write('<div class="items">');
-    invoice.items.forEach((item) => {
+  const printInvoice = async (invoice) => {
+    try {
+      const token = localStorage.getItem('token');
+      const configResponse = await axios.get(`${API_URL}/api/config`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const config = configResponse.data;
+
+      const printWindow = window.open('', '', 'height=600,width=400');
+      printWindow.document.write('<html><head><title>Factura</title>');
+      printWindow.document.write('<style>');
+      printWindow.document.write(`
+        body { font-family: monospace; padding: 20px; font-size: 12px; }
+        h1 { text-align: center; font-size: 16px; margin: 0; }
+        .header { text-align: center; margin-bottom: 15px; }
+        .header p { margin: 2px 0; font-size: 11px; }
+        .divider { border-top: 1px dashed #000; margin: 10px 0; }
+        .item { display: flex; justify-content: space-between; margin: 5px 0; font-size: 11px; }
+        .total { border-top: 2px solid #000; margin-top: 10px; padding-top: 10px; font-weight: bold; }
+        .footer { margin-top: 15px; text-align: center; font-size: 11px; }
+      `);
+      printWindow.document.write('</style></head><body>');
+      printWindow.document.write('<div class="header">');
+      printWindow.document.write(`<h1>${config.nombre_negocio}</h1>`);
+      if (config.direccion) {
+        printWindow.document.write(`<p>${config.direccion}</p>`);
+      }
+      if (config.telefono) {
+        printWindow.document.write(`<p>Tel: ${config.telefono}</p>`);
+      }
+      printWindow.document.write('</div>');
+      printWindow.document.write('<div class="divider"></div>');
+      printWindow.document.write(`<p style="text-align:center; margin: 5px 0;">Factura: ${invoice.numero}</p>`);
       printWindow.document.write(
-        `<div class="item"><span>${item.nombre} x${item.cantidad}</span><span>$${item.subtotal.toFixed(2)}</span></div>`
+        `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Fecha: ${new Date(invoice.fecha).toLocaleString('es-ES')}</p>`
       );
-    });
-    printWindow.document.write('</div>');
-    printWindow.document.write(
-      `<div class="total"><div class="item"><span>TOTAL:</span><span>$${invoice.total.toFixed(2)}</span></div></div>`
-    );
-    printWindow.document.write(
-      '<div class="footer"><p>¡Gracias por su compra!</p></div>'
-    );
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+      printWindow.document.write(
+        `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Atendió: ${invoice.vendedor_nombre}</p>`
+      );
+      printWindow.document.write('<div class="divider"></div>');
+      printWindow.document.write('<div class="items">');
+      invoice.items.forEach((item) => {
+        printWindow.document.write(
+          `<div class="item"><span>${item.nombre} x${item.cantidad}</span><span>$${item.subtotal.toFixed(2)}</span></div>`
+        );
+      });
+      printWindow.document.write('</div>');
+      printWindow.document.write(
+        `<div class="total"><div class="item"><span>TOTAL:</span><span>$${invoice.total.toFixed(2)}</span></div></div>`
+      );
+      printWindow.document.write('<div class="divider"></div>');
+      printWindow.document.write(
+        `<div class="footer"><p>${config.mensaje_pie}</p></div>`
+      );
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    } catch (error) {
+      console.error('Error loading config:', error);
+      toast.error('Error al imprimir factura');
+    }
   };
 
   if (loading) {
