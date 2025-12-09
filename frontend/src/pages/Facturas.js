@@ -84,6 +84,31 @@ export default function Facturas() {
         `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Atendió: ${invoice.vendedor_nombre}</p>`
       );
       printWindow.document.write('<div class="divider"></div>');
+      
+      if (config.mostrar_info_cliente && clienteData) {
+        printWindow.document.write('<div style="margin-bottom: 10px;">');
+        printWindow.document.write('<p style="font-weight: bold; font-size: 11px; margin: 2px 0;">CLIENTE:</p>');
+        printWindow.document.write(`<p style="font-size: 11px; margin: 2px 0;">${clienteData.nombre}</p>`);
+        if (clienteData.cedula_ruc) {
+          printWindow.document.write(`<p style="font-size: 10px; margin: 2px 0;">Cédula/RUC: ${clienteData.cedula_ruc}</p>`);
+        }
+        if (clienteData.direccion) {
+          printWindow.document.write(`<p style="font-size: 10px; margin: 2px 0;">${clienteData.direccion}</p>`);
+        }
+        if (clienteData.telefono) {
+          printWindow.document.write(`<p style="font-size: 10px; margin: 2px 0;">Tel: ${clienteData.telefono}</p>`);
+        }
+        printWindow.document.write('</div>');
+        printWindow.document.write('<div class="divider"></div>');
+      }
+      
+      if (config.mostrar_comentarios && invoice.comentarios) {
+        printWindow.document.write('<div style="margin-bottom: 10px;">');
+        printWindow.document.write('<p style="font-weight: bold; font-size: 11px; margin: 2px 0;">COMENTARIOS:</p>');
+        printWindow.document.write(`<p style="font-size: 10px; margin: 2px 0;">${invoice.comentarios}</p>`);
+        printWindow.document.write('</div>');
+        printWindow.document.write('<div class="divider"></div>');
+      }
       printWindow.document.write('<div class="items">');
       invoice.items.forEach((item) => {
         printWindow.document.write(
