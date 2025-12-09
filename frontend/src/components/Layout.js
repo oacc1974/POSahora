@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -6,13 +6,26 @@ import {
   ShoppingCart,
   FileText,
   Users,
+  Settings,
   LogOut,
   Store,
+  Menu,
+  X,
 } from 'lucide-react';
 import { Button } from './ui/button';
 
+const getRolBadge = (rol) => {
+  const badges = {
+    propietario: { text: 'Propietario', color: 'bg-purple-100 text-purple-700' },
+    administrador: { text: 'Administrador', color: 'bg-blue-100 text-blue-700' },
+    cajero: { text: 'Cajero', color: 'bg-green-100 text-green-700' },
+  };
+  return badges[rol] || badges.cajero;
+};
+
 export default function Layout({ children, user, onLogout }) {
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
     {
@@ -20,56 +33,83 @@ export default function Layout({ children, user, onLogout }) {
       href: '/',
       icon: LayoutDashboard,
       testId: 'nav-dashboard',
+      show: true,
     },
     {
       name: 'Productos',
       href: '/productos',
       icon: Package,
       testId: 'nav-products',
+      show: ['propietario', 'administrador'].includes(user.rol),
     },
     {
       name: 'Punto de Venta',
       href: '/pos',
       icon: ShoppingCart,
       testId: 'nav-pos',
+      show: true,
     },
     {
       name: 'Facturas',
       href: '/facturas',
       icon: FileText,
       testId: 'nav-invoices',
+      show: true,
     },
-  ];
-
-  if (user.es_admin) {
-    navigation.push({
-      name: 'Usuarios',
+    {
+      name: 'Empleados',
       href: '/usuarios',
       icon: Users,
       testId: 'nav-users',
-    });
-  }
+      show: user.rol === 'propietario',
+    },
+    {
+      name: 'Configuración',
+      href: '/configuracion',
+      icon: Settings,
+      testId: 'nav-config',
+      show: user.rol === 'propietario',
+    },
+  ].filter((item) => item.show);
+
+  const rolBadge = getRolBadge(user.rol);
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-6 border-b border-slate-200">
+    <div className="min-h-screen flex flex-col md:flex-row bg-slate-50">
+      {/* Mobile header */}
+      <div className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+            <Store size={24} className="text-white" />
+          </div>
+          <h1 className="text-lg font-bold text-slate-900">Sistema POS</h1>
+        </div>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 hover:bg-slate-100 rounded-lg"
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Sidebar */}
+      <aside
+        className={`${
+          mobileMenuOpen ? 'block' : 'hidden'
+        } md:block w-full md:w-64 bg-white border-r border-slate-200 flex flex-col fixed md:sticky top-[73px] md:top-0 h-[calc(100vh-73px)] md:h-screen z-40`}
+      >
+        <div className="hidden md:block p-6 border-b border-slate-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
               <Store size={24} className="text-white" />
             </div>
             <div>
-              <h1
-                className="text-lg font-bold text-slate-900"
-                data-testid="app-title"
-              >
-                Sistema POS
-              </h1>
+              <h1 className="text-lg font-bold text-slate-900">Sistema POS</h1>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
@@ -78,6 +118,7 @@ export default function Layout({ children, user, onLogout }) {
                 key={item.href}
                 to={item.href}
                 data-testid={item.testId}
+                onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-blue-50 text-blue-600 font-semibold'
@@ -93,18 +134,19 @@ export default function Layout({ children, user, onLogout }) {
 
         <div className="p-4 border-t border-slate-200">
           <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-            <p className="text-sm font-medium text-slate-900" data-testid="user-name">
+            <p
+              className="text-sm font-medium text-slate-900 truncate"
+              data-testid="user-name"
+            >
               {user.nombre}
             </p>
-            <p className="text-xs text-slate-500">@{user.username}</p>
-            {user.es_admin && (
-              <span
-                className="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded"
-                data-testid="admin-badge"
-              >
-                Administrador
-              </span>
-            )}
+            <p className="text-xs text-slate-500 truncate">@{user.username}</p>
+            <span
+              className={`inline-block mt-2 px-2 py-1 text-xs font-medium rounded ${rolBadge.color}`}
+              data-testid="rol-badge"
+            >
+              {rolBadge.text}
+            </span>
           </div>
           <Button
             onClick={onLogout}
@@ -118,9 +160,18 @@ export default function Layout({ children, user, onLogout }) {
         </div>
       </aside>
 
+      {/* Main content */}
       <main className="flex-1 overflow-auto">
-        <div className="p-8">{children}</div>
+        <div className="p-4 md:p-8">{children}</div>
       </main>
+
+      {/* Overlay for mobile menu */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
     </div>
   );
 }

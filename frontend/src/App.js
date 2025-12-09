@@ -6,6 +6,7 @@ import Productos from './pages/Productos';
 import POS from './pages/POS';
 import Facturas from './pages/Facturas';
 import Usuarios from './pages/Usuarios';
+import Configuracion from './pages/Configuracion';
 import Layout from './components/Layout';
 import { Toaster } from './components/ui/sonner';
 import './App.css';
@@ -68,12 +69,12 @@ function App() {
         <Route
           path="/productos"
           element={
-            user ? (
+            user && ['propietario', 'administrador'].includes(user.rol) ? (
               <Layout user={user} onLogout={handleLogout}>
                 <Productos />
               </Layout>
             ) : (
-              <Navigate to="/login" replace />
+              <Navigate to="/" replace />
             )
           }
         />
@@ -104,9 +105,21 @@ function App() {
         <Route
           path="/usuarios"
           element={
-            user && user.es_admin ? (
+            user && user.rol === 'propietario' ? (
               <Layout user={user} onLogout={handleLogout}>
                 <Usuarios />
+              </Layout>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/configuracion"
+          element={
+            user && user.rol === 'propietario' ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <Configuracion />
               </Layout>
             ) : (
               <Navigate to="/" replace />
