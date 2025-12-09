@@ -748,6 +748,12 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
     
     numero_factura = f"FAC-{numero:06d}"
     
+    cliente_nombre = None
+    if invoice.cliente_id:
+        cliente = await db.clientes.find_one({"_id": invoice.cliente_id})
+        if cliente:
+            cliente_nombre = cliente["nombre"]
+    
     new_invoice = {
         "_id": invoice_id,
         "numero": numero_factura,
@@ -757,6 +763,9 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         "vendedor_nombre": current_user["nombre"],
         "organizacion_id": current_user["organizacion_id"],
         "caja_id": caja_activa["_id"],
+        "cliente_id": invoice.cliente_id,
+        "cliente_nombre": cliente_nombre,
+        "comentarios": invoice.comentarios,
         "fecha": datetime.now(timezone.utc).isoformat()
     }
     await db.facturas.insert_one(new_invoice)
@@ -780,6 +789,9 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         vendedor_nombre=current_user["nombre"],
         organizacion_id=current_user["organizacion_id"],
         caja_id=caja_activa["_id"],
+        cliente_id=invoice.cliente_id,
+        cliente_nombre=cliente_nombre,
+        comentarios=invoice.comentarios,
         fecha=new_invoice["fecha"]
     )
 
@@ -801,6 +813,9 @@ async def get_facturas(current_user: dict = Depends(get_current_user)):
             vendedor_nombre=f["vendedor_nombre"],
             organizacion_id=f["organizacion_id"],
             caja_id=f.get("caja_id"),
+            cliente_id=f.get("cliente_id"),
+            cliente_nombre=f.get("cliente_nombre"),
+            comentarios=f.get("comentarios"),
             fecha=f["fecha"]
         )
         for f in facturas
