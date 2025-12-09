@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   Wallet,
+  UserCircle,
 } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -62,6 +63,13 @@ export default function Layout({ children, user, onLogout }) {
       href: '/facturas',
       icon: FileText,
       testId: 'nav-invoices',
+      show: true,
+    },
+    {
+      name: 'Clientes',
+      href: '/clientes',
+      icon: UserCircle,
+      testId: 'nav-clientes',
       show: true,
     },
     {
