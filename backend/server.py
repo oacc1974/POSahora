@@ -122,6 +122,8 @@ class InvoiceItem(BaseModel):
 class InvoiceCreate(BaseModel):
     items: List[InvoiceItem]
     total: float
+    cliente_id: Optional[str] = None
+    comentarios: Optional[str] = None
 
 class InvoiceResponse(BaseModel):
     id: str
@@ -132,6 +134,9 @@ class InvoiceResponse(BaseModel):
     vendedor_nombre: str
     organizacion_id: str
     caja_id: Optional[str] = None
+    cliente_id: Optional[str] = None
+    cliente_nombre: Optional[str] = None
+    comentarios: Optional[str] = None
     fecha: str
 
 class CajaApertura(BaseModel):
