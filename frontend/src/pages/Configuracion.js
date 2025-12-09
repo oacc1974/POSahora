@@ -161,6 +161,74 @@ export default function Configuracion() {
             />
           </div>
 
+          <div className="border-t pt-6 mt-6">
+            <h3 className="font-semibold text-lg mb-4">Opciones Avanzadas</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="mostrar_info_cliente"
+                  data-testid="config-mostrar-cliente-checkbox"
+                  checked={formData.mostrar_info_cliente}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, mostrar_info_cliente: checked })
+                  }
+                />
+                <Label htmlFor="mostrar_info_cliente" className="cursor-pointer font-normal">
+                  Mostrar información del cliente en el ticket
+                </Label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="mostrar_comentarios"
+                  data-testid="config-mostrar-comentarios-checkbox"
+                  checked={formData.mostrar_comentarios}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, mostrar_comentarios: checked })
+                  }
+                />
+                <Label htmlFor="mostrar_comentarios" className="cursor-pointer font-normal">
+                  Mostrar comentarios en el ticket
+                </Label>
+              </div>
+
+              <div>
+                <Label htmlFor="logo_email">URL del Logo (Email)</Label>
+                <Input
+                  id="logo_email"
+                  data-testid="config-logo-email-input"
+                  value={formData.logo_email || ''}
+                  onChange={(e) =>
+                    setFormData({ ...formData, logo_email: e.target.value })
+                  }
+                  placeholder="https://ejemplo.com/logo.png"
+                  className="mt-2"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Logo que aparecerá en tickets enviados por email
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="logo_impreso">URL del Logo (Impreso)</Label>
+                <Input
+                  id="logo_impreso"
+                  data-testid="config-logo-impreso-input"
+                  value={formData.logo_impreso || ''}
+                  onChange={(e) =>
+                    setFormData({ ...formData, logo_impreso: e.target.value })
+                  }
+                  placeholder="https://ejemplo.com/logo.png"
+                  className="mt-2"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Logo que aparecerá en tickets impresos
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="pt-4">
             <Button
               type="submit"
