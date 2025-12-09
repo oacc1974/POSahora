@@ -12,26 +12,36 @@ export default function BarcodeScanner({ open, onClose, onScan }) {
 
   useEffect(() => {
     if (open && !scannerRef.current) {
-      const config = {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        supportedScanTypes: [0, 1],
-      };
-
-      const scanner = new Html5QrcodeScanner('scanner-container', config, false);
-
-      scanner.render(
-        (decodedText, decodedResult) => {
-          onScan({ text: decodedText, format: decodedResult.result.format });
-          scanner.clear();
-          scannerRef.current = null;
-        },
-        (error) => {
-          console.warn('Scanner error:', error);
+      const timer = setTimeout(() => {
+        const element = document.getElementById('scanner-container');
+        if (!element) {
+          console.warn('Scanner container not found');
+          return;
         }
-      );
 
-      scannerRef.current = scanner;
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          supportedScanTypes: [0, 1],
+        };
+
+        const scanner = new Html5QrcodeScanner('scanner-container', config, false);
+
+        scanner.render(
+          (decodedText, decodedResult) => {
+            onScan({ text: decodedText, format: decodedResult.result.format });
+            scanner.clear();
+            scannerRef.current = null;
+          },
+          (error) => {
+            console.warn('Scanner error:', error);
+          }
+        );
+
+        scannerRef.current = scanner;
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
 
     return () => {
