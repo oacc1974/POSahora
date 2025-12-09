@@ -168,9 +168,9 @@ export default function POS() {
         .footer { margin-top: 15px; text-align: center; font-size: 11px; }
       `);
       printWindow.document.write('</style></head><body>');
-      if (config.cabecera) {
-        printWindow.document.write('<div style="text-align:center; margin-bottom: 10px;">');
-        printWindow.document.write(`<p style="font-size: 11px;">${config.cabecera}</p>`);
+      if (config.cabecera && config.cabecera.trim() !== '') {
+        printWindow.document.write('<div style="text-align:center; margin-bottom: 8px; padding: 5px 0;">');
+        printWindow.document.write(`<p style="font-size: 11px; font-weight: bold; margin: 0;">${config.cabecera}</p>`);
         printWindow.document.write('</div>');
         printWindow.document.write('<div class="divider"></div>');
       }
