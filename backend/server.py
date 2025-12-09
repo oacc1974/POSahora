@@ -44,6 +44,37 @@ class TicketConfig(BaseModel):
     email: Optional[str] = None
     sitio_web: Optional[str] = None
     mensaje_pie: Optional[str] = "¡Gracias por su compra!"
+    mostrar_info_cliente: bool = False
+    mostrar_comentarios: bool = False
+    logo_email: Optional[str] = None
+    logo_impreso: Optional[str] = None
+
+class ClienteCreate(BaseModel):
+    nombre: str
+    email: Optional[str] = None
+    telefono: Optional[str] = None
+    direccion: Optional[str] = None
+    ciudad: Optional[str] = None
+    region: Optional[str] = None
+    codigo_postal: Optional[str] = None
+    pais: Optional[str] = None
+    codigo_cliente: Optional[str] = None
+    nota: Optional[str] = None
+
+class ClienteResponse(BaseModel):
+    id: str
+    nombre: str
+    email: Optional[str] = None
+    telefono: Optional[str] = None
+    direccion: Optional[str] = None
+    ciudad: Optional[str] = None
+    region: Optional[str] = None
+    codigo_postal: Optional[str] = None
+    pais: Optional[str] = None
+    codigo_cliente: Optional[str] = None
+    nota: Optional[str] = None
+    organizacion_id: str
+    creado: str
 
 class UserCreate(BaseModel):
     nombre: str
