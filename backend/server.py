@@ -58,7 +58,7 @@ class ClienteCreate(BaseModel):
     region: Optional[str] = None
     codigo_postal: Optional[str] = None
     pais: Optional[str] = None
-    codigo_cliente: Optional[str] = None
+    cedula_ruc: Optional[str] = None
     nota: Optional[str] = None
 
 class ClienteResponse(BaseModel):
@@ -71,7 +71,7 @@ class ClienteResponse(BaseModel):
     region: Optional[str] = None
     codigo_postal: Optional[str] = None
     pais: Optional[str] = None
-    codigo_cliente: Optional[str] = None
+    cedula_ruc: Optional[str] = None
     nota: Optional[str] = None
     organizacion_id: str
     creado: str
@@ -517,7 +517,7 @@ async def create_cliente(cliente: ClienteCreate, current_user: dict = Depends(ge
         "region": cliente.region,
         "codigo_postal": cliente.codigo_postal,
         "pais": cliente.pais,
-        "codigo_cliente": cliente.codigo_cliente,
+        "cedula_ruc": cliente.cedula_ruc,
         "nota": cliente.nota,
         "organizacion_id": current_user["organizacion_id"],
         "creado": datetime.now(timezone.utc).isoformat()
@@ -534,7 +534,7 @@ async def create_cliente(cliente: ClienteCreate, current_user: dict = Depends(ge
         region=cliente.region,
         codigo_postal=cliente.codigo_postal,
         pais=cliente.pais,
-        codigo_cliente=cliente.codigo_cliente,
+        cedula_ruc=cliente.cedula_ruc,
         nota=cliente.nota,
         organizacion_id=current_user["organizacion_id"],
         creado=nuevo_cliente["creado"]
@@ -558,7 +558,7 @@ async def update_cliente(cliente_id: str, cliente: ClienteCreate, current_user: 
         "region": cliente.region,
         "codigo_postal": cliente.codigo_postal,
         "pais": cliente.pais,
-        "codigo_cliente": cliente.codigo_cliente,
+        "cedula_ruc": cliente.cedula_ruc,
         "nota": cliente.nota
     }
     
@@ -574,7 +574,7 @@ async def update_cliente(cliente_id: str, cliente: ClienteCreate, current_user: 
         region=cliente.region,
         codigo_postal=cliente.codigo_postal,
         pais=cliente.pais,
-        codigo_cliente=cliente.codigo_cliente,
+        cedula_ruc=cliente.cedula_ruc,
         nota=cliente.nota,
         organizacion_id=current_user["organizacion_id"],
         creado=existing["creado"]
