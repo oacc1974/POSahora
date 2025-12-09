@@ -49,7 +49,7 @@ class UserCreate(BaseModel):
     nombre: str
     username: str
     password: str
-    rol: str  # propietario, administrador, cajero
+    rol: str
 
 class UserLogin(BaseModel):
     username: str
@@ -100,7 +100,24 @@ class InvoiceResponse(BaseModel):
     vendedor: str
     vendedor_nombre: str
     organizacion_id: str
+    caja_id: Optional[str] = None
     fecha: str
+
+class CajaApertura(BaseModel):
+    monto_inicial: float
+
+class CajaResponse(BaseModel):
+    id: str
+    numero: str
+    usuario_id: str
+    usuario_nombre: str
+    monto_inicial: float
+    monto_ventas: float
+    monto_final: float
+    total_ventas: int
+    fecha_apertura: str
+    fecha_cierre: Optional[str] = None
+    estado: str
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -415,8 +432,159 @@ async def delete_producto(product_id: str, current_user: dict = Depends(get_prop
     
     return {"message": "Producto eliminado correctamente"}
 
+@app.get("/api/caja/activa")
+async def get_caja_activa(current_user: dict = Depends(get_current_user)):
+    caja = await db.cajas.find_one({
+        "usuario_id": current_user["_id"],
+        "estado": "abierta"
+    })
+    
+    if not caja:
+        return None
+    
+    return CajaResponse(
+        id=caja["_id"],
+        numero=caja["numero"],
+        usuario_id=caja["usuario_id"],
+        usuario_nombre=caja["usuario_nombre"],
+        monto_inicial=caja["monto_inicial"],
+        monto_ventas=caja["monto_ventas"],
+        monto_final=caja["monto_inicial"] + caja["monto_ventas"],
+        total_ventas=caja["total_ventas"],
+        fecha_apertura=caja["fecha_apertura"],
+        fecha_cierre=caja.get("fecha_cierre"),
+        estado=caja["estado"]
+    )
+
+@app.post("/api/caja/abrir")
+async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_current_user)):
+    caja_abierta = await db.cajas.find_one({
+        "usuario_id": current_user["_id"],
+        "estado": "abierta"
+    })
+    
+    if caja_abierta:
+        raise HTTPException(status_code=400, detail="Ya tienes una caja abierta")
+    
+    import uuid
+    caja_id = str(uuid.uuid4())
+    
+    counter = await db.contadores.find_one({"_id": f"caja_{current_user['organizacion_id']}"})
+    if not counter:
+        numero = 1
+        await db.contadores.insert_one({"_id": f"caja_{current_user['organizacion_id']}", "seq": 1})
+    else:
+        numero = counter["seq"] + 1
+        await db.contadores.update_one(
+            {"_id": f"caja_{current_user['organizacion_id']}"},
+            {"$set": {"seq": numero}}
+        )
+    
+    numero_caja = f"CAJA-{numero:06d}"
+    
+    nueva_caja = {
+        "_id": caja_id,
+        "numero": numero_caja,
+        "usuario_id": current_user["_id"],
+        "usuario_nombre": current_user["nombre"],
+        "organizacion_id": current_user["organizacion_id"],
+        "monto_inicial": apertura.monto_inicial,
+        "monto_ventas": 0.0,
+        "total_ventas": 0,
+        "fecha_apertura": datetime.now(timezone.utc).isoformat(),
+        "fecha_cierre": None,
+        "estado": "abierta"
+    }
+    
+    await db.cajas.insert_one(nueva_caja)
+    
+    return CajaResponse(
+        id=caja_id,
+        numero=numero_caja,
+        usuario_id=current_user["_id"],
+        usuario_nombre=current_user["nombre"],
+        monto_inicial=apertura.monto_inicial,
+        monto_ventas=0.0,
+        monto_final=apertura.monto_inicial,
+        total_ventas=0,
+        fecha_apertura=nueva_caja["fecha_apertura"],
+        fecha_cierre=None,
+        estado="abierta"
+    )
+
+@app.post("/api/caja/cerrar")
+async def cerrar_caja(current_user: dict = Depends(get_current_user)):
+    caja = await db.cajas.find_one({
+        "usuario_id": current_user["_id"],
+        "estado": "abierta"
+    })
+    
+    if not caja:
+        raise HTTPException(status_code=404, detail="No tienes una caja abierta")
+    
+    await db.cajas.update_one(
+        {"_id": caja["_id"]},
+        {
+            "$set": {
+                "estado": "cerrada",
+                "fecha_cierre": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    caja["estado"] = "cerrada"
+    caja["fecha_cierre"] = datetime.now(timezone.utc).isoformat()
+    
+    return CajaResponse(
+        id=caja["_id"],
+        numero=caja["numero"],
+        usuario_id=caja["usuario_id"],
+        usuario_nombre=caja["usuario_nombre"],
+        monto_inicial=caja["monto_inicial"],
+        monto_ventas=caja["monto_ventas"],
+        monto_final=caja["monto_inicial"] + caja["monto_ventas"],
+        total_ventas=caja["total_ventas"],
+        fecha_apertura=caja["fecha_apertura"],
+        fecha_cierre=caja["fecha_cierre"],
+        estado="cerrada"
+    )
+
+@app.get("/api/caja/historial", response_model=List[CajaResponse])
+async def get_historial_cajas(current_user: dict = Depends(get_current_user)):
+    query = {"organizacion_id": current_user["organizacion_id"]}
+    
+    if current_user["rol"] == "cajero":
+        query["usuario_id"] = current_user["_id"]
+    
+    cajas = await db.cajas.find(query).sort("fecha_apertura", -1).to_list(100)
+    
+    return [
+        CajaResponse(
+            id=c["_id"],
+            numero=c["numero"],
+            usuario_id=c["usuario_id"],
+            usuario_nombre=c["usuario_nombre"],
+            monto_inicial=c["monto_inicial"],
+            monto_ventas=c["monto_ventas"],
+            monto_final=c["monto_inicial"] + c["monto_ventas"],
+            total_ventas=c["total_ventas"],
+            fecha_apertura=c["fecha_apertura"],
+            fecha_cierre=c.get("fecha_cierre"),
+            estado=c["estado"]
+        )
+        for c in cajas
+    ]
+
 @app.post("/api/facturas", response_model=InvoiceResponse)
 async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(get_current_user)):
+    caja_activa = await db.cajas.find_one({
+        "usuario_id": current_user["_id"],
+        "estado": "abierta"
+    })
+    
+    if not caja_activa:
+        raise HTTPException(status_code=400, detail="Debes abrir una caja antes de realizar ventas")
+    
     import uuid
     invoice_id = str(uuid.uuid4())
     
@@ -441,9 +609,20 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         "vendedor": current_user["_id"],
         "vendedor_nombre": current_user["nombre"],
         "organizacion_id": current_user["organizacion_id"],
+        "caja_id": caja_activa["_id"],
         "fecha": datetime.now(timezone.utc).isoformat()
     }
     await db.facturas.insert_one(new_invoice)
+    
+    await db.cajas.update_one(
+        {"_id": caja_activa["_id"]},
+        {
+            "$inc": {
+                "monto_ventas": invoice.total,
+                "total_ventas": 1
+            }
+        }
+    )
     
     return InvoiceResponse(
         id=invoice_id,
@@ -453,6 +632,7 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         vendedor=current_user["_id"],
         vendedor_nombre=current_user["nombre"],
         organizacion_id=current_user["organizacion_id"],
+        caja_id=caja_activa["_id"],
         fecha=new_invoice["fecha"]
     )
 
@@ -473,6 +653,7 @@ async def get_facturas(current_user: dict = Depends(get_current_user)):
             vendedor=f["vendedor"],
             vendedor_nombre=f["vendedor_nombre"],
             organizacion_id=f["organizacion_id"],
+            caja_id=f.get("caja_id"),
             fecha=f["fecha"]
         )
         for f in facturas
@@ -494,11 +675,17 @@ async def get_dashboard(current_user: dict = Depends(get_current_user)):
     if current_user["rol"] == "propietario":
         total_empleados = await db.usuarios.count_documents({"organizacion_id": current_user["organizacion_id"]}) - 1
     
+    caja_activa = await db.cajas.find_one({
+        "usuario_id": current_user["_id"],
+        "estado": "abierta"
+    })
+    
     return {
         "total_productos": total_productos,
         "total_ventas": total_ventas,
         "total_ingresos": total_ingresos,
         "total_empleados": total_empleados,
+        "caja_activa": caja_activa is not None,
         "facturas_recientes": [
             {
                 "id": f["_id"],
