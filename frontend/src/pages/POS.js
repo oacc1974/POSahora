@@ -195,16 +195,16 @@ export default function POS() {
   const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] gap-6" data-testid="pos-page">
-      <div className="flex-1 flex flex-col">
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">
+    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-8rem)] gap-4 lg:gap-6" data-testid="pos-page">
+      <div className="flex-1 flex flex-col order-2 lg:order-1">
+        <div className="mb-4 lg:mb-6">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
             Punto de Venta
           </h1>
-          <p className="text-slate-600">Selecciona productos para la venta</p>
+          <p className="text-sm md:text-base text-slate-600">Selecciona productos para la venta</p>
         </div>
 
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 mb-4 lg:mb-6">
           <Input
             placeholder="Buscar productos..."
             data-testid="product-search-input"
@@ -216,7 +216,7 @@ export default function POS() {
             onClick={() => setShowScanner(true)}
             data-testid="open-scanner-button"
             variant="outline"
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
           >
             <Scan size={20} />
             Escanear
@@ -224,7 +224,7 @@ export default function POS() {
         </div>
 
         <div className="flex-1 overflow-auto">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
             {filteredProductos.map((producto) => (
               <Card
                 key={producto.id}
@@ -251,12 +251,12 @@ export default function POS() {
         </div>
       </div>
 
-      <Card className="w-full md:w-96 flex flex-col shadow-xl">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-2xl font-bold">Carrito</h2>
+      <Card className="w-full lg:w-96 flex flex-col shadow-xl order-1 lg:order-2 lg:sticky lg:top-0">
+        <div className="p-4 lg:p-6 border-b border-slate-200">
+          <h2 className="text-xl lg:text-2xl font-bold">Carrito</h2>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 lg:p-6 max-h-[300px] lg:max-h-none">
           {cart.length === 0 ? (
             <div
               className="flex items-center justify-center h-full text-slate-400"
@@ -319,11 +319,11 @@ export default function POS() {
           )}
         </div>
 
-        <div className="p-6 border-t border-slate-200 bg-slate-50">
-          <div className="flex justify-between items-center mb-6">
-            <span className="text-lg font-semibold">Total:</span>
+        <div className="p-4 lg:p-6 border-t border-slate-200 bg-slate-50">
+          <div className="flex justify-between items-center mb-4 lg:mb-6">
+            <span className="text-base lg:text-lg font-semibold">Total:</span>
             <span
-              className="text-3xl font-bold font-mono text-blue-600"
+              className="text-2xl lg:text-3xl font-bold font-mono text-blue-600"
               data-testid="cart-total"
             >
               ${total.toFixed(2)}
@@ -334,9 +334,9 @@ export default function POS() {
             onClick={handleCheckout}
             data-testid="checkout-button"
             disabled={cart.length === 0 || loading}
-            className="w-full h-14 text-lg font-semibold gap-2"
+            className="w-full h-12 lg:h-14 text-base lg:text-lg font-semibold gap-2"
           >
-            <Printer size={24} />
+            <Printer size={20} />
             {loading ? 'Procesando...' : 'Finalizar Venta'}
           </Button>
         </div>
