@@ -4,7 +4,7 @@ import {
   Package,
   ShoppingBag,
   DollarSign,
-  AlertTriangle,
+  Users,
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -37,6 +37,8 @@ export default function Dashboard() {
     return <div>Cargando...</div>;
   }
 
+  const user = JSON.parse(localStorage.getItem('user'));
+  
   const stats = [
     {
       name: 'Total Productos',
@@ -44,6 +46,7 @@ export default function Dashboard() {
       icon: Package,
       color: 'bg-blue-500',
       testId: 'stat-total-products',
+      show: ['propietario', 'administrador'].includes(user?.rol),
     },
     {
       name: 'Ventas Realizadas',
@@ -51,6 +54,7 @@ export default function Dashboard() {
       icon: ShoppingBag,
       color: 'bg-green-500',
       testId: 'stat-total-sales',
+      show: true,
     },
     {
       name: 'Ingresos Totales',
@@ -58,28 +62,30 @@ export default function Dashboard() {
       icon: DollarSign,
       color: 'bg-purple-500',
       testId: 'stat-total-revenue',
+      show: true,
     },
     {
-      name: 'Productos Bajo Stock',
-      value: data?.productos_bajo_stock || 0,
-      icon: AlertTriangle,
-      color: 'bg-orange-500',
-      testId: 'stat-low-stock',
+      name: 'Total Empleados',
+      value: data?.total_empleados || 0,
+      icon: Users,
+      color: 'bg-indigo-500',
+      testId: 'stat-total-employees',
+      show: user?.rol === 'propietario',
     },
-  ];
+  ].filter(stat => stat.show);
 
   return (
     <div data-testid="dashboard">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-900 mb-2">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
           Dashboard
         </h1>
-        <p className="text-slate-600">
+        <p className="text-sm md:text-base text-slate-600">
           Resumen general de tu negocio
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
