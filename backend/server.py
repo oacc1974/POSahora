@@ -468,6 +468,117 @@ async def delete_producto(product_id: str, current_user: dict = Depends(get_prop
     
     return {"message": "Producto eliminado correctamente"}
 
+@app.get("/api/clientes", response_model=List[ClienteResponse])
+async def get_clientes(current_user: dict = Depends(get_current_user)):
+    clientes = await db.clientes.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
+    return [
+        ClienteResponse(
+            id=c["_id"],
+            nombre=c["nombre"],
+            email=c.get("email"),
+            telefono=c.get("telefono"),
+            direccion=c.get("direccion"),
+            ciudad=c.get("ciudad"),
+            region=c.get("region"),
+            codigo_postal=c.get("codigo_postal"),
+            pais=c.get("pais"),
+            codigo_cliente=c.get("codigo_cliente"),
+            nota=c.get("nota"),
+            organizacion_id=c["organizacion_id"],
+            creado=c["creado"]
+        )
+        for c in clientes
+    ]
+
+@app.post("/api/clientes", response_model=ClienteResponse)
+async def create_cliente(cliente: ClienteCreate, current_user: dict = Depends(get_current_user)):
+    import uuid
+    cliente_id = str(uuid.uuid4())
+    
+    nuevo_cliente = {
+        "_id": cliente_id,
+        "nombre": cliente.nombre,
+        "email": cliente.email,
+        "telefono": cliente.telefono,
+        "direccion": cliente.direccion,
+        "ciudad": cliente.ciudad,
+        "region": cliente.region,
+        "codigo_postal": cliente.codigo_postal,
+        "pais": cliente.pais,
+        "codigo_cliente": cliente.codigo_cliente,
+        "nota": cliente.nota,
+        "organizacion_id": current_user["organizacion_id"],
+        "creado": datetime.now(timezone.utc).isoformat()
+    }
+    await db.clientes.insert_one(nuevo_cliente)
+    
+    return ClienteResponse(
+        id=cliente_id,
+        nombre=cliente.nombre,
+        email=cliente.email,
+        telefono=cliente.telefono,
+        direccion=cliente.direccion,
+        ciudad=cliente.ciudad,
+        region=cliente.region,
+        codigo_postal=cliente.codigo_postal,
+        pais=cliente.pais,
+        codigo_cliente=cliente.codigo_cliente,
+        nota=cliente.nota,
+        organizacion_id=current_user["organizacion_id"],
+        creado=nuevo_cliente["creado"]
+    )
+
+@app.put("/api/clientes/{cliente_id}", response_model=ClienteResponse)
+async def update_cliente(cliente_id: str, cliente: ClienteCreate, current_user: dict = Depends(get_current_user)):
+    existing = await db.clientes.find_one({
+        "_id": cliente_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    if not existing:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    
+    updated_cliente = {
+        "nombre": cliente.nombre,
+        "email": cliente.email,
+        "telefono": cliente.telefono,
+        "direccion": cliente.direccion,
+        "ciudad": cliente.ciudad,
+        "region": cliente.region,
+        "codigo_postal": cliente.codigo_postal,
+        "pais": cliente.pais,
+        "codigo_cliente": cliente.codigo_cliente,
+        "nota": cliente.nota
+    }
+    
+    await db.clientes.update_one({"_id": cliente_id}, {"$set": updated_cliente})
+    
+    return ClienteResponse(
+        id=cliente_id,
+        nombre=cliente.nombre,
+        email=cliente.email,
+        telefono=cliente.telefono,
+        direccion=cliente.direccion,
+        ciudad=cliente.ciudad,
+        region=cliente.region,
+        codigo_postal=cliente.codigo_postal,
+        pais=cliente.pais,
+        codigo_cliente=cliente.codigo_cliente,
+        nota=cliente.nota,
+        organizacion_id=current_user["organizacion_id"],
+        creado=existing["creado"]
+    )
+
+@app.delete("/api/clientes/{cliente_id}")
+async def delete_cliente(cliente_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.clientes.delete_one({
+        "_id": cliente_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    
+    return {"message": "Cliente eliminado correctamente"}
+
 @app.get("/api/caja/activa")
 async def get_caja_activa(current_user: dict = Depends(get_current_user)):
     caja = await db.cajas.find_one({
