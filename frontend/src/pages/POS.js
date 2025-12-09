@@ -392,7 +392,53 @@ export default function POS() {
 
       <Card className="w-full lg:w-96 flex flex-col shadow-xl order-1 lg:order-2 lg:sticky lg:top-0">
         <div className="p-4 lg:p-6 border-b border-slate-200">
-          <h2 className="text-xl lg:text-2xl font-bold">Carrito</h2>
+          <h2 className="text-xl lg:text-2xl font-bold mb-3">Carrito</h2>
+          
+          {/* Cliente */}
+          <div className="mb-3">
+            {clienteSeleccionado ? (
+              <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-blue-900 truncate">
+                    {clienteSeleccionado.nombre}
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    Cédula: {clienteSeleccionado.cedula_ruc}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setClienteSeleccionado(null)}
+                  className="ml-2 text-blue-600 hover:text-blue-800"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <Button
+                onClick={() => setShowClienteDialog(true)}
+                data-testid="add-cliente-button"
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+              >
+                <Plus size={16} />
+                Agregar Cliente
+              </Button>
+            )}
+          </div>
+
+          {/* Comentarios */}
+          <div>
+            <Textarea
+              placeholder="Comentarios (opcional)"
+              data-testid="comentarios-input"
+              value={comentarios}
+              onChange={(e) => setComentarios(e.target.value)}
+              rows={2}
+              maxLength={255}
+              className="text-sm"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-auto p-4 lg:p-6 max-h-[300px] lg:max-h-none">
