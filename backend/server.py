@@ -39,6 +39,9 @@ class TicketConfig(BaseModel):
     nombre_negocio: str
     direccion: Optional[str] = None
     telefono: Optional[str] = None
+    rfc: Optional[str] = None
+    email: Optional[str] = None
+    sitio_web: Optional[str] = None
     mensaje_pie: Optional[str] = "¡Gracias por su compra!"
 
 class UserCreate(BaseModel):
@@ -162,6 +165,9 @@ async def startup_db():
             "nombre_negocio": "Mi Negocio",
             "direccion": "",
             "telefono": "",
+            "rfc": "",
+            "email": "",
+            "sitio_web": "",
             "mensaje_pie": "¡Gracias por su compra!"
         }
         await db.configuraciones.insert_one(config_negocio)
@@ -203,12 +209,18 @@ async def get_config(current_user: dict = Depends(get_current_user)):
             "nombre_negocio": "Mi Negocio",
             "direccion": "",
             "telefono": "",
+            "rfc": "",
+            "email": "",
+            "sitio_web": "",
             "mensaje_pie": "¡Gracias por su compra!"
         }
     return {
         "nombre_negocio": config.get("nombre_negocio", "Mi Negocio"),
         "direccion": config.get("direccion", ""),
         "telefono": config.get("telefono", ""),
+        "rfc": config.get("rfc", ""),
+        "email": config.get("email", ""),
+        "sitio_web": config.get("sitio_web", ""),
         "mensaje_pie": config.get("mensaje_pie", "¡Gracias por su compra!")
     }
 
