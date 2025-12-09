@@ -434,6 +434,51 @@ export default function POS() {
         onClose={() => setShowScanner(false)}
         onScan={handleScan}
       />
+
+      {/* Dialog Apertura de Caja */}
+      <Dialog open={showAperturaCaja} onOpenChange={setShowAperturaCaja}>
+        <DialogContent data-testid="apertura-caja-dialog" className="max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle>Abrir Caja para Vender</DialogTitle>
+          </DialogHeader>
+
+          <div className="mb-4">
+            <p className="text-slate-600">
+              Antes de realizar ventas, debes abrir tu caja con una base inicial.
+            </p>
+          </div>
+
+          <form onSubmit={handleAbrirCaja} className="space-y-4">
+            <div>
+              <Label htmlFor="monto_inicial_pos">Base de Caja (Monto Inicial) *</Label>
+              <Input
+                id="monto_inicial_pos"
+                data-testid="monto-inicial-pos-input"
+                type="number"
+                step="0.01"
+                value={montoInicial}
+                onChange={(e) => setMontoInicial(e.target.value)}
+                required
+                placeholder="0.00"
+                className="mt-2"
+              />
+              <p className="text-xs text-slate-500 mt-2">
+                Ingresa el monto con el que inicias tu caja
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="submit"
+                data-testid="confirmar-apertura-pos-button"
+                className="flex-1"
+              >
+                Abrir Caja y Comenzar
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
