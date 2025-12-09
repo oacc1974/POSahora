@@ -175,6 +175,14 @@ export default function Configuracion() {
             Vista Previa del Ticket
           </h3>
           <div className="bg-white p-4 rounded border border-slate-200 font-mono text-sm">
+            {formData.cabecera && (
+              <>
+                <div className="text-center mb-2">
+                  <p className="text-xs">{formData.cabecera}</p>
+                </div>
+                <div className="border-t border-dashed border-slate-300 my-2" />
+              </>
+            )}
             <div className="text-center mb-4">
               <p className="font-bold">{formData.nombre_negocio || 'Mi Negocio'}</p>
               {formData.direccion && <p className="text-xs">{formData.direccion}</p>}
