@@ -165,12 +165,21 @@ export default function POS() {
       `);
       printWindow.document.write('</style></head><body>');
       printWindow.document.write('<div class="header">');
-      printWindow.document.write(`<h1>${config.nombre_negocio}</h1>`);
+      printWindow.document.write(`<h1>${config.nombre_negocio || 'Mi Negocio'}</h1>`);
       if (config.direccion) {
         printWindow.document.write(`<p>${config.direccion}</p>`);
       }
       if (config.telefono) {
         printWindow.document.write(`<p>Tel: ${config.telefono}</p>`);
+      }
+      if (config.rfc) {
+        printWindow.document.write(`<p>RFC: ${config.rfc}</p>`);
+      }
+      if (config.email) {
+        printWindow.document.write(`<p>${config.email}</p>`);
+      }
+      if (config.sitio_web) {
+        printWindow.document.write(`<p>${config.sitio_web}</p>`);
       }
       printWindow.document.write('</div>');
       printWindow.document.write('<div class="divider"></div>');
