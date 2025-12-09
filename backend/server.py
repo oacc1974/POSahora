@@ -68,6 +68,7 @@ class ProductCreate(BaseModel):
     precio: float
     codigo_barras: Optional[str] = None
     descripcion: Optional[str] = None
+    stock: Optional[int] = 0
 
 class ProductResponse(BaseModel):
     id: str
@@ -75,6 +76,7 @@ class ProductResponse(BaseModel):
     precio: float
     codigo_barras: Optional[str] = None
     descripcion: Optional[str] = None
+    stock: int = 0
     organizacion_id: str
     creado: str
 
@@ -313,6 +315,7 @@ async def get_productos(current_user: dict = Depends(get_current_user)):
             precio=p["precio"],
             codigo_barras=p.get("codigo_barras"),
             descripcion=p.get("descripcion"),
+            stock=p.get("stock", 0),
             organizacion_id=p["organizacion_id"],
             creado=p["creado"]
         )
@@ -334,6 +337,7 @@ async def get_producto_by_barcode(codigo: str, current_user: dict = Depends(get_
         precio=producto["precio"],
         codigo_barras=producto.get("codigo_barras"),
         descripcion=producto.get("descripcion"),
+        stock=producto.get("stock", 0),
         organizacion_id=producto["organizacion_id"],
         creado=producto["creado"]
     )
@@ -349,6 +353,7 @@ async def create_producto(product: ProductCreate, current_user: dict = Depends(g
         "precio": product.precio,
         "codigo_barras": product.codigo_barras,
         "descripcion": product.descripcion,
+        "stock": product.stock or 0,
         "organizacion_id": current_user["organizacion_id"],
         "creado": datetime.now(timezone.utc).isoformat()
     }
@@ -360,6 +365,7 @@ async def create_producto(product: ProductCreate, current_user: dict = Depends(g
         precio=product.precio,
         codigo_barras=product.codigo_barras,
         descripcion=product.descripcion,
+        stock=product.stock or 0,
         organizacion_id=current_user["organizacion_id"],
         creado=new_product["creado"]
     )
@@ -377,7 +383,8 @@ async def update_producto(product_id: str, product: ProductCreate, current_user:
         "nombre": product.nombre,
         "precio": product.precio,
         "codigo_barras": product.codigo_barras,
-        "descripcion": product.descripcion
+        "descripcion": product.descripcion,
+        "stock": product.stock or 0
     }
     
     await db.productos.update_one({"_id": product_id}, {"$set": updated_product})
@@ -388,6 +395,7 @@ async def update_producto(product_id: str, product: ProductCreate, current_user:
         precio=product.precio,
         codigo_barras=product.codigo_barras,
         descripcion=product.descripcion,
+        stock=product.stock or 0,
         organizacion_id=current_user["organizacion_id"],
         creado=existing["creado"]
     )
