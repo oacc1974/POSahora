@@ -7,6 +7,7 @@ import POS from './pages/POS';
 import Facturas from './pages/Facturas';
 import Usuarios from './pages/Usuarios';
 import Configuracion from './pages/Configuracion';
+import Caja from './pages/Caja';
 import Layout from './components/Layout';
 import { Toaster } from './components/ui/sonner';
 import './App.css';
