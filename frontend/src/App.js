@@ -8,6 +8,7 @@ import Facturas from './pages/Facturas';
 import Usuarios from './pages/Usuarios';
 import Configuracion from './pages/Configuracion';
 import Caja from './pages/Caja';
+import Clientes from './pages/Clientes';
 import Layout from './components/Layout';
 import { Toaster } from './components/ui/sonner';
 import './App.css';
@@ -133,6 +134,18 @@ function App() {
             user ? (
               <Layout user={user} onLogout={handleLogout}>
                 <Caja />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/clientes"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <Clientes />
               </Layout>
             ) : (
               <Navigate to="/login" replace />
