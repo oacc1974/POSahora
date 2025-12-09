@@ -10,7 +10,8 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import BarcodeScanner from '../components/BarcodeScanner';
-import { Plus, Minus, Trash2, Scan, Printer } from 'lucide-react';
+import { Plus, Minus, Trash2, Scan, Printer, X, Search } from 'lucide-react';
+import { Textarea } from '../components/ui/textarea';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -575,6 +576,47 @@ export default function POS() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Buscar Cliente */}
+      <Dialog open={showClienteDialog} onOpenChange={setShowClienteDialog}>
+        <DialogContent data-testid="buscar-cliente-dialog" className="max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle>Buscar Cliente</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="cedula_busqueda">Cédula o RUC</Label>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  id="cedula_busqueda"
+                  data-testid="cedula-busqueda-input"
+                  value={cedulaBusqueda}
+                  onChange={(e) => setCedulaBusqueda(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      buscarClientePorCedula();
+                    }
+                  }}
+                  placeholder="Ingresa cédula o RUC"
+                  maxLength={13}
+                />
+                <Button
+                  onClick={buscarClientePorCedula}
+                  data-testid="buscar-cliente-button"
+                  className="gap-2"
+                >
+                  <Search size={16} />
+                  Buscar
+                </Button>
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                10 dígitos para Cédula, 13 para RUC
+              </p>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
