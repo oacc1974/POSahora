@@ -127,6 +127,18 @@ function App() {
             )
           }
         />
+        <Route
+          path="/caja"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <Caja />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
