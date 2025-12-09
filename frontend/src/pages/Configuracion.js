@@ -88,6 +88,21 @@ export default function Configuracion() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
+            <Label htmlFor="cabecera">Cabecera del Ticket</Label>
+            <Textarea
+              id="cabecera"
+              data-testid="config-cabecera-input"
+              value={formData.cabecera}
+              onChange={(e) =>
+                setFormData({ ...formData, cabecera: e.target.value })
+              }
+              rows={2}
+              placeholder="Texto que aparece al inicio del ticket"
+              className="mt-2"
+            />
+          </div>
+
+          <div>
             <Label htmlFor="nombre_negocio">Nombre del Negocio *</Label>
             <Input
               id="nombre_negocio"
