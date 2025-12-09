@@ -25,6 +25,10 @@ export default function POS() {
   const [cajaActiva, setCajaActiva] = useState(null);
   const [showAperturaCaja, setShowAperturaCaja] = useState(false);
   const [montoInicial, setMontoInicial] = useState('');
+  const [showClienteDialog, setShowClienteDialog] = useState(false);
+  const [cedulaBusqueda, setCedulaBusqueda] = useState('');
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [comentarios, setComentarios] = useState('');
 
   useEffect(() => {
     fetchProductos();
@@ -159,6 +163,29 @@ export default function POS() {
     }
   };
 
+  const buscarClientePorCedula = async () => {
+    if (!cedulaBusqueda.trim()) {
+      toast.error('Ingresa una cédula o RUC');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${API_URL}/api/clientes/buscar/${cedulaBusqueda}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setClienteSeleccionado(response.data);
+      toast.success(`Cliente encontrado: ${response.data.nombre}`);
+      setShowClienteDialog(false);
+      setCedulaBusqueda('');
+    } catch (error) {
+      toast.error('Cliente no encontrado');
+    }
+  };
+
   const handleCheckout = async () => {
     if (cart.length === 0) {
       toast.error('El carrito está vacío');
@@ -181,6 +208,8 @@ export default function POS() {
         {
           items: cart,
           total,
+          cliente_id: clienteSeleccionado?.id || null,
+          comentarios: comentarios || null,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -189,6 +218,8 @@ export default function POS() {
 
       toast.success(`Factura ${response.data.numero} creada correctamente`);
       setCart([]);
+      setClienteSeleccionado(null);
+      setComentarios('');
       fetchProductos();
       verificarCaja();
       printInvoice(response.data);
