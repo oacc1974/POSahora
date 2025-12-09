@@ -480,6 +480,32 @@ async def delete_producto(product_id: str, current_user: dict = Depends(get_prop
     
     return {"message": "Producto eliminado correctamente"}
 
+@app.get("/api/clientes/buscar/{cedula}")
+async def buscar_cliente_por_cedula(cedula: str, current_user: dict = Depends(get_current_user)):
+    cliente = await db.clientes.find_one({
+        "cedula_ruc": cedula,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    
+    return ClienteResponse(
+        id=cliente["_id"],
+        nombre=cliente["nombre"],
+        email=cliente.get("email"),
+        telefono=cliente.get("telefono"),
+        direccion=cliente.get("direccion"),
+        ciudad=cliente.get("ciudad"),
+        region=cliente.get("region"),
+        codigo_postal=cliente.get("codigo_postal"),
+        pais=cliente.get("pais"),
+        cedula_ruc=cliente.get("cedula_ruc"),
+        nota=cliente.get("nota"),
+        organizacion_id=cliente["organizacion_id"],
+        creado=cliente["creado"]
+    )
+
 @app.get("/api/clientes", response_model=List[ClienteResponse])
 async def get_clientes(current_user: dict = Depends(get_current_user)):
     clientes = await db.clientes.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
