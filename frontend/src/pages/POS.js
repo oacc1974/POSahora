@@ -15,10 +15,31 @@ export default function POS() {
   const [showScanner, setShowScanner] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cajaActiva, setCajaActiva] = useState(null);
+  const [showAperturaCaja, setShowAperturaCaja] = useState(false);
+  const [montoInicial, setMontoInicial] = useState('');
 
   useEffect(() => {
     fetchProductos();
+    verificarCaja();
   }, []);
+
+  const verificarCaja = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/caja/activa`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (response.data) {
+        setCajaActiva(response.data);
+      } else {
+        setShowAperturaCaja(true);
+      }
+    } catch (error) {
+      console.error('Error al verificar caja:', error);
+    }
+  };
 
   const fetchProductos = async () => {
     try {
