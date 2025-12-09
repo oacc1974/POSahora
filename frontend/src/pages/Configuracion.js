@@ -1,0 +1,177 @@
+import React, { useState, useEffect } from 'react';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Store, Save } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'sonner';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+export default function Configuracion() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    nombre_negocio: '',
+    direccion: '',
+    telefono: '',
+    mensaje_pie: '',
+  });
+
+  useEffect(() => {
+    fetchConfig();
+  }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/config`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFormData(response.data);
+    } catch (error) {
+      toast.error('Error al cargar configuración');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/api/config`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Configuración guardada correctamente');
+    } catch (error) {
+      toast.error('Error al guardar configuración');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
+
+  return (
+    <div data-testid="config-page" className="max-w-4xl">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
+          Configuración
+        </h1>
+        <p className="text-slate-600">
+          Configura la información de tu negocio para los tickets
+        </p>
+      </div>
+
+      <Card className="p-6 md:p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+            <Store size={24} className="text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">Información del Negocio</h2>
+            <p className="text-sm text-slate-500">
+              Esta información aparecerá en tus tickets
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <Label htmlFor="nombre_negocio">Nombre del Negocio *</Label>
+            <Input
+              id="nombre_negocio"
+              data-testid="config-nombre-input"
+              value={formData.nombre_negocio}
+              onChange={(e) =>
+                setFormData({ ...formData, nombre_negocio: e.target.value })
+              }
+              required
+              className="mt-2"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="direccion">Dirección</Label>
+            <Input
+              id="direccion"
+              data-testid="config-direccion-input"
+              value={formData.direccion}
+              onChange={(e) =>
+                setFormData({ ...formData, direccion: e.target.value })
+              }
+              className="mt-2"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="telefono">Teléfono</Label>
+            <Input
+              id="telefono"
+              data-testid="config-telefono-input"
+              value={formData.telefono}
+              onChange={(e) =>
+                setFormData({ ...formData, telefono: e.target.value })
+              }
+              className="mt-2"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="mensaje_pie">Mensaje al Pie del Ticket</Label>
+            <Textarea
+              id="mensaje_pie"
+              data-testid="config-mensaje-input"
+              value={formData.mensaje_pie}
+              onChange={(e) =>
+                setFormData({ ...formData, mensaje_pie: e.target.value })
+              }
+              rows={3}
+              className="mt-2"
+            />
+          </div>
+
+          <div className="pt-4">
+            <Button
+              type="submit"
+              data-testid="config-save-button"
+              disabled={saving}
+              className="w-full md:w-auto gap-2"
+              size="lg"
+            >
+              <Save size={20} />
+              {saving ? 'Guardando...' : 'Guardar Configuración'}
+            </Button>
+          </div>
+        </form>
+
+        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="font-semibold text-blue-900 mb-2">
+            Vista Previa del Ticket
+          </h3>
+          <div className="bg-white p-4 rounded border border-slate-200 font-mono text-sm">
+            <div className="text-center mb-4">
+              <p className="font-bold">{formData.nombre_negocio || 'Mi Negocio'}</p>
+              {formData.direccion && <p className="text-xs">{formData.direccion}</p>}
+              {formData.telefono && <p className="text-xs">Tel: {formData.telefono}</p>}
+            </div>
+            <div className="border-t border-dashed border-slate-300 my-2" />
+            <p className="text-xs">Producto Ejemplo x1 ........... $10.00</p>
+            <div className="border-t border-dashed border-slate-300 my-2" />
+            <p className="font-bold">TOTAL: $10.00</p>
+            <div className="border-t border-dashed border-slate-300 my-2" />
+            <p className="text-xs text-center mt-4">
+              {formData.mensaje_pie || '¡Gracias por su compra!'}
+            </p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
