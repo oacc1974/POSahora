@@ -364,7 +364,7 @@ export default function Clientes() {
             </div>
 
             <div>
-              <Label htmlFor="cedula_ruc">Código de Cliente</Label>
+              <Label htmlFor="cedula_ruc">Cédula o RUC</Label>
               <Input
                 id="cedula_ruc"
                 data-testid="cliente-codigo-input"
@@ -372,8 +372,12 @@ export default function Clientes() {
                 onChange={(e) =>
                   setFormData({ ...formData, cedula_ruc: e.target.value })
                 }
-                placeholder="Opcional"
+                placeholder="10 dígitos (Cédula) o 13 dígitos (RUC)"
+                maxLength={13}
               />
+              <p className="text-xs text-slate-500 mt-1">
+                Ecuador: 10 dígitos para Cédula, 13 para RUC
+              </p>
             </div>
 
             <div>
