@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Store, Save } from 'lucide-react';
+import { Checkbox } from '../components/ui/checkbox';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -22,6 +23,10 @@ export default function Configuracion() {
     email: '',
     sitio_web: '',
     mensaje_pie: '',
+    mostrar_info_cliente: false,
+    mostrar_comentarios: false,
+    logo_email: '',
+    logo_impreso: '',
   });
 
   useEffect(() => {
