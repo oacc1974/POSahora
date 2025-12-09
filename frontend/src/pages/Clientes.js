@@ -30,7 +30,7 @@ export default function Clientes() {
     region: '',
     codigo_postal: '',
     pais: '',
-    codigo_cliente: '',
+    cedula_ruc: '',
     nota: '',
   });
 
@@ -108,7 +108,7 @@ export default function Clientes() {
         region: cliente.region || '',
         codigo_postal: cliente.codigo_postal || '',
         pais: cliente.pais || '',
-        codigo_cliente: cliente.codigo_cliente || '',
+        cedula_ruc: cliente.cedula_ruc || '',
         nota: cliente.nota || '',
       });
     } else {
@@ -128,7 +128,7 @@ export default function Clientes() {
       region: '',
       codigo_postal: '',
       pais: '',
-      codigo_cliente: '',
+      cedula_ruc: '',
       nota: '',
     });
   };
@@ -186,9 +186,9 @@ export default function Clientes() {
                     <h3 className="font-bold text-base md:text-lg truncate">
                       {cliente.nombre}
                     </h3>
-                    {cliente.codigo_cliente && (
+                    {cliente.cedula_ruc && (
                       <p className="text-xs text-slate-500 font-mono">
-                        {cliente.codigo_cliente}
+                        Cédula/RUC: {cliente.cedula_ruc}
                       </p>
                     )}
                   </div>
@@ -364,13 +364,13 @@ export default function Clientes() {
             </div>
 
             <div>
-              <Label htmlFor="codigo_cliente">Código de Cliente</Label>
+              <Label htmlFor="cedula_ruc">Código de Cliente</Label>
               <Input
-                id="codigo_cliente"
+                id="cedula_ruc"
                 data-testid="cliente-codigo-input"
-                value={formData.codigo_cliente}
+                value={formData.cedula_ruc}
                 onChange={(e) =>
-                  setFormData({ ...formData, codigo_cliente: e.target.value })
+                  setFormData({ ...formData, cedula_ruc: e.target.value })
                 }
                 placeholder="Opcional"
               />
