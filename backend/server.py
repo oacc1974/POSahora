@@ -455,6 +455,7 @@ async def register_user(user_data: UserRegister, response: Response):
     org_id = str(uuid.uuid4())
     
     new_user = {
+        "_id": user_id,
         "user_id": user_id,
         "nombre": user_data.nombre,
         "email": user_data.email,
