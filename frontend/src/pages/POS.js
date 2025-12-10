@@ -304,6 +304,7 @@ export default function POS() {
           cliente_id: clienteSeleccionado?.id || null,
           comentarios: comentarios || null,
           metodo_pago_id: metodoPagoSeleccionado,
+          tipo_pedido_id: tipoPedidoSeleccionado,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
