@@ -102,9 +102,39 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Sistema POS multi-tenant con cálculo y desglose de impuestos en facturas"
+user_problem_statement: "Sistema POS multi-tenant con métodos de pago y cálculo de impuestos en facturas"
 
 backend:
+  - task: "Sistema de métodos de pago (CRUD)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implementado sistema completo de métodos de pago con endpoints CRUD: GET/POST/PUT/DELETE /api/metodos-pago. Incluye modelos Pydantic MetodoPagoCreate y MetodoPagoResponse. Los métodos de pago son específicos por organización y solo propietario/admin pueden gestionarlos. Se crean métodos por defecto 'Efectivo' y 'Tarjeta' al registrar nuevas organizaciones."
+        - working: true
+          agent: "testing"
+          comment: "✅ SISTEMA DE MÉTODOS DE PAGO COMPLETAMENTE FUNCIONAL. Pruebas realizadas: 1) Verificación de métodos por defecto 'Efectivo' y 'Tarjeta' existentes, 2) Creación exitosa de nuevo método 'Transferencia Bancaria', 3) Actualización de método de pago (nombre y estado activo), 4) Validación de permisos - solo admin/propietario pueden gestionar, 5) Eliminación exitosa de métodos de pago, 6) Todos los endpoints CRUD funcionando correctamente. CORRECCIÓN APLICADA: Agregué métodos de pago por defecto para organización admin durante startup. API completamente funcional y lista para producción."
+
+  - task: "Integración métodos de pago con facturas"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Integrado sistema de métodos de pago con facturas. Agregados campos metodo_pago_id y metodo_pago_nombre al modelo InvoiceCreate e InvoiceResponse. Al crear facturas, se obtiene automáticamente el nombre del método de pago y se almacena junto con el ID para facilitar consultas."
+        - working: true
+          agent: "testing"
+          comment: "✅ INTEGRACIÓN MÉTODOS DE PAGO CON FACTURAS COMPLETAMENTE FUNCIONAL. Pruebas realizadas: 1) Creación de factura con método de pago - almacena correctamente ID y nombre, 2) Creación de factura sin método de pago - mantiene retrocompatibilidad con metodo_pago_id=null, 3) Listado de facturas muestra correctamente datos de métodos de pago, 4) Retrocompatibilidad verificada - facturas antiguas tienen metodo_pago_id=null, 5) Facturas nuevas incluyen tanto ID como nombre del método de pago. Integración perfecta entre sistemas."
+
   - task: "Cálculo de impuestos en facturas"
     implemented: true
     working: true
