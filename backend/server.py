@@ -225,7 +225,7 @@ class InvoiceResponse(BaseModel):
     fecha: str
 
 class CajaApertura(BaseModel):
-    monto_inicial: float
+    monto_inicial: Optional[float] = 0.0
 
 class CajaCierre(BaseModel):
     efectivo_contado: float
