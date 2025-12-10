@@ -55,6 +55,7 @@ export default function Register() {
       
       toast.success('Cuenta creada exitosamente');
       navigate('/dashboard', { replace: true });
+      window.location.reload();
     } catch (error) {
       console.error('Error al registrar:', error);
       toast.error(error.response?.data?.detail || 'Error al crear cuenta');
