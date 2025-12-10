@@ -360,6 +360,7 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         org_id = str(uuid.uuid4())
         nombre_tienda = body.nombre_tienda
+        temp_password = f"{nombre.split()[0].lower()}{str(uuid.uuid4().hex[:6])}"
         
         new_user = {
             "_id": user_id,
@@ -367,6 +368,8 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
             "nombre": nombre,
             "email": email,
             "username": email.split("@")[0],
+            "password": get_password_hash(temp_password),
+            "password_temp": temp_password,
             "picture": picture,
             "rol": "propietario",
             "organizacion_id": org_id,
