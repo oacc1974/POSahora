@@ -760,7 +760,7 @@ class BillingSystemTester:
         return success
 
 def main():
-    print("🚀 Starting POS Tax System Backend Tests")
+    print("🚀 Starting POS Payment Methods System Backend Tests")
     print("=" * 60)
     
     tester = BillingSystemTester()
