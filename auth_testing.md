@@ -29,11 +29,11 @@ print('User ID: ' + userId);
 ## Step 2: Test Backend API
 ```bash
 # Test auth endpoint
-curl -X GET "https://role-access-1.preview.emergentagent.com/api/auth/me" \
+curl -X GET "https://salespoint-27.preview.emergentagent.com/api/auth/me" \
   -H "Authorization: Bearer YOUR_SESSION_TOKEN"
 
 # Test protected endpoints
-curl -X GET "https://role-access-1.preview.emergentagent.com/api/productos" \
+curl -X GET "https://salespoint-27.preview.emergentagent.com/api/productos" \
   -H "Authorization: Bearer YOUR_SESSION_TOKEN"
 ```
 
@@ -49,7 +49,7 @@ await page.context.add_cookies([{
     "secure": true,
     "sameSite": "None"
 }]);
-await page.goto("https://role-access-1.preview.emergentagent.com");
+await page.goto("https://salespoint-27.preview.emergentagent.com");
 ```
 
 ## Quick Debug
