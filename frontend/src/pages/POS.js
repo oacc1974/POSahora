@@ -31,6 +31,8 @@ export default function POS() {
   const [cedulaBusqueda, setCedulaBusqueda] = useState('');
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [comentarios, setComentarios] = useState('');
+  const [metodosPago, setMetodosPago] = useState([]);
+  const [metodoPagoSeleccionado, setMetodoPagoSeleccionado] = useState(null);
   const [nuevoClienteForm, setNuevoClienteForm] = useState({
     nombre: '',
     cedula_ruc: '',
@@ -42,6 +44,7 @@ export default function POS() {
   useEffect(() => {
     fetchProductos();
     verificarCaja();
+    fetchMetodosPago();
   }, []);
 
   const verificarCaja = async () => {
