@@ -620,6 +620,26 @@ export default function POS() {
         </div>
 
         <div className="p-4 lg:p-6 border-t border-slate-200 bg-slate-50">
+          {/* Selector de Método de Pago */}
+          {metodosPago.length > 0 && (
+            <div className="mb-4">
+              <Label className="text-sm font-semibold mb-2 block">
+                Método de Pago
+              </Label>
+              <select
+                value={metodoPagoSeleccionado || ''}
+                onChange={(e) => setMetodoPagoSeleccionado(e.target.value)}
+                className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {metodosPago.map((metodo) => (
+                  <option key={metodo.id} value={metodo.id}>
+                    {metodo.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="flex justify-between items-center mb-4 lg:mb-6">
             <span className="text-base lg:text-lg font-semibold">Total:</span>
             <span
