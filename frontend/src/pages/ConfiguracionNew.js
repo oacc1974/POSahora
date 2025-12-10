@@ -19,11 +19,7 @@ export default function ConfiguracionNew() {
     tipo_pedido: false,
   });
 
-  React.useEffect(() => {
-    fetchFuncionesConfig();
-  }, []);
-
-  const fetchFuncionesConfig = async () => {
+  const fetchFuncionesConfig = React.useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/funciones`, {
@@ -33,7 +29,11 @@ export default function ConfiguracionNew() {
     } catch (error) {
       console.error('Error al cargar funciones:', error);
     }
-  };
+  }, []);
+
+  React.useEffect(() => {
+    fetchFuncionesConfig();
+  }, [fetchFuncionesConfig]);
 
   const allMenuItems = [
     {
