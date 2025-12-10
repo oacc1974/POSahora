@@ -121,6 +121,20 @@ class OrganizacionResponse(BaseModel):
     total_productos: int
     total_ventas: int
 
+class ImpuestoCreate(BaseModel):
+    nombre: str
+    tasa: float
+    tipo: str
+    activo: bool = True
+
+class ImpuestoResponse(BaseModel):
+    id: str
+    nombre: str
+    tasa: float
+    tipo: str
+    activo: bool
+    organizacion_id: str
+
 class ProductCreate(BaseModel):
     nombre: str
     precio: float
