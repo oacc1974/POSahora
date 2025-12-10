@@ -99,11 +99,27 @@ function AppRouter() {
         <Route
           path="/login"
           element={
-            user ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />
+            user ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />
           }
         />
         <Route
+          path="/register"
+          element={
+            user ? <Navigate to="/dashboard" replace /> : <Register />
+          }
+        />
+        <Route
+          path="/auth/callback"
+          element={<AuthCallback />}
+        />
+        <Route
           path="/"
+          element={
+            user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/dashboard"
           element={
             user ? (
               <Layout user={user} onLogout={handleLogout}>
