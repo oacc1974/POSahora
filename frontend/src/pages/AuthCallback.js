@@ -13,6 +13,8 @@ export default function AuthCallback() {
   const navigate = useNavigate();
   const [needsStoreName, setNeedsStoreName] = useState(false);
   const [storeName, setStoreName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -60,12 +62,26 @@ export default function AuthCallback() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    
     setLoading(true);
 
     try {
       const response = await axios.post(
         `${API_URL}/api/auth/session`,
-        { nombre_tienda: storeName },
+        { 
+          nombre_tienda: storeName,
+          password: password
+        },
         {
           headers: { 'X-Session-ID': sessionId },
           withCredentials: true
@@ -73,20 +89,10 @@ export default function AuthCallback() {
       );
 
       const user = response.data.user;
-      const tempPassword = response.data.temp_password;
       
       localStorage.setItem('user', JSON.stringify(user));
       sessionStorage.setItem('just_authenticated', 'true');
-      
-      if (tempPassword) {
-        toast.success(
-          `¡Cuenta creada! Tu contraseña es: ${tempPassword}`,
-          { duration: 10000 }
-        );
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      } else {
-        toast.success('¡Cuenta creada exitosamente!');
-      }
+      toast.success('¡Cuenta creada exitosamente!');
       
       navigate('/dashboard', { replace: true, state: { user } });
       window.location.reload();
@@ -118,6 +124,35 @@ export default function AuthCallback() {
                 required
                 placeholder="Mi Tienda"
                 className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="password">Contraseña</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="mt-2"
+                minLength={6}
+              />
+              <p className="text-xs text-slate-500 mt-1">Mínimo 6 caracteres</p>
+            </div>
+
+            <div>
+              <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="mt-2"
+                minLength={6}
               />
             </div>
 
