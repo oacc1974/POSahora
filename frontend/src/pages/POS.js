@@ -76,6 +76,22 @@ export default function POS() {
     }
   };
 
+  const fetchMetodosPago = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/metodos-pago`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const activos = response.data.filter(m => m.activo);
+      setMetodosPago(activos);
+      if (activos.length > 0) {
+        setMetodoPagoSeleccionado(activos[0].id);
+      }
+    } catch (error) {
+      console.error('Error al cargar métodos de pago:', error);
+    }
+  };
+
   const addToCart = (producto) => {
     const existing = cart.find((item) => item.producto_id === producto.id);
     if (existing) {
