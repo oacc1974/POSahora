@@ -281,7 +281,8 @@ class TaxSystemTester:
                 print(f"     - {tax['nombre']}: {tax['tasa']}% ({tax['tipo']}) = ${tax['monto']}")
                 
                 # Validate individual tax calculations
-                if tax['tipo'] == 'agregado':
+                if tax['tipo'] == 'agregado' or tax['tipo'] == 'no_incluido':
+                    # Both 'agregado' and 'no_incluido' are added to subtotal
                     expected_amount = subtotal * (tax['tasa'] / 100)
                     total_agregado_taxes += tax['monto']
                 elif tax['tipo'] == 'incluido':
