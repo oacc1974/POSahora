@@ -253,6 +253,11 @@ export default function POS() {
       return;
     }
 
+    if (!metodoPagoSeleccionado) {
+      toast.error('Selecciona un método de pago');
+      return;
+    }
+
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -265,6 +270,7 @@ export default function POS() {
           total,
           cliente_id: clienteSeleccionado?.id || null,
           comentarios: comentarios || null,
+          metodo_pago_id: metodoPagoSeleccionado,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
