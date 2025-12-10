@@ -33,6 +33,9 @@ export default function POS() {
   const [comentarios, setComentarios] = useState('');
   const [metodosPago, setMetodosPago] = useState([]);
   const [metodoPagoSeleccionado, setMetodoPagoSeleccionado] = useState(null);
+  const [tiposPedido, setTiposPedido] = useState([]);
+  const [tipoPedidoSeleccionado, setTipoPedidoSeleccionado] = useState(null);
+  const [requiereCierres, setRequiereCierres] = useState(true);
   const [nuevoClienteForm, setNuevoClienteForm] = useState({
     nombre: '',
     cedula_ruc: '',
@@ -45,6 +48,8 @@ export default function POS() {
     fetchProductos();
     verificarCaja();
     fetchMetodosPago();
+    fetchTiposPedido();
+    fetchFuncionesConfig();
   }, []);
 
   const verificarCaja = async () => {
