@@ -1797,6 +1797,8 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         comentarios=invoice.comentarios,
         metodo_pago_id=invoice.metodo_pago_id,
         metodo_pago_nombre=metodo_pago_nombre,
+        tipo_pedido_id=invoice.tipo_pedido_id,
+        tipo_pedido_nombre=tipo_pedido_nombre,
         fecha=new_invoice["fecha"]
     )
 
