@@ -366,15 +366,34 @@ class BillingSystemTester:
         return success
 
     def test_get_invoices(self):
-        """Test getting invoices list"""
+        """Test getting invoices list and validate backward compatibility"""
         success, response = self.run_test(
-            "Get Invoices",
+            "Get Invoices (Backward Compatibility)",
             "GET",
             "api/facturas",
             200
         )
         if success:
             print(f"   Found {len(response)} invoices")
+            
+            # Validate backward compatibility for old invoices
+            for invoice in response:
+                subtotal = invoice.get('subtotal')
+                total_impuestos = invoice.get('total_impuestos', 0)
+                desglose_impuestos = invoice.get('desglose_impuestos', [])
+                total = invoice.get('total')
+                
+                print(f"   Invoice {invoice.get('numero')}: Subtotal=${subtotal}, Taxes=${total_impuestos}, Total=${total}")
+                
+                # For old invoices without tax fields, subtotal should equal total
+                if total_impuestos == 0 and len(desglose_impuestos) == 0:
+                    if subtotal != total:
+                        print(f"   ❌ Backward compatibility issue: old invoice should have subtotal=total")
+                        return False
+                    print(f"   ✅ Old invoice backward compatibility OK")
+                else:
+                    print(f"   ✅ New invoice with tax breakdown")
+                    
         return success
 
     def test_get_users(self):
