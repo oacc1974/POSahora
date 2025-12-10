@@ -1360,11 +1360,55 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         if cliente:
             cliente_nombre = cliente["nombre"]
     
+    # Calcular subtotal de items (sin impuestos)
+    subtotal = sum(item.subtotal for item in invoice.items)
+    
+    # Obtener impuestos activos de la organización
+    impuestos_activos = await db.impuestos.find({
+        "organizacion_id": current_user["organizacion_id"],
+        "activo": True
+    }, {"_id": 0}).to_list(100)
+    
+    # Calcular impuestos
+    desglose_impuestos = []
+    total_impuestos = 0
+    
+    for impuesto in impuestos_activos:
+        if impuesto["tipo"] == "agregado":
+            # Impuesto se agrega al subtotal
+            monto_impuesto = subtotal * (impuesto["tasa"] / 100)
+        else:  # tipo == "incluido"
+            # Impuesto ya está incluido en el precio
+            # Calculamos cuánto del subtotal corresponde al impuesto
+            monto_impuesto = subtotal - (subtotal / (1 + impuesto["tasa"] / 100))
+        
+        desglose_impuestos.append({
+            "nombre": impuesto["nombre"],
+            "tasa": impuesto["tasa"],
+            "tipo": impuesto["tipo"],
+            "monto": round(monto_impuesto, 2)
+        })
+        total_impuestos += monto_impuesto
+    
+    # Calcular total final
+    if impuestos_activos:
+        # Si hay impuestos del tipo "agregado", se suman al subtotal
+        total_agregado = sum(imp["monto"] for imp in desglose_impuestos if imp["tipo"] == "agregado")
+        total_final = subtotal + total_agregado
+    else:
+        total_final = subtotal
+    
+    total_impuestos = round(total_impuestos, 2)
+    total_final = round(total_final, 2)
+    
     new_invoice = {
         "_id": invoice_id,
         "numero": numero_factura,
         "items": [item.model_dump() for item in invoice.items],
-        "total": invoice.total,
+        "subtotal": subtotal,
+        "total_impuestos": total_impuestos,
+        "desglose_impuestos": desglose_impuestos,
+        "total": total_final,
         "vendedor": current_user["_id"],
         "vendedor_nombre": current_user["nombre"],
         "organizacion_id": current_user["organizacion_id"],
@@ -1380,7 +1424,7 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         {"_id": caja_activa["_id"]},
         {
             "$inc": {
-                "monto_ventas": invoice.total,
+                "monto_ventas": total_final,
                 "total_ventas": 1
             }
         }
@@ -1390,7 +1434,10 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         id=invoice_id,
         numero=numero_factura,
         items=invoice.items,
-        total=invoice.total,
+        subtotal=subtotal,
+        total_impuestos=total_impuestos,
+        desglose_impuestos=[ImpuestoDesglose(**imp) for imp in desglose_impuestos],
+        total=total_final,
         vendedor=current_user["_id"],
         vendedor_nombre=current_user["nombre"],
         organizacion_id=current_user["organizacion_id"],
