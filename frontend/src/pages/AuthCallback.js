@@ -73,9 +73,21 @@ export default function AuthCallback() {
       );
 
       const user = response.data.user;
+      const tempPassword = response.data.temp_password;
+      
       localStorage.setItem('user', JSON.stringify(user));
       sessionStorage.setItem('just_authenticated', 'true');
-      toast.success('¡Cuenta creada exitosamente!');
+      
+      if (tempPassword) {
+        toast.success(
+          `¡Cuenta creada! Tu contraseña es: ${tempPassword}`,
+          { duration: 10000 }
+        );
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      } else {
+        toast.success('¡Cuenta creada exitosamente!');
+      }
+      
       navigate('/dashboard', { replace: true, state: { user } });
       window.location.reload();
     } catch (error) {
