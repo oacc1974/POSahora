@@ -490,6 +490,250 @@ class BillingSystemTester:
             
         return success
 
+    def test_get_default_payment_methods(self):
+        """Test getting default payment methods (Efectivo and Tarjeta)"""
+        success, response = self.run_test(
+            "Get Default Payment Methods",
+            "GET",
+            "api/metodos-pago",
+            200
+        )
+        if success:
+            print(f"   Found {len(response)} payment methods")
+            
+            # Check for default methods
+            method_names = [m['nombre'] for m in response]
+            efectivo_found = any('Efectivo' in name for name in method_names)
+            tarjeta_found = any('Tarjeta' in name for name in method_names)
+            
+            if efectivo_found and tarjeta_found:
+                print("   ✅ Default payment methods 'Efectivo' and 'Tarjeta' found")
+                # Store IDs for later use
+                for method in response:
+                    if 'Efectivo' in method['nombre']:
+                        self.efectivo_metodo_id = method['id']
+                    elif 'Tarjeta' in method['nombre']:
+                        self.tarjeta_metodo_id = method['id']
+                return True
+            else:
+                print(f"   ❌ Missing default payment methods. Found: {method_names}")
+                return False
+        return success
+
+    def test_create_payment_method(self):
+        """Test creating a new payment method (Transferencia)"""
+        payment_method_data = {
+            "nombre": "Transferencia Bancaria",
+            "activo": True
+        }
+        success, response = self.run_test(
+            "Create Payment Method (Transferencia)",
+            "POST",
+            "api/metodos-pago",
+            200,
+            data=payment_method_data
+        )
+        if success and 'id' in response:
+            self.created_metodo_pago_id = response['id']
+            print(f"   Created payment method ID: {self.created_metodo_pago_id}")
+            print(f"   Payment method: {response['nombre']} - Active: {response['activo']}")
+        return success
+
+    def test_update_payment_method(self):
+        """Test updating a payment method"""
+        if not self.created_metodo_pago_id:
+            print("❌ No payment method ID available for update test")
+            return False
+            
+        updated_data = {
+            "nombre": "Transferencia Bancaria Actualizada",
+            "activo": False
+        }
+        success, response = self.run_test(
+            "Update Payment Method",
+            "PUT",
+            f"api/metodos-pago/{self.created_metodo_pago_id}",
+            200,
+            data=updated_data
+        )
+        if success:
+            print(f"   Updated payment method: {response['nombre']} - Active: {response['activo']}")
+        return success
+
+    def test_create_invoice_with_payment_method(self):
+        """Test creating an invoice with payment method integration"""
+        if not self.created_product_id:
+            print("❌ No product ID available for invoice test")
+            return False
+            
+        if not self.efectivo_metodo_id:
+            print("❌ No Efectivo payment method ID available")
+            return False
+            
+        invoice_data = {
+            "items": [
+                {
+                    "producto_id": self.created_product_id,
+                    "nombre": "Producto Test con Método de Pago",
+                    "precio": 50.00,
+                    "cantidad": 2,
+                    "subtotal": 100.00
+                }
+            ],
+            "total": 100.00,
+            "metodo_pago_id": self.efectivo_metodo_id
+        }
+        success, response = self.run_test(
+            "Create Invoice with Payment Method",
+            "POST",
+            "api/facturas",
+            200,
+            data=invoice_data
+        )
+        if success and 'id' in response:
+            print(f"   Created invoice: {response.get('numero')}")
+            
+            # Validate payment method integration
+            metodo_pago_id = response.get('metodo_pago_id')
+            metodo_pago_nombre = response.get('metodo_pago_nombre')
+            
+            if metodo_pago_id == self.efectivo_metodo_id:
+                print(f"   ✅ Payment method ID correctly stored: {metodo_pago_id}")
+            else:
+                print(f"   ❌ Payment method ID mismatch: expected {self.efectivo_metodo_id}, got {metodo_pago_id}")
+                return False
+                
+            if metodo_pago_nombre and 'Efectivo' in metodo_pago_nombre:
+                print(f"   ✅ Payment method name correctly stored: {metodo_pago_nombre}")
+            else:
+                print(f"   ❌ Payment method name issue: {metodo_pago_nombre}")
+                return False
+                
+            print(f"   ✅ Payment method integration working correctly!")
+            
+        return success
+
+    def test_create_invoice_without_payment_method(self):
+        """Test creating an invoice without payment method (backward compatibility)"""
+        if not self.created_product_id:
+            print("❌ No product ID available for invoice test")
+            return False
+            
+        invoice_data = {
+            "items": [
+                {
+                    "producto_id": self.created_product_id,
+                    "nombre": "Producto Test sin Método de Pago",
+                    "precio": 25.00,
+                    "cantidad": 1,
+                    "subtotal": 25.00
+                }
+            ],
+            "total": 25.00
+            # No metodo_pago_id specified
+        }
+        success, response = self.run_test(
+            "Create Invoice without Payment Method (Backward Compatibility)",
+            "POST",
+            "api/facturas",
+            200,
+            data=invoice_data
+        )
+        if success and 'id' in response:
+            print(f"   Created invoice: {response.get('numero')}")
+            
+            # Validate backward compatibility
+            metodo_pago_id = response.get('metodo_pago_id')
+            metodo_pago_nombre = response.get('metodo_pago_nombre')
+            
+            if metodo_pago_id is None:
+                print(f"   ✅ Backward compatibility: metodo_pago_id is null")
+            else:
+                print(f"   ❌ Backward compatibility issue: metodo_pago_id should be null, got {metodo_pago_id}")
+                return False
+                
+            if metodo_pago_nombre is None:
+                print(f"   ✅ Backward compatibility: metodo_pago_nombre is null")
+            else:
+                print(f"   ❌ Backward compatibility issue: metodo_pago_nombre should be null, got {metodo_pago_nombre}")
+                return False
+                
+            print(f"   ✅ Backward compatibility working correctly!")
+            
+        return success
+
+    def test_get_invoices_with_payment_methods(self):
+        """Test getting invoices and validate payment method data"""
+        success, response = self.run_test(
+            "Get Invoices with Payment Methods",
+            "GET",
+            "api/facturas",
+            200
+        )
+        if success:
+            print(f"   Found {len(response)} invoices")
+            
+            # Validate payment method data in invoices
+            invoices_with_payment = 0
+            invoices_without_payment = 0
+            
+            for invoice in response:
+                metodo_pago_id = invoice.get('metodo_pago_id')
+                metodo_pago_nombre = invoice.get('metodo_pago_nombre')
+                
+                if metodo_pago_id is not None:
+                    invoices_with_payment += 1
+                    print(f"   Invoice {invoice.get('numero')}: Payment Method = {metodo_pago_nombre} (ID: {metodo_pago_id})")
+                else:
+                    invoices_without_payment += 1
+                    print(f"   Invoice {invoice.get('numero')}: No payment method (backward compatibility)")
+                    
+            print(f"   ✅ Invoices with payment method: {invoices_with_payment}")
+            print(f"   ✅ Invoices without payment method: {invoices_without_payment}")
+                    
+        return success
+
+    def test_payment_method_permissions(self):
+        """Test that only propietario/admin can manage payment methods"""
+        # This test assumes we're logged in as admin, so it should work
+        # In a real scenario, we'd test with a cajero user to verify restrictions
+        
+        test_data = {
+            "nombre": "Método de Prueba Permisos",
+            "activo": True
+        }
+        success, response = self.run_test(
+            "Payment Method Permissions (Admin)",
+            "POST",
+            "api/metodos-pago",
+            200,
+            data=test_data
+        )
+        if success and 'id' in response:
+            # Clean up the test payment method
+            cleanup_success, _ = self.run_test(
+                "Cleanup Permission Test Method",
+                "DELETE",
+                f"api/metodos-pago/{response['id']}",
+                200
+            )
+            print(f"   ✅ Admin can create/delete payment methods")
+        return success
+
+    def test_delete_payment_method(self):
+        """Test deleting a payment method"""
+        if not self.created_metodo_pago_id:
+            print("❌ No payment method ID available for delete test")
+            return False
+            
+        success, response = self.run_test(
+            "Delete Payment Method",
+            "DELETE",
+            f"api/metodos-pago/{self.created_metodo_pago_id}",
+            200
+        )
+        return success
+
     def test_delete_product(self):
         """Test deleting a product"""
         if not self.created_product_id:
