@@ -322,8 +322,11 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "organizacion_id": current_user["organizacion_id"]
     }
 
+class GoogleSessionRequest(BaseModel):
+    nombre_tienda: Optional[str] = None
+
 @app.post("/api/auth/session")
-async def create_session(request: Request, response: Response):
+async def create_session(request: Request, response: Response, body: GoogleSessionRequest = None):
     session_id = request.headers.get("X-Session-ID")
     if not session_id:
         raise HTTPException(status_code=400, detail="Session ID requerido")
@@ -354,6 +357,8 @@ async def create_session(request: Request, response: Response):
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         org_id = str(uuid.uuid4())
         
+        nombre_tienda = body.nombre_tienda if body and body.nombre_tienda else f"Tienda de {nombre}"
+        
         new_user = {
             "user_id": user_id,
             "nombre": nombre,
@@ -369,7 +374,7 @@ async def create_session(request: Request, response: Response):
         
         nueva_org = {
             "_id": org_id,
-            "nombre": f"Organización de {nombre}",
+            "nombre": nombre_tienda,
             "propietario_id": user_id,
             "fecha_creacion": datetime.now(timezone.utc).isoformat(),
             "ultima_actividad": datetime.now(timezone.utc).isoformat()
@@ -379,7 +384,7 @@ async def create_session(request: Request, response: Response):
         config_negocio = {
             "_id": org_id,
             "cabecera": "",
-            "nombre_negocio": nombre,
+            "nombre_negocio": nombre_tienda,
             "direccion": "",
             "telefono": "",
             "rfc": "",
