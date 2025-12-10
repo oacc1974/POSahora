@@ -65,7 +65,7 @@ export default function ConfigFunciones() {
       title: 'Cierres de caja por turnos',
       description: 'Controla el dinero que entra y sale del cajón de efectivo.',
       enabled: funciones.cierres_caja,
-      active: true, // Ya existe en el sistema
+      active: true,
     },
     {
       id: 'tickets_abiertos',
@@ -74,7 +74,7 @@ export default function ConfigFunciones() {
       title: 'Tickets abiertos',
       description: 'Permite guardar y editar pedidos antes de completar un pago.',
       enabled: funciones.tickets_abiertos,
-      active: false, // Próximamente
+      active: true,
     },
     {
       id: 'tipo_pedido',
@@ -83,7 +83,7 @@ export default function ConfigFunciones() {
       title: 'Tipo de pedido',
       description: 'Toma pedidos para cenar dentro, para llevar o a domicilio.',
       enabled: funciones.tipo_pedido,
-      active: false, // Próximamente
+      active: true,
     },
   ];
 
