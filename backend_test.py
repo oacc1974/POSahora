@@ -174,8 +174,170 @@ class BillingSystemTester:
         )
         return success
 
+    def test_open_cash_register(self):
+        """Test opening a cash register"""
+        cash_data = {
+            "monto_inicial": 100.0
+        }
+        success, response = self.run_test(
+            "Open Cash Register",
+            "POST",
+            "api/caja/abrir",
+            200,
+            data=cash_data
+        )
+        if success and 'id' in response:
+            self.caja_id = response['id']
+            print(f"   Opened cash register: {response.get('numero')}")
+        return success
+
+    def test_get_active_cash_register(self):
+        """Test getting active cash register"""
+        success, response = self.run_test(
+            "Get Active Cash Register",
+            "GET",
+            "api/caja/activa",
+            200
+        )
+        if success and response:
+            print(f"   Active cash register: {response.get('numero')}")
+        return success
+
+    def test_create_tax_agregado(self):
+        """Test creating an 'agregado' type tax (IVA 12%)"""
+        tax_data = {
+            "nombre": "IVA",
+            "tasa": 12.0,
+            "tipo": "agregado",
+            "activo": True
+        }
+        success, response = self.run_test(
+            "Create Tax (Agregado - IVA 12%)",
+            "POST",
+            "api/impuestos",
+            200,
+            data=tax_data
+        )
+        if success and 'id' in response:
+            self.created_tax_agregado_id = response['id']
+            print(f"   Created tax ID: {self.created_tax_agregado_id}")
+        return success
+
+    def test_create_tax_incluido(self):
+        """Test creating an 'incluido' type tax (Impuesto Incluido 5%)"""
+        tax_data = {
+            "nombre": "Impuesto Incluido",
+            "tasa": 5.0,
+            "tipo": "incluido",
+            "activo": True
+        }
+        success, response = self.run_test(
+            "Create Tax (Incluido - 5%)",
+            "POST",
+            "api/impuestos",
+            200,
+            data=tax_data
+        )
+        if success and 'id' in response:
+            self.created_tax_incluido_id = response['id']
+            print(f"   Created tax ID: {self.created_tax_incluido_id}")
+        return success
+
+    def test_get_taxes(self):
+        """Test getting taxes list"""
+        success, response = self.run_test(
+            "Get Taxes",
+            "GET",
+            "api/impuestos",
+            200
+        )
+        if success:
+            print(f"   Found {len(response)} taxes")
+            for tax in response:
+                print(f"     - {tax['nombre']}: {tax['tasa']}% ({tax['tipo']}) - Active: {tax['activo']}")
+        return success
+
+    def test_create_invoice_with_taxes(self):
+        """Test creating an invoice with tax calculations"""
+        if not self.created_product_id:
+            print("❌ No product ID available for invoice test")
+            return False
+            
+        invoice_data = {
+            "items": [
+                {
+                    "producto_id": self.created_product_id,
+                    "nombre": "Producto Test Actualizado",
+                    "precio": 30.00,
+                    "cantidad": 2,
+                    "subtotal": 60.00
+                },
+                {
+                    "producto_id": self.created_product_id,
+                    "nombre": "Producto Test 2",
+                    "precio": 40.00,
+                    "cantidad": 1,
+                    "subtotal": 40.00
+                }
+            ],
+            "total": 100.00
+        }
+        success, response = self.run_test(
+            "Create Invoice with Tax Calculations",
+            "POST",
+            "api/facturas",
+            200,
+            data=invoice_data
+        )
+        if success and 'id' in response:
+            self.created_invoice_id = response['id']
+            print(f"   Created invoice: {response.get('numero')}")
+            
+            # Validate tax calculations
+            subtotal = response.get('subtotal', 0)
+            total_impuestos = response.get('total_impuestos', 0)
+            desglose_impuestos = response.get('desglose_impuestos', [])
+            total = response.get('total', 0)
+            
+            print(f"   Subtotal: ${subtotal}")
+            print(f"   Total Taxes: ${total_impuestos}")
+            print(f"   Total: ${total}")
+            print(f"   Tax Breakdown:")
+            
+            expected_subtotal = 100.0  # 60 + 40
+            if abs(subtotal - expected_subtotal) > 0.01:
+                print(f"   ❌ Subtotal mismatch: expected {expected_subtotal}, got {subtotal}")
+                return False
+            
+            # Validate tax breakdown
+            for tax in desglose_impuestos:
+                print(f"     - {tax['nombre']}: {tax['tasa']}% ({tax['tipo']}) = ${tax['monto']}")
+                
+                # Validate tax calculations
+                if tax['tipo'] == 'agregado':
+                    expected_amount = subtotal * (tax['tasa'] / 100)
+                    if abs(tax['monto'] - expected_amount) > 0.01:
+                        print(f"     ❌ Tax calculation error for {tax['nombre']}: expected {expected_amount}, got {tax['monto']}")
+                        return False
+                elif tax['tipo'] == 'incluido':
+                    expected_amount = subtotal - (subtotal / (1 + tax['tasa'] / 100))
+                    if abs(tax['monto'] - expected_amount) > 0.01:
+                        print(f"     ❌ Tax calculation error for {tax['nombre']}: expected {expected_amount}, got {tax['monto']}")
+                        return False
+            
+            # Validate total calculation
+            total_agregado = sum(tax['monto'] for tax in desglose_impuestos if tax['tipo'] == 'agregado')
+            expected_total = subtotal + total_agregado
+            if abs(total - expected_total) > 0.01:
+                print(f"   ❌ Total calculation error: expected {expected_total}, got {total}")
+                return False
+                
+            print(f"   ✅ Tax calculations are correct!")
+            
+        return success
+
     def test_create_invoice(self):
-        """Test creating an invoice"""
+        """Test creating a simple invoice (legacy test)"""
         if not self.created_product_id:
             print("❌ No product ID available for invoice test")
             return False
@@ -193,14 +355,13 @@ class BillingSystemTester:
             "total": 60.00
         }
         success, response = self.run_test(
-            "Create Invoice",
+            "Create Simple Invoice",
             "POST",
             "api/facturas",
             200,
             data=invoice_data
         )
         if success and 'id' in response:
-            self.created_invoice_id = response['id']
             print(f"   Created invoice: {response.get('numero')}")
         return success
 
