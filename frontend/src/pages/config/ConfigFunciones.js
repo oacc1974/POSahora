@@ -1,17 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Wallet, ClipboardList, ShoppingBag, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function ConfigFunciones() {
   const [funciones, setFunciones] = useState({
-    cierres_caja: true, // Ya existe en el sistema
+    cierres_caja: true,
     tickets_abiertos: false,
     tipo_pedido: false,
   });
 
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFunciones();
+  }, []);
+
+  const fetchFunciones = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/funciones`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFunciones(response.data);
+    } catch (error) {
+      console.error('Error al cargar funciones:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleToggle = (key) => {
     setFunciones({
@@ -23,8 +45,10 @@ export default function ConfigFunciones() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Por ahora solo guardamos en localStorage
-      localStorage.setItem('funciones_config', JSON.stringify(funciones));
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/api/funciones`, funciones, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       toast.success('Configuración guardada correctamente');
     } catch (error) {
       toast.error('Error al guardar la configuración');
