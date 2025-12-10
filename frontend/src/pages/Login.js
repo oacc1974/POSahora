@@ -46,6 +46,14 @@ export default function Login({ onLogin }) {
 
   return (
     <div className="min-h-screen flex">
+      {/* Botón Login POS en esquina superior derecha */}
+      <button
+        onClick={() => navigate('/login-pos')}
+        className="fixed top-4 right-4 z-50 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all flex items-center gap-2"
+      >
+        <Store size={20} />
+        Login POS
+      </button>
       <div
         className="hidden lg:flex lg:w-1/2 bg-cover bg-center relative"
         style={{
