@@ -1595,6 +1595,8 @@ async def get_facturas(current_user: dict = Depends(get_current_user)):
             cliente_id=f.get("cliente_id"),
             cliente_nombre=f.get("cliente_nombre"),
             comentarios=f.get("comentarios"),
+            metodo_pago_id=f.get("metodo_pago_id"),
+            metodo_pago_nombre=f.get("metodo_pago_nombre"),
             fecha=f["fecha"]
         )
         for f in facturas
