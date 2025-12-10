@@ -442,6 +442,51 @@ class BillingSystemTester:
         )
         return success
 
+    def test_update_tax(self):
+        """Test updating a tax"""
+        if not self.created_tax_agregado_id:
+            print("❌ No tax ID available for update test")
+            return False
+            
+        updated_tax_data = {
+            "nombre": "IVA Actualizado",
+            "tasa": 15.0,
+            "tipo": "agregado",
+            "activo": True
+        }
+        success, response = self.run_test(
+            "Update Tax",
+            "PUT",
+            f"api/impuestos/{self.created_tax_agregado_id}",
+            200,
+            data=updated_tax_data
+        )
+        return success
+
+    def test_delete_taxes(self):
+        """Test deleting taxes"""
+        success = True
+        
+        if self.created_tax_agregado_id:
+            success1, response = self.run_test(
+                "Delete Tax (Agregado)",
+                "DELETE",
+                f"api/impuestos/{self.created_tax_agregado_id}",
+                200
+            )
+            success = success and success1
+            
+        if self.created_tax_incluido_id:
+            success2, response = self.run_test(
+                "Delete Tax (Incluido)",
+                "DELETE",
+                f"api/impuestos/{self.created_tax_incluido_id}",
+                200
+            )
+            success = success and success2
+            
+        return success
+
     def test_delete_product(self):
         """Test deleting a product"""
         if not self.created_product_id:
