@@ -145,6 +145,29 @@ class MetodoPagoResponse(BaseModel):
     activo: bool
     organizacion_id: str
 
+class FuncionesConfig(BaseModel):
+    cierres_caja: bool = True
+    tickets_abiertos: bool = False
+    tipo_pedido: bool = False
+
+class TicketPredefinidoCreate(BaseModel):
+    nombre: str
+
+class TicketPredefinidoResponse(BaseModel):
+    id: str
+    nombre: str
+    organizacion_id: str
+
+class TipoPedidoCreate(BaseModel):
+    nombre: str
+    activo: bool = True
+
+class TipoPedidoResponse(BaseModel):
+    id: str
+    nombre: str
+    activo: bool
+    organizacion_id: str
+
 class ProductCreate(BaseModel):
     nombre: str
     precio: float
