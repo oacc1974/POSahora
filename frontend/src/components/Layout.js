@@ -33,7 +33,7 @@ export default function Layout({ children, user, onLogout }) {
   const navigation = [
     {
       name: 'Dashboard',
-      href: '/',
+      href: '/dashboard',
       icon: LayoutDashboard,
       testId: 'nav-dashboard',
       show: true,
