@@ -78,6 +78,41 @@ export default function Configuracion() {
         </p>
       </div>
 
+      {/* Código de Tienda POS */}
+      <Card className="p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">
+              Código de Tienda POS
+            </h3>
+            <p className="text-sm text-slate-600">
+              Comparte este código con tus empleados para que puedan acceder al sistema desde Login POS
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-xs text-slate-600 mb-1">Código:</p>
+              <p className="text-2xl md:text-3xl font-bold font-mono text-blue-600">
+                {JSON.parse(localStorage.getItem('user') || '{}').codigo_tienda || 'Cargando...'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const codigo = JSON.parse(localStorage.getItem('user') || '{}').codigo_tienda;
+                if (codigo) {
+                  navigator.clipboard.writeText(codigo);
+                  toast.success('Código copiado al portapapeles');
+                }
+              }}
+              className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+            >
+              Copiar
+            </button>
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-6 md:p-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
