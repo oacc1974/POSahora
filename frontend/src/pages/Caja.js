@@ -22,6 +22,7 @@ export default function Caja() {
   const [showApertura, setShowApertura] = useState(false);
   const [showCierre, setShowCierre] = useState(false);
   const [montoInicial, setMontoInicial] = useState('');
+  const [efectivoContado, setEfectivoContado] = useState('');
 
   useEffect(() => {
     fetchCajaActiva();
@@ -73,12 +74,13 @@ export default function Caja() {
     }
   };
 
-  const handleCerrarCaja = async () => {
+  const handleCerrarCaja = async (e) => {
+    e.preventDefault();
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
         `${API_URL}/api/caja/cerrar`,
-        {},
+        { efectivo_contado: parseFloat(efectivoContado) },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -86,6 +88,7 @@ export default function Caja() {
       
       setCajaActiva(null);
       setShowCierre(false);
+      setEfectivoContado('');
       toast.success('Caja cerrada correctamente');
       fetchHistorial();
     } catch (error) {
@@ -127,6 +130,14 @@ export default function Caja() {
     );
     printWindow.document.write(
       `<div class="total"><div class="item"><span>TOTAL ESPERADO:</span><span>$${caja.monto_final.toFixed(2)}</span></div></div>`
+    );
+    printWindow.document.write('<div class="divider"></div>');
+    printWindow.document.write(
+      `<div class="item"><span>Efectivo Contado:</span><span>$${caja.efectivo_contado.toFixed(2)}</span></div>`
+    );
+    const diferenciaTxt = caja.diferencia >= 0 ? `+$${caja.diferencia.toFixed(2)}` : `-$${Math.abs(caja.diferencia).toFixed(2)}`;
+    printWindow.document.write(
+      `<div class="item" style="font-weight: bold; color: ${caja.diferencia >= 0 ? 'green' : 'red'}"><span>Diferencia:</span><span>${diferenciaTxt}</span></div>`
     );
     printWindow.document.write('</body></html>');
     printWindow.document.close();
@@ -313,9 +324,9 @@ export default function Caja() {
             <DialogTitle>Cerrar Caja</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <form onSubmit={handleCerrarCaja} className="space-y-4">
             <p className="text-slate-600">
-              ¿Estás seguro que deseas cerrar la caja?
+              Ingresa el efectivo contado en caja para cerrar el turno
             </p>
 
             {cajaActiva && (
@@ -339,6 +350,24 @@ export default function Caja() {
               </div>
             )}
 
+            <div>
+              <Label htmlFor="efectivo_contado">Efectivo Contado *</Label>
+              <Input
+                id="efectivo_contado"
+                data-testid="efectivo-contado-input"
+                type="number"
+                step="0.01"
+                value={efectivoContado}
+                onChange={(e) => setEfectivoContado(e.target.value)}
+                required
+                placeholder="0.00"
+                className="mt-2"
+              />
+              <p className="text-xs text-slate-500 mt-2">
+                Cuenta el efectivo físico en caja e ingresa el monto total
+              </p>
+            </div>
+
             <div className="flex gap-3">
               <Button
                 type="button"
@@ -349,7 +378,7 @@ export default function Caja() {
                 Cancelar
               </Button>
               <Button
-                onClick={handleCerrarCaja}
+                type="submit"
                 data-testid="confirmar-cierre-button"
                 variant="destructive"
                 className="flex-1"
@@ -357,7 +386,7 @@ export default function Caja() {
                 Cerrar Caja
               </Button>
             </div>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
