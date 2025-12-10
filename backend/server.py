@@ -193,12 +193,34 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_current_user(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="No se pudo validar las credenciales",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    token = None
+    session_token = request.cookies.get("session_token")
+    
+    if session_token:
+        session = await db.user_sessions.find_one({"session_token": session_token}, {"_id": 0})
+        if session:
+            expires_at = session["expires_at"]
+            if isinstance(expires_at, str):
+                expires_at = datetime.fromisoformat(expires_at)
+            if expires_at.tzinfo is None:
+                expires_at = expires_at.replace(tzinfo=timezone.utc)
+            
+            if expires_at > datetime.now(timezone.utc):
+                user = await db.usuarios.find_one({"user_id": session["user_id"]}, {"_id": 0})
+                if user:
+                    await db.organizaciones.update_one(
+                        {"_id": user["organizacion_id"]},
+                        {"$set": {"ultima_actividad": datetime.now(timezone.utc).isoformat()}}
+                    )
+                    return user
+    
     try:
         token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
