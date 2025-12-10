@@ -445,11 +445,16 @@ export default function POS() {
         `<div class="total"><div class="item"><span>TOTAL:</span><span>$${invoice.total.toFixed(2)}</span></div></div>`
       );
       
-      // Mostrar método de pago
+      // Mostrar método de pago y tipo de pedido
+      printWindow.document.write('<div class="divider"></div>');
       if (invoice.metodo_pago_nombre) {
-        printWindow.document.write('<div class="divider"></div>');
         printWindow.document.write(
-          `<div style="text-align: center; margin: 10px 0;"><p style="font-size: 11px; font-weight: bold;">Método de Pago: ${invoice.metodo_pago_nombre}</p></div>`
+          `<div style="text-align: center; margin: 5px 0;"><p style="font-size: 11px; font-weight: bold;">Método de Pago: ${invoice.metodo_pago_nombre}</p></div>`
+        );
+      }
+      if (invoice.tipo_pedido_nombre) {
+        printWindow.document.write(
+          `<div style="text-align: center; margin: 5px 0;"><p style="font-size: 11px; font-weight: bold;">Tipo de Pedido: ${invoice.tipo_pedido_nombre}</p></div>`
         );
       }
       
