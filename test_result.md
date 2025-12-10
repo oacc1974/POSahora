@@ -107,15 +107,18 @@ user_problem_statement: "Sistema POS multi-tenant con cálculo y desglose de imp
 backend:
   - task: "Cálculo de impuestos en facturas"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Implementado el cálculo de impuestos en el endpoint POST /api/facturas. Se modificaron los modelos Pydantic para incluir subtotal, total_impuestos, y desglose_impuestos. El sistema ahora obtiene los impuestos activos de la organización y calcula correctamente según el tipo (agregado o incluido). Las facturas antiguas son compatibles mediante retrocompatibilidad en el GET."
+        - working: true
+          agent: "testing"
+          comment: "✅ SISTEMA DE IMPUESTOS COMPLETAMENTE FUNCIONAL. Pruebas realizadas: 1) Login admin exitoso, 2) Creación de impuestos tipo 'agregado' (IVA 12%) y 'incluido' (5%) - ambos activos, 3) Listado de impuestos muestra todos activos correctamente, 4) Creación de facturas con cálculo automático de impuestos - matemáticamente correcto, 5) Desglose de impuestos incluye nombre, tasa, tipo y monto, 6) Retrocompatibilidad verificada - facturas antiguas muestran subtotal=total y desglose_impuestos=[], 7) Facturas nuevas incluyen todos los campos requeridos. CORRECCIÓN APLICADA: Fijo bug en backend donde tipo 'no_incluido' se calculaba como 'incluido' pero no se agregaba al total. Ahora 'no_incluido' se trata igual que 'agregado'. Todos los cálculos matemáticos verificados y correctos."
 
 frontend:
   - task: "Mostrar desglose de impuestos en recibo"
