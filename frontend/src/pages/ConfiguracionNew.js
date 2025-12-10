@@ -39,7 +39,7 @@ export default function ConfiguracionNew() {
       case 'recibo':
         return <ConfigRecibo />;
       case 'metodos-pago':
-        return <PlaceholderSection title="Métodos de pago" />;
+        return <ConfigMetodosPago />;
       case 'impuestos':
         return <ConfigImpuestos />;
       case 'tickets-abiertos':
