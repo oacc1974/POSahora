@@ -366,6 +366,22 @@ export default function POS() {
         );
       });
       printWindow.document.write('</div>');
+      
+      // Mostrar subtotal si hay impuestos
+      if (invoice.desglose_impuestos && invoice.desglose_impuestos.length > 0) {
+        printWindow.document.write('<div class="divider"></div>');
+        printWindow.document.write(
+          `<div class="item"><span>SUBTOTAL:</span><span>$${invoice.subtotal.toFixed(2)}</span></div>`
+        );
+        
+        // Mostrar cada impuesto
+        invoice.desglose_impuestos.forEach((impuesto) => {
+          printWindow.document.write(
+            `<div class="item"><span>${impuesto.nombre} (${impuesto.tasa}%) ${impuesto.tipo === 'incluido' ? '[Incluido]' : ''}:</span><span>$${impuesto.monto.toFixed(2)}</span></div>`
+          );
+        });
+      }
+      
       printWindow.document.write(
         `<div class="total"><div class="item"><span>TOTAL:</span><span>$${invoice.total.toFixed(2)}</span></div></div>`
       );
