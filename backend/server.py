@@ -301,13 +301,220 @@ async def login(user_login: UserLogin):
 
 @app.get("/api/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
+    user_id = current_user.get("_id") or current_user.get("user_id")
     return {
-        "id": current_user["_id"],
+        "id": user_id,
         "nombre": current_user["nombre"],
-        "username": current_user["username"],
+        "username": current_user.get("username"),
+        "email": current_user.get("email"),
         "rol": current_user["rol"],
         "organizacion_id": current_user["organizacion_id"]
     }
+
+@app.post("/api/auth/session")
+async def create_session(request: Request, response: Response):
+    session_id = request.headers.get("X-Session-ID")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="Session ID requerido")
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+                headers={"X-Session-ID": session_id},
+                timeout=10.0
+            )
+            resp.raise_for_status()
+            data = resp.json()
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error al obtener datos de sesión: {str(e)}")
+    
+    email = data.get("email")
+    nombre = data.get("name")
+    picture = data.get("picture")
+    session_token = data.get("session_token")
+    
+    if not email or not session_token:
+        raise HTTPException(status_code=400, detail="Datos de sesión inválidos")
+    
+    user = await db.usuarios.find_one({"email": email}, {"_id": 0})
+    
+    if not user:
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        org_id = str(uuid.uuid4())
+        
+        new_user = {
+            "user_id": user_id,
+            "nombre": nombre,
+            "email": email,
+            "username": email.split("@")[0],
+            "picture": picture,
+            "rol": "propietario",
+            "organizacion_id": org_id,
+            "creado_por": None,
+            "creado": datetime.now(timezone.utc).isoformat()
+        }
+        await db.usuarios.insert_one(new_user)
+        
+        nueva_org = {
+            "_id": org_id,
+            "nombre": f"Organización de {nombre}",
+            "propietario_id": user_id,
+            "fecha_creacion": datetime.now(timezone.utc).isoformat(),
+            "ultima_actividad": datetime.now(timezone.utc).isoformat()
+        }
+        await db.organizaciones.insert_one(nueva_org)
+        
+        config_negocio = {
+            "_id": org_id,
+            "cabecera": "",
+            "nombre_negocio": nombre,
+            "direccion": "",
+            "telefono": "",
+            "rfc": "",
+            "email": email,
+            "sitio_web": "",
+            "mensaje_pie": "¡Gracias por su compra!",
+            "mostrar_info_cliente": False,
+            "mostrar_comentarios": False,
+            "logo_email": None,
+            "logo_impreso": None
+        }
+        await db.configuraciones.insert_one(config_negocio)
+        
+        user = new_user
+    else:
+        user_id = user["user_id"]
+        await db.usuarios.update_one(
+            {"user_id": user_id},
+            {"$set": {
+                "nombre": nombre,
+                "picture": picture
+            }}
+        )
+        await db.organizaciones.update_one(
+            {"_id": user["organizacion_id"]},
+            {"$set": {"ultima_actividad": datetime.now(timezone.utc).isoformat()}}
+        )
+    
+    existing_session = await db.user_sessions.find_one({"user_id": user_id})
+    if existing_session:
+        await db.user_sessions.delete_one({"user_id": user_id})
+    
+    await db.user_sessions.insert_one({
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=7 * 24 * 60 * 60,
+        path="/"
+    )
+    
+    return {
+        "user": {
+            "id": user_id,
+            "nombre": user["nombre"],
+            "email": user["email"],
+            "username": user.get("username"),
+            "rol": user["rol"],
+            "organizacion_id": user["organizacion_id"]
+        }
+    }
+
+@app.post("/api/auth/register")
+async def register_user(user_data: UserRegister, response: Response):
+    existing = await db.usuarios.find_one({"email": user_data.email}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="El email ya está registrado")
+    
+    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    org_id = str(uuid.uuid4())
+    
+    new_user = {
+        "user_id": user_id,
+        "nombre": user_data.nombre,
+        "email": user_data.email,
+        "username": user_data.email.split("@")[0],
+        "password": get_password_hash(user_data.password),
+        "picture": None,
+        "rol": "propietario",
+        "organizacion_id": org_id,
+        "creado_por": None,
+        "creado": datetime.now(timezone.utc).isoformat()
+    }
+    await db.usuarios.insert_one(new_user)
+    
+    nueva_org = {
+        "_id": org_id,
+        "nombre": f"Organización de {user_data.nombre}",
+        "propietario_id": user_id,
+        "fecha_creacion": datetime.now(timezone.utc).isoformat(),
+        "ultima_actividad": datetime.now(timezone.utc).isoformat()
+    }
+    await db.organizaciones.insert_one(nueva_org)
+    
+    config_negocio = {
+        "_id": org_id,
+        "cabecera": "",
+        "nombre_negocio": user_data.nombre,
+        "direccion": "",
+        "telefono": "",
+        "rfc": "",
+        "email": user_data.email,
+        "sitio_web": "",
+        "mensaje_pie": "¡Gracias por su compra!",
+        "mostrar_info_cliente": False,
+        "mostrar_comentarios": False,
+        "logo_email": None,
+        "logo_impreso": None
+    }
+    await db.configuraciones.insert_one(config_negocio)
+    
+    session_token = f"session_{uuid.uuid4().hex}"
+    await db.user_sessions.insert_one({
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=7 * 24 * 60 * 60,
+        path="/"
+    )
+    
+    return {
+        "user": {
+            "id": user_id,
+            "nombre": new_user["nombre"],
+            "email": new_user["email"],
+            "username": new_user["username"],
+            "rol": new_user["rol"],
+            "organizacion_id": new_user["organizacion_id"]
+        }
+    }
+
+@app.post("/api/auth/logout")
+async def logout(request: Request, response: Response):
+    session_token = request.cookies.get("session_token")
+    if session_token:
+        await db.user_sessions.delete_one({"session_token": session_token})
+    
+    response.delete_cookie(key="session_token", path="/", samesite="none", secure=True)
+    return {"message": "Sesión cerrada correctamente"}
 
 @app.get("/api/config")
 async def get_config(current_user: dict = Depends(get_current_user)):
