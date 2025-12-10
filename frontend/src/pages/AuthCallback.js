@@ -46,8 +46,9 @@ export default function AuthCallback() {
       localStorage.setItem('user', JSON.stringify(user));
       sessionStorage.setItem('just_authenticated', 'true');
       navigate('/dashboard', { replace: true, state: { user } });
+      window.location.reload();
     } catch (error) {
-      if (error.response?.status === 400 && error.response?.data?.detail?.includes('nombre_tienda')) {
+      if (error.response?.status === 400 && error.response?.data?.detail?.includes('tienda')) {
         setNeedsStoreName(true);
       } else {
         console.error('Error al procesar sesión:', error);
@@ -74,7 +75,9 @@ export default function AuthCallback() {
       const user = response.data.user;
       localStorage.setItem('user', JSON.stringify(user));
       sessionStorage.setItem('just_authenticated', 'true');
+      toast.success('¡Cuenta creada exitosamente!');
       navigate('/dashboard', { replace: true, state: { user } });
+      window.location.reload();
     } catch (error) {
       console.error('Error al procesar sesión:', error);
       toast.error('Error al crear cuenta');

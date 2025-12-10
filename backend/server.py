@@ -354,10 +354,12 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
     user = await db.usuarios.find_one({"email": email}, {"_id": 0})
     
     if not user:
+        if not body or not body.nombre_tienda:
+            raise HTTPException(status_code=400, detail="Se requiere el nombre de la tienda")
+        
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         org_id = str(uuid.uuid4())
-        
-        nombre_tienda = body.nombre_tienda if body and body.nombre_tienda else f"Tienda de {nombre}"
+        nombre_tienda = body.nombre_tienda
         
         new_user = {
             "_id": user_id,
