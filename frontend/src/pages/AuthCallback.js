@@ -1,5 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Card } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -7,44 +11,114 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const [needsStoreName, setNeedsStoreName] = useState(false);
+  const [storeName, setStoreName] = useState('');
+  const [sessionId, setSessionId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const processSession = async () => {
-      const hash = window.location.hash;
-      const params = new URLSearchParams(hash.substring(1));
-      const sessionId = params.get('session_id');
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.substring(1));
+    const sid = params.get('session_id');
 
-      if (!sessionId) {
-        toast.error('No se encontró ID de sesión');
-        navigate('/login');
-        return;
-      }
+    if (!sid) {
+      toast.error('No se encontró ID de sesión');
+      navigate('/login');
+      return;
+    }
 
-      try {
-        const response = await axios.post(
-          `${API_URL}/api/auth/session`,
-          {},
-          {
-            headers: { 'X-Session-ID': sessionId },
-            withCredentials: true
-          }
-        );
+    setSessionId(sid);
+    checkIfNewUser(sid);
+  }, [navigate]);
 
-        const user = response.data.user;
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        sessionStorage.setItem('just_authenticated', 'true');
-        
-        navigate('/dashboard', { replace: true, state: { user } });
-      } catch (error) {
+  const checkIfNewUser = async (sid) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/auth/session`,
+        {},
+        {
+          headers: { 'X-Session-ID': sid },
+          withCredentials: true
+        }
+      );
+
+      const user = response.data.user;
+      localStorage.setItem('user', JSON.stringify(user));
+      sessionStorage.setItem('just_authenticated', 'true');
+      navigate('/dashboard', { replace: true, state: { user } });
+    } catch (error) {
+      if (error.response?.status === 400 && error.response?.data?.detail?.includes('nombre_tienda')) {
+        setNeedsStoreName(true);
+      } else {
         console.error('Error al procesar sesión:', error);
         toast.error('Error al iniciar sesión con Google');
         navigate('/login');
       }
-    };
+    }
+  };
 
-    processSession();
-  }, [navigate]);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/auth/session`,
+        { nombre_tienda: storeName },
+        {
+          headers: { 'X-Session-ID': sessionId },
+          withCredentials: true
+        }
+      );
+
+      const user = response.data.user;
+      localStorage.setItem('user', JSON.stringify(user));
+      sessionStorage.setItem('just_authenticated', 'true');
+      navigate('/dashboard', { replace: true, state: { user } });
+    } catch (error) {
+      console.error('Error al procesar sesión:', error);
+      toast.error('Error al crear cuenta');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (needsStoreName) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+        <Card className="w-full max-w-md p-8">
+          <h2 className="text-2xl font-bold text-center mb-2">¡Bienvenido!</h2>
+          <p className="text-slate-600 text-center mb-6">
+            Para completar tu registro, ingresa el nombre de tu tienda
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="storeName">Nombre de la Tienda</Label>
+              <Input
+                id="storeName"
+                type="text"
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
+                required
+                placeholder="Mi Tienda"
+                className="mt-2"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? 'Creando cuenta...' : 'Continuar'}
+            </Button>
+          </form>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
