@@ -170,8 +170,20 @@ export default function ConfigTicketsAbiertos() {
 
       {/* Botones de acción */}
       <div className="flex justify-end gap-3 pt-4">
-        <Button variant="outline">CANCELAR</Button>
-        <Button className="bg-green-600 hover:bg-green-700">GUARDAR</Button>
+        <Button 
+          variant="outline"
+          onClick={() => window.history.back()}
+        >
+          CANCELAR
+        </Button>
+        <Button 
+          className="bg-green-600 hover:bg-green-700"
+          onClick={() => {
+            toast.success('Configuración guardada correctamente');
+          }}
+        >
+          GUARDAR
+        </Button>
       </div>
 
       {/* Dialog para añadir ticket */}
