@@ -331,6 +331,23 @@ async def startup_db():
             "logo_impreso": None
         }
         await db.configuraciones.insert_one(config_negocio)
+        
+        # Crear métodos de pago por defecto para admin
+        metodos_default = [
+            {
+                "id": str(uuid.uuid4()),
+                "nombre": "Efectivo",
+                "activo": True,
+                "organizacion_id": org_id
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "nombre": "Tarjeta",
+                "activo": True,
+                "organizacion_id": org_id
+            }
+        ]
+        await db.metodos_pago.insert_many(metodos_default)
 
 def generar_codigo_tienda(nombre_tienda: str) -> str:
     palabras = nombre_tienda.upper().replace('-', ' ').replace('_', ' ').split()
