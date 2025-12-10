@@ -745,28 +745,33 @@ export default function POS() {
 
           <div className="mb-4">
             <p className="text-slate-600">
-              Antes de realizar ventas, debes abrir tu caja con una base inicial.
+              {requiereCierres 
+                ? 'Antes de realizar ventas, debes abrir tu caja con una base inicial.'
+                : 'Confirma para abrir la caja y comenzar a vender.'
+              }
             </p>
           </div>
 
           <form onSubmit={handleAbrirCaja} className="space-y-4">
-            <div>
-              <Label htmlFor="monto_inicial_pos">Base de Caja (Monto Inicial) *</Label>
-              <Input
-                id="monto_inicial_pos"
-                data-testid="monto-inicial-pos-input"
-                type="number"
-                step="0.01"
-                value={montoInicial}
-                onChange={(e) => setMontoInicial(e.target.value)}
-                required
-                placeholder="0.00"
-                className="mt-2"
-              />
-              <p className="text-xs text-slate-500 mt-2">
-                Ingresa el monto con el que inicias tu caja
-              </p>
-            </div>
+            {requiereCierres && (
+              <div>
+                <Label htmlFor="monto_inicial_pos">Base de Caja (Monto Inicial) *</Label>
+                <Input
+                  id="monto_inicial_pos"
+                  data-testid="monto-inicial-pos-input"
+                  type="number"
+                  step="0.01"
+                  value={montoInicial}
+                  onChange={(e) => setMontoInicial(e.target.value)}
+                  required
+                  placeholder="0.00"
+                  className="mt-2"
+                />
+                <p className="text-xs text-slate-500 mt-2">
+                  Ingresa el monto con el que inicias tu caja
+                </p>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4">
               <Button
@@ -774,7 +779,7 @@ export default function POS() {
                 data-testid="confirmar-apertura-pos-button"
                 className="flex-1"
               >
-                Abrir Caja y Comenzar
+                {requiereCierres ? 'Abrir Caja y Comenzar' : 'Comenzar a Vender'}
               </Button>
             </div>
           </form>
