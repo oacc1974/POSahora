@@ -13,6 +13,7 @@ import {
   X,
   Wallet,
   UserCircle,
+  Building2,
 } from 'lucide-react';
 import { Button } from './ui/button';
 
