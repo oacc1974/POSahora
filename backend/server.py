@@ -648,6 +648,23 @@ async def register_user(user_data: UserRegister, response: Response):
     }
     await db.configuraciones.insert_one(config_negocio)
     
+    # Crear métodos de pago por defecto
+    metodos_default = [
+        {
+            "id": str(uuid.uuid4()),
+            "nombre": "Efectivo",
+            "activo": True,
+            "organizacion_id": org_id
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "nombre": "Tarjeta",
+            "activo": True,
+            "organizacion_id": org_id
+        }
+    ]
+    await db.metodos_pago.insert_many(metodos_default)
+    
     session_token = f"session_{uuid.uuid4().hex}"
     await db.user_sessions.insert_one({
         "user_id": user_id,
