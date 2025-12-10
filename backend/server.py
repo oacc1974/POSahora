@@ -142,6 +142,9 @@ class InvoiceResponse(BaseModel):
 class CajaApertura(BaseModel):
     monto_inicial: float
 
+class CajaCierre(BaseModel):
+    efectivo_contado: float
+
 class CajaResponse(BaseModel):
     id: str
     numero: str
@@ -150,6 +153,8 @@ class CajaResponse(BaseModel):
     monto_inicial: float
     monto_ventas: float
     monto_final: float
+    efectivo_contado: Optional[float] = None
+    diferencia: Optional[float] = None
     total_ventas: int
     fecha_apertura: str
     fecha_cierre: Optional[str] = None
@@ -698,7 +703,7 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
     )
 
 @app.post("/api/caja/cerrar")
-async def cerrar_caja(current_user: dict = Depends(get_current_user)):
+async def cerrar_caja(cierre: CajaCierre, current_user: dict = Depends(get_current_user)):
     caja = await db.cajas.find_one({
         "usuario_id": current_user["_id"],
         "estado": "abierta"
@@ -707,18 +712,25 @@ async def cerrar_caja(current_user: dict = Depends(get_current_user)):
     if not caja:
         raise HTTPException(status_code=404, detail="No tienes una caja abierta")
     
+    monto_esperado = caja["monto_inicial"] + caja["monto_ventas"]
+    diferencia = cierre.efectivo_contado - monto_esperado
+    
     await db.cajas.update_one(
         {"_id": caja["_id"]},
         {
             "$set": {
                 "estado": "cerrada",
-                "fecha_cierre": datetime.now(timezone.utc).isoformat()
+                "fecha_cierre": datetime.now(timezone.utc).isoformat(),
+                "efectivo_contado": cierre.efectivo_contado,
+                "diferencia": diferencia
             }
         }
     )
     
     caja["estado"] = "cerrada"
     caja["fecha_cierre"] = datetime.now(timezone.utc).isoformat()
+    caja["efectivo_contado"] = cierre.efectivo_contado
+    caja["diferencia"] = diferencia
     
     return CajaResponse(
         id=caja["_id"],
@@ -727,7 +739,9 @@ async def cerrar_caja(current_user: dict = Depends(get_current_user)):
         usuario_nombre=caja["usuario_nombre"],
         monto_inicial=caja["monto_inicial"],
         monto_ventas=caja["monto_ventas"],
-        monto_final=caja["monto_inicial"] + caja["monto_ventas"],
+        monto_final=monto_esperado,
+        efectivo_contado=cierre.efectivo_contado,
+        diferencia=diferencia,
         total_ventas=caja["total_ventas"],
         fecha_apertura=caja["fecha_apertura"],
         fecha_cierre=caja["fecha_cierre"],
@@ -752,6 +766,8 @@ async def get_historial_cajas(current_user: dict = Depends(get_current_user)):
             monto_inicial=c["monto_inicial"],
             monto_ventas=c["monto_ventas"],
             monto_final=c["monto_inicial"] + c["monto_ventas"],
+            efectivo_contado=c.get("efectivo_contado"),
+            diferencia=c.get("diferencia"),
             total_ventas=c["total_ventas"],
             fecha_apertura=c["fecha_apertura"],
             fecha_cierre=c.get("fecha_cierre"),
