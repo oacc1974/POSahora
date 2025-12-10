@@ -197,6 +197,8 @@ class InvoiceResponse(BaseModel):
     cliente_id: Optional[str] = None
     cliente_nombre: Optional[str] = None
     comentarios: Optional[str] = None
+    metodo_pago_id: Optional[str] = None
+    metodo_pago_nombre: Optional[str] = None
     fecha: str
 
 class CajaApertura(BaseModel):
