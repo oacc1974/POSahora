@@ -833,6 +833,24 @@ def main():
     
     if failed_tests:
         print(f"❌ Failed tests: {', '.join(failed_tests)}")
+        print("\n🔍 Payment Methods System Test Summary:")
+        payment_tests = [
+            'test_get_default_payment_methods',
+            'test_create_payment_method',
+            'test_update_payment_method',
+            'test_payment_method_permissions',
+            'test_create_invoice_with_payment_method',
+            'test_create_invoice_without_payment_method',
+            'test_get_invoices_with_payment_methods',
+            'test_delete_payment_method'
+        ]
+        
+        payment_failures = [t for t in failed_tests if t in payment_tests]
+        if payment_failures:
+            print(f"❌ Payment methods system failures: {', '.join(payment_failures)}")
+        else:
+            print("✅ Payment methods system tests passed!")
+            
         print("\n🔍 Tax System Test Summary:")
         tax_tests = [
             'test_create_tax_agregado',
@@ -852,6 +870,7 @@ def main():
         return 1
     else:
         print("✅ All tests passed!")
+        print("✅ Payment methods system is working correctly!")
         print("✅ Tax system is working correctly!")
         return 0
 
