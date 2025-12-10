@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '../components/ui/card';
 import { Settings, CreditCard, Receipt, FileText, ClipboardList, ShoppingBag, Store, Monitor } from 'lucide-react';
+import axios from 'axios';
 import ConfigRecibo from './config/ConfigRecibo';
 import ConfigFunciones from './config/ConfigFunciones';
 import ConfigImpuestos from './config/ConfigImpuestos';
