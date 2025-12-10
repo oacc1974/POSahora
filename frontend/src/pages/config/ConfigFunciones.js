@@ -1,0 +1,158 @@
+import React, { useState } from 'react';
+import { Card } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Wallet, ClipboardList, ShoppingBag, ExternalLink } from 'lucide-react';
+import { toast } from 'sonner';
+
+export default function ConfigFunciones() {
+  const [funciones, setFunciones] = useState({
+    cierres_caja: true, // Ya existe en el sistema
+    tickets_abiertos: false,
+    tipo_pedido: false,
+  });
+
+  const [saving, setSaving] = useState(false);
+
+  const handleToggle = (key) => {
+    setFunciones({
+      ...funciones,
+      [key]: !funciones[key]
+    });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Por ahora solo guardamos en localStorage
+      localStorage.setItem('funciones_config', JSON.stringify(funciones));
+      toast.success('Configuración guardada correctamente');
+    } catch (error) {
+      toast.error('Error al guardar la configuración');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const funcionesData = [
+    {
+      id: 'cierres_caja',
+      key: 'cierres_caja',
+      icon: Wallet,
+      title: 'Cierres de caja por turnos',
+      description: 'Controla el dinero que entra y sale del cajón de efectivo.',
+      enabled: funciones.cierres_caja,
+      active: true, // Ya existe en el sistema
+    },
+    {
+      id: 'tickets_abiertos',
+      key: 'tickets_abiertos',
+      icon: ClipboardList,
+      title: 'Tickets abiertos',
+      description: 'Permite guardar y editar pedidos antes de completar un pago.',
+      enabled: funciones.tickets_abiertos,
+      active: false, // Próximamente
+    },
+    {
+      id: 'tipo_pedido',
+      key: 'tipo_pedido',
+      icon: ShoppingBag,
+      title: 'Tipo de pedido',
+      description: 'Toma pedidos para cenar dentro, para llevar o a domicilio.',
+      enabled: funciones.tipo_pedido,
+      active: false, // Próximamente
+    },
+  ];
+
+  return (
+    <Card className="p-6 md:p-8">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-2">Funciones</h2>
+        <p className="text-slate-600">
+          Activa o desactiva funciones del sistema según las necesidades de tu negocio
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {funcionesData.map((funcion) => {
+          const Icon = funcion.icon;
+          
+          return (
+            <div
+              key={funcion.id}
+              className="flex items-start gap-4 p-4 border rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Icon size={20} className="text-blue-600" />
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-slate-900">
+                    {funcion.title}
+                  </h3>
+                  {!funcion.active && (
+                    <span className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded-full">
+                      Próximamente
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-slate-600 mb-2">
+                  {funcion.description}
+                </p>
+                <button
+                  type="button"
+                  className="text-sm text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
+                  onClick={() => toast.info('Documentación próximamente disponible')}
+                >
+                  Más información
+                  <ExternalLink size={14} />
+                </button>
+              </div>
+
+              <div className="flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => funcion.active && handleToggle(funcion.key)}
+                  disabled={!funcion.active}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    funcion.enabled
+                      ? 'bg-blue-600'
+                      : 'bg-gray-200'
+                  } ${!funcion.active ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      funcion.enabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-8 flex justify-end gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            setFunciones({
+              cierres_caja: true,
+              tickets_abiertos: false,
+              tipo_pedido: false,
+            });
+          }}
+        >
+          Cancelar
+        </Button>
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? 'Guardando...' : 'Guardar cambios'}
+        </Button>
+      </div>
+    </Card>
+  );
+}
