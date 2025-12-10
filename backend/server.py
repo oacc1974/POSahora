@@ -249,12 +249,13 @@ async def get_propietario_user(current_user: dict = Depends(get_current_user)):
 async def startup_db():
     admin_exists = await db.usuarios.find_one({"username": "admin"})
     if not admin_exists:
-        import uuid
         org_id = str(uuid.uuid4())
         admin_user = {
             "_id": "admin",
+            "user_id": "admin",
             "nombre": "Administrador Principal",
             "username": "admin",
+            "email": "admin@system.com",
             "password": get_password_hash("admin*88"),
             "rol": "propietario",
             "organizacion_id": org_id,
@@ -262,6 +263,15 @@ async def startup_db():
             "creado": datetime.now(timezone.utc).isoformat()
         }
         await db.usuarios.insert_one(admin_user)
+        
+        admin_org = {
+            "_id": org_id,
+            "nombre": "Administración Principal",
+            "propietario_id": "admin",
+            "fecha_creacion": datetime.now(timezone.utc).isoformat(),
+            "ultima_actividad": datetime.now(timezone.utc).isoformat()
+        }
+        await db.organizaciones.insert_one(admin_org)
         
         config_negocio = {
             "_id": org_id,
