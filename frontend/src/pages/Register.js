@@ -14,6 +14,7 @@ export default function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     nombre: '',
+    nombre_tienda: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -42,6 +43,7 @@ export default function Register() {
         `${API_URL}/api/auth/register`,
         {
           nombre: formData.nombre,
+          nombre_tienda: formData.nombre_tienda,
           email: formData.email,
           password: formData.password
         },
@@ -88,6 +90,20 @@ export default function Register() {
               onChange={handleChange}
               required
               placeholder="Juan Pérez"
+              className="mt-2"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="nombre_tienda">Nombre de la Tienda</Label>
+            <Input
+              id="nombre_tienda"
+              name="nombre_tienda"
+              type="text"
+              value={formData.nombre_tienda}
+              onChange={handleChange}
+              required
+              placeholder="Mi Tienda"
               className="mt-2"
             />
           </div>
