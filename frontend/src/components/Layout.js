@@ -81,6 +81,13 @@ export default function Layout({ children, user, onLogout }) {
       show: user.rol === 'propietario',
     },
     {
+      name: 'Organizaciones',
+      href: '/organizaciones',
+      icon: Building2,
+      testId: 'nav-organizaciones',
+      show: user.id === 'admin',
+    },
+    {
       name: 'Configuración',
       href: '/configuracion',
       icon: Settings,
