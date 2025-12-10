@@ -414,7 +414,7 @@ class BillingSystemTester:
             "nombre": "Usuario Test",
             "username": f"test_user_{datetime.now().strftime('%H%M%S')}",
             "password": "test123",
-            "es_admin": False
+            "rol": "cajero"
         }
         success, response = self.run_test(
             "Create User (Admin)",
