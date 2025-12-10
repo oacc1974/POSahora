@@ -1535,6 +1535,8 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         "cliente_id": invoice.cliente_id,
         "cliente_nombre": cliente_nombre,
         "comentarios": invoice.comentarios,
+        "metodo_pago_id": invoice.metodo_pago_id,
+        "metodo_pago_nombre": metodo_pago_nombre,
         "fecha": datetime.now(timezone.utc).isoformat()
     }
     await db.facturas.insert_one(new_invoice)
