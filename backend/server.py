@@ -1392,8 +1392,8 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
     
     # Calcular total final
     if impuestos_activos:
-        # Si hay impuestos del tipo "agregado", se suman al subtotal
-        total_agregado = sum(imp["monto"] for imp in desglose_impuestos if imp["tipo"] == "agregado")
+        # Si hay impuestos del tipo "agregado" o "no_incluido", se suman al subtotal
+        total_agregado = sum(imp["monto"] for imp in desglose_impuestos if imp["tipo"] in ["agregado", "no_incluido"])
         total_final = subtotal + total_agregado
     else:
         total_final = subtotal
