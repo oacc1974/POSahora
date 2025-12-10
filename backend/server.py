@@ -1083,6 +1083,175 @@ async def delete_metodo_pago(metodo_id: str, current_user: dict = Depends(get_cu
     
     return {"message": "Método de pago eliminado correctamente"}
 
+# Configuración de funciones
+@app.get("/api/funciones")
+async def get_funciones(current_user: dict = Depends(get_current_user)):
+    config = await db.funciones_config.find_one({"organizacion_id": current_user["organizacion_id"]}, {"_id": 0})
+    if not config:
+        return {
+            "cierres_caja": True,
+            "tickets_abiertos": False,
+            "tipo_pedido": False
+        }
+    return {
+        "cierres_caja": config.get("cierres_caja", True),
+        "tickets_abiertos": config.get("tickets_abiertos", False),
+        "tipo_pedido": config.get("tipo_pedido", False)
+    }
+
+@app.put("/api/funciones")
+async def update_funciones(funciones: FuncionesConfig, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    await db.funciones_config.update_one(
+        {"organizacion_id": current_user["organizacion_id"]},
+        {"$set": {
+            "organizacion_id": current_user["organizacion_id"],
+            "cierres_caja": funciones.cierres_caja,
+            "tickets_abiertos": funciones.tickets_abiertos,
+            "tipo_pedido": funciones.tipo_pedido
+        }},
+        upsert=True
+    )
+    
+    return {"message": "Configuración de funciones actualizada"}
+
+# Tickets predefinidos (Mesas)
+@app.get("/api/tickets-predefinidos", response_model=List[TicketPredefinidoResponse])
+async def get_tickets_predefinidos(current_user: dict = Depends(get_current_user)):
+    tickets = await db.tickets_predefinidos.find({
+        "organizacion_id": current_user["organizacion_id"]
+    }, {"_id": 0}).to_list(1000)
+    
+    return [
+        TicketPredefinidoResponse(
+            id=t["id"],
+            nombre=t["nombre"],
+            organizacion_id=t["organizacion_id"]
+        )
+        for t in tickets
+    ]
+
+@app.post("/api/tickets-predefinidos")
+async def create_ticket_predefinido(ticket: TicketPredefinidoCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    ticket_id = str(uuid.uuid4())
+    
+    new_ticket = {
+        "id": ticket_id,
+        "nombre": ticket.nombre,
+        "organizacion_id": current_user["organizacion_id"]
+    }
+    
+    await db.tickets_predefinidos.insert_one(new_ticket)
+    
+    return TicketPredefinidoResponse(
+        id=ticket_id,
+        nombre=ticket.nombre,
+        organizacion_id=current_user["organizacion_id"]
+    )
+
+@app.delete("/api/tickets-predefinidos/{ticket_id}")
+async def delete_ticket_predefinido(ticket_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    result = await db.tickets_predefinidos.delete_one({
+        "id": ticket_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Ticket predefinido no encontrado")
+    
+    return {"message": "Ticket predefinido eliminado correctamente"}
+
+# Tipos de pedido
+@app.get("/api/tipos-pedido", response_model=List[TipoPedidoResponse])
+async def get_tipos_pedido(current_user: dict = Depends(get_current_user)):
+    tipos = await db.tipos_pedido.find({
+        "organizacion_id": current_user["organizacion_id"]
+    }, {"_id": 0}).to_list(1000)
+    
+    return [
+        TipoPedidoResponse(
+            id=t["id"],
+            nombre=t["nombre"],
+            activo=t["activo"],
+            organizacion_id=t["organizacion_id"]
+        )
+        for t in tipos
+    ]
+
+@app.post("/api/tipos-pedido")
+async def create_tipo_pedido(tipo: TipoPedidoCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    tipo_id = str(uuid.uuid4())
+    
+    new_tipo = {
+        "id": tipo_id,
+        "nombre": tipo.nombre,
+        "activo": tipo.activo,
+        "organizacion_id": current_user["organizacion_id"]
+    }
+    
+    await db.tipos_pedido.insert_one(new_tipo)
+    
+    return TipoPedidoResponse(
+        id=tipo_id,
+        nombre=tipo.nombre,
+        activo=tipo.activo,
+        organizacion_id=current_user["organizacion_id"]
+    )
+
+@app.put("/api/tipos-pedido/{tipo_id}")
+async def update_tipo_pedido(tipo_id: str, tipo: TipoPedidoCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    result = await db.tipos_pedido.update_one(
+        {
+            "id": tipo_id,
+            "organizacion_id": current_user["organizacion_id"]
+        },
+        {
+            "$set": {
+                "nombre": tipo.nombre,
+                "activo": tipo.activo
+            }
+        }
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Tipo de pedido no encontrado")
+    
+    return TipoPedidoResponse(
+        id=tipo_id,
+        nombre=tipo.nombre,
+        activo=tipo.activo,
+        organizacion_id=current_user["organizacion_id"]
+    )
+
+@app.delete("/api/tipos-pedido/{tipo_id}")
+async def delete_tipo_pedido(tipo_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    result = await db.tipos_pedido.delete_one({
+        "id": tipo_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Tipo de pedido no encontrado")
+    
+    return {"message": "Tipo de pedido eliminado correctamente"}
+
 @app.get("/api/productos", response_model=List[ProductResponse])
 async def get_productos(current_user: dict = Depends(get_current_user)):
     productos = await db.productos.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
