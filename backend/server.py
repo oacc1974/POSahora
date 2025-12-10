@@ -99,6 +99,7 @@ class UserResponse(BaseModel):
 
 class UserRegister(BaseModel):
     nombre: str
+    nombre_tienda: str
     email: EmailStr
     password: str
     confirm_password: Optional[str] = None
@@ -464,7 +465,7 @@ async def register_user(user_data: UserRegister, response: Response):
     
     nueva_org = {
         "_id": org_id,
-        "nombre": f"Organización de {user_data.nombre}",
+        "nombre": user_data.nombre_tienda,
         "propietario_id": user_id,
         "fecha_creacion": datetime.now(timezone.utc).isoformat(),
         "ultima_actividad": datetime.now(timezone.utc).isoformat()
@@ -474,7 +475,7 @@ async def register_user(user_data: UserRegister, response: Response):
     config_negocio = {
         "_id": org_id,
         "cabecera": "",
-        "nombre_negocio": user_data.nombre,
+        "nombre_negocio": user_data.nombre_tienda,
         "direccion": "",
         "telefono": "",
         "rfc": "",
