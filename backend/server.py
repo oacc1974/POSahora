@@ -360,6 +360,7 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
         nombre_tienda = body.nombre_tienda if body and body.nombre_tienda else f"Tienda de {nombre}"
         
         new_user = {
+            "_id": user_id,
             "user_id": user_id,
             "nombre": nombre,
             "email": email,
