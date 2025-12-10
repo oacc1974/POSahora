@@ -78,12 +78,39 @@ export default function Dashboard() {
   return (
     <div data-testid="dashboard">
       <div className="mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
-          Dashboard
-        </h1>
-        <p className="text-sm md:text-base text-slate-600">
-          Resumen general de tu negocio
-        </p>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
+              Dashboard
+            </h1>
+            <p className="text-sm md:text-base text-slate-600">
+              Resumen general de tu negocio
+            </p>
+          </div>
+          
+          {user?.rol === 'propietario' && codigoTienda && (
+            <Card className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 w-full md:w-auto">
+              <p className="text-xs text-slate-600 mb-1">Código de Tienda POS</p>
+              <div className="flex items-center gap-3">
+                <p className="text-xl md:text-2xl font-bold font-mono text-blue-600">
+                  {codigoTienda}
+                </p>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(codigoTienda);
+                    toast.success('Código copiado');
+                  }}
+                  className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                >
+                  Copiar
+                </button>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Comparte con tus empleados para acceso al POS
+              </p>
+            </Card>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
