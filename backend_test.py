@@ -314,7 +314,7 @@ class BillingSystemTester:
                 print(f"     - {tax['nombre']}: {tax['tasa']}% ({tax['tipo']}) = ${tax['monto']}")
                 
                 # Validate tax calculations
-                if tax['tipo'] == 'agregado':
+                if tax['tipo'] == 'agregado' or tax['tipo'] == 'no_incluido':
                     expected_amount = subtotal * (tax['tasa'] / 100)
                     if abs(tax['monto'] - expected_amount) > 0.01:
                         print(f"     ❌ Tax calculation error for {tax['nombre']}: expected {expected_amount}, got {tax['monto']}")
