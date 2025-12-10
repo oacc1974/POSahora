@@ -19,26 +19,66 @@ import './App.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-function App() {
+function AuthChecker() {
+  const location = useLocation();
+  
+  if (location.hash?.includes('session_id=')) {
+    return <AuthCallback />;
+  }
+  
+  return <AppRouter />;
+}
+
+function AppRouter() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    if (token && userData) {
-      setUser(JSON.parse(userData));
-    }
-    setLoading(false);
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      const userData = localStorage.getItem('user');
+      
+      if (token && userData) {
+        setUser(JSON.parse(userData));
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${API_URL}/api/me`, {
+          withCredentials: true
+        });
+        
+        const userData = response.data;
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+      } catch (error) {
+        console.log('No hay sesión activa');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const handleLogin = (userData, token) => {
-    localStorage.setItem('token', token);
+    if (token) {
+      localStorage.setItem('token', token);
+    }
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_URL}/api/auth/logout`, {}, {
+        withCredentials: true
+      });
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+    
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
