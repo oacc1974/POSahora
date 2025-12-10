@@ -765,7 +765,7 @@ def main():
     
     tester = BillingSystemTester()
     
-    # Test sequence - focusing on tax system testing
+    # Test sequence - focusing on payment methods system testing
     tests = [
         # Basic system tests
         tester.test_root_endpoint,
@@ -784,10 +784,23 @@ def main():
         tester.test_open_cash_register,
         tester.test_get_active_cash_register,
         
-        # TAX SYSTEM TESTS - Main focus
+        # PAYMENT METHODS SYSTEM TESTS - Main focus
+        tester.test_get_default_payment_methods,
+        tester.test_create_payment_method,
+        tester.test_update_payment_method,
+        tester.test_payment_method_permissions,
+        
+        # TAX SYSTEM TESTS (for invoice integration)
         tester.test_create_tax_agregado,
         tester.test_create_tax_incluido,
         tester.test_get_taxes,
+        
+        # INVOICE INTEGRATION WITH PAYMENT METHODS
+        tester.test_create_invoice_with_payment_method,
+        tester.test_create_invoice_without_payment_method,
+        tester.test_get_invoices_with_payment_methods,
+        
+        # Additional invoice tests
         tester.test_create_invoice_with_taxes,
         tester.test_create_invoice,  # Simple invoice for comparison
         tester.test_get_invoices,  # Test backward compatibility
@@ -799,6 +812,7 @@ def main():
         tester.test_delete_user,
         
         # Cleanup tests
+        tester.test_delete_payment_method,
         tester.test_delete_taxes,
         tester.test_delete_product,
     ]
