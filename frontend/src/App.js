@@ -93,7 +93,7 @@ function AppRouter() {
   }
 
   return (
-    <BrowserRouter>
+    <>
       <Toaster position="top-right" />
       <Routes>
         <Route
