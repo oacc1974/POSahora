@@ -174,6 +174,7 @@ class InvoiceCreate(BaseModel):
     total: float
     cliente_id: Optional[str] = None
     comentarios: Optional[str] = None
+    metodo_pago_id: Optional[str] = None
 
 class ImpuestoDesglose(BaseModel):
     nombre: str
