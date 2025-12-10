@@ -214,7 +214,7 @@ async def get_current_user(request: Request, credentials: HTTPAuthorizationCrede
                 expires_at = expires_at.replace(tzinfo=timezone.utc)
             
             if expires_at > datetime.now(timezone.utc):
-                user = await db.usuarios.find_one({"user_id": session["user_id"]}, {"_id": 0})
+                user = await db.usuarios.find_one({"user_id": session["user_id"]})
                 if user:
                     await db.organizaciones.update_one(
                         {"_id": user["organizacion_id"]},
