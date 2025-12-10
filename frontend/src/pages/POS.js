@@ -210,9 +210,10 @@ export default function POS() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
+      const monto = requiereCierres ? parseFloat(montoInicial) : 0;
       const response = await axios.post(
         `${API_URL}/api/caja/abrir`,
-        { monto_inicial: parseFloat(montoInicial) },
+        { monto_inicial: monto },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setCajaActiva(response.data);
