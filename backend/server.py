@@ -415,13 +415,18 @@ async def login(user_login: UserLogin, response: Response):
 @app.get("/api/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
     user_id = current_user.get("_id") or current_user.get("user_id")
+    
+    org = await db.organizaciones.find_one({"_id": current_user["organizacion_id"]})
+    codigo_tienda = org.get("codigo_tienda") if org else None
+    
     return {
         "id": user_id,
         "nombre": current_user["nombre"],
         "username": current_user.get("username"),
         "email": current_user.get("email"),
         "rol": current_user["rol"],
-        "organizacion_id": current_user["organizacion_id"]
+        "organizacion_id": current_user["organizacion_id"],
+        "codigo_tienda": codigo_tienda
     }
 
 class GoogleSessionRequest(BaseModel):
