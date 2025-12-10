@@ -485,6 +485,7 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
         nueva_org = {
             "_id": org_id,
             "nombre": nombre_tienda,
+            "codigo_tienda": generar_codigo_tienda(nombre_tienda),
             "propietario_id": user_id,
             "fecha_creacion": datetime.now(timezone.utc).isoformat(),
             "ultima_actividad": datetime.now(timezone.utc).isoformat()
@@ -582,6 +583,7 @@ async def register_user(user_data: UserRegister, response: Response):
     nueva_org = {
         "_id": org_id,
         "nombre": user_data.nombre_tienda,
+        "codigo_tienda": generar_codigo_tienda(user_data.nombre_tienda),
         "propietario_id": user_id,
         "fecha_creacion": datetime.now(timezone.utc).isoformat(),
         "ultima_actividad": datetime.now(timezone.utc).isoformat()
