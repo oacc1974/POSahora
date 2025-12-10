@@ -38,6 +38,7 @@ export default function Dashboard() {
   }
 
   const user = JSON.parse(localStorage.getItem('user'));
+  const codigoTienda = user?.codigo_tienda;
   
   const stats = [
     {
