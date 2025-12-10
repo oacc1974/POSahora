@@ -198,6 +198,7 @@ class InvoiceCreate(BaseModel):
     cliente_id: Optional[str] = None
     comentarios: Optional[str] = None
     metodo_pago_id: Optional[str] = None
+    tipo_pedido_id: Optional[str] = None
 
 class ImpuestoDesglose(BaseModel):
     nombre: str
