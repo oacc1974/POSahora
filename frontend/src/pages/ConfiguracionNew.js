@@ -45,9 +45,9 @@ export default function ConfiguracionNew() {
       case 'impuestos':
         return <ConfigImpuestos />;
       case 'tickets-abiertos':
-        return <PlaceholderSection title="Tickets abiertos" />;
+        return <ConfigTicketsAbiertos />;
       case 'tipo-pedido':
-        return <PlaceholderSection title="Tipo de pedido" />;
+        return <ConfigTipoPedido />;
       case 'tiendas':
         return <PlaceholderSection title="Tiendas" />;
       case 'dispositivos-tpv':
