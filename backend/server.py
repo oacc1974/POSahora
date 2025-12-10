@@ -1529,6 +1529,13 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
     if caja_abierta:
         raise HTTPException(status_code=400, detail="Ya tienes una caja abierta")
     
+    # Verificar configuración de cierres de caja
+    funciones_config = await db.funciones_config.find_one({"organizacion_id": current_user["organizacion_id"]}, {"_id": 0})
+    cierres_caja_activo = funciones_config.get("cierres_caja", True) if funciones_config else True
+    
+    # Si cierres de caja está desactivado, usar monto_inicial = 0
+    monto_inicial = apertura.monto_inicial if cierres_caja_activo else 0.0
+    
     import uuid
     caja_id = str(uuid.uuid4())
     
@@ -1551,12 +1558,13 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         "usuario_id": current_user["_id"],
         "usuario_nombre": current_user["nombre"],
         "organizacion_id": current_user["organizacion_id"],
-        "monto_inicial": apertura.monto_inicial,
+        "monto_inicial": monto_inicial,
         "monto_ventas": 0.0,
         "total_ventas": 0,
         "fecha_apertura": datetime.now(timezone.utc).isoformat(),
         "fecha_cierre": None,
-        "estado": "abierta"
+        "estado": "abierta",
+        "requiere_cierre": cierres_caja_activo
     }
     
     await db.cajas.insert_one(nueva_caja)
@@ -1566,9 +1574,9 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         numero=numero_caja,
         usuario_id=current_user["_id"],
         usuario_nombre=current_user["nombre"],
-        monto_inicial=apertura.monto_inicial,
+        monto_inicial=monto_inicial,
         monto_ventas=0.0,
-        monto_final=apertura.monto_inicial,
+        monto_final=monto_inicial,
         total_ventas=0,
         fecha_apertura=nueva_caja["fecha_apertura"],
         fecha_cierre=None,
