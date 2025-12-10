@@ -214,7 +214,28 @@ function AppRouter() {
             )
           }
         />
+        <Route
+          path="/organizaciones"
+          element={
+            user && user.id === 'admin' ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <Organizaciones />
+              </Layout>
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
+        />
       </Routes>
+    </BrowserRouter>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Toaster position="top-right" />
+      <AuthChecker />
     </BrowserRouter>
   );
 }
