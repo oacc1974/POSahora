@@ -135,6 +135,16 @@ class ImpuestoResponse(BaseModel):
     activo: bool
     organizacion_id: str
 
+class MetodoPagoCreate(BaseModel):
+    nombre: str
+    activo: bool = True
+
+class MetodoPagoResponse(BaseModel):
+    id: str
+    nombre: str
+    activo: bool
+    organizacion_id: str
+
 class ProductCreate(BaseModel):
     nombre: str
     precio: float
