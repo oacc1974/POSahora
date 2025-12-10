@@ -1828,6 +1828,8 @@ async def get_facturas(current_user: dict = Depends(get_current_user)):
             comentarios=f.get("comentarios"),
             metodo_pago_id=f.get("metodo_pago_id"),
             metodo_pago_nombre=f.get("metodo_pago_nombre"),
+            tipo_pedido_id=f.get("tipo_pedido_id"),
+            tipo_pedido_nombre=f.get("tipo_pedido_nombre"),
             fecha=f["fecha"]
         )
         for f in facturas
