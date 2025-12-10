@@ -292,10 +292,35 @@ async def startup_db():
         await db.configuraciones.insert_one(config_negocio)
 
 @app.post("/api/login")
-async def login(user_login: UserLogin):
+async def login(user_login: UserLogin, response: Response):
     user = await db.usuarios.find_one({"username": user_login.username})
     if not user or not verify_password(user_login.password, user["password"]):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+    
+    user_id = user.get("user_id") or user["_id"]
+    
+    session_token = f"session_{uuid.uuid4().hex}"
+    await db.user_sessions.insert_one({
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=7 * 24 * 60 * 60,
+        path="/"
+    )
+    
+    await db.organizaciones.update_one(
+        {"_id": user["organizacion_id"]},
+        {"$set": {"ultima_actividad": datetime.now(timezone.utc).isoformat()}}
+    )
     
     access_token = create_access_token(data={"sub": user["_id"]})
     return {
