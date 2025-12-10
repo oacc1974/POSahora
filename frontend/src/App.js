@@ -64,12 +64,24 @@ function AppRouter() {
     checkAuth();
   }, []);
 
-  const handleLogin = (userData, token) => {
+  const handleLogin = async (userData, token) => {
     if (token) {
       localStorage.setItem('token', token);
     }
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
+    
+    try {
+      const response = await axios.get(`${API_URL}/api/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true
+      });
+      const fullUserData = response.data;
+      localStorage.setItem('user', JSON.stringify(fullUserData));
+      setUser(fullUserData);
+    } catch (error) {
+      console.log('Error al obtener datos completos del usuario');
+    }
   };
 
   const handleLogout = async () => {
