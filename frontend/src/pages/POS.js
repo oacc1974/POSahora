@@ -97,6 +97,34 @@ export default function POS() {
     }
   };
 
+  const fetchTiposPedido = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/tipos-pedido`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const activos = response.data.filter(t => t.activo);
+      setTiposPedido(activos);
+      if (activos.length > 0) {
+        setTipoPedidoSeleccionado(activos[0].id);
+      }
+    } catch (error) {
+      console.error('Error al cargar tipos de pedido:', error);
+    }
+  };
+
+  const fetchFuncionesConfig = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/funciones`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRequiereCierres(response.data.cierres_caja);
+    } catch (error) {
+      console.error('Error al cargar configuración de funciones:', error);
+    }
+  };
+
   const addToCart = (producto) => {
     const existing = cart.find((item) => item.producto_id === producto.id);
     if (existing) {
