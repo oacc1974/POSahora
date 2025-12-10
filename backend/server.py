@@ -1472,6 +1472,13 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         if cliente:
             cliente_nombre = cliente["nombre"]
     
+    # Obtener nombre del método de pago
+    metodo_pago_nombre = None
+    if invoice.metodo_pago_id:
+        metodo = await db.metodos_pago.find_one({"id": invoice.metodo_pago_id}, {"_id": 0})
+        if metodo:
+            metodo_pago_nombre = metodo["nombre"]
+    
     # Calcular subtotal de items (sin impuestos)
     subtotal = sum(item.subtotal for item in invoice.items)
     
