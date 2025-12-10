@@ -628,6 +628,61 @@ async def delete_usuario(user_id: str, current_user: dict = Depends(get_propieta
     
     return {"message": "Usuario eliminado correctamente"}
 
+@app.get("/api/organizaciones", response_model=List[OrganizacionResponse])
+async def get_organizaciones(current_user: dict = Depends(get_current_user)):
+    if current_user["_id"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo el administrador principal puede ver organizaciones")
+    
+    organizaciones = await db.organizaciones.find({}, {"_id": 1, "nombre": 1, "propietario_id": 1, "fecha_creacion": 1, "ultima_actividad": 1}).to_list(1000)
+    
+    result = []
+    for org in organizaciones:
+        propietario = await db.usuarios.find_one(
+            {"$or": [{"user_id": org["propietario_id"]}, {"_id": org["propietario_id"]}]},
+            {"_id": 0, "nombre": 1, "email": 1}
+        )
+        
+        total_usuarios = await db.usuarios.count_documents({"organizacion_id": org["_id"]})
+        total_productos = await db.productos.count_documents({"organizacion_id": org["_id"]})
+        total_ventas = await db.facturas.count_documents({"organizacion_id": org["_id"]})
+        
+        result.append(OrganizacionResponse(
+            id=org["_id"],
+            nombre=org.get("nombre", "Sin nombre"),
+            propietario_id=org["propietario_id"],
+            propietario_nombre=propietario["nombre"] if propietario else "Desconocido",
+            propietario_email=propietario.get("email") if propietario else None,
+            fecha_creacion=org.get("fecha_creacion", ""),
+            ultima_actividad=org.get("ultima_actividad"),
+            total_usuarios=total_usuarios,
+            total_productos=total_productos,
+            total_ventas=total_ventas
+        ))
+    
+    return result
+
+@app.delete("/api/organizaciones/{org_id}")
+async def delete_organizacion(org_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["_id"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo el administrador principal puede eliminar organizaciones")
+    
+    if org_id == current_user["organizacion_id"]:
+        raise HTTPException(status_code=400, detail="No puedes eliminar tu propia organización")
+    
+    org = await db.organizaciones.find_one({"_id": org_id})
+    if not org:
+        raise HTTPException(status_code=404, detail="Organización no encontrada")
+    
+    await db.usuarios.delete_many({"organizacion_id": org_id})
+    await db.productos.delete_many({"organizacion_id": org_id})
+    await db.facturas.delete_many({"organizacion_id": org_id})
+    await db.clientes.delete_many({"organizacion_id": org_id})
+    await db.cajas.delete_many({"organizacion_id": org_id})
+    await db.configuraciones.delete_one({"_id": org_id})
+    await db.organizaciones.delete_one({"_id": org_id})
+    
+    return {"message": "Organización eliminada correctamente"}
+
 @app.get("/api/productos", response_model=List[ProductResponse])
 async def get_productos(current_user: dict = Depends(get_current_user)):
     productos = await db.productos.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
