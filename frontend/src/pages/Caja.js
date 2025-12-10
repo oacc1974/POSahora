@@ -253,6 +253,16 @@ export default function Caja() {
                     <p className="text-lg font-bold font-mono text-blue-600">
                       Total: ${caja.monto_final.toFixed(2)}
                     </p>
+                    {caja.estado === 'cerrada' && caja.efectivo_contado !== null && (
+                      <>
+                        <p className="text-sm text-slate-600 mt-1">
+                          Contado: ${caja.efectivo_contado.toFixed(2)}
+                        </p>
+                        <p className={`text-sm font-semibold ${caja.diferencia >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          Diferencia: {caja.diferencia >= 0 ? '+' : ''}{caja.diferencia.toFixed(2)}
+                        </p>
+                      </>
+                    )}
                     <span
                       className={`inline-block mt-2 px-2 py-1 text-xs font-medium rounded ${
                         caja.estado === 'abierta'
