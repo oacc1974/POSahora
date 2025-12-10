@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
+import LoginPOS from './pages/LoginPOS';
 import Register from './pages/Register';
 import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
@@ -100,6 +101,12 @@ function AppRouter() {
           path="/login"
           element={
             user ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />
+          }
+        />
+        <Route
+          path="/login-pos"
+          element={
+            user ? <Navigate to="/dashboard" replace /> : <LoginPOS onLogin={handleLogin} />
           }
         />
         <Route
