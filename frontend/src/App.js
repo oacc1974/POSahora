@@ -227,14 +227,13 @@ function AppRouter() {
           }
         />
       </Routes>
-    </BrowserRouter>
+    </>
   );
 }
 
 function App() {
   return (
     <BrowserRouter>
-      <Toaster position="top-right" />
       <AuthChecker />
     </BrowserRouter>
   );
