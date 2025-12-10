@@ -688,6 +688,26 @@ export default function POS() {
             </div>
           )}
 
+          {/* Selector de Tipo de Pedido */}
+          {tiposPedido.length > 0 && (
+            <div className="mb-4">
+              <Label className="text-sm font-semibold mb-2 block">
+                Tipo de Pedido
+              </Label>
+              <select
+                value={tipoPedidoSeleccionado || ''}
+                onChange={(e) => setTipoPedidoSeleccionado(e.target.value)}
+                className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {tiposPedido.map((tipo) => (
+                  <option key={tipo.id} value={tipo.id}>
+                    {tipo.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="flex justify-between items-center mb-4 lg:mb-6">
             <span className="text-base lg:text-lg font-semibold">Total:</span>
             <span
