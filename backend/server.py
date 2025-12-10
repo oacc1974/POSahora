@@ -97,6 +97,24 @@ class UserResponse(BaseModel):
     creado_por: Optional[str] = None
     creado: str
 
+class UserRegister(BaseModel):
+    nombre: str
+    email: EmailStr
+    password: str
+    confirm_password: Optional[str] = None
+
+class OrganizacionResponse(BaseModel):
+    id: str
+    nombre: str
+    propietario_id: str
+    propietario_nombre: str
+    propietario_email: Optional[str] = None
+    fecha_creacion: str
+    ultima_actividad: Optional[str] = None
+    total_usuarios: int
+    total_productos: int
+    total_ventas: int
+
 class ProductCreate(BaseModel):
     nombre: str
     precio: float
