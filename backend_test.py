@@ -513,27 +513,46 @@ class BillingSystemTester:
         return success
 
 def main():
-    print("🚀 Starting Billing System Backend Tests")
-    print("=" * 50)
+    print("🚀 Starting POS Tax System Backend Tests")
+    print("=" * 60)
     
     tester = BillingSystemTester()
     
-    # Test sequence
+    # Test sequence - focusing on tax system testing
     tests = [
+        # Basic system tests
         tester.test_root_endpoint,
         tester.test_invalid_login,
         tester.test_admin_login,
         tester.test_get_current_user,
         tester.test_dashboard_stats,
+        
+        # Product setup for testing
         tester.test_get_products,
         tester.test_create_product,
         tester.test_update_product,
         tester.test_get_product_by_barcode,
-        tester.test_create_invoice,
-        tester.test_get_invoices,
+        
+        # Cash register setup (required for invoices)
+        tester.test_open_cash_register,
+        tester.test_get_active_cash_register,
+        
+        # TAX SYSTEM TESTS - Main focus
+        tester.test_create_tax_agregado,
+        tester.test_create_tax_incluido,
+        tester.test_get_taxes,
+        tester.test_create_invoice_with_taxes,
+        tester.test_create_invoice,  # Simple invoice for comparison
+        tester.test_get_invoices,  # Test backward compatibility
+        tester.test_update_tax,
+        
+        # User management tests
         tester.test_get_users,
         tester.test_create_user,
         tester.test_delete_user,
+        
+        # Cleanup tests
+        tester.test_delete_taxes,
         tester.test_delete_product,
     ]
     
@@ -548,14 +567,31 @@ def main():
             failed_tests.append(test.__name__)
     
     # Print results
-    print("\n" + "=" * 50)
+    print("\n" + "=" * 60)
     print(f"📊 Test Results: {tester.tests_passed}/{tester.tests_run} passed")
     
     if failed_tests:
         print(f"❌ Failed tests: {', '.join(failed_tests)}")
+        print("\n🔍 Tax System Test Summary:")
+        tax_tests = [
+            'test_create_tax_agregado',
+            'test_create_tax_incluido', 
+            'test_get_taxes',
+            'test_create_invoice_with_taxes',
+            'test_get_invoices',
+            'test_update_tax'
+        ]
+        
+        tax_failures = [t for t in failed_tests if t in tax_tests]
+        if tax_failures:
+            print(f"❌ Tax system failures: {', '.join(tax_failures)}")
+        else:
+            print("✅ Tax system tests passed!")
+            
         return 1
     else:
         print("✅ All tests passed!")
+        print("✅ Tax system is working correctly!")
         return 0
 
 if __name__ == "__main__":
