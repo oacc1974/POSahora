@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
+import Register from './pages/Register';
+import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import Productos from './pages/Productos';
 import POS from './pages/POS';
@@ -9,9 +11,13 @@ import Usuarios from './pages/Usuarios';
 import Configuracion from './pages/Configuracion';
 import Caja from './pages/Caja';
 import Clientes from './pages/Clientes';
+import Organizaciones from './pages/Organizaciones';
 import Layout from './components/Layout';
 import { Toaster } from './components/ui/sonner';
+import axios from 'axios';
 import './App.css';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 function App() {
   const [user, setUser] = useState(null);
