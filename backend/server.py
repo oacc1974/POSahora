@@ -165,10 +165,19 @@ class InvoiceCreate(BaseModel):
     cliente_id: Optional[str] = None
     comentarios: Optional[str] = None
 
+class ImpuestoDesglose(BaseModel):
+    nombre: str
+    tasa: float
+    tipo: str
+    monto: float
+
 class InvoiceResponse(BaseModel):
     id: str
     numero: str
     items: List[InvoiceItem]
+    subtotal: float
+    total_impuestos: float
+    desglose_impuestos: List[ImpuestoDesglose]
     total: float
     vendedor: str
     vendedor_nombre: str
