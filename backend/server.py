@@ -440,7 +440,7 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
         path="/"
     )
     
-    return {
+    response_data = {
         "user": {
             "id": user_id,
             "nombre": user["nombre"],
@@ -450,6 +450,15 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
             "organizacion_id": user["organizacion_id"]
         }
     }
+    
+    if "password_temp" in user:
+        response_data["temp_password"] = user["password_temp"]
+        await db.usuarios.update_one(
+            {"user_id": user_id},
+            {"$unset": {"password_temp": ""}}
+        )
+    
+    return response_data
 
 @app.post("/api/auth/register")
 async def register_user(user_data: UserRegister, response: Response):
