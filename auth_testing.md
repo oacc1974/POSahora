@@ -10,10 +10,11 @@ db.usuarios.insertOne({
   user_id: userId,
   email: 'test.user.' + Date.now() + '@example.com',
   nombre: 'Test User',
-  username: 'testuser',
+  username: 'testuser' + Date.now(),
   rol: 'propietario',
-  organizacion_id: userId,
-  created_at: new Date()
+  organizacion_id: 'org-' + Date.now(),
+  picture: 'https://via.placeholder.com/150',
+  creado: new Date()
 });
 db.user_sessions.insertOne({
   user_id: userId,
@@ -43,7 +44,7 @@ curl -X GET "https://salespoint-27.preview.emergentagent.com/api/productos" \
 await page.context.add_cookies([{
     "name": "session_token",
     "value": "YOUR_SESSION_TOKEN",
-    "domain": "role-access-1.preview.emergentagent.com",
+    "domain": "salespoint-27.preview.emergentagent.com",
     "path": "/",
     "httpOnly": true,
     "secure": true,
