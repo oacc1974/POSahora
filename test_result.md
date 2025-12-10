@@ -141,7 +141,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Cálculo de impuestos en facturas"
     - "Mostrar desglose de impuestos en recibo"
   stuck_tasks: []
   test_all: false
