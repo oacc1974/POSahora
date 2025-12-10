@@ -101,3 +101,49 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Sistema POS multi-tenant con cálculo y desglose de impuestos en facturas"
+
+backend:
+  - task: "Cálculo de impuestos en facturas"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implementado el cálculo de impuestos en el endpoint POST /api/facturas. Se modificaron los modelos Pydantic para incluir subtotal, total_impuestos, y desglose_impuestos. El sistema ahora obtiene los impuestos activos de la organización y calcula correctamente según el tipo (agregado o incluido). Las facturas antiguas son compatibles mediante retrocompatibilidad en el GET."
+
+frontend:
+  - task: "Mostrar desglose de impuestos en recibo"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/POS.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Actualizada la función printInvoice para mostrar el subtotal, desglose de cada impuesto con su tasa y monto, y el total final. Se muestra si el impuesto está incluido en el precio."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Cálculo de impuestos en facturas"
+    - "Mostrar desglose de impuestos en recibo"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+      message: "Implementación completa del sistema de impuestos. Por favor, prueba el siguiente flujo: 1) Login como propietario (admin/admin*88), 2) Crear un impuesto desde Configuración > Impuestos (ej: IVA 12% tipo agregado), 3) Ir al POS, abrir caja, realizar una venta, y verificar que el recibo muestre el desglose de impuestos correctamente. También probar con impuestos de tipo 'incluido'. Verificar que las facturas antiguas sigan mostrándose correctamente."
