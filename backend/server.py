@@ -831,6 +831,97 @@ async def delete_organizacion(org_id: str, current_user: dict = Depends(get_curr
     
     return {"message": "Organización eliminada correctamente"}
 
+@app.get("/api/impuestos", response_model=List[ImpuestoResponse])
+async def get_impuestos(current_user: dict = Depends(get_current_user)):
+    impuestos = await db.impuestos.find(
+        {"organizacion_id": current_user["organizacion_id"]},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    return [
+        ImpuestoResponse(
+            id=imp["id"],
+            nombre=imp["nombre"],
+            tasa=imp["tasa"],
+            tipo=imp["tipo"],
+            activo=imp.get("activo", True),
+            organizacion_id=imp["organizacion_id"]
+        )
+        for imp in impuestos
+    ]
+
+@app.post("/api/impuestos")
+async def create_impuesto(impuesto: ImpuestoCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    impuesto_id = str(uuid.uuid4())
+    nuevo_impuesto = {
+        "id": impuesto_id,
+        "nombre": impuesto.nombre,
+        "tasa": impuesto.tasa,
+        "tipo": impuesto.tipo,
+        "activo": impuesto.activo,
+        "organizacion_id": current_user["organizacion_id"],
+        "creado": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.impuestos.insert_one(nuevo_impuesto)
+    
+    return ImpuestoResponse(
+        id=impuesto_id,
+        nombre=impuesto.nombre,
+        tasa=impuesto.tasa,
+        tipo=impuesto.tipo,
+        activo=impuesto.activo,
+        organizacion_id=current_user["organizacion_id"]
+    )
+
+@app.put("/api/impuestos/{impuesto_id}")
+async def update_impuesto(
+    impuesto_id: str,
+    impuesto: ImpuestoCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    result = await db.impuestos.update_one(
+        {
+            "id": impuesto_id,
+            "organizacion_id": current_user["organizacion_id"]
+        },
+        {
+            "$set": {
+                "nombre": impuesto.nombre,
+                "tasa": impuesto.tasa,
+                "tipo": impuesto.tipo,
+                "activo": impuesto.activo,
+                "actualizado": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Impuesto no encontrado")
+    
+    return {"message": "Impuesto actualizado correctamente"}
+
+@app.delete("/api/impuestos/{impuesto_id}")
+async def delete_impuesto(impuesto_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    result = await db.impuestos.delete_one({
+        "id": impuesto_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Impuesto no encontrado")
+    
+    return {"message": "Impuesto eliminado correctamente"}
+
 @app.get("/api/productos", response_model=List[ProductResponse])
 async def get_productos(current_user: dict = Depends(get_current_user)):
     productos = await db.productos.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
