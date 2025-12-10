@@ -223,6 +223,8 @@ class InvoiceResponse(BaseModel):
     comentarios: Optional[str] = None
     metodo_pago_id: Optional[str] = None
     metodo_pago_nombre: Optional[str] = None
+    tipo_pedido_id: Optional[str] = None
+    tipo_pedido_nombre: Optional[str] = None
     fecha: str
 
 class CajaApertura(BaseModel):
