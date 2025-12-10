@@ -12,27 +12,56 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function ConfiguracionNew() {
   const [activeSection, setActiveSection] = useState('funciones');
+  const [funcionesConfig, setFuncionesConfig] = React.useState({
+    cierres_caja: true,
+    tickets_abiertos: false,
+    tipo_pedido: false,
+  });
 
-  const menuSections = [
+  React.useEffect(() => {
+    fetchFuncionesConfig();
+  }, []);
+
+  const fetchFuncionesConfig = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/funciones`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFuncionesConfig(response.data);
+    } catch (error) {
+      console.error('Error al cargar funciones:', error);
+    }
+  };
+
+  const allMenuItems = [
     {
       title: 'Configuración del sistema',
       items: [
-        { id: 'funciones', label: 'Funciones', icon: Settings },
-        { id: 'metodos-pago', label: 'Métodos de pago', icon: CreditCard },
-        { id: 'impuestos', label: 'Impuestos', icon: FileText },
-        { id: 'recibo', label: 'Recibo', icon: Receipt },
-        { id: 'tickets-abiertos', label: 'Tickets abiertos', icon: ClipboardList },
-        { id: 'tipo-pedido', label: 'Tipo de pedido', icon: ShoppingBag },
+        { id: 'funciones', label: 'Funciones', icon: Settings, alwaysShow: true },
+        { id: 'metodos-pago', label: 'Métodos de pago', icon: CreditCard, alwaysShow: true },
+        { id: 'impuestos', label: 'Impuestos', icon: FileText, alwaysShow: true },
+        { id: 'recibo', label: 'Recibo', icon: Receipt, alwaysShow: true },
+        { id: 'tickets-abiertos', label: 'Tickets abiertos', icon: ClipboardList, showWhen: 'tickets_abiertos' },
+        { id: 'tipo-pedido', label: 'Tipo de pedido', icon: ShoppingBag, showWhen: 'tipo_pedido' },
       ]
     },
     {
       title: 'Configuración de la tienda y el TPV',
       items: [
-        { id: 'tiendas', label: 'Tiendas', icon: Store },
-        { id: 'dispositivos-tpv', label: 'Dispositivos TPV', icon: Monitor },
+        { id: 'tiendas', label: 'Tiendas', icon: Store, alwaysShow: true },
+        { id: 'dispositivos-tpv', label: 'Dispositivos TPV', icon: Monitor, alwaysShow: true },
       ]
     }
   ];
+
+  // Filtrar items según configuración de funciones
+  const menuSections = allMenuItems.map(section => ({
+    ...section,
+    items: section.items.filter(item => 
+      item.alwaysShow || (item.showWhen && funcionesConfig[item.showWhen])
+    )
+  }));
 
   const renderContent = () => {
     switch (activeSection) {
