@@ -708,6 +708,44 @@ async def register_user(user_data: UserRegister, response: Response):
     ]
     await db.metodos_pago.insert_many(metodos_default)
     
+    # Crear tipos de pedido por defecto
+    tipos_pedido_default = [
+        {
+            "id": str(uuid.uuid4()),
+            "nombre": "Para llevar",
+            "activo": True,
+            "organizacion_id": org_id
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "nombre": "Comer aquí",
+            "activo": True,
+            "organizacion_id": org_id
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "nombre": "A domicilio",
+            "activo": True,
+            "organizacion_id": org_id
+        }
+    ]
+    await db.tipos_pedido.insert_many(tipos_pedido_default)
+    
+    # Crear tickets predefinidos por defecto
+    tickets_default = [
+        {
+            "id": str(uuid.uuid4()),
+            "nombre": "Mesa 1",
+            "organizacion_id": org_id
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "nombre": "Mesa 2",
+            "organizacion_id": org_id
+        }
+    ]
+    await db.tickets_predefinidos.insert_many(tickets_default)
+    
     session_token = f"session_{uuid.uuid4().hex}"
     await db.user_sessions.insert_one({
         "user_id": user_id,
