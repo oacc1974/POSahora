@@ -326,7 +326,7 @@ class BillingSystemTester:
                         return False
             
             # Validate total calculation
-            total_agregado = sum(tax['monto'] for tax in desglose_impuestos if tax['tipo'] == 'agregado')
+            total_agregado = sum(tax['monto'] for tax in desglose_impuestos if tax['tipo'] in ['agregado', 'no_incluido'])
             expected_total = subtotal + total_agregado
             if abs(total - expected_total) > 0.01:
                 print(f"   ❌ Total calculation error: expected {expected_total}, got {total}")
