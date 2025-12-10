@@ -3,6 +3,7 @@ import { Card } from '../components/ui/card';
 import { Settings, CreditCard, Receipt, FileText, ClipboardList, ShoppingBag, Store, Monitor } from 'lucide-react';
 import ConfigRecibo from './config/ConfigRecibo';
 import ConfigFunciones from './config/ConfigFunciones';
+import ConfigImpuestos from './config/ConfigImpuestos';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -39,7 +40,7 @@ export default function ConfiguracionNew() {
       case 'metodos-pago':
         return <PlaceholderSection title="Métodos de pago" />;
       case 'impuestos':
-        return <PlaceholderSection title="Impuestos" />;
+        return <ConfigImpuestos />;
       case 'tickets-abiertos':
         return <PlaceholderSection title="Tickets abiertos" />;
       case 'tipo-pedido':
