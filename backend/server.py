@@ -349,6 +349,7 @@ async def get_me(current_user: dict = Depends(get_current_user)):
 
 class GoogleSessionRequest(BaseModel):
     nombre_tienda: Optional[str] = None
+    password: Optional[str] = None
 
 @app.post("/api/auth/session")
 async def create_session(request: Request, response: Response, body: GoogleSessionRequest = None):
@@ -382,10 +383,12 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
         if not body or not body.nombre_tienda:
             raise HTTPException(status_code=400, detail="Se requiere el nombre de la tienda")
         
+        if not body.password:
+            raise HTTPException(status_code=400, detail="Se requiere una contraseña")
+        
         user_id = f"user_{uuid.uuid4().hex[:12]}"
         org_id = str(uuid.uuid4())
         nombre_tienda = body.nombre_tienda
-        temp_password = f"{nombre.split()[0].lower()}{str(uuid.uuid4().hex[:6])}"
         
         new_user = {
             "_id": user_id,
@@ -393,8 +396,7 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
             "nombre": nombre,
             "email": email,
             "username": email.split("@")[0],
-            "password": get_password_hash(temp_password),
-            "password_temp": temp_password,
+            "password": get_password_hash(body.password),
             "picture": picture,
             "rol": "propietario",
             "organizacion_id": org_id,
@@ -465,7 +467,7 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
         path="/"
     )
     
-    response_data = {
+    return {
         "user": {
             "id": user_id,
             "nombre": user["nombre"],
@@ -475,15 +477,6 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
             "organizacion_id": user["organizacion_id"]
         }
     }
-    
-    if "password_temp" in user:
-        response_data["temp_password"] = user["password_temp"]
-        await db.usuarios.update_one(
-            {"user_id": user_id},
-            {"$unset": {"password_temp": ""}}
-        )
-    
-    return response_data
 
 @app.post("/api/auth/register")
 async def register_user(user_data: UserRegister, response: Response):
