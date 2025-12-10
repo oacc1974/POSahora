@@ -27,9 +27,17 @@ export default function POS() {
   const [showAperturaCaja, setShowAperturaCaja] = useState(false);
   const [montoInicial, setMontoInicial] = useState('');
   const [showClienteDialog, setShowClienteDialog] = useState(false);
+  const [showNuevoClienteDialog, setShowNuevoClienteDialog] = useState(false);
   const [cedulaBusqueda, setCedulaBusqueda] = useState('');
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [comentarios, setComentarios] = useState('');
+  const [nuevoClienteForm, setNuevoClienteForm] = useState({
+    nombre: '',
+    cedula_ruc: '',
+    telefono: '',
+    email: '',
+    direccion: '',
+  });
 
   useEffect(() => {
     fetchProductos();
@@ -184,6 +192,33 @@ export default function POS() {
       setCedulaBusqueda('');
     } catch (error) {
       toast.error('Cliente no encontrado');
+    }
+  };
+
+  const handleCrearNuevoCliente = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_URL}/api/clientes`,
+        nuevoClienteForm,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setClienteSeleccionado(response.data);
+      toast.success('Cliente creado y seleccionado');
+      setShowNuevoClienteDialog(false);
+      setShowClienteDialog(false);
+      setNuevoClienteForm({
+        nombre: '',
+        cedula_ruc: '',
+        telefono: '',
+        email: '',
+        direccion: '',
+      });
+    } catch (error) {
+      toast.error('Error al crear cliente');
     }
   };
 
@@ -654,7 +689,116 @@ export default function POS() {
                 10 dígitos para Cédula, 13 para RUC
               </p>
             </div>
+
+            <div className="pt-4 border-t">
+              <Button
+                onClick={() => {
+                  setShowClienteDialog(false);
+                  setShowNuevoClienteDialog(true);
+                }}
+                data-testid="crear-nuevo-cliente-button"
+                variant="outline"
+                className="w-full gap-2"
+              >
+                <Plus size={16} />
+                Crear Nuevo Cliente
+              </Button>
+            </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Crear Nuevo Cliente */}
+      <Dialog open={showNuevoClienteDialog} onOpenChange={setShowNuevoClienteDialog}>
+        <DialogContent data-testid="nuevo-cliente-dialog" className="max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Crear Nuevo Cliente</DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleCrearNuevoCliente} className="space-y-4">
+            <div>
+              <Label htmlFor="nuevo_nombre">Nombre *</Label>
+              <Input
+                id="nuevo_nombre"
+                data-testid="nuevo-cliente-nombre-input"
+                value={nuevoClienteForm.nombre}
+                onChange={(e) =>
+                  setNuevoClienteForm({ ...nuevoClienteForm, nombre: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="nuevo_cedula">Cédula o RUC *</Label>
+              <Input
+                id="nuevo_cedula"
+                data-testid="nuevo-cliente-cedula-input"
+                value={nuevoClienteForm.cedula_ruc}
+                onChange={(e) =>
+                  setNuevoClienteForm({ ...nuevoClienteForm, cedula_ruc: e.target.value })
+                }
+                placeholder="10 o 13 dígitos"
+                maxLength={13}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="nuevo_telefono">Teléfono</Label>
+              <Input
+                id="nuevo_telefono"
+                data-testid="nuevo-cliente-telefono-input"
+                value={nuevoClienteForm.telefono}
+                onChange={(e) =>
+                  setNuevoClienteForm({ ...nuevoClienteForm, telefono: e.target.value })
+                }
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="nuevo_email">Email</Label>
+              <Input
+                id="nuevo_email"
+                data-testid="nuevo-cliente-email-input"
+                type="email"
+                value={nuevoClienteForm.email}
+                onChange={(e) =>
+                  setNuevoClienteForm({ ...nuevoClienteForm, email: e.target.value })
+                }
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="nuevo_direccion">Dirección</Label>
+              <Input
+                id="nuevo_direccion"
+                data-testid="nuevo-cliente-direccion-input"
+                value={nuevoClienteForm.direccion}
+                onChange={(e) =>
+                  setNuevoClienteForm({ ...nuevoClienteForm, direccion: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowNuevoClienteDialog(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                data-testid="guardar-nuevo-cliente-button"
+                className="flex-1"
+              >
+                Crear y Seleccionar
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
