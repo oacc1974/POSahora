@@ -47,7 +47,8 @@ function AppRouter() {
 
       try {
         const response = await axios.get(`${API_URL}/api/me`, {
-          withCredentials: true
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
         });
         
         const userData = response.data;
