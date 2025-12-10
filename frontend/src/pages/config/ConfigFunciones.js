@@ -50,9 +50,12 @@ export default function ConfigFunciones() {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Configuración guardada correctamente');
+      // Recargar la página para actualizar el menú
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       toast.error('Error al guardar la configuración');
-    } finally {
       setSaving(false);
     }
   };
