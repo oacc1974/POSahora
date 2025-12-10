@@ -4,6 +4,7 @@ import { Settings, CreditCard, Receipt, FileText, ClipboardList, ShoppingBag, St
 import ConfigRecibo from './config/ConfigRecibo';
 import ConfigFunciones from './config/ConfigFunciones';
 import ConfigImpuestos from './config/ConfigImpuestos';
+import ConfigMetodosPago from './config/ConfigMetodosPago';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
