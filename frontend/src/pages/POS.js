@@ -1095,6 +1095,168 @@ export default function POS() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Guardar Ticket */}
+      <Dialog open={showGuardarTicketDialog} onOpenChange={setShowGuardarTicketDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Guardar ticket</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Buscar mesa */}
+            <div>
+              <Input
+                placeholder="Buscar..."
+                className="w-full"
+              />
+            </div>
+
+            {/* Lista de mesas */}
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {mesasPredefinidas.map((mesa) => (
+                <button
+                  key={mesa.id}
+                  onClick={() => handleGuardarTicket(mesa.nombre)}
+                  className="w-full text-left px-4 py-3 hover:bg-slate-100 rounded-md transition-colors border border-slate-200"
+                >
+                  {mesa.nombre}
+                </button>
+              ))}
+
+              {/* Ticket Personalizado */}
+              <button
+                onClick={() => setModoGuardar('personalizado')}
+                className="w-full text-left px-4 py-3 bg-green-50 border-2 border-green-500 text-green-700 font-semibold rounded-md hover:bg-green-100 transition-colors"
+              >
+                TICKET PERSONALIZADO
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Ticket Personalizado */}
+      <Dialog open={modoGuardar === 'personalizado'} onOpenChange={() => setModoGuardar('mesa')}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Guardar ticket</DialogTitle>
+          </DialogHeader>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (nombreTicketPersonalizado.trim()) {
+                handleGuardarTicket(nombreTicketPersonalizado);
+                setModoGuardar('mesa');
+              }
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <Label htmlFor="nombre-ticket">Nombre</Label>
+              <Input
+                id="nombre-ticket"
+                value={nombreTicketPersonalizado}
+                onChange={(e) => setNombreTicketPersonalizado(e.target.value)}
+                placeholder={`Ticket - ${new Date().toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}`}
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="comentario-ticket">Comentario</Label>
+              <Input
+                id="comentario-ticket"
+                placeholder="Opcional"
+                disabled
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setModoGuardar('mesa');
+                  setNombreTicketPersonalizado('');
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Guardando...' : 'GUARDAR'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Tickets Abiertos */}
+      <Dialog open={showTicketsAbiertosDialog} onOpenChange={setShowTicketsAbiertosDialog}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Tickets abiertos</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 overflow-y-auto max-h-[60vh]">
+            {ticketsAbiertos.length === 0 ? (
+              <div className="text-center py-12 text-slate-500">
+                No hay tickets abiertos
+              </div>
+            ) : (
+              ticketsAbiertos.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="border rounded-lg p-4 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-semibold text-lg">{ticket.nombre}</h3>
+                      <p className="text-sm text-slate-600">
+                        {new Date(ticket.fecha_creacion).toLocaleString('es-ES')}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-lg">${ticket.subtotal.toFixed(2)}</p>
+                      <p className="text-sm text-slate-600">{ticket.items.length} items</p>
+                    </div>
+                  </div>
+
+                  {/* Items del ticket */}
+                  <div className="space-y-1 mb-3 text-sm">
+                    {ticket.items.map((item, idx) => (
+                      <div key={idx} className="flex justify-between text-slate-600">
+                        <span>{item.cantidad}x {item.nombre}</span>
+                        <span>${item.subtotal.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Botones de acción */}
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleCargarTicket(ticket)}
+                      className="flex-1"
+                      size="sm"
+                    >
+                      Cargar
+                    </Button>
+                    <Button
+                      onClick={() => handleEliminarTicket(ticket.id)}
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Eliminar
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
