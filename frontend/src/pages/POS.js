@@ -1035,12 +1035,12 @@ export default function POS() {
           {ticketsAbiertosFuncionActiva && (
             <div className="grid grid-cols-2 gap-2 mb-3">
               <Button
-                onClick={() => setShowGuardarTicketDialog(true)}
+                onClick={handleClickGuardar}
                 disabled={cart.length === 0}
                 variant="outline"
                 className="h-10 text-sm font-semibold"
               >
-                GUARDAR
+                {ticketActualId ? 'ACTUALIZAR' : 'GUARDAR'}
               </Button>
               <Button
                 onClick={() => {
