@@ -854,6 +854,30 @@ export default function POS() {
             </span>
           </div>
 
+          {/* Botones de tickets abiertos */}
+          {ticketsAbiertosFuncionActiva && (
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <Button
+                onClick={() => setShowGuardarTicketDialog(true)}
+                disabled={cart.length === 0}
+                variant="outline"
+                className="h-10 text-sm font-semibold"
+              >
+                GUARDAR
+              </Button>
+              <Button
+                onClick={() => {
+                  fetchTicketsAbiertos();
+                  setShowTicketsAbiertosDialog(true);
+                }}
+                variant="outline"
+                className="h-10 text-sm font-semibold"
+              >
+                TICKETS ABIERTOS
+              </Button>
+            </div>
+          )}
+
           <Button
             onClick={handleCheckout}
             data-testid="checkout-button"
