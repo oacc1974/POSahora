@@ -169,6 +169,24 @@ class TipoPedidoResponse(BaseModel):
     activo: bool
     organizacion_id: str
 
+# Modelos para Tiendas (Sucursales)
+class TiendaCreate(BaseModel):
+    nombre: str
+    direccion: Optional[str] = None
+    telefono: Optional[str] = None
+    email: Optional[str] = None
+    activa: bool = True
+
+class TiendaResponse(BaseModel):
+    id: str
+    nombre: str
+    direccion: Optional[str] = None
+    telefono: Optional[str] = None
+    email: Optional[str] = None
+    activa: bool
+    organizacion_id: str
+    fecha_creacion: str
+
 class ProductCreate(BaseModel):
     nombre: str
     precio: float
