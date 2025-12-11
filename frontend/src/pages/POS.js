@@ -178,6 +178,16 @@ export default function POS() {
       return;
     }
 
+    // Validar que el nombre no esté ya en uso
+    const nombreExiste = ticketsAbiertos.some(
+      (ticket) => ticket.nombre.toLowerCase() === nombreMesa.toLowerCase()
+    );
+    
+    if (nombreExiste) {
+      toast.error(`Ya existe un ticket con el nombre "${nombreMesa}"`);
+      return;
+    }
+
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -205,6 +215,7 @@ export default function POS() {
       setTicketActualId(null);
       setShowGuardarTicketDialog(false);
       setNombreTicketPersonalizado('');
+      setModoGuardar('mesa');
       fetchTicketsAbiertos();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error al guardar ticket');
