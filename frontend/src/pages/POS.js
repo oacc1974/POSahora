@@ -129,8 +129,38 @@ export default function POS() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setRequiereCierres(response.data.cierres_caja);
+      setTicketsAbiertosFuncionActiva(response.data.tickets_abiertos);
+      
+      // Si tickets abiertos está activo, cargar la lista
+      if (response.data.tickets_abiertos) {
+        fetchTicketsAbiertos();
+      }
     } catch (error) {
       console.error('Error al cargar configuración de funciones:', error);
+    }
+  };
+
+  const fetchMesasPredefinidas = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/tickets-predefinidos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMesasPredefinidas(response.data);
+    } catch (error) {
+      console.error('Error al cargar mesas predefinidas:', error);
+    }
+  };
+
+  const fetchTicketsAbiertos = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/tickets-abiertos-pos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTicketsAbiertos(response.data);
+    } catch (error) {
+      console.error('Error al cargar tickets abiertos:', error);
     }
   };
 
