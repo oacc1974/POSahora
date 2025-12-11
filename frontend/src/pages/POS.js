@@ -690,6 +690,7 @@ export default function POS() {
               <Scan size={20} />
             </Button>
             <Button
+              onClick={() => setShowMobileSearch(true)}
               variant="ghost"
               size="sm"
               className="p-2"
