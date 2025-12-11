@@ -1539,7 +1539,7 @@ export default function POS() {
                   handleCheckout();
                 }}
                 disabled={loading}
-                className="w-full h-12 text-lg font-semibold gap-2 bg-green-600 hover:bg-green-700"
+                className="w-full h-12 text-lg font-semibold gap-2 bg-blue-600 hover:bg-blue-700"
               >
                 <Printer size={20} />
                 {loading ? 'Procesando...' : 'Finalizar Venta'}
