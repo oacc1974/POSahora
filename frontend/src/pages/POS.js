@@ -654,24 +654,52 @@ export default function POS() {
           </div>
         </div>
 
-        {/* Botones GUARDAR y COBRAR */}
-        <div className="bg-blue-600 px-4 pb-3 grid grid-cols-2 gap-2">
-          {ticketsAbiertosFuncionActiva && (
+        {/* Botones GUARDAR, TICKETS ABIERTOS y COBRAR */}
+        <div className="bg-blue-600 px-4 pb-3">
+          {ticketsAbiertosFuncionActiva ? (
+            <div className="grid grid-cols-2 gap-2">
+              {/* GUARDAR solo si hay productos */}
+              {cart.length > 0 && (
+                <Button
+                  onClick={() => setShowGuardarTicketDialog(true)}
+                  className="bg-blue-500 hover:bg-blue-400 h-10 font-semibold"
+                >
+                  GUARDAR
+                </Button>
+              )}
+              
+              {/* TICKETS ABIERTOS solo si HAY tickets guardados */}
+              {ticketsAbiertos.length > 0 && (
+                <Button
+                  onClick={() => {
+                    fetchTicketsAbiertos();
+                    setShowTicketsAbiertosDialog(true);
+                  }}
+                  className={`bg-blue-500 hover:bg-blue-400 h-10 font-semibold ${cart.length === 0 ? 'col-span-2' : ''}`}
+                >
+                  TICKETS ABIERTOS
+                </Button>
+              )}
+
+              {/* COBRAR - siempre visible si hay productos */}
+              {cart.length > 0 && (
+                <Button
+                  onClick={() => setShowMobileCart(true)}
+                  className={`bg-blue-700 hover:bg-blue-600 h-10 font-semibold ${ticketsAbiertos.length === 0 ? 'col-span-2' : ''}`}
+                >
+                  COBRAR ${total.toFixed(2)}
+                </Button>
+              )}
+            </div>
+          ) : (
             <Button
-              onClick={() => setShowGuardarTicketDialog(true)}
+              onClick={() => setShowMobileCart(true)}
               disabled={cart.length === 0}
-              className="bg-blue-500 hover:bg-blue-400 h-10 font-semibold"
+              className="w-full bg-blue-700 hover:bg-blue-600 h-10 font-semibold"
             >
-              GUARDAR
+              COBRAR ${total.toFixed(2)}
             </Button>
           )}
-          <Button
-            onClick={() => setShowMobileCart(true)}
-            disabled={cart.length === 0}
-            className={`bg-blue-700 hover:bg-blue-600 h-10 font-semibold ${ticketsAbiertosFuncionActiva ? '' : 'col-span-2'}`}
-          >
-            COBRAR ${total.toFixed(2)}
-          </Button>
         </div>
 
         {/* Selector de categoría y búsqueda */}
