@@ -8,6 +8,7 @@ import ConfigImpuestos from './config/ConfigImpuestos';
 import ConfigMetodosPago from './config/ConfigMetodosPago';
 import ConfigTicketsAbiertos from './config/ConfigTicketsAbiertos';
 import ConfigTipoPedido from './config/ConfigTipoPedido';
+import ConfigTiendas from './config/ConfigTiendas';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
