@@ -1360,7 +1360,7 @@ export default function POS() {
       <Dialog open={showMobileCart} onOpenChange={setShowMobileCart}>
         <DialogContent className="md:hidden sm:max-w-full h-[90vh] p-0 flex flex-col">
           {/* Header del sheet */}
-          <div className="bg-green-600 text-white p-4 flex items-center justify-between">
+          <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
             <h2 className="text-lg font-bold">Carrito ({cart.length} items)</h2>
             <button onClick={() => setShowMobileCart(false)} className="text-white">
               <X size={24} />
