@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from '../components/ui/dialog';
 import BarcodeScanner from '../components/BarcodeScanner';
-import { Plus, Minus, Trash2, Scan, Printer, X, Search } from 'lucide-react';
+import { Plus, Minus, Trash2, Scan, Printer, X, Search, Menu, Bell, User, MoreVertical, ChevronDown, UserPlus } from 'lucide-react';
 import { Textarea } from '../components/ui/textarea';
 import axios from 'axios';
 import { toast } from 'sonner';
