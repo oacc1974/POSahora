@@ -1420,14 +1420,14 @@ export default function POS() {
                     </div>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => updateCartQuantity(item.producto_id, item.cantidad - 1)}
+                        onClick={() => updateQuantity(item.producto_id, -1)}
                         className="w-8 h-8 flex items-center justify-center bg-slate-200 rounded hover:bg-slate-300"
                       >
                         <Minus size={16} />
                       </button>
                       <span className="w-8 text-center font-bold">{item.cantidad}</span>
                       <button
-                        onClick={() => updateCartQuantity(item.producto_id, item.cantidad + 1)}
+                        onClick={() => updateQuantity(item.producto_id, 1)}
                         className="w-8 h-8 flex items-center justify-center bg-slate-200 rounded hover:bg-slate-300"
                       >
                         <Plus size={16} />
