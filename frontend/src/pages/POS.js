@@ -164,6 +164,88 @@ export default function POS() {
     }
   };
 
+  const handleGuardarTicket = async (nombreMesa) => {
+    if (cart.length === 0) {
+      toast.error('El carrito está vacío');
+      return;
+    }
+
+    if (!cajaActiva) {
+      toast.error('Debes abrir una caja antes de guardar tickets');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+
+      await axios.post(
+        `${API_URL}/api/tickets-abiertos-pos`,
+        {
+          nombre: nombreMesa,
+          items: cart,
+          subtotal: total,
+          cliente_id: clienteSeleccionado?.id || null,
+          cliente_nombre: clienteSeleccionado?.nombre || null,
+          comentarios: comentarios || null,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      toast.success(`Ticket "${nombreMesa}" guardado correctamente`);
+      setCart([]);
+      setClienteSeleccionado(null);
+      setComentarios('');
+      setTicketActualId(null);
+      setShowGuardarTicketDialog(false);
+      setNombreTicketPersonalizado('');
+      fetchTicketsAbiertos();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Error al guardar ticket');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCargarTicket = (ticket) => {
+    setCart(ticket.items);
+    setTicketActualId(ticket.id);
+    
+    if (ticket.cliente_id) {
+      setClienteSeleccionado({
+        id: ticket.cliente_id,
+        nombre: ticket.cliente_nombre
+      });
+    }
+    
+    if (ticket.comentarios) {
+      setComentarios(ticket.comentarios);
+    }
+
+    setShowTicketsAbiertosDialog(false);
+    toast.success(`Ticket "${ticket.nombre}" cargado`);
+  };
+
+  const handleEliminarTicket = async (ticketId) => {
+    if (!window.confirm('¿Estás seguro de eliminar este ticket?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/tickets-abiertos-pos/${ticketId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Ticket eliminado');
+      fetchTicketsAbiertos();
+    } catch (error) {
+      toast.error('Error al eliminar ticket');
+    }
+  };
+
   const addToCart = (producto) => {
     const existing = cart.find((item) => item.producto_id === producto.id);
     if (existing) {
