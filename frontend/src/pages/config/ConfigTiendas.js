@@ -134,8 +134,7 @@ export default function ConfigTiendas() {
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${API_URL}/api/tiendas/${tienda.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true
+        headers: { Authorization: `Bearer ${token}` }
       });
       fetchTiendas();
     } catch (error) {
