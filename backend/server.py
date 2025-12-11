@@ -1155,12 +1155,14 @@ async def get_funciones(current_user: dict = Depends(get_current_user)):
         return {
             "cierres_caja": True,
             "tickets_abiertos": False,
-            "tipo_pedido": False
+            "tipo_pedido": False,
+            "venta_con_stock": True
         }
     return {
         "cierres_caja": config.get("cierres_caja", True),
         "tickets_abiertos": config.get("tickets_abiertos", False),
-        "tipo_pedido": config.get("tipo_pedido", False)
+        "tipo_pedido": config.get("tipo_pedido", False),
+        "venta_con_stock": config.get("venta_con_stock", True)
     }
 
 @app.put("/api/funciones")
