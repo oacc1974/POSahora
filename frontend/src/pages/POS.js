@@ -180,37 +180,58 @@ export default function POS() {
       return;
     }
 
-    // Validar que el nombre no esté ya en uso
-    const nombreExiste = ticketsAbiertos.some(
-      (ticket) => ticket.nombre.toLowerCase() === nombreMesa.toLowerCase()
-    );
-    
-    if (nombreExiste) {
-      toast.error(`Ya existe un ticket con el nombre "${nombreMesa}"`);
-      return;
-    }
-
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
       const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
-      await axios.post(
-        `${API_URL}/api/tickets-abiertos-pos`,
-        {
-          nombre: nombreMesa,
-          items: cart,
-          subtotal: total,
-          cliente_id: clienteSeleccionado?.id || null,
-          cliente_nombre: clienteSeleccionado?.nombre || null,
-          comentarios: comentarios || null,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
+      // Si hay un ticket actual (recuperado), actualizar ese ticket
+      if (ticketActualId) {
+        await axios.put(
+          `${API_URL}/api/tickets-abiertos-pos/${ticketActualId}`,
+          {
+            nombre: nombreMesa,
+            items: cart,
+            subtotal: total,
+            cliente_id: clienteSeleccionado?.id || null,
+            cliente_nombre: clienteSeleccionado?.nombre || null,
+            comentarios: comentarios || null,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        toast.success(`Ticket "${nombreMesa}" actualizado correctamente`);
+      } else {
+        // Es un ticket nuevo, validar que el nombre no esté en uso
+        const nombreExiste = ticketsAbiertos.some(
+          (ticket) => ticket.nombre.toLowerCase() === nombreMesa.toLowerCase()
+        );
+        
+        if (nombreExiste) {
+          toast.error(`Ya existe un ticket con el nombre "${nombreMesa}"`);
+          setLoading(false);
+          return;
         }
-      );
 
-      toast.success(`Ticket "${nombreMesa}" guardado correctamente`);
+        // Crear nuevo ticket
+        await axios.post(
+          `${API_URL}/api/tickets-abiertos-pos`,
+          {
+            nombre: nombreMesa,
+            items: cart,
+            subtotal: total,
+            cliente_id: clienteSeleccionado?.id || null,
+            cliente_nombre: clienteSeleccionado?.nombre || null,
+            comentarios: comentarios || null,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        toast.success(`Ticket "${nombreMesa}" guardado correctamente`);
+      }
+
       setCart([]);
       setClienteSeleccionado(null);
       setComentarios('');
