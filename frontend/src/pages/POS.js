@@ -625,13 +625,18 @@ export default function POS() {
       {/* Header Móvil */}
       <div className="md:hidden sticky top-0 z-50 bg-white border-b">
         {/* Barra superior con iconos */}
-        <div className="bg-green-600 text-white px-4 py-3 flex items-center justify-between">
+        <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Menu size={24} />
-            <span className="font-semibold">Ticket</span>
-            <span className="bg-white text-green-600 rounded-full px-2 py-0.5 text-xs font-bold">
-              {cart.length}
-            </span>
+            <button 
+              onClick={() => setShowMobileCart(true)}
+              className="flex items-center gap-2"
+            >
+              <span className="font-semibold">Ticket</span>
+              <span className="bg-white text-blue-600 rounded-full px-2 py-0.5 text-xs font-bold">
+                {cart.length}
+              </span>
+            </button>
           </div>
           <div className="flex items-center gap-3">
             <Bell size={20} />
@@ -649,12 +654,12 @@ export default function POS() {
         </div>
 
         {/* Botones GUARDAR y COBRAR */}
-        <div className="bg-green-600 px-4 pb-3 grid grid-cols-2 gap-2">
+        <div className="bg-blue-600 px-4 pb-3 grid grid-cols-2 gap-2">
           {ticketsAbiertosFuncionActiva && (
             <Button
               onClick={() => setShowGuardarTicketDialog(true)}
               disabled={cart.length === 0}
-              className="bg-green-500 hover:bg-green-400 h-10 font-semibold"
+              className="bg-blue-500 hover:bg-blue-400 h-10 font-semibold"
             >
               GUARDAR
             </Button>
@@ -662,7 +667,7 @@ export default function POS() {
           <Button
             onClick={() => setShowMobileCart(true)}
             disabled={cart.length === 0}
-            className={`bg-green-700 hover:bg-green-600 h-10 font-semibold ${ticketsAbiertosFuncionActiva ? '' : 'col-span-2'}`}
+            className={`bg-blue-700 hover:bg-blue-600 h-10 font-semibold ${ticketsAbiertosFuncionActiva ? '' : 'col-span-2'}`}
           >
             COBRAR ${total.toFixed(2)}
           </Button>
