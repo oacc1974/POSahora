@@ -227,6 +227,28 @@ class InvoiceResponse(BaseModel):
     tipo_pedido_nombre: Optional[str] = None
     fecha: str
 
+class TicketAbiertoCreate(BaseModel):
+    nombre: str
+    items: List[InvoiceItem]
+    subtotal: float
+    cliente_id: Optional[str] = None
+    cliente_nombre: Optional[str] = None
+    comentarios: Optional[str] = None
+
+class TicketAbiertoResponse(BaseModel):
+    id: str
+    nombre: str
+    items: List[InvoiceItem]
+    subtotal: float
+    vendedor_id: str
+    vendedor_nombre: str
+    organizacion_id: str
+    caja_id: str
+    cliente_id: Optional[str] = None
+    cliente_nombre: Optional[str] = None
+    comentarios: Optional[str] = None
+    fecha_creacion: str
+
 class CajaApertura(BaseModel):
     monto_inicial: Optional[float] = 0.0
 
