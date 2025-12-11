@@ -1572,14 +1572,14 @@ export default function POS() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
-            {filteredProducts.length === 0 ? (
+            {filteredProductos.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
                 <p>No se encontraron productos</p>
                 <p className="text-sm mt-2">Intenta con otro término de búsqueda</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {filteredProducts.map((producto) => (
+                {filteredProductos.map((producto) => (
                   <button
                     key={producto.id}
                     onClick={() => {
