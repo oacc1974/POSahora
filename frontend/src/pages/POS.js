@@ -1240,20 +1240,30 @@ export default function POS() {
 
             {/* Lista de mesas */}
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
-              {mesasPredefinidas.map((mesa) => (
-                <button
-                  key={mesa.id}
-                  onClick={() => handleGuardarTicket(mesa.nombre)}
-                  className="w-full text-left px-4 py-3 hover:bg-slate-100 rounded-md transition-colors border border-slate-200"
-                >
-                  {mesa.nombre}
-                </button>
-              ))}
+              {mesasPredefinidas
+                .filter((mesa) => !ticketsAbiertos.some((ticket) => ticket.nombre === mesa.nombre))
+                .map((mesa) => (
+                  <button
+                    key={mesa.id}
+                    onClick={() => handleGuardarTicket(mesa.nombre)}
+                    className="w-full text-left px-4 py-3 hover:bg-slate-100 rounded-md transition-colors border border-slate-200"
+                  >
+                    {mesa.nombre}
+                  </button>
+                ))}
+
+              {/* Mensaje si todas las mesas están ocupadas */}
+              {mesasPredefinidas.length > 0 && 
+               mesasPredefinidas.every((mesa) => ticketsAbiertos.some((ticket) => ticket.nombre === mesa.nombre)) && (
+                <div className="text-center py-4 text-slate-500 text-sm">
+                  Todas las mesas están ocupadas
+                </div>
+              )}
 
               {/* Ticket Personalizado */}
               <button
                 onClick={() => setModoGuardar('personalizado')}
-                className="w-full text-left px-4 py-3 bg-green-50 border-2 border-green-500 text-green-700 font-semibold rounded-md hover:bg-green-100 transition-colors"
+                className="w-full text-left px-4 py-3 bg-blue-50 border-2 border-blue-500 text-blue-700 font-semibold rounded-md hover:bg-blue-100 transition-colors"
               >
                 TICKET PERSONALIZADO
               </button>
