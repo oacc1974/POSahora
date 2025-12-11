@@ -779,7 +779,7 @@ export default function POS() {
       {cart.length > 0 && !clienteSeleccionado && (
         <button
           onClick={() => setShowClienteDialog(true)}
-          className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 hover:bg-green-700 transition-colors"
+          className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 hover:bg-blue-700 transition-colors"
         >
           <UserPlus size={24} />
         </button>
