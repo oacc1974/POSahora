@@ -787,6 +787,19 @@ async def register_user(user_data: UserRegister, response: Response):
     ]
     await db.tickets_predefinidos.insert_many(tickets_default)
     
+    # Crear tienda por defecto
+    tienda_default = {
+        "id": str(uuid.uuid4()),
+        "nombre": user_data.nombre_tienda,
+        "direccion": None,
+        "telefono": None,
+        "email": user_data.email,
+        "activa": True,
+        "organizacion_id": org_id,
+        "fecha_creacion": datetime.now(timezone.utc).isoformat()
+    }
+    await db.tiendas.insert_one(tienda_default)
+    
     session_token = f"session_{uuid.uuid4().hex}"
     await db.user_sessions.insert_one({
         "user_id": user_id,
