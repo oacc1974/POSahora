@@ -80,7 +80,7 @@ export default function ConfiguracionNew() {
       case 'tipo-pedido':
         return <ConfigTipoPedido />;
       case 'tiendas':
-        return <PlaceholderSection title="Tiendas" />;
+        return <ConfigTiendas />;
       case 'dispositivos-tpv':
         return <PlaceholderSection title="Dispositivos TPV" />;
       default:
