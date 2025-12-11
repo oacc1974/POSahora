@@ -635,7 +635,7 @@ export default function POS() {
             >
               <span className="font-semibold">Ticket</span>
               <span className="bg-white text-blue-600 rounded-full px-2 py-0.5 text-xs font-bold">
-                {cart.length}
+                {cart.reduce((sum, item) => sum + item.cantidad, 0)}
               </span>
             </button>
           </div>
