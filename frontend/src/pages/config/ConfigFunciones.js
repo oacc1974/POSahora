@@ -12,6 +12,7 @@ export default function ConfigFunciones() {
     cierres_caja: true,
     tickets_abiertos: false,
     tipo_pedido: false,
+    venta_con_stock: true,
   });
 
   const [saving, setSaving] = useState(false);
