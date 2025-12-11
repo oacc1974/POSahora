@@ -634,6 +634,19 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
         }
         await db.configuraciones.insert_one(config_negocio)
         
+        # Crear tienda por defecto para Google Auth
+        tienda_default = {
+            "id": str(uuid.uuid4()),
+            "nombre": nombre_tienda,
+            "direccion": None,
+            "telefono": None,
+            "email": email,
+            "activa": True,
+            "organizacion_id": org_id,
+            "fecha_creacion": datetime.now(timezone.utc).isoformat()
+        }
+        await db.tiendas.insert_one(tienda_default)
+        
         user = new_user
     else:
         user_id = user["user_id"]
