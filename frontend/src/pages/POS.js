@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '../components/ui/dialog';
 import BarcodeScanner from '../components/BarcodeScanner';
 import { Plus, Minus, Trash2, Scan, Printer, X, Search } from 'lucide-react';
