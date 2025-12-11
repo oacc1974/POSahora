@@ -169,6 +169,19 @@ export default function POS() {
     }
   };
 
+  const handleClickGuardar = async () => {
+    // Si hay un ticket actual (recuperado), actualizar automáticamente
+    if (ticketActualId) {
+      const ticketActual = ticketsAbiertos.find(t => t.id === ticketActualId);
+      if (ticketActual) {
+        await handleGuardarTicket(ticketActual.nombre);
+      }
+    } else {
+      // Si es nuevo, mostrar dialog para seleccionar mesa
+      setShowGuardarTicketDialog(true);
+    }
+  };
+
   const handleGuardarTicket = async (nombreMesa) => {
     if (cart.length === 0) {
       toast.error('El carrito está vacío');
