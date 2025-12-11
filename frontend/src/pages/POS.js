@@ -1548,6 +1548,61 @@ export default function POS() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Búsqueda Móvil */}
+      <Dialog open={showMobileSearch} onOpenChange={setShowMobileSearch}>
+        <DialogContent className="md:hidden sm:max-w-full h-[80vh] p-0 flex flex-col">
+          <div className="p-4 border-b">
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Buscar productos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1"
+                autoFocus
+              />
+              <Button
+                onClick={() => setShowMobileSearch(false)}
+                variant="ghost"
+                size="sm"
+              >
+                <X size={20} />
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4">
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-12 text-slate-500">
+                <p>No se encontraron productos</p>
+                <p className="text-sm mt-2">Intenta con otro término de búsqueda</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {filteredProducts.map((producto) => (
+                  <button
+                    key={producto.id}
+                    onClick={() => {
+                      addToCart(producto);
+                      setShowMobileSearch(false);
+                      setSearchQuery('');
+                    }}
+                    className="bg-white border rounded-lg p-3 hover:shadow-md transition-shadow text-left"
+                  >
+                    <p className="font-medium text-sm mb-1 line-clamp-2">{producto.nombre}</p>
+                    <p className="text-lg font-bold text-blue-600">
+                      ${producto.precio.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Stock: {producto.stock}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
