@@ -713,10 +713,10 @@ export default function POS() {
               {/* GUARDAR solo si hay productos */}
               {cart.length > 0 && (
                 <Button
-                  onClick={() => setShowGuardarTicketDialog(true)}
+                  onClick={handleClickGuardar}
                   className="bg-blue-500 hover:bg-blue-400 h-10 font-semibold"
                 >
-                  GUARDAR
+                  {ticketActualId ? 'ACTUALIZAR' : 'GUARDAR'}
                 </Button>
               )}
               
