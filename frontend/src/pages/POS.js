@@ -434,9 +434,23 @@ export default function POS() {
       );
 
       toast.success(`Factura ${response.data.numero} creada correctamente`);
+      
+      // Si venía de un ticket guardado, eliminarlo
+      if (ticketActualId) {
+        try {
+          await axios.delete(`${API_URL}/api/tickets-abiertos-pos/${ticketActualId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          fetchTicketsAbiertos();
+        } catch (error) {
+          console.error('Error al eliminar ticket:', error);
+        }
+      }
+      
       setCart([]);
       setClienteSeleccionado(null);
       setComentarios('');
+      setTicketActualId(null);
       fetchProductos();
       verificarCaja();
       printInvoice(response.data);
