@@ -621,47 +621,124 @@ export default function POS() {
   const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
   return (
-    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-8rem)] gap-4 lg:gap-6" data-testid="pos-page">
-      <div className="flex-1 flex flex-col order-2 lg:order-1">
-        <div className="mb-4 lg:mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
-                Punto de Venta
-              </h1>
-              <p className="text-sm md:text-base text-slate-600">Selecciona productos para la venta</p>
-            </div>
-            {cajaActiva && (
-              <div className="hidden md:block px-4 py-2 bg-green-100 border border-green-300 rounded-lg">
-                <p className="text-xs text-green-700 font-medium">
-                  Caja Abierta
-                </p>
-                <p className="text-sm font-mono font-bold text-green-900">
-                  ${cajaActiva.monto_final.toFixed(2)}
-                </p>
-              </div>
-            )}
+    <div className="flex flex-col h-auto md:h-[calc(100vh-8rem)]" data-testid="pos-page">
+      {/* Header Móvil */}
+      <div className="md:hidden sticky top-0 z-50 bg-white border-b">
+        {/* Barra superior con iconos */}
+        <div className="bg-green-600 text-white px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Menu size={24} />
+            <span className="font-semibold">Ticket</span>
+            <span className="bg-white text-green-600 rounded-full px-2 py-0.5 text-xs font-bold">
+              {cart.length}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Bell size={20} />
+            <button 
+              onClick={() => setShowClienteDialog(true)}
+              className="relative"
+            >
+              <User size={20} />
+              {clienteSeleccionado && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
+              )}
+            </button>
+            <MoreVertical size={20} />
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 mb-4 lg:mb-6">
-          <Input
-            placeholder="Buscar productos..."
-            data-testid="product-search-input"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1"
-          />
+        {/* Botones GUARDAR y COBRAR */}
+        <div className="bg-green-600 px-4 pb-3 grid grid-cols-2 gap-2">
+          {ticketsAbiertosFuncionActiva && (
+            <Button
+              onClick={() => setShowGuardarTicketDialog(true)}
+              disabled={cart.length === 0}
+              className="bg-green-500 hover:bg-green-400 h-10 font-semibold"
+            >
+              GUARDAR
+            </Button>
+          )}
           <Button
-            onClick={() => setShowScanner(true)}
-            data-testid="open-scanner-button"
-            variant="outline"
-            className="gap-2 w-full sm:w-auto"
+            onClick={() => setShowMobileCart(true)}
+            disabled={cart.length === 0}
+            className={`bg-green-700 hover:bg-green-600 h-10 font-semibold ${ticketsAbiertosFuncionActiva ? '' : 'col-span-2'}`}
           >
-            <Scan size={20} />
-            Escanear
+            COBRAR ${total.toFixed(2)}
           </Button>
         </div>
+
+        {/* Selector de categoría y búsqueda */}
+        <div className="px-4 py-3 flex items-center justify-between gap-2 bg-white">
+          <button className="flex items-center gap-2 text-sm font-medium">
+            <span>Todos los artículos</span>
+            <ChevronDown size={16} />
+          </button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowScanner(true)}
+              variant="ghost"
+              size="sm"
+              className="p-2"
+            >
+              <Scan size={20} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="p-2"
+            >
+              <Search size={20} />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Layout principal */}
+      <div className="flex flex-col md:flex-row h-full gap-0 md:gap-6">
+        {/* Columna de productos */}
+        <div className="flex-1 flex flex-col md:order-1">
+          {/* Header Desktop */}
+          <div className="hidden md:block mb-4 lg:mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
+                  Punto de Venta
+                </h1>
+                <p className="text-sm md:text-base text-slate-600">Selecciona productos para la venta</p>
+              </div>
+              {cajaActiva && (
+                <div className="px-4 py-2 bg-green-100 border border-green-300 rounded-lg">
+                  <p className="text-xs text-green-700 font-medium">
+                    Caja Abierta
+                  </p>
+                  <p className="text-sm font-mono font-bold text-green-900">
+                    ${cajaActiva.monto_final.toFixed(2)}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Búsqueda Desktop */}
+          <div className="hidden md:flex flex-col sm:flex-row gap-3 lg:gap-4 mb-4 lg:mb-6">
+            <Input
+              placeholder="Buscar productos..."
+              data-testid="product-search-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              onClick={() => setShowScanner(true)}
+              data-testid="open-scanner-button"
+              variant="outline"
+              className="gap-2 w-full sm:w-auto"
+            >
+              <Scan size={20} />
+              Escanear
+            </Button>
+          </div>
 
         <div className="flex-1 overflow-auto">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
