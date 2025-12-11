@@ -768,7 +768,18 @@ export default function POS() {
         </div>
       </div>
 
-      <Card className="w-full lg:w-96 flex flex-col shadow-xl order-1 lg:order-2 lg:sticky lg:top-0">
+      {/* Botón flotante para añadir cliente (solo móvil) */}
+      {cart.length > 0 && !clienteSeleccionado && (
+        <button
+          onClick={() => setShowClienteDialog(true)}
+          className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 hover:bg-green-700 transition-colors"
+        >
+          <UserPlus size={24} />
+        </button>
+      )}
+
+      {/* Carrito Desktop (siempre visible) */}
+      <Card className="hidden md:flex w-full lg:w-96 flex-col shadow-xl lg:sticky lg:top-0">
         <div className="p-4 lg:p-6 border-b border-slate-200">
           <h2 className="text-xl lg:text-2xl font-bold mb-3">Carrito</h2>
           
