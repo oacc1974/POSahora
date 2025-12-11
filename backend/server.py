@@ -1337,6 +1337,111 @@ async def delete_tipo_pedido(tipo_id: str, current_user: dict = Depends(get_curr
     
     return {"message": "Tipo de pedido eliminado correctamente"}
 
+# Tiendas (Sucursales)
+@app.get("/api/tiendas", response_model=List[TiendaResponse])
+async def get_tiendas(current_user: dict = Depends(get_current_user)):
+    tiendas = await db.tiendas.find({
+        "organizacion_id": current_user["organizacion_id"]
+    }, {"_id": 0}).to_list(1000)
+    
+    return [
+        TiendaResponse(
+            id=t["id"],
+            nombre=t["nombre"],
+            direccion=t.get("direccion"),
+            telefono=t.get("telefono"),
+            email=t.get("email"),
+            activa=t.get("activa", True),
+            organizacion_id=t["organizacion_id"],
+            fecha_creacion=t.get("fecha_creacion", "")
+        )
+        for t in tiendas
+    ]
+
+@app.post("/api/tiendas")
+async def create_tienda(tienda: TiendaCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    tienda_id = str(uuid.uuid4())
+    
+    nueva_tienda = {
+        "id": tienda_id,
+        "nombre": tienda.nombre,
+        "direccion": tienda.direccion,
+        "telefono": tienda.telefono,
+        "email": tienda.email,
+        "activa": tienda.activa,
+        "organizacion_id": current_user["organizacion_id"],
+        "fecha_creacion": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.tiendas.insert_one(nueva_tienda)
+    
+    return TiendaResponse(
+        id=tienda_id,
+        nombre=tienda.nombre,
+        direccion=tienda.direccion,
+        telefono=tienda.telefono,
+        email=tienda.email,
+        activa=tienda.activa,
+        organizacion_id=current_user["organizacion_id"],
+        fecha_creacion=nueva_tienda["fecha_creacion"]
+    )
+
+@app.put("/api/tiendas/{tienda_id}")
+async def update_tienda(tienda_id: str, tienda: TiendaCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    result = await db.tiendas.update_one(
+        {
+            "id": tienda_id,
+            "organizacion_id": current_user["organizacion_id"]
+        },
+        {
+            "$set": {
+                "nombre": tienda.nombre,
+                "direccion": tienda.direccion,
+                "telefono": tienda.telefono,
+                "email": tienda.email,
+                "activa": tienda.activa
+            }
+        }
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Tienda no encontrada")
+    
+    # Obtener la tienda actualizada para devolver
+    tienda_actualizada = await db.tiendas.find_one({"id": tienda_id}, {"_id": 0})
+    
+    return TiendaResponse(
+        id=tienda_id,
+        nombre=tienda.nombre,
+        direccion=tienda.direccion,
+        telefono=tienda.telefono,
+        email=tienda.email,
+        activa=tienda.activa,
+        organizacion_id=current_user["organizacion_id"],
+        fecha_creacion=tienda_actualizada.get("fecha_creacion", "")
+    )
+
+@app.delete("/api/tiendas/{tienda_id}")
+async def delete_tienda(tienda_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    result = await db.tiendas.delete_one({
+        "id": tienda_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Tienda no encontrada")
+    
+    return {"message": "Tienda eliminada correctamente"}
+
 # Tickets Abiertos
 @app.get("/api/tickets-abiertos-pos", response_model=List[TicketAbiertoResponse])
 async def get_tickets_abiertos_pos(current_user: dict = Depends(get_current_user)):
