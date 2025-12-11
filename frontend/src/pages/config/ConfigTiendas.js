@@ -38,8 +38,7 @@ export default function ConfigTiendas() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/tiendas`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true
+        headers: { Authorization: `Bearer ${token}` }
       });
       setTiendas(response.data);
     } catch (error) {
