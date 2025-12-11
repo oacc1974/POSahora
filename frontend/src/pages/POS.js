@@ -265,7 +265,8 @@ export default function POS() {
   const addToCart = (producto) => {
     const existing = cart.find((item) => item.producto_id === producto.id);
     if (existing) {
-      if (existing.cantidad < producto.stock) {
+      // Si venta con stock está desactivado O hay stock suficiente
+      if (!ventaConStock || existing.cantidad < producto.stock) {
         setCart(
           cart.map((item) =>
             item.producto_id === producto.id
@@ -281,7 +282,8 @@ export default function POS() {
         toast.error('No hay suficiente stock');
       }
     } else {
-      if (producto.stock > 0) {
+      // Si venta con stock está desactivado O hay stock disponible
+      if (!ventaConStock || producto.stock > 0) {
         setCart([
           ...cart,
           {
@@ -305,20 +307,23 @@ export default function POS() {
 
     if (newQty <= 0) {
       removeFromCart(producto_id);
-    } else if (newQty <= item.max_stock) {
-      setCart(
-        cart.map((item) =>
-          item.producto_id === producto_id
-            ? {
-                ...item,
-                cantidad: newQty,
-                subtotal: newQty * item.precio,
-              }
-            : item
-        )
-      );
     } else {
-      toast.error('No hay suficiente stock');
+      // Si venta con stock está desactivado O no excede el stock
+      if (!ventaConStock || newQty <= item.max_stock) {
+        setCart(
+          cart.map((item) =>
+            item.producto_id === producto_id
+              ? {
+                  ...item,
+                  cantidad: newQty,
+                  subtotal: newQty * item.precio,
+                }
+              : item
+          )
+        );
+      } else {
+        toast.error('No hay suficiente stock');
+      }
     }
   };
 
