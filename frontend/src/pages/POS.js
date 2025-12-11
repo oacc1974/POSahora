@@ -45,6 +45,7 @@ export default function POS() {
   const [modoGuardar, setModoGuardar] = useState('mesa'); // 'mesa' o 'personalizado'
   const [nombreTicketPersonalizado, setNombreTicketPersonalizado] = useState('');
   const [ticketActualId, setTicketActualId] = useState(null);
+  const [showMobileCart, setShowMobileCart] = useState(false);
   const [nuevoClienteForm, setNuevoClienteForm] = useState({
     nombre: '',
     cedula_ruc: '',
