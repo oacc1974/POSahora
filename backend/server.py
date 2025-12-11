@@ -168,28 +168,6 @@ class TipoPedidoResponse(BaseModel):
     activo: bool
     organizacion_id: str
 
-class TicketAbiertoCreate(BaseModel):
-    nombre: str
-    items: List[InvoiceItem]
-    subtotal: float
-    cliente_id: Optional[str] = None
-    cliente_nombre: Optional[str] = None
-    comentarios: Optional[str] = None
-
-class TicketAbiertoResponse(BaseModel):
-    id: str
-    nombre: str
-    items: List[InvoiceItem]
-    subtotal: float
-    vendedor_id: str
-    vendedor_nombre: str
-    organizacion_id: str
-    caja_id: str
-    cliente_id: Optional[str] = None
-    cliente_nombre: Optional[str] = None
-    comentarios: Optional[str] = None
-    fecha_creacion: str
-
 class ProductCreate(BaseModel):
     nombre: str
     precio: float
