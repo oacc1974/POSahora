@@ -89,6 +89,15 @@ export default function ConfigFunciones() {
       enabled: funciones.tipo_pedido,
       active: true,
     },
+    {
+      id: 'venta_con_stock',
+      key: 'venta_con_stock',
+      icon: ShoppingBag,
+      title: 'Venta con stock',
+      description: 'Controla si se permite vender productos sin stock disponible.',
+      enabled: funciones.venta_con_stock,
+      active: true,
+    },
   ];
 
   return (
