@@ -149,6 +149,7 @@ class FuncionesConfig(BaseModel):
     cierres_caja: bool = True
     tickets_abiertos: bool = False
     tipo_pedido: bool = False
+    venta_con_stock: bool = True
 
 class TicketPredefinidoCreate(BaseModel):
     nombre: str
