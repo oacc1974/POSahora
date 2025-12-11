@@ -103,8 +103,7 @@ export default function ConfigTiendas() {
           `${API_URL}/api/tiendas/${editingTienda.id}`,
           payload,
           {
-            headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true
+            headers: { Authorization: `Bearer ${token}` }
           }
         );
       } else {
@@ -112,8 +111,7 @@ export default function ConfigTiendas() {
           `${API_URL}/api/tiendas`,
           payload,
           {
-            headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true
+            headers: { Authorization: `Bearer ${token}` }
           }
         );
       }
