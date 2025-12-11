@@ -1315,6 +1315,124 @@ async def delete_tipo_pedido(tipo_id: str, current_user: dict = Depends(get_curr
     
     return {"message": "Tipo de pedido eliminado correctamente"}
 
+# Tickets Abiertos
+@app.get("/api/tickets-abiertos-pos", response_model=List[TicketAbiertoResponse])
+async def get_tickets_abiertos_pos(current_user: dict = Depends(get_current_user)):
+    # Obtener caja activa del usuario
+    caja_activa = await db.cajas.find_one({
+        "usuario_id": current_user["_id"],
+        "estado": "abierta"
+    })
+    
+    if not caja_activa:
+        return []
+    
+    tickets = await db.tickets_abiertos.find({
+        "caja_id": caja_activa["_id"],
+        "organizacion_id": current_user["organizacion_id"]
+    }, {"_id": 0}).sort("fecha_creacion", -1).to_list(1000)
+    
+    return [
+        TicketAbiertoResponse(
+            id=t["id"],
+            nombre=t["nombre"],
+            items=[InvoiceItem(**item) for item in t["items"]],
+            subtotal=t["subtotal"],
+            vendedor_id=t["vendedor_id"],
+            vendedor_nombre=t["vendedor_nombre"],
+            organizacion_id=t["organizacion_id"],
+            caja_id=t["caja_id"],
+            cliente_id=t.get("cliente_id"),
+            cliente_nombre=t.get("cliente_nombre"),
+            comentarios=t.get("comentarios"),
+            fecha_creacion=t["fecha_creacion"]
+        )
+        for t in tickets
+    ]
+
+@app.post("/api/tickets-abiertos-pos")
+async def create_ticket_abierto(ticket: TicketAbiertoCreate, current_user: dict = Depends(get_current_user)):
+    # Verificar caja activa
+    caja_activa = await db.cajas.find_one({
+        "usuario_id": current_user["_id"],
+        "estado": "abierta"
+    })
+    
+    if not caja_activa:
+        raise HTTPException(status_code=400, detail="Debes abrir una caja antes de guardar tickets")
+    
+    ticket_id = str(uuid.uuid4())
+    
+    new_ticket = {
+        "id": ticket_id,
+        "nombre": ticket.nombre,
+        "items": [item.model_dump() for item in ticket.items],
+        "subtotal": ticket.subtotal,
+        "vendedor_id": current_user["_id"],
+        "vendedor_nombre": current_user["nombre"],
+        "organizacion_id": current_user["organizacion_id"],
+        "caja_id": caja_activa["_id"],
+        "cliente_id": ticket.cliente_id,
+        "cliente_nombre": ticket.cliente_nombre,
+        "comentarios": ticket.comentarios,
+        "fecha_creacion": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.tickets_abiertos.insert_one(new_ticket)
+    
+    return TicketAbiertoResponse(
+        id=ticket_id,
+        nombre=ticket.nombre,
+        items=ticket.items,
+        subtotal=ticket.subtotal,
+        vendedor_id=current_user["_id"],
+        vendedor_nombre=current_user["nombre"],
+        organizacion_id=current_user["organizacion_id"],
+        caja_id=caja_activa["_id"],
+        cliente_id=ticket.cliente_id,
+        cliente_nombre=ticket.cliente_nombre,
+        comentarios=ticket.comentarios,
+        fecha_creacion=new_ticket["fecha_creacion"]
+    )
+
+@app.put("/api/tickets-abiertos-pos/{ticket_id}")
+async def update_ticket_abierto(ticket_id: str, ticket: TicketAbiertoCreate, current_user: dict = Depends(get_current_user)):
+    result = await db.tickets_abiertos.update_one(
+        {
+            "id": ticket_id,
+            "vendedor_id": current_user["_id"],
+            "organizacion_id": current_user["organizacion_id"]
+        },
+        {
+            "$set": {
+                "nombre": ticket.nombre,
+                "items": [item.model_dump() for item in ticket.items],
+                "subtotal": ticket.subtotal,
+                "cliente_id": ticket.cliente_id,
+                "cliente_nombre": ticket.cliente_nombre,
+                "comentarios": ticket.comentarios
+            }
+        }
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    
+    return {"message": "Ticket actualizado correctamente"}
+
+@app.delete("/api/tickets-abiertos-pos/{ticket_id}")
+async def delete_ticket_abierto(ticket_id: str, current_user: dict = Depends(get_current_user)):
+    result = await db.tickets_abiertos.delete_one({
+        "id": ticket_id,
+        "vendedor_id": current_user["_id"],
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    
+    return {"message": "Ticket eliminado correctamente"}
+
 @app.get("/api/productos", response_model=List[ProductResponse])
 async def get_productos(current_user: dict = Depends(get_current_user)):
     productos = await db.productos.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
