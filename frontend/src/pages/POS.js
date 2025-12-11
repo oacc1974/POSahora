@@ -46,6 +46,7 @@ export default function POS() {
   const [nombreTicketPersonalizado, setNombreTicketPersonalizado] = useState('');
   const [ticketActualId, setTicketActualId] = useState(null);
   const [showMobileCart, setShowMobileCart] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [nuevoClienteForm, setNuevoClienteForm] = useState({
     nombre: '',
     cedula_ruc: '',
