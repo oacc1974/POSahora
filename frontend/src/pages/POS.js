@@ -36,6 +36,14 @@ export default function POS() {
   const [tiposPedido, setTiposPedido] = useState([]);
   const [tipoPedidoSeleccionado, setTipoPedidoSeleccionado] = useState(null);
   const [requiereCierres, setRequiereCierres] = useState(true);
+  const [ticketsAbiertosFuncionActiva, setTicketsAbiertosFuncionActiva] = useState(false);
+  const [ticketsAbiertos, setTicketsAbiertos] = useState([]);
+  const [showGuardarTicketDialog, setShowGuardarTicketDialog] = useState(false);
+  const [showTicketsAbiertosDialog, setShowTicketsAbiertosDialog] = useState(false);
+  const [mesasPredefinidas, setMesasPredefinidas] = useState([]);
+  const [modoGuardar, setModoGuardar] = useState('mesa'); // 'mesa' o 'personalizado'
+  const [nombreTicketPersonalizado, setNombreTicketPersonalizado] = useState('');
+  const [ticketActualId, setTicketActualId] = useState(null);
   const [nuevoClienteForm, setNuevoClienteForm] = useState({
     nombre: '',
     cedula_ruc: '',
@@ -50,6 +58,7 @@ export default function POS() {
     fetchMetodosPago();
     fetchTiposPedido();
     fetchFuncionesConfig();
+    fetchMesasPredefinidas();
   }, []);
 
   const verificarCaja = async () => {
