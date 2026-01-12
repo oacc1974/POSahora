@@ -1150,12 +1150,12 @@ class BillingSystemTester:
         return success
 
 def main():
-    print("🚀 Starting POS Payment Methods System Backend Tests")
+    print("🚀 Starting POS SRI Ecuador System Backend Tests")
     print("=" * 60)
     
     tester = BillingSystemTester()
     
-    # Test sequence - focusing on payment methods system testing
+    # Test sequence - focusing on POS SRI Ecuador functionality
     tests = [
         # Basic system tests
         tester.test_root_endpoint,
@@ -1170,30 +1170,46 @@ def main():
         tester.test_update_product,
         tester.test_get_product_by_barcode,
         
-        # Cash register setup (required for invoices)
-        tester.test_open_cash_register,
-        tester.test_get_active_cash_register,
+        # === POS SRI ECUADOR FUNCTIONALITY TESTS ===
         
-        # PAYMENT METHODS SYSTEM TESTS - Main focus
+        # 1. Gestión de Tiendas
+        tester.test_get_tiendas,
+        tester.test_create_tienda,
+        
+        # 2. Gestión de TPV (CRUD)
+        tester.test_get_tpv_all,
+        tester.test_create_tpv,
+        tester.test_get_tpv_disponibles,
+        tester.test_update_tpv,
+        
+        # 3. Apertura de Caja con TPV (TPV occupation)
+        tester.test_open_cash_register_with_tpv,
+        tester.test_verify_tpv_ocupado,
+        
+        # 4. Numeración SRI en Facturas
+        tester.test_create_invoice_with_sri_numbering,
+        
+        # 5. Cierre de Caja (TPV release)
+        tester.test_close_cash_register_and_release_tpv,
+        
+        # Payment methods system tests (existing functionality)
         tester.test_get_default_payment_methods,
         tester.test_create_payment_method,
         tester.test_update_payment_method,
         tester.test_payment_method_permissions,
         
-        # TAX SYSTEM TESTS (for invoice integration)
+        # Tax system tests (existing functionality)
         tester.test_create_tax_agregado,
         tester.test_create_tax_incluido,
         tester.test_get_taxes,
         
-        # INVOICE INTEGRATION WITH PAYMENT METHODS
+        # Invoice integration tests (existing functionality)
         tester.test_create_invoice_with_payment_method,
         tester.test_create_invoice_without_payment_method,
         tester.test_get_invoices_with_payment_methods,
-        
-        # Additional invoice tests
         tester.test_create_invoice_with_taxes,
-        tester.test_create_invoice,  # Simple invoice for comparison
-        tester.test_get_invoices,  # Test backward compatibility
+        tester.test_create_invoice,
+        tester.test_get_invoices,
         tester.test_update_tax,
         
         # User management tests
@@ -1204,6 +1220,8 @@ def main():
         # Cleanup tests
         tester.test_delete_payment_method,
         tester.test_delete_taxes,
+        tester.test_delete_tpv,
+        tester.test_delete_tienda,
         tester.test_delete_product,
     ]
     
@@ -1223,6 +1241,30 @@ def main():
     
     if failed_tests:
         print(f"❌ Failed tests: {', '.join(failed_tests)}")
+        
+        # POS SRI Ecuador specific test summary
+        print("\n🔍 POS SRI Ecuador System Test Summary:")
+        sri_tests = [
+            'test_get_tiendas',
+            'test_create_tienda',
+            'test_get_tpv_all',
+            'test_create_tpv',
+            'test_get_tpv_disponibles',
+            'test_update_tpv',
+            'test_open_cash_register_with_tpv',
+            'test_verify_tpv_ocupado',
+            'test_create_invoice_with_sri_numbering',
+            'test_close_cash_register_and_release_tpv',
+            'test_delete_tpv',
+            'test_delete_tienda'
+        ]
+        
+        sri_failures = [t for t in failed_tests if t in sri_tests]
+        if sri_failures:
+            print(f"❌ POS SRI Ecuador system failures: {', '.join(sri_failures)}")
+        else:
+            print("✅ POS SRI Ecuador system tests passed!")
+        
         print("\n🔍 Payment Methods System Test Summary:")
         payment_tests = [
             'test_get_default_payment_methods',
@@ -1260,6 +1302,7 @@ def main():
         return 1
     else:
         print("✅ All tests passed!")
+        print("✅ POS SRI Ecuador system is working correctly!")
         print("✅ Payment methods system is working correctly!")
         print("✅ Tax system is working correctly!")
         return 0
