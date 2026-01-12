@@ -19,6 +19,10 @@ class BillingSystemTester:
         self.created_metodo_pago_id = None
         self.efectivo_metodo_id = None
         self.tarjeta_metodo_id = None
+        # New POS SRI Ecuador variables
+        self.created_tienda_id = None
+        self.created_tpv_id = None
+        self.tpv_ocupado_id = None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
