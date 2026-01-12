@@ -9,6 +9,7 @@ import ConfigMetodosPago from './config/ConfigMetodosPago';
 import ConfigTicketsAbiertos from './config/ConfigTicketsAbiertos';
 import ConfigTipoPedido from './config/ConfigTipoPedido';
 import ConfigTiendas from './config/ConfigTiendas';
+import ConfigTPV from './config/ConfigTPV';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
