@@ -490,6 +490,7 @@ export default function POS() {
 
     if (!cajaActiva) {
       toast.error('Debes abrir una caja antes de realizar ventas');
+      fetchTpvsDisponibles();
       setShowAperturaCaja(true);
       return;
     }
