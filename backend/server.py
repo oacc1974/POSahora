@@ -2106,7 +2106,13 @@ async def get_caja_activa(current_user: dict = Depends(get_current_user)):
         total_ventas=caja["total_ventas"],
         fecha_apertura=caja["fecha_apertura"],
         fecha_cierre=caja.get("fecha_cierre"),
-        estado=caja["estado"]
+        estado=caja["estado"],
+        tpv_id=caja.get("tpv_id"),
+        tpv_nombre=caja.get("tpv_nombre"),
+        tienda_id=caja.get("tienda_id"),
+        tienda_nombre=caja.get("tienda_nombre"),
+        codigo_establecimiento=caja.get("codigo_establecimiento"),
+        punto_emision=caja.get("punto_emision")
     )
 
 @app.post("/api/caja/abrir")
@@ -2126,21 +2132,70 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
     # Si cierres de caja está desactivado, usar monto_inicial = 0
     monto_inicial = apertura.monto_inicial if cierres_caja_activo else 0.0
     
-    import uuid
-    caja_id = str(uuid.uuid4())
+    # Variables para TPV
+    tpv_id = None
+    tpv_nombre = None
+    tienda_id = None
+    tienda_nombre = None
+    codigo_establecimiento = None
+    punto_emision = None
+    numero_caja = None
     
-    counter = await db.contadores.find_one({"_id": f"caja_{current_user['organizacion_id']}"})
-    if not counter:
-        numero = 1
-        await db.contadores.insert_one({"_id": f"caja_{current_user['organizacion_id']}", "seq": 1})
-    else:
-        numero = counter["seq"] + 1
-        await db.contadores.update_one(
-            {"_id": f"caja_{current_user['organizacion_id']}"},
-            {"$set": {"seq": numero}}
+    # Si se proporciona un TPV, validarlo y ocuparlo
+    if apertura.tpv_id:
+        tpv = await db.tpv.find_one({
+            "id": apertura.tpv_id,
+            "organizacion_id": current_user["organizacion_id"],
+            "activo": True
+        })
+        
+        if not tpv:
+            raise HTTPException(status_code=404, detail="TPV no encontrado o no está activo")
+        
+        if tpv.get("ocupado"):
+            raise HTTPException(status_code=400, detail="El TPV ya está ocupado por otro usuario")
+        
+        # Obtener datos de la tienda
+        tienda = await db.tiendas.find_one({"id": tpv["tienda_id"]}, {"_id": 0})
+        if not tienda:
+            raise HTTPException(status_code=404, detail="Tienda del TPV no encontrada")
+        
+        tpv_id = tpv["id"]
+        tpv_nombre = tpv["nombre"]
+        tienda_id = tienda["id"]
+        tienda_nombre = tienda["nombre"]
+        codigo_establecimiento = tienda.get("codigo_establecimiento", "001")
+        punto_emision = tpv["punto_emision"]
+        
+        # Marcar el TPV como ocupado
+        await db.tpv.update_one(
+            {"id": tpv_id},
+            {
+                "$set": {
+                    "ocupado": True,
+                    "ocupado_por": current_user["_id"],
+                    "ocupado_por_nombre": current_user["nombre"]
+                }
+            }
         )
+        
+        # El nombre de la caja será el nombre del TPV
+        numero_caja = tpv_nombre
+    else:
+        # Sin TPV, usar numeración secuencial antigua
+        counter = await db.contadores.find_one({"_id": f"caja_{current_user['organizacion_id']}"})
+        if not counter:
+            numero = 1
+            await db.contadores.insert_one({"_id": f"caja_{current_user['organizacion_id']}", "seq": 1})
+        else:
+            numero = counter["seq"] + 1
+            await db.contadores.update_one(
+                {"_id": f"caja_{current_user['organizacion_id']}"},
+                {"$set": {"seq": numero}}
+            )
+        numero_caja = f"CAJA-{numero:06d}"
     
-    numero_caja = f"CAJA-{numero:06d}"
+    caja_id = str(uuid.uuid4())
     
     nueva_caja = {
         "_id": caja_id,
@@ -2154,7 +2209,13 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         "fecha_apertura": datetime.now(timezone.utc).isoformat(),
         "fecha_cierre": None,
         "estado": "abierta",
-        "requiere_cierre": cierres_caja_activo
+        "requiere_cierre": cierres_caja_activo,
+        "tpv_id": tpv_id,
+        "tpv_nombre": tpv_nombre,
+        "tienda_id": tienda_id,
+        "tienda_nombre": tienda_nombre,
+        "codigo_establecimiento": codigo_establecimiento,
+        "punto_emision": punto_emision
     }
     
     await db.cajas.insert_one(nueva_caja)
@@ -2170,7 +2231,13 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         total_ventas=0,
         fecha_apertura=nueva_caja["fecha_apertura"],
         fecha_cierre=None,
-        estado="abierta"
+        estado="abierta",
+        tpv_id=tpv_id,
+        tpv_nombre=tpv_nombre,
+        tienda_id=tienda_id,
+        tienda_nombre=tienda_nombre,
+        codigo_establecimiento=codigo_establecimiento,
+        punto_emision=punto_emision
     )
 
 @app.post("/api/caja/cerrar")
