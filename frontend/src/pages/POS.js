@@ -171,6 +171,22 @@ export default function POS() {
     }
   };
 
+  const fetchTpvsDisponibles = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/tpv/disponibles`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTpvsDisponibles(response.data);
+      // Si hay TPVs disponibles, seleccionar el primero por defecto
+      if (response.data.length > 0) {
+        setTpvSeleccionado(response.data[0].id);
+      }
+    } catch (error) {
+      console.error('Error al cargar TPVs disponibles:', error);
+    }
+  };
+
   const handleClickGuardar = async () => {
     // Si hay un ticket actual (recuperado), actualizar automáticamente
     if (ticketActualId) {
