@@ -1526,6 +1526,197 @@ async def delete_tienda(tienda_id: str, current_user: dict = Depends(get_current
     
     return {"message": "Tienda eliminada correctamente"}
 
+# TPV (Dispositivos de Punto de Venta)
+@app.get("/api/tpv", response_model=List[TPVResponse])
+async def get_tpvs(current_user: dict = Depends(get_current_user)):
+    tpvs = await db.tpv.find({
+        "organizacion_id": current_user["organizacion_id"]
+    }, {"_id": 0}).to_list(1000)
+    
+    result = []
+    for t in tpvs:
+        # Obtener nombre de la tienda
+        tienda = await db.tiendas.find_one({"id": t["tienda_id"]}, {"_id": 0, "nombre": 1})
+        tienda_nombre = tienda["nombre"] if tienda else "Sin tienda"
+        
+        result.append(TPVResponse(
+            id=t["id"],
+            nombre=t["nombre"],
+            punto_emision=t["punto_emision"],
+            tienda_id=t["tienda_id"],
+            tienda_nombre=tienda_nombre,
+            activo=t.get("activo", True),
+            ocupado=t.get("ocupado", False),
+            ocupado_por=t.get("ocupado_por"),
+            ocupado_por_nombre=t.get("ocupado_por_nombre"),
+            organizacion_id=t["organizacion_id"],
+            fecha_creacion=t.get("fecha_creacion", "")
+        ))
+    
+    return result
+
+@app.get("/api/tpv/disponibles", response_model=List[TPVResponse])
+async def get_tpvs_disponibles(current_user: dict = Depends(get_current_user)):
+    """Obtiene solo los TPV activos y no ocupados para selección al abrir caja"""
+    tpvs = await db.tpv.find({
+        "organizacion_id": current_user["organizacion_id"],
+        "activo": True,
+        "$or": [
+            {"ocupado": False},
+            {"ocupado": {"$exists": False}}
+        ]
+    }, {"_id": 0}).to_list(1000)
+    
+    result = []
+    for t in tpvs:
+        tienda = await db.tiendas.find_one({"id": t["tienda_id"]}, {"_id": 0, "nombre": 1})
+        tienda_nombre = tienda["nombre"] if tienda else "Sin tienda"
+        
+        result.append(TPVResponse(
+            id=t["id"],
+            nombre=t["nombre"],
+            punto_emision=t["punto_emision"],
+            tienda_id=t["tienda_id"],
+            tienda_nombre=tienda_nombre,
+            activo=t.get("activo", True),
+            ocupado=False,
+            ocupado_por=None,
+            ocupado_por_nombre=None,
+            organizacion_id=t["organizacion_id"],
+            fecha_creacion=t.get("fecha_creacion", "")
+        ))
+    
+    return result
+
+@app.post("/api/tpv")
+async def create_tpv(tpv: TPVCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    # Validar que la tienda existe
+    tienda = await db.tiendas.find_one({
+        "id": tpv.tienda_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    if not tienda:
+        raise HTTPException(status_code=404, detail="Tienda no encontrada")
+    
+    # Validar punto de emisión único dentro de la tienda
+    existing = await db.tpv.find_one({
+        "punto_emision": tpv.punto_emision,
+        "tienda_id": tpv.tienda_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="El punto de emisión ya existe en esta tienda")
+    
+    tpv_id = str(uuid.uuid4())
+    
+    nuevo_tpv = {
+        "id": tpv_id,
+        "nombre": tpv.nombre,
+        "punto_emision": tpv.punto_emision,
+        "tienda_id": tpv.tienda_id,
+        "activo": tpv.activo,
+        "ocupado": False,
+        "ocupado_por": None,
+        "ocupado_por_nombre": None,
+        "organizacion_id": current_user["organizacion_id"],
+        "fecha_creacion": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.tpv.insert_one(nuevo_tpv)
+    
+    return TPVResponse(
+        id=tpv_id,
+        nombre=tpv.nombre,
+        punto_emision=tpv.punto_emision,
+        tienda_id=tpv.tienda_id,
+        tienda_nombre=tienda["nombre"],
+        activo=tpv.activo,
+        ocupado=False,
+        ocupado_por=None,
+        ocupado_por_nombre=None,
+        organizacion_id=current_user["organizacion_id"],
+        fecha_creacion=nuevo_tpv["fecha_creacion"]
+    )
+
+@app.put("/api/tpv/{tpv_id}")
+async def update_tpv(tpv_id: str, tpv: TPVCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    # Validar que el TPV no esté ocupado
+    tpv_actual = await db.tpv.find_one({"id": tpv_id, "organizacion_id": current_user["organizacion_id"]})
+    if not tpv_actual:
+        raise HTTPException(status_code=404, detail="TPV no encontrado")
+    
+    if tpv_actual.get("ocupado"):
+        raise HTTPException(status_code=400, detail="No se puede modificar un TPV ocupado")
+    
+    # Validar que la tienda existe
+    tienda = await db.tiendas.find_one({
+        "id": tpv.tienda_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    if not tienda:
+        raise HTTPException(status_code=404, detail="Tienda no encontrada")
+    
+    # Validar punto de emisión único (excluyendo el TPV actual)
+    existing = await db.tpv.find_one({
+        "punto_emision": tpv.punto_emision,
+        "tienda_id": tpv.tienda_id,
+        "organizacion_id": current_user["organizacion_id"],
+        "id": {"$ne": tpv_id}
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="El punto de emisión ya existe en esta tienda")
+    
+    await db.tpv.update_one(
+        {"id": tpv_id, "organizacion_id": current_user["organizacion_id"]},
+        {
+            "$set": {
+                "nombre": tpv.nombre,
+                "punto_emision": tpv.punto_emision,
+                "tienda_id": tpv.tienda_id,
+                "activo": tpv.activo
+            }
+        }
+    )
+    
+    tpv_actualizado = await db.tpv.find_one({"id": tpv_id}, {"_id": 0})
+    
+    return TPVResponse(
+        id=tpv_id,
+        nombre=tpv.nombre,
+        punto_emision=tpv.punto_emision,
+        tienda_id=tpv.tienda_id,
+        tienda_nombre=tienda["nombre"],
+        activo=tpv.activo,
+        ocupado=tpv_actualizado.get("ocupado", False),
+        ocupado_por=tpv_actualizado.get("ocupado_por"),
+        ocupado_por_nombre=tpv_actualizado.get("ocupado_por_nombre"),
+        organizacion_id=current_user["organizacion_id"],
+        fecha_creacion=tpv_actualizado.get("fecha_creacion", "")
+    )
+
+@app.delete("/api/tpv/{tpv_id}")
+async def delete_tpv(tpv_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    # Validar que el TPV no esté ocupado
+    tpv = await db.tpv.find_one({"id": tpv_id, "organizacion_id": current_user["organizacion_id"]})
+    if not tpv:
+        raise HTTPException(status_code=404, detail="TPV no encontrado")
+    
+    if tpv.get("ocupado"):
+        raise HTTPException(status_code=400, detail="No se puede eliminar un TPV ocupado")
+    
+    await db.tpv.delete_one({"id": tpv_id, "organizacion_id": current_user["organizacion_id"]})
+    
+    return {"message": "TPV eliminado correctamente"}
+
 # Tickets Abiertos
 @app.get("/api/tickets-abiertos-pos", response_model=List[TicketAbiertoResponse])
 async def get_tickets_abiertos_pos(current_user: dict = Depends(get_current_user)):
