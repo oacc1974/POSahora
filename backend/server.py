@@ -172,6 +172,7 @@ class TipoPedidoResponse(BaseModel):
 # Modelos para Tiendas (Sucursales)
 class TiendaCreate(BaseModel):
     nombre: str
+    codigo_establecimiento: str  # Ej: "001" para facturación SRI
     direccion: Optional[str] = None
     telefono: Optional[str] = None
     email: Optional[str] = None
@@ -180,10 +181,32 @@ class TiendaCreate(BaseModel):
 class TiendaResponse(BaseModel):
     id: str
     nombre: str
+    codigo_establecimiento: str
     direccion: Optional[str] = None
     telefono: Optional[str] = None
     email: Optional[str] = None
     activa: bool
+    organizacion_id: str
+    codigo_tienda: Optional[str] = None  # Código para login POS (de la organización)
+    fecha_creacion: str
+
+# Modelos para TPV (Dispositivos de Punto de Venta)
+class TPVCreate(BaseModel):
+    nombre: str
+    punto_emision: str  # Ej: "001", "002" para facturación
+    tienda_id: str
+    activo: bool = True
+
+class TPVResponse(BaseModel):
+    id: str
+    nombre: str
+    punto_emision: str
+    tienda_id: str
+    tienda_nombre: Optional[str] = None
+    activo: bool
+    ocupado: bool = False
+    ocupado_por: Optional[str] = None
+    ocupado_por_nombre: Optional[str] = None
     organizacion_id: str
     fecha_creacion: str
 
