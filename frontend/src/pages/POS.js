@@ -405,15 +405,26 @@ export default function POS() {
     try {
       const token = localStorage.getItem('token');
       const monto = requiereCierres ? parseFloat(montoInicial) : 0;
+      const payload = { 
+        monto_inicial: monto,
+        tpv_id: tpvSeleccionado || null
+      };
       const response = await axios.post(
         `${API_URL}/api/caja/abrir`,
-        { monto_inicial: monto },
+        payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setCajaActiva(response.data);
       setShowAperturaCaja(false);
       setMontoInicial('');
-      toast.success('Caja abierta correctamente. ¡Puedes comenzar a vender!');
+      setTpvSeleccionado(null);
+      
+      // Mensaje de éxito con info del TPV si corresponde
+      if (response.data.tpv_nombre) {
+        toast.success(`Caja abierta en ${response.data.tpv_nombre}. ¡Puedes comenzar a vender!`);
+      } else {
+        toast.success('Caja abierta correctamente. ¡Puedes comenzar a vender!');
+      }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error al abrir caja');
     }
