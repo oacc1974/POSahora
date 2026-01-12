@@ -77,6 +77,8 @@ export default function POS() {
       if (response.data) {
         setCajaActiva(response.data);
       } else {
+        // Cargar TPVs disponibles antes de mostrar el diálogo
+        fetchTpvsDisponibles();
         setShowAperturaCaja(true);
       }
     } catch (error) {
