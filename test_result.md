@@ -238,6 +238,42 @@ frontend:
           agent: "main"
           comment: "Actualizada la función printInvoice para mostrar el subtotal, desglose de cada impuesto con su tasa y monto, y el total final. Se muestra si el impuesto está incluido en el precio."
 
+  - task: "Interfaz de Configuración > Tiendas"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/config/ConfigTiendas.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ SECCIÓN TIENDAS COMPLETAMENTE FUNCIONAL. Pruebas realizadas: 1) Código de Tienda para Login POS mostrado correctamente: 'ADMI-7005', 2) Códigos de establecimiento verificados: ['001', '002', '003'], 3) Formulario de crear/editar tienda funciona correctamente con auto-sugerencia de código '004', 4) Validación de campos requeridos, 5) Interfaz responsive y bien estructurada. Todas las funcionalidades solicitadas están implementadas y funcionando."
+
+  - task: "Interfaz de Configuración > Dispositivos TPV"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/config/ConfigTPV.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ SECCIÓN TPV COMPLETAMENTE FUNCIONAL. Pruebas realizadas: 1) 5 dispositivos TPV encontrados con puntos de emisión (#001, #002, #001, #004), 2) Asociación con tiendas mostrada correctamente, 3) Estados verificados (Disponible/En uso/Inactivo), 4) Formulario crear/editar TPV con auto-sugerencia punto emisión '005', 5) Vista previa numeración factura: '001-005-000000001', 6) Validación de campos y selección de tienda. Sistema TPV completamente operativo."
+
+  - task: "Punto de Venta (POS) - Apertura de Caja con TPV"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/POS.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ APERTURA DE CAJA CON TPV COMPLETAMENTE FUNCIONAL. Pruebas realizadas: 1) Diálogo de apertura de caja aparece automáticamente al acceder al POS, 2) Selector de TPV presente con opciones: 'Caja 1 (Tienda Principal) - Punto: 001', 'Caja 2 (Tienda Principal) - Punto: 002', 'Caja Norte (Sucursal Norte) - Punto: 001', 'Test TPV 006 (Sin tienda) - Punto: 004', 3) Opción por defecto '-- Sin TPV asignado --' disponible, 4) Formulario permite selección de TPV y monto inicial, 5) Mensaje informativo sobre numeración de facturas. Sistema de apertura de caja con TPV completamente operativo."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
