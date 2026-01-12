@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '../../components/ui/dialog';
-import { Store, Plus, Pencil, Trash2, MapPin, Phone, Mail, CheckCircle, XCircle } from 'lucide-react';
+import { Store, Plus, Pencil, Trash2, MapPin, Phone, Mail, CheckCircle, XCircle, Hash, Key } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -23,12 +23,14 @@ export default function ConfigTiendas() {
   const [editingTienda, setEditingTienda] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
+    codigo_establecimiento: '',
     direccion: '',
     telefono: '',
     email: '',
     activa: true
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchTiendas();
@@ -49,10 +51,12 @@ export default function ConfigTiendas() {
   };
 
   const openDialog = (tienda = null) => {
+    setError('');
     if (tienda) {
       setEditingTienda(tienda);
       setFormData({
         nombre: tienda.nombre,
+        codigo_establecimiento: tienda.codigo_establecimiento || '',
         direccion: tienda.direccion || '',
         telefono: tienda.telefono || '',
         email: tienda.email || '',
@@ -60,8 +64,11 @@ export default function ConfigTiendas() {
       });
     } else {
       setEditingTienda(null);
+      // Sugerir el siguiente código de establecimiento
+      const nextCode = String(tiendas.length + 1).padStart(3, '0');
       setFormData({
         nombre: '',
+        codigo_establecimiento: nextCode,
         direccion: '',
         telefono: '',
         email: '',
@@ -74,8 +81,10 @@ export default function ConfigTiendas() {
   const closeDialog = () => {
     setDialogOpen(false);
     setEditingTienda(null);
+    setError('');
     setFormData({
       nombre: '',
+      codigo_establecimiento: '',
       direccion: '',
       telefono: '',
       email: '',
@@ -85,13 +94,15 @@ export default function ConfigTiendas() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.nombre.trim()) return;
+    if (!formData.nombre.trim() || !formData.codigo_establecimiento.trim()) return;
 
+    setError('');
     setSaving(true);
     try {
       const token = localStorage.getItem('token');
       const payload = {
         nombre: formData.nombre.trim(),
+        codigo_establecimiento: formData.codigo_establecimiento.trim(),
         direccion: formData.direccion.trim() || null,
         telefono: formData.telefono.trim() || null,
         email: formData.email.trim() || null,
@@ -120,7 +131,11 @@ export default function ConfigTiendas() {
       fetchTiendas();
     } catch (error) {
       console.error('Error al guardar tienda:', error);
-      alert('Error al guardar la tienda');
+      if (error.response?.data?.detail) {
+        setError(error.response.data.detail);
+      } else {
+        setError('Error al guardar la tienda');
+      }
     } finally {
       setSaving(false);
     }
@@ -153,6 +168,9 @@ export default function ConfigTiendas() {
     );
   }
 
+  // Obtener el código de tienda de la primera tienda (es el mismo para todas)
+  const codigoTiendaLogin = tiendas.length > 0 ? tiendas[0].codigo_tienda : null;
+
   return (
     <Card className="p-6">
       {/* Header */}
@@ -171,6 +189,18 @@ export default function ConfigTiendas() {
           Nueva Tienda
         </Button>
       </div>
+
+      {/* Código de Tienda para Login POS */}
+      {codigoTiendaLogin && (
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2 mb-1">
+            <Key size={16} className="text-blue-600" />
+            <span className="font-semibold text-blue-800">Código de Tienda para Login POS</span>
+          </div>
+          <p className="text-2xl font-mono font-bold text-blue-700">{codigoTiendaLogin}</p>
+          <p className="text-xs text-blue-600 mt-1">Usa este código para que tus empleados accedan al punto de venta</p>
+        </div>
+      )}
 
       {/* Lista de tiendas */}
       {tiendas.length === 0 ? (
@@ -199,6 +229,9 @@ export default function ConfigTiendas() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-slate-800">{tienda.nombre}</h3>
+                    <span className="text-xs font-mono bg-slate-200 text-slate-600 px-2 py-0.5 rounded">
+                      {tienda.codigo_establecimiento || '001'}
+                    </span>
                     {tienda.activa ? (
                       <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                         <CheckCircle size={12} />
@@ -266,15 +299,38 @@ export default function ConfigTiendas() {
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre de la tienda *</Label>
-                <Input
-                  id="nombre"
-                  placeholder="Ej: Sucursal Centro"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  required
-                />
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="nombre">Nombre de la tienda *</Label>
+                  <Input
+                    id="nombre"
+                    placeholder="Ej: Sucursal Centro"
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="codigo_establecimiento">Código *</Label>
+                  <div className="relative">
+                    <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      id="codigo_establecimiento"
+                      placeholder="001"
+                      value={formData.codigo_establecimiento}
+                      onChange={(e) => setFormData({ ...formData, codigo_establecimiento: e.target.value.replace(/\D/g, '').slice(0, 3).padStart(3, '0') })}
+                      maxLength={3}
+                      className="pl-8 font-mono"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500">Para facturación SRI</p>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="direccion">Dirección</Label>
@@ -290,7 +346,7 @@ export default function ConfigTiendas() {
                   <Label htmlFor="telefono">Teléfono</Label>
                   <Input
                     id="telefono"
-                    placeholder="Ej: +1 234 567890"
+                    placeholder="Ej: +593 99 123 4567"
                     value={formData.telefono}
                     onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
                   />
@@ -322,7 +378,7 @@ export default function ConfigTiendas() {
               <Button type="button" variant="outline" onClick={closeDialog}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={saving || !formData.nombre.trim()}>
+              <Button type="submit" disabled={saving || !formData.nombre.trim() || !formData.codigo_establecimiento.trim()}>
                 {saving ? 'Guardando...' : editingTienda ? 'Actualizar' : 'Crear'}
               </Button>
             </DialogFooter>
