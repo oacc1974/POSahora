@@ -83,7 +83,7 @@ export default function ConfiguracionNew() {
       case 'tiendas':
         return <ConfigTiendas />;
       case 'dispositivos-tpv':
-        return <PlaceholderSection title="Dispositivos TPV" />;
+        return <ConfigTPV />;
       default:
         return <ConfigFunciones />;
     }
