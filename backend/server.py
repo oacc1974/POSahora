@@ -2343,21 +2343,42 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
     if not caja_activa:
         raise HTTPException(status_code=400, detail="Debes abrir una caja antes de realizar ventas")
     
-    import uuid
     invoice_id = str(uuid.uuid4())
     
-    counter = await db.contadores.find_one({"_id": f"factura_{current_user['organizacion_id']}"})
-    if not counter:
-        numero = 1
-        await db.contadores.insert_one({"_id": f"factura_{current_user['organizacion_id']}", "seq": 1})
-    else:
-        numero = counter["seq"] + 1
-        await db.contadores.update_one(
-            {"_id": f"factura_{current_user['organizacion_id']}"},
-            {"$set": {"seq": numero}}
-        )
+    # Determinar el formato de numeración de factura
+    codigo_establecimiento = caja_activa.get("codigo_establecimiento")
+    punto_emision = caja_activa.get("punto_emision")
     
-    numero_factura = f"FAC-{numero:06d}"
+    if codigo_establecimiento and punto_emision:
+        # Nueva numeración SRI: XXX-YYY-ZZZZZZZZZ
+        # Contador por punto de emisión específico
+        contador_id = f"factura_{current_user['organizacion_id']}_{codigo_establecimiento}_{punto_emision}"
+        counter = await db.contadores.find_one({"_id": contador_id})
+        if not counter:
+            numero = 1
+            await db.contadores.insert_one({"_id": contador_id, "seq": 1})
+        else:
+            numero = counter["seq"] + 1
+            await db.contadores.update_one(
+                {"_id": contador_id},
+                {"$set": {"seq": numero}}
+            )
+        
+        numero_factura = f"{codigo_establecimiento}-{punto_emision}-{numero:09d}"
+    else:
+        # Numeración antigua para compatibilidad
+        counter = await db.contadores.find_one({"_id": f"factura_{current_user['organizacion_id']}"})
+        if not counter:
+            numero = 1
+            await db.contadores.insert_one({"_id": f"factura_{current_user['organizacion_id']}", "seq": 1})
+        else:
+            numero = counter["seq"] + 1
+            await db.contadores.update_one(
+                {"_id": f"factura_{current_user['organizacion_id']}"},
+                {"$set": {"seq": numero}}
+            )
+        
+        numero_factura = f"FAC-{numero:06d}"
     
     cliente_nombre = None
     if invoice.cliente_id:
