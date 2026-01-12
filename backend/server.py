@@ -293,6 +293,7 @@ class TicketAbiertoResponse(BaseModel):
 
 class CajaApertura(BaseModel):
     monto_inicial: Optional[float] = 0.0
+    tpv_id: Optional[str] = None  # ID del TPV seleccionado
 
 class CajaCierre(BaseModel):
     efectivo_contado: float
@@ -311,6 +312,12 @@ class CajaResponse(BaseModel):
     fecha_apertura: str
     fecha_cierre: Optional[str] = None
     estado: str
+    tpv_id: Optional[str] = None
+    tpv_nombre: Optional[str] = None
+    tienda_id: Optional[str] = None
+    tienda_nombre: Optional[str] = None
+    codigo_establecimiento: Optional[str] = None
+    punto_emision: Optional[str] = None
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
