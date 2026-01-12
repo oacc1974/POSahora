@@ -1393,15 +1393,21 @@ async def get_tiendas(current_user: dict = Depends(get_current_user)):
         "organizacion_id": current_user["organizacion_id"]
     }, {"_id": 0}).to_list(1000)
     
+    # Obtener el código de tienda de la organización
+    org = await db.organizaciones.find_one({"_id": current_user["organizacion_id"]})
+    codigo_tienda_org = org.get("codigo_tienda") if org else None
+    
     return [
         TiendaResponse(
             id=t["id"],
             nombre=t["nombre"],
+            codigo_establecimiento=t.get("codigo_establecimiento", "001"),
             direccion=t.get("direccion"),
             telefono=t.get("telefono"),
             email=t.get("email"),
             activa=t.get("activa", True),
             organizacion_id=t["organizacion_id"],
+            codigo_tienda=codigo_tienda_org,
             fecha_creacion=t.get("fecha_creacion", "")
         )
         for t in tiendas
@@ -1412,11 +1418,24 @@ async def create_tienda(tienda: TiendaCreate, current_user: dict = Depends(get_c
     if current_user["rol"] not in ["propietario", "administrador"]:
         raise HTTPException(status_code=403, detail="No tienes permiso")
     
+    # Validar código de establecimiento único en la organización
+    existing = await db.tiendas.find_one({
+        "codigo_establecimiento": tienda.codigo_establecimiento,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="El código de establecimiento ya existe")
+    
     tienda_id = str(uuid.uuid4())
+    
+    # Obtener el código de tienda de la organización
+    org = await db.organizaciones.find_one({"_id": current_user["organizacion_id"]})
+    codigo_tienda_org = org.get("codigo_tienda") if org else None
     
     nueva_tienda = {
         "id": tienda_id,
         "nombre": tienda.nombre,
+        "codigo_establecimiento": tienda.codigo_establecimiento,
         "direccion": tienda.direccion,
         "telefono": tienda.telefono,
         "email": tienda.email,
@@ -1430,11 +1449,13 @@ async def create_tienda(tienda: TiendaCreate, current_user: dict = Depends(get_c
     return TiendaResponse(
         id=tienda_id,
         nombre=tienda.nombre,
+        codigo_establecimiento=tienda.codigo_establecimiento,
         direccion=tienda.direccion,
         telefono=tienda.telefono,
         email=tienda.email,
         activa=tienda.activa,
         organizacion_id=current_user["organizacion_id"],
+        codigo_tienda=codigo_tienda_org,
         fecha_creacion=nueva_tienda["fecha_creacion"]
     )
 
@@ -1442,6 +1463,15 @@ async def create_tienda(tienda: TiendaCreate, current_user: dict = Depends(get_c
 async def update_tienda(tienda_id: str, tienda: TiendaCreate, current_user: dict = Depends(get_current_user)):
     if current_user["rol"] not in ["propietario", "administrador"]:
         raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    # Validar código de establecimiento único (excluyendo la tienda actual)
+    existing = await db.tiendas.find_one({
+        "codigo_establecimiento": tienda.codigo_establecimiento,
+        "organizacion_id": current_user["organizacion_id"],
+        "id": {"$ne": tienda_id}
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="El código de establecimiento ya existe")
     
     result = await db.tiendas.update_one(
         {
@@ -1451,6 +1481,7 @@ async def update_tienda(tienda_id: str, tienda: TiendaCreate, current_user: dict
         {
             "$set": {
                 "nombre": tienda.nombre,
+                "codigo_establecimiento": tienda.codigo_establecimiento,
                 "direccion": tienda.direccion,
                 "telefono": tienda.telefono,
                 "email": tienda.email,
@@ -1462,17 +1493,21 @@ async def update_tienda(tienda_id: str, tienda: TiendaCreate, current_user: dict
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Tienda no encontrada")
     
-    # Obtener la tienda actualizada para devolver
+    # Obtener la tienda actualizada y el código de tienda
     tienda_actualizada = await db.tiendas.find_one({"id": tienda_id}, {"_id": 0})
+    org = await db.organizaciones.find_one({"_id": current_user["organizacion_id"]})
+    codigo_tienda_org = org.get("codigo_tienda") if org else None
     
     return TiendaResponse(
         id=tienda_id,
         nombre=tienda.nombre,
+        codigo_establecimiento=tienda.codigo_establecimiento,
         direccion=tienda.direccion,
         telefono=tienda.telefono,
         email=tienda.email,
         activa=tienda.activa,
         organizacion_id=current_user["organizacion_id"],
+        codigo_tienda=codigo_tienda_org,
         fecha_creacion=tienda_actualizada.get("fecha_creacion", "")
     )
 
