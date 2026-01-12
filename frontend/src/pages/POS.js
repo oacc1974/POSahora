@@ -55,6 +55,8 @@ export default function POS() {
     email: '',
     direccion: '',
   });
+  const [tpvsDisponibles, setTpvsDisponibles] = useState([]);
+  const [tpvSeleccionado, setTpvSeleccionado] = useState(null);
 
   useEffect(() => {
     fetchProductos();
