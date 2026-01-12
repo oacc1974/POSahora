@@ -767,7 +767,7 @@ class BillingSystemTester:
         """Test creating a new tienda with codigo_establecimiento"""
         tienda_data = {
             "nombre": "Tienda Test SRI",
-            "codigo_establecimiento": "002",
+            "codigo_establecimiento": "004",  # Changed to avoid conflict
             "direccion": "Av. Test 123",
             "telefono": "0987654321",
             "email": "tienda@test.com",
