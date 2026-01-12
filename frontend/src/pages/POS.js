@@ -1123,6 +1123,37 @@ export default function POS() {
           </div>
 
           <form onSubmit={handleAbrirCaja} className="space-y-4">
+            {/* Selección de TPV */}
+            {tpvsDisponibles.length > 0 && (
+              <div>
+                <Label htmlFor="tpv_seleccion">Selecciona un TPV (Punto de Venta)</Label>
+                <select
+                  id="tpv_seleccion"
+                  value={tpvSeleccionado || ''}
+                  onChange={(e) => setTpvSeleccionado(e.target.value || null)}
+                  className="w-full mt-2 p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">-- Sin TPV asignado --</option>
+                  {tpvsDisponibles.map((tpv) => (
+                    <option key={tpv.id} value={tpv.id}>
+                      {tpv.nombre} ({tpv.tienda_nombre}) - Punto: {tpv.punto_emision}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-500 mt-2">
+                  Las facturas usarán la numeración del TPV seleccionado
+                </p>
+              </div>
+            )}
+
+            {tpvsDisponibles.length === 0 && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-yellow-800 text-sm">
+                  No hay TPVs disponibles. Puedes continuar sin TPV o contacta al administrador.
+                </p>
+              </div>
+            )}
+
             {requiereCierres && (
               <div>
                 <Label htmlFor="monto_inicial_pos">Base de Caja (Monto Inicial) *</Label>
