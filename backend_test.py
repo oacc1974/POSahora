@@ -738,6 +738,392 @@ class BillingSystemTester:
         )
         return success
 
+    # ===== POS SRI ECUADOR FUNCTIONALITY TESTS =====
+    
+    def test_get_tiendas(self):
+        """Test getting tiendas (stores) with codigo_establecimiento"""
+        success, response = self.run_test(
+            "Get Tiendas (Stores)",
+            "GET",
+            "api/tiendas",
+            200
+        )
+        if success:
+            print(f"   Found {len(response)} tiendas")
+            for tienda in response:
+                codigo_est = tienda.get('codigo_establecimiento', 'N/A')
+                codigo_tienda = tienda.get('codigo_tienda', 'N/A')
+                print(f"     - {tienda['nombre']}: Código Establecimiento={codigo_est}, Código Tienda={codigo_tienda}")
+                
+                # Validate codigo_establecimiento exists
+                if not tienda.get('codigo_establecimiento'):
+                    print(f"   ❌ Tienda {tienda['nombre']} missing codigo_establecimiento")
+                    return False
+                    
+            print("   ✅ All tiendas have codigo_establecimiento field")
+        return success
+
+    def test_create_tienda(self):
+        """Test creating a new tienda with codigo_establecimiento"""
+        tienda_data = {
+            "nombre": "Tienda Test SRI",
+            "codigo_establecimiento": "002",
+            "direccion": "Av. Test 123",
+            "telefono": "0987654321",
+            "email": "tienda@test.com",
+            "activa": True
+        }
+        success, response = self.run_test(
+            "Create Tienda with Código Establecimiento",
+            "POST",
+            "api/tiendas",
+            200,
+            data=tienda_data
+        )
+        if success and 'id' in response:
+            self.created_tienda_id = response['id']
+            print(f"   Created tienda ID: {self.created_tienda_id}")
+            print(f"   Código Establecimiento: {response.get('codigo_establecimiento')}")
+            print(f"   Código Tienda (org): {response.get('codigo_tienda')}")
+            
+            # Validate required fields
+            if response.get('codigo_establecimiento') != "002":
+                print(f"   ❌ Código establecimiento mismatch")
+                return False
+                
+            if not response.get('codigo_tienda'):
+                print(f"   ❌ Missing código tienda from organization")
+                return False
+                
+            print("   ✅ Tienda created with correct SRI fields")
+        return success
+
+    def test_get_tpv_all(self):
+        """Test getting all TPV devices"""
+        success, response = self.run_test(
+            "Get All TPV Devices",
+            "GET",
+            "api/tpv",
+            200
+        )
+        if success:
+            print(f"   Found {len(response)} TPV devices")
+            for tpv in response:
+                print(f"     - {tpv['nombre']}: Punto Emisión={tpv['punto_emision']}, Activo={tpv['activo']}, Ocupado={tpv.get('ocupado', False)}")
+        return success
+
+    def test_create_tpv(self):
+        """Test creating a new TPV device"""
+        if not self.created_tienda_id:
+            print("❌ No tienda ID available for TPV creation")
+            return False
+            
+        tpv_data = {
+            "nombre": "TPV Test SRI",
+            "punto_emision": "001",
+            "tienda_id": self.created_tienda_id,
+            "activo": True
+        }
+        success, response = self.run_test(
+            "Create TPV Device",
+            "POST",
+            "api/tpv",
+            200,
+            data=tpv_data
+        )
+        if success and 'id' in response:
+            self.created_tpv_id = response['id']
+            print(f"   Created TPV ID: {self.created_tpv_id}")
+            print(f"   Punto Emisión: {response.get('punto_emision')}")
+            print(f"   Tienda: {response.get('tienda_nombre')}")
+            print(f"   Ocupado: {response.get('ocupado', False)}")
+            
+            # Validate TPV fields
+            if response.get('punto_emision') != "001":
+                print(f"   ❌ Punto emisión mismatch")
+                return False
+                
+            if response.get('ocupado') != False:
+                print(f"   ❌ New TPV should not be occupied")
+                return False
+                
+            print("   ✅ TPV created with correct SRI fields")
+        return success
+
+    def test_get_tpv_disponibles(self):
+        """Test getting available TPV devices (activos y no ocupados)"""
+        success, response = self.run_test(
+            "Get Available TPV Devices",
+            "GET",
+            "api/tpv/disponibles",
+            200
+        )
+        if success:
+            print(f"   Found {len(response)} available TPV devices")
+            for tpv in response:
+                print(f"     - {tpv['nombre']}: Punto Emisión={tpv['punto_emision']}, Activo={tpv['activo']}")
+                
+                # Validate all returned TPV are active and not occupied
+                if not tpv.get('activo'):
+                    print(f"   ❌ TPV {tpv['nombre']} should be active")
+                    return False
+                    
+                if tpv.get('ocupado'):
+                    print(f"   ❌ TPV {tpv['nombre']} should not be occupied")
+                    return False
+                    
+            print("   ✅ All available TPV are active and not occupied")
+        return success
+
+    def test_update_tpv(self):
+        """Test updating a TPV device"""
+        if not self.created_tpv_id:
+            print("❌ No TPV ID available for update test")
+            return False
+            
+        updated_data = {
+            "nombre": "TPV Test SRI Actualizado",
+            "punto_emision": "002",
+            "tienda_id": self.created_tienda_id,
+            "activo": True
+        }
+        success, response = self.run_test(
+            "Update TPV Device",
+            "PUT",
+            f"api/tpv/{self.created_tpv_id}",
+            200,
+            data=updated_data
+        )
+        if success:
+            print(f"   Updated TPV: {response.get('nombre')}")
+            print(f"   New Punto Emisión: {response.get('punto_emision')}")
+        return success
+
+    def test_open_cash_register_with_tpv(self):
+        """Test opening cash register with TPV selection"""
+        if not self.created_tpv_id:
+            print("❌ No TPV ID available for cash register test")
+            return False
+            
+        cash_data = {
+            "monto_inicial": 150.0,
+            "tpv_id": self.created_tpv_id
+        }
+        success, response = self.run_test(
+            "Open Cash Register with TPV",
+            "POST",
+            "api/caja/abrir",
+            200,
+            data=cash_data
+        )
+        if success and 'id' in response:
+            self.caja_id = response['id']
+            print(f"   Opened cash register: {response.get('numero')}")
+            print(f"   TPV ID: {response.get('tpv_id')}")
+            print(f"   TPV Nombre: {response.get('tpv_nombre')}")
+            print(f"   Tienda: {response.get('tienda_nombre')}")
+            print(f"   Código Establecimiento: {response.get('codigo_establecimiento')}")
+            print(f"   Punto Emisión: {response.get('punto_emision')}")
+            
+            # Validate TPV integration
+            if response.get('tpv_id') != self.created_tpv_id:
+                print(f"   ❌ TPV ID mismatch in cash register")
+                return False
+                
+            if not response.get('codigo_establecimiento'):
+                print(f"   ❌ Missing código establecimiento in cash register")
+                return False
+                
+            if not response.get('punto_emision'):
+                print(f"   ❌ Missing punto emisión in cash register")
+                return False
+                
+            print("   ✅ Cash register opened with correct TPV integration")
+            
+            # Store TPV ID for occupation test
+            self.tpv_ocupado_id = self.created_tpv_id
+        return success
+
+    def test_verify_tpv_ocupado(self):
+        """Test that TPV is marked as occupied after opening cash register"""
+        if not self.tpv_ocupado_id:
+            print("❌ No occupied TPV ID available for verification")
+            return False
+            
+        success, response = self.run_test(
+            "Verify TPV Occupation Status",
+            "GET",
+            "api/tpv",
+            200
+        )
+        if success:
+            # Find our TPV in the list
+            tpv_found = False
+            for tpv in response:
+                if tpv['id'] == self.tpv_ocupado_id:
+                    tpv_found = True
+                    print(f"   TPV {tpv['nombre']}: Ocupado={tpv.get('ocupado', False)}")
+                    print(f"   Ocupado por: {tpv.get('ocupado_por_nombre', 'N/A')}")
+                    
+                    if not tpv.get('ocupado'):
+                        print(f"   ❌ TPV should be marked as occupied")
+                        return False
+                        
+                    if not tpv.get('ocupado_por'):
+                        print(f"   ❌ TPV should have ocupado_por field")
+                        return False
+                        
+                    print("   ✅ TPV correctly marked as occupied")
+                    break
+                    
+            if not tpv_found:
+                print(f"   ❌ TPV not found in list")
+                return False
+                
+        return success
+
+    def test_create_invoice_with_sri_numbering(self):
+        """Test creating invoice with SRI numbering format XXX-YYY-ZZZZZZZZZ"""
+        if not self.created_product_id:
+            print("❌ No product ID available for SRI invoice test")
+            return False
+            
+        invoice_data = {
+            "items": [
+                {
+                    "producto_id": self.created_product_id,
+                    "nombre": "Producto SRI Test",
+                    "precio": 100.00,
+                    "cantidad": 1,
+                    "subtotal": 100.00
+                }
+            ],
+            "total": 100.00
+        }
+        success, response = self.run_test(
+            "Create Invoice with SRI Numbering",
+            "POST",
+            "api/facturas",
+            200,
+            data=invoice_data
+        )
+        if success and 'id' in response:
+            numero_factura = response.get('numero', '')
+            print(f"   Created invoice: {numero_factura}")
+            
+            # Validate SRI numbering format XXX-YYY-ZZZZZZZZZ
+            if '-' in numero_factura:
+                parts = numero_factura.split('-')
+                if len(parts) == 3:
+                    codigo_establecimiento = parts[0]
+                    punto_emision = parts[1]
+                    secuencial = parts[2]
+                    
+                    print(f"   Código Establecimiento: {codigo_establecimiento}")
+                    print(f"   Punto Emisión: {punto_emision}")
+                    print(f"   Secuencial: {secuencial}")
+                    
+                    # Validate format
+                    if len(codigo_establecimiento) == 3 and codigo_establecimiento.isdigit():
+                        print("   ✅ Código establecimiento format correct (XXX)")
+                    else:
+                        print(f"   ❌ Invalid código establecimiento format: {codigo_establecimiento}")
+                        return False
+                        
+                    if len(punto_emision) == 3 and punto_emision.isdigit():
+                        print("   ✅ Punto emisión format correct (YYY)")
+                    else:
+                        print(f"   ❌ Invalid punto emisión format: {punto_emision}")
+                        return False
+                        
+                    if len(secuencial) == 9 and secuencial.isdigit():
+                        print("   ✅ Secuencial format correct (ZZZZZZZZZ)")
+                    else:
+                        print(f"   ❌ Invalid secuencial format: {secuencial}")
+                        return False
+                        
+                    print("   ✅ SRI numbering format is correct!")
+                else:
+                    print(f"   ❌ Invalid invoice number format: {numero_factura}")
+                    return False
+            else:
+                print(f"   ❌ Invoice number doesn't contain SRI format: {numero_factura}")
+                return False
+                
+        return success
+
+    def test_close_cash_register_and_release_tpv(self):
+        """Test closing cash register and releasing TPV"""
+        if not self.caja_id:
+            print("❌ No active cash register for closing test")
+            return False
+            
+        close_data = {
+            "efectivo_contado": 250.0
+        }
+        success, response = self.run_test(
+            "Close Cash Register and Release TPV",
+            "POST",
+            "api/caja/cerrar",
+            200,
+            data=close_data
+        )
+        if success:
+            print(f"   Closed cash register: {response.get('numero')}")
+            print(f"   Final amount: ${response.get('monto_final')}")
+            print(f"   Difference: ${response.get('diferencia')}")
+            
+            # Now verify TPV is released
+            tpv_success, tpv_response = self.run_test(
+                "Verify TPV Released After Cash Close",
+                "GET",
+                "api/tpv",
+                200
+            )
+            
+            if tpv_success and self.tpv_ocupado_id:
+                for tpv in tpv_response:
+                    if tpv['id'] == self.tpv_ocupado_id:
+                        ocupado = tpv.get('ocupado', False)
+                        print(f"   TPV {tpv['nombre']} ocupado status: {ocupado}")
+                        
+                        if ocupado:
+                            print(f"   ❌ TPV should be released after cash register close")
+                            return False
+                        else:
+                            print("   ✅ TPV correctly released after cash register close")
+                            break
+                            
+        return success
+
+    def test_delete_tpv(self):
+        """Test deleting a TPV device"""
+        if not self.created_tpv_id:
+            print("❌ No TPV ID available for delete test")
+            return False
+            
+        success, response = self.run_test(
+            "Delete TPV Device",
+            "DELETE",
+            f"api/tpv/{self.created_tpv_id}",
+            200
+        )
+        return success
+
+    def test_delete_tienda(self):
+        """Test deleting a tienda"""
+        if not self.created_tienda_id:
+            print("❌ No tienda ID available for delete test")
+            return False
+            
+        success, response = self.run_test(
+            "Delete Tienda",
+            "DELETE",
+            f"api/tiendas/{self.created_tienda_id}",
+            200
+        )
+        return success
+
     def test_delete_product(self):
         """Test deleting a product"""
         if not self.created_product_id:
