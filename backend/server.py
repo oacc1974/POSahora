@@ -2265,6 +2265,19 @@ async def cerrar_caja(cierre: CajaCierre, current_user: dict = Depends(get_curre
         }
     )
     
+    # Liberar el TPV si estaba asignado
+    if caja.get("tpv_id"):
+        await db.tpv.update_one(
+            {"id": caja["tpv_id"]},
+            {
+                "$set": {
+                    "ocupado": False,
+                    "ocupado_por": None,
+                    "ocupado_por_nombre": None
+                }
+            }
+        )
+    
     caja["estado"] = "cerrada"
     caja["fecha_cierre"] = datetime.now(timezone.utc).isoformat()
     caja["efectivo_contado"] = cierre.efectivo_contado
@@ -2283,7 +2296,13 @@ async def cerrar_caja(cierre: CajaCierre, current_user: dict = Depends(get_curre
         total_ventas=caja["total_ventas"],
         fecha_apertura=caja["fecha_apertura"],
         fecha_cierre=caja["fecha_cierre"],
-        estado="cerrada"
+        estado="cerrada",
+        tpv_id=caja.get("tpv_id"),
+        tpv_nombre=caja.get("tpv_nombre"),
+        tienda_id=caja.get("tienda_id"),
+        tienda_nombre=caja.get("tienda_nombre"),
+        codigo_establecimiento=caja.get("codigo_establecimiento"),
+        punto_emision=caja.get("punto_emision")
     )
 
 @app.get("/api/caja/historial", response_model=List[CajaResponse])
