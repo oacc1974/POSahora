@@ -2146,8 +2146,16 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
     funciones_config = await db.funciones_config.find_one({"organizacion_id": current_user["organizacion_id"]}, {"_id": 0})
     cierres_caja_activo = funciones_config.get("cierres_caja", True) if funciones_config else True
     
-    # Si cierres de caja está desactivado, usar monto_inicial = 0
-    monto_inicial = apertura.monto_inicial if cierres_caja_activo else 0.0
+    # Los meseros no manejan dinero - siempre monto_inicial = 0 y no requieren cierre
+    es_mesero = current_user.get("rol") == "mesero"
+    
+    # Si cierres de caja está desactivado o es mesero, usar monto_inicial = 0
+    if es_mesero or not cierres_caja_activo:
+        monto_inicial = 0.0
+        requiere_cierre = False
+    else:
+        monto_inicial = apertura.monto_inicial or 0.0
+        requiere_cierre = True
     
     # Variables para TPV
     tpv_id = None
