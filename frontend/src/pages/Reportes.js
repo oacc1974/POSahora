@@ -54,9 +54,11 @@ export default function Reportes() {
   const [data, setData] = useState(null);
   const [facturas, setFacturas] = useState([]);
   
-  // Filtros
-  const [fechaDesde, setFechaDesde] = useState('');
-  const [fechaHasta, setFechaHasta] = useState('');
+  // Filtros - usando objeto de rango de fechas
+  const [dateRange, setDateRange] = useState({
+    from: subMonths(new Date(), 1),
+    to: new Date()
+  });
   const [tiendaId, setTiendaId] = useState('');
   const [empleadoId, setEmpleadoId] = useState('');
   
@@ -69,18 +71,13 @@ export default function Reportes() {
 
   useEffect(() => {
     loadFilterData();
-    const today = new Date();
-    const monthAgo = new Date();
-    monthAgo.setMonth(monthAgo.getMonth() - 1);
-    setFechaDesde(monthAgo.toISOString().split('T')[0]);
-    setFechaHasta(today.toISOString().split('T')[0]);
   }, []);
 
   useEffect(() => {
-    if (fechaDesde && fechaHasta) {
+    if (dateRange?.from && dateRange?.to) {
       fetchReportData();
     }
-  }, [selectedReport, fechaDesde, fechaHasta, tiendaId, empleadoId]);
+  }, [selectedReport, dateRange, tiendaId, empleadoId]);
 
   const loadFilterData = async () => {
     try {
