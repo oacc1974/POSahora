@@ -13,6 +13,7 @@ import Configuracion from './pages/Configuracion';
 import Caja from './pages/Caja';
 import Clientes from './pages/Clientes';
 import Organizaciones from './pages/Organizaciones';
+import Reportes from './pages/Reportes';
 import Layout from './components/Layout';
 import { Toaster } from './components/ui/sonner';
 import axios from 'axios';
