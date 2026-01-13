@@ -114,13 +114,21 @@ function AppRouter() {
         <Route
           path="/login"
           element={
-            user ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />
+            user ? (
+              ['cajero', 'mesero'].includes(user.rol) ? 
+                <Navigate to="/pos" replace /> : 
+                <Navigate to="/dashboard" replace />
+            ) : <Login onLogin={handleLogin} />
           }
         />
         <Route
           path="/login-pos"
           element={
-            user ? <Navigate to="/dashboard" replace /> : <LoginPOS onLogin={handleLogin} />
+            user ? (
+              ['cajero', 'mesero'].includes(user.rol) ? 
+                <Navigate to="/pos" replace /> : 
+                <Navigate to="/dashboard" replace />
+            ) : <LoginPOS onLogin={handleLogin} />
           }
         />
         <Route
