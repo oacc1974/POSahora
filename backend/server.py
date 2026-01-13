@@ -1228,6 +1228,12 @@ async def delete_metodo_pago(metodo_id: str, current_user: dict = Depends(get_cu
 @app.get("/api/funciones")
 async def get_funciones(current_user: dict = Depends(get_current_user)):
     config = await db.funciones_config.find_one({"organizacion_id": current_user["organizacion_id"]}, {"_id": 0})
+    
+    # Contar tickets abiertos
+    tickets_count = await db.tickets_abiertos.count_documents({
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
     if not config:
         return {
             "cierres_caja": True,
@@ -1236,7 +1242,8 @@ async def get_funciones(current_user: dict = Depends(get_current_user)):
             "venta_con_stock": True,
             "funcion_reloj": False,
             "impresoras_cocina": False,
-            "pantalla_clientes": False
+            "pantalla_clientes": False,
+            "tickets_abiertos_count": tickets_count
         }
     return {
         "cierres_caja": config.get("cierres_caja", True),
@@ -1245,7 +1252,8 @@ async def get_funciones(current_user: dict = Depends(get_current_user)):
         "venta_con_stock": config.get("venta_con_stock", True),
         "funcion_reloj": config.get("funcion_reloj", False),
         "impresoras_cocina": config.get("impresoras_cocina", False),
-        "pantalla_clientes": config.get("pantalla_clientes", False)
+        "pantalla_clientes": config.get("pantalla_clientes", False),
+        "tickets_abiertos_count": tickets_count
     }
 
 @app.put("/api/funciones")
