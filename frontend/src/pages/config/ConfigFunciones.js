@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Wallet, ClipboardList, ShoppingBag, ExternalLink } from 'lucide-react';
+import { Wallet, ClipboardList, ShoppingBag, ExternalLink, Clock, Printer, Monitor } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -13,6 +13,9 @@ export default function ConfigFunciones() {
     tickets_abiertos: false,
     tipo_pedido: false,
     venta_con_stock: true,
+    funcion_reloj: false,
+    impresoras_cocina: false,
+    pantalla_clientes: false,
   });
 
   const [saving, setSaving] = useState(false);
@@ -98,6 +101,33 @@ export default function ConfigFunciones() {
       enabled: funciones.venta_con_stock,
       active: true,
     },
+    {
+      id: 'funcion_reloj',
+      key: 'funcion_reloj',
+      icon: Clock,
+      title: 'Función de reloj',
+      description: 'Permite a los empleados registrar su entrada y salida del trabajo.',
+      enabled: funciones.funcion_reloj,
+      active: true,
+    },
+    {
+      id: 'impresoras_cocina',
+      key: 'impresoras_cocina',
+      icon: Printer,
+      title: 'Impresoras de cocina',
+      description: 'Envía los pedidos directamente a la impresora de cocina para preparación.',
+      enabled: funciones.impresoras_cocina,
+      active: true,
+    },
+    {
+      id: 'pantalla_clientes',
+      key: 'pantalla_clientes',
+      icon: Monitor,
+      title: 'Pantalla para clientes',
+      description: 'Muestra la información del pedido en una pantalla secundaria para el cliente.',
+      enabled: funciones.pantalla_clientes,
+      active: true,
+    },
   ];
 
   return (
@@ -178,6 +208,10 @@ export default function ConfigFunciones() {
               cierres_caja: true,
               tickets_abiertos: false,
               tipo_pedido: false,
+              venta_con_stock: true,
+              funcion_reloj: false,
+              impresoras_cocina: false,
+              pantalla_clientes: false,
             });
           }}
         >
