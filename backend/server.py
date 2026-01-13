@@ -150,6 +150,9 @@ class FuncionesConfig(BaseModel):
     tickets_abiertos: bool = False
     tipo_pedido: bool = False
     venta_con_stock: bool = True
+    funcion_reloj: bool = False
+    impresoras_cocina: bool = False
+    pantalla_clientes: bool = False
 
 class TicketPredefinidoCreate(BaseModel):
     nombre: str
@@ -1229,13 +1232,19 @@ async def get_funciones(current_user: dict = Depends(get_current_user)):
             "cierres_caja": True,
             "tickets_abiertos": False,
             "tipo_pedido": False,
-            "venta_con_stock": True
+            "venta_con_stock": True,
+            "funcion_reloj": False,
+            "impresoras_cocina": False,
+            "pantalla_clientes": False
         }
     return {
         "cierres_caja": config.get("cierres_caja", True),
         "tickets_abiertos": config.get("tickets_abiertos", False),
         "tipo_pedido": config.get("tipo_pedido", False),
-        "venta_con_stock": config.get("venta_con_stock", True)
+        "venta_con_stock": config.get("venta_con_stock", True),
+        "funcion_reloj": config.get("funcion_reloj", False),
+        "impresoras_cocina": config.get("impresoras_cocina", False),
+        "pantalla_clientes": config.get("pantalla_clientes", False)
     }
 
 @app.put("/api/funciones")
@@ -1250,7 +1259,10 @@ async def update_funciones(funciones: FuncionesConfig, current_user: dict = Depe
             "cierres_caja": funciones.cierres_caja,
             "tickets_abiertos": funciones.tickets_abiertos,
             "tipo_pedido": funciones.tipo_pedido,
-            "venta_con_stock": funciones.venta_con_stock
+            "venta_con_stock": funciones.venta_con_stock,
+            "funcion_reloj": funciones.funcion_reloj,
+            "impresoras_cocina": funciones.impresoras_cocina,
+            "pantalla_clientes": funciones.pantalla_clientes
         }},
         upsert=True
     )
