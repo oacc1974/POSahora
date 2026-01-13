@@ -108,28 +108,31 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-50">
-      {/* Mobile header - siempre visible cuando hideSidebar está activo */}
-      <div className={`${hideSidebar ? 'block' : 'md:hidden'} bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-50`}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Store size={24} className="text-white" />
+      {/* Mobile header - oculto cuando hideSidebar está activo (el POS tiene su propio header) */}
+      {!hideSidebar && (
+        <div className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Store size={24} className="text-white" />
+            </div>
+            <h1 className="text-lg font-bold text-slate-900">Sistema POS</h1>
           </div>
-          <h1 className="text-lg font-bold text-slate-900">Sistema POS</h1>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 hover:bg-slate-100 rounded-lg"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 hover:bg-slate-100 rounded-lg"
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
+      )}
 
-      {/* Sidebar - oculto cuando hideSidebar está activo */}
-      <aside
-        className={`${
-          mobileMenuOpen ? 'block' : 'hidden'
-        } ${hideSidebar ? '' : 'md:block'} w-full md:w-64 bg-white border-r border-slate-200 flex flex-col fixed ${hideSidebar ? 'top-[73px]' : 'md:sticky top-[73px] md:top-0'} h-[calc(100vh-73px)] md:h-screen z-40`}
-      >
+      {/* Sidebar - siempre oculto cuando hideSidebar está activo */}
+      {!hideSidebar && (
+        <aside
+          className={`${
+            mobileMenuOpen ? 'block' : 'hidden'
+          } md:block w-full md:w-64 bg-white border-r border-slate-200 flex flex-col fixed md:sticky top-[73px] md:top-0 h-[calc(100vh-73px)] md:h-screen z-40`}
+        >
         <div className="hidden md:block p-6 border-b border-slate-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
