@@ -13,25 +13,42 @@ import {
 import { 
   FileText, 
   DollarSign, 
-  TrendingUp, 
   Calendar, 
   User, 
   Store, 
   Monitor,
   Filter,
-  Download,
   RefreshCw,
-  CreditCard
+  CreditCard,
+  Package,
+  Tag,
+  Users,
+  Percent,
+  Receipt,
+  TrendingUp,
+  ChevronRight
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+const REPORT_TYPES = [
+  { id: 'resumen', name: 'Resumen de ventas', icon: TrendingUp, description: 'Vista general de las ventas' },
+  { id: 'articulo', name: 'Ventas por artículo', icon: Package, description: 'Ventas por cada producto' },
+  { id: 'categoria', name: 'Ventas por categoría', icon: Tag, description: 'Ventas agrupadas por categoría' },
+  { id: 'empleado', name: 'Ventas por empleado', icon: Users, description: 'Rendimiento de ventas por empleado' },
+  { id: 'tipo_pago', name: 'Ventas por tipo de pago', icon: CreditCard, description: 'Ventas según método de pago' },
+  { id: 'ingresos', name: 'Ingresos', icon: DollarSign, description: 'Total de ingresos generados' },
+  { id: 'descuentos', name: 'Descuentos', icon: Percent, description: 'Descuentos aplicados' },
+  { id: 'impuestos', name: 'Impuestos', icon: Receipt, description: 'Impuestos cobrados' },
+];
+
 export default function Reportes() {
-  const [activeTab, setActiveTab] = useState('ventas');
+  const [selectedReport, setSelectedReport] = useState('resumen');
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
+  const [facturas, setFacturas] = useState([]);
   
   // Filtros
   const [fechaDesde, setFechaDesde] = useState('');
@@ -39,49 +56,44 @@ export default function Reportes() {
   const [cajeroId, setCajeroId] = useState('');
   const [tiendaId, setTiendaId] = useState('');
   const [tpvId, setTpvId] = useState('');
-  const [metodoPagoId, setMetodoPagoId] = useState('');
   
   // Datos para filtros
   const [empleados, setEmpleados] = useState([]);
   const [tiendas, setTiendas] = useState([]);
   const [tpvs, setTpvs] = useState([]);
-  const [metodosPago, setMetodosPago] = useState([]);
   
-  // Datos del usuario
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = ['propietario', 'administrador'].includes(user?.rol);
 
   useEffect(() => {
     loadFilterData();
-    // Establecer fecha de hoy como predeterminada
     const today = new Date().toISOString().split('T')[0];
     setFechaHasta(today);
-    // Una semana atrás
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     setFechaDesde(weekAgo.toISOString().split('T')[0]);
   }, []);
 
   useEffect(() => {
-    fetchReportData();
-  }, [activeTab]);
+    if (fechaDesde && fechaHasta) {
+      fetchReportData();
+    }
+  }, [selectedReport, fechaDesde, fechaHasta]);
 
   const loadFilterData = async () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const [empRes, tiendaRes, tpvRes, metodosRes] = await Promise.all([
+      const [empRes, tiendaRes, tpvRes] = await Promise.all([
         axios.get(`${API_URL}/api/empleados-filtro`, { headers }),
         axios.get(`${API_URL}/api/tiendas`, { headers }),
-        axios.get(`${API_URL}/api/tpv`, { headers }),
-        axios.get(`${API_URL}/api/metodos-pago`, { headers })
+        axios.get(`${API_URL}/api/tpv`, { headers })
       ]);
       
       setEmpleados(empRes.data || []);
       setTiendas(tiendaRes.data || []);
       setTpvs(tpvRes.data || []);
-      setMetodosPago(metodosRes.data || []);
     } catch (error) {
       console.error('Error al cargar datos de filtros:', error);
     }
@@ -98,13 +110,18 @@ export default function Reportes() {
       if (cajeroId) params.append('cajero_id', cajeroId);
       if (tiendaId) params.append('tienda_id', tiendaId);
       if (tpvId) params.append('tpv_id', tpvId);
-      if (metodoPagoId) params.append('metodo_pago_id', metodoPagoId);
       
-      const response = await axios.get(
-        `${API_URL}/api/dashboard?${params.toString()}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setData(response.data);
+      const [dashboardRes, facturasRes] = await Promise.all([
+        axios.get(`${API_URL}/api/dashboard?${params.toString()}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_URL}/api/facturas?${params.toString()}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+      
+      setData(dashboardRes.data);
+      setFacturas(facturasRes.data);
     } catch (error) {
       toast.error('Error al cargar el reporte');
     } finally {
@@ -122,431 +139,487 @@ export default function Reportes() {
     setCajeroId('');
     setTiendaId('');
     setTpvId('');
-    setMetodoPagoId('');
   };
 
-  const tabs = [
-    { id: 'ventas', label: 'Ventas', icon: DollarSign },
-    { id: 'productos', label: 'Productos', icon: TrendingUp },
-    { id: 'cajas', label: 'Cierres de Caja', icon: FileText },
-  ];
+  const renderReportContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      );
+    }
+
+    switch (selectedReport) {
+      case 'resumen':
+        return <ReporteResumen data={data} facturas={facturas} />;
+      case 'articulo':
+        return <ReporteArticulo facturas={facturas} />;
+      case 'categoria':
+        return <ReporteCategoria facturas={facturas} />;
+      case 'empleado':
+        return <ReporteEmpleado facturas={facturas} />;
+      case 'tipo_pago':
+        return <ReporteTipoPago data={data} />;
+      case 'ingresos':
+        return <ReporteIngresos data={data} facturas={facturas} />;
+      case 'descuentos':
+        return <ReporteDescuentos facturas={facturas} />;
+      case 'impuestos':
+        return <ReporteImpuestos facturas={facturas} />;
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Reportes</h1>
-          <p className="text-slate-600">Analiza el rendimiento de tu negocio</p>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
-                  : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <Icon size={18} />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Filtros */}
-      <Card className="p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter size={18} className="text-slate-600" />
-          <h3 className="font-semibold">Filtros</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {/* Fecha Desde */}
+    <div className="flex flex-col lg:flex-row gap-6">
+      {/* Sidebar con tipos de reportes */}
+      <div className="lg:w-72 flex-shrink-0">
+        <Card className="p-4">
+          <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+            <FileText size={20} className="text-blue-600" />
+            Reportes
+          </h2>
           <div className="space-y-1">
-            <Label className="text-xs text-slate-500">Desde</Label>
-            <div className="relative">
-              <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input
-                type="date"
-                value={fechaDesde}
-                onChange={(e) => setFechaDesde(e.target.value)}
-                className="pl-9 text-sm"
-              />
-            </div>
-          </div>
-          
-          {/* Fecha Hasta */}
-          <div className="space-y-1">
-            <Label className="text-xs text-slate-500">Hasta</Label>
-            <div className="relative">
-              <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input
-                type="date"
-                value={fechaHasta}
-                onChange={(e) => setFechaHasta(e.target.value)}
-                className="pl-9 text-sm"
-              />
-            </div>
-          </div>
-          
-          {/* Cajero */}
-          {isAdmin && (
-            <div className="space-y-1">
-              <Label className="text-xs text-slate-500">Cajero</Label>
-              <Select value={cajeroId || "all"} onValueChange={(v) => setCajeroId(v === "all" ? "" : v)}>
-                <SelectTrigger className="text-sm">
-                  <User size={14} className="mr-2 text-slate-400" />
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los cajeros</SelectItem>
-                  {empleados.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id}>
-                      {emp.nombre} ({emp.rol})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          
-          {/* Tienda */}
-          {isAdmin && tiendas.length > 0 && (
-            <div className="space-y-1">
-              <Label className="text-xs text-slate-500">Tienda</Label>
-              <Select value={tiendaId || "all"} onValueChange={(v) => setTiendaId(v === "all" ? "" : v)}>
-                <SelectTrigger className="text-sm">
-                  <Store size={14} className="mr-2 text-slate-400" />
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las tiendas</SelectItem>
-                  {tiendas.map((tienda) => (
-                    <SelectItem key={tienda.id} value={tienda.id}>
-                      {tienda.nombre} ({tienda.codigo_establecimiento})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          
-          {/* TPV */}
-          {isAdmin && tpvs.length > 0 && (
-            <div className="space-y-1">
-              <Label className="text-xs text-slate-500">TPV</Label>
-              <Select value={tpvId || "all"} onValueChange={(v) => setTpvId(v === "all" ? "" : v)}>
-                <SelectTrigger className="text-sm">
-                  <Monitor size={14} className="mr-2 text-slate-400" />
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los TPV</SelectItem>
-                  {tpvs.map((tpv) => (
-                    <SelectItem key={tpv.id} value={tpv.id}>
-                      {tpv.nombre} ({tpv.punto_emision})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          
-          {/* Método de Pago */}
-          <div className="space-y-1">
-            <Label className="text-xs text-slate-500">Método Pago</Label>
-            <Select value={metodoPagoId || "all"} onValueChange={(v) => setMetodoPagoId(v === "all" ? "" : v)}>
-              <SelectTrigger className="text-sm">
-                <CreditCard size={14} className="mr-2 text-slate-400" />
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los métodos</SelectItem>
-                {metodosPago.map((mp) => (
-                  <SelectItem key={mp.id} value={mp.id}>
-                    {mp.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <div className="flex gap-2 mt-4">
-          <Button onClick={fetchReportData} className="gap-2">
-            <RefreshCw size={16} />
-            Aplicar Filtros
-          </Button>
-          <Button variant="outline" onClick={clearFilters} className="gap-2">
-            Limpiar
-          </Button>
-        </div>
-      </Card>
-
-      {/* Contenido del Reporte */}
-      {loading ? (
-        <Card className="p-8">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            {REPORT_TYPES.map((report) => {
+              const Icon = report.icon;
+              return (
+                <button
+                  key={report.id}
+                  onClick={() => setSelectedReport(report.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                    selectedReport === report.id
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      : 'hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <Icon size={18} className={selectedReport === report.id ? 'text-blue-600' : 'text-slate-400'} />
+                  <span className="text-sm font-medium">{report.name}</span>
+                  {selectedReport === report.id && (
+                    <ChevronRight size={16} className="ml-auto text-blue-600" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </Card>
-      ) : (
-        <>
-          {activeTab === 'ventas' && <ReporteVentas data={data} />}
-          {activeTab === 'productos' && <ReporteProductos data={data} />}
-          {activeTab === 'cajas' && <ReporteCajas />}
-        </>
+      </div>
+
+      {/* Contenido principal */}
+      <div className="flex-1 space-y-4">
+        {/* Filtros */}
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter size={18} className="text-slate-600" />
+            <h3 className="font-semibold">Filtros</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="space-y-1">
+              <Label className="text-xs text-slate-500">Desde</Label>
+              <div className="relative">
+                <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Input
+                  type="date"
+                  value={fechaDesde}
+                  onChange={(e) => setFechaDesde(e.target.value)}
+                  className="pl-9 text-sm"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-1">
+              <Label className="text-xs text-slate-500">Hasta</Label>
+              <div className="relative">
+                <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Input
+                  type="date"
+                  value={fechaHasta}
+                  onChange={(e) => setFechaHasta(e.target.value)}
+                  className="pl-9 text-sm"
+                />
+              </div>
+            </div>
+            
+            {isAdmin && (
+              <div className="space-y-1">
+                <Label className="text-xs text-slate-500">Cajero</Label>
+                <Select value={cajeroId || "all"} onValueChange={(v) => setCajeroId(v === "all" ? "" : v)}>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los cajeros</SelectItem>
+                    {empleados.map((emp) => (
+                      <SelectItem key={emp.id} value={emp.id}>
+                        {emp.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            {isAdmin && tiendas.length > 0 && (
+              <div className="space-y-1">
+                <Label className="text-xs text-slate-500">Tienda</Label>
+                <Select value={tiendaId || "all"} onValueChange={(v) => setTiendaId(v === "all" ? "" : v)}>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las tiendas</SelectItem>
+                    {tiendas.map((tienda) => (
+                      <SelectItem key={tienda.id} value={tienda.id}>
+                        {tienda.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            {isAdmin && tpvs.length > 0 && (
+              <div className="space-y-1">
+                <Label className="text-xs text-slate-500">TPV</Label>
+                <Select value={tpvId || "all"} onValueChange={(v) => setTpvId(v === "all" ? "" : v)}>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los TPV</SelectItem>
+                    {tpvs.map((tpv) => (
+                      <SelectItem key={tpv.id} value={tpv.id}>
+                        {tpv.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex gap-2 mt-4">
+            <Button onClick={fetchReportData} size="sm" className="gap-2">
+              <RefreshCw size={14} />
+              Aplicar Filtros
+            </Button>
+            <Button variant="outline" size="sm" onClick={clearFilters}>
+              Limpiar
+            </Button>
+          </div>
+        </Card>
+
+        {/* Contenido del reporte */}
+        <Card className="p-6">
+          <h2 className="text-xl font-bold mb-4">
+            {REPORT_TYPES.find(r => r.id === selectedReport)?.name}
+          </h2>
+          {renderReportContent()}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Componentes de cada tipo de reporte
+function ReporteResumen({ data, facturas }) {
+  if (!data) return <p className="text-slate-500">No hay datos disponibles</p>;
+  
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+          <p className="text-sm text-green-600 mb-1">Total Ingresos</p>
+          <p className="text-2xl font-bold text-green-700">${(data.total_ingresos || 0).toFixed(2)}</p>
+        </div>
+        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-600 mb-1">Total Ventas</p>
+          <p className="text-2xl font-bold text-blue-700">{data.total_ventas || 0}</p>
+        </div>
+        <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+          <p className="text-sm text-purple-600 mb-1">Ticket Promedio</p>
+          <p className="text-2xl font-bold text-purple-700">
+            ${data.total_ventas > 0 ? (data.total_ingresos / data.total_ventas).toFixed(2) : '0.00'}
+          </p>
+        </div>
+      </div>
+      
+      {/* Ventas por día */}
+      {data.ventas_por_dia && Object.keys(data.ventas_por_dia).length > 0 && (
+        <div>
+          <h3 className="font-semibold mb-3">Ventas por Día</h3>
+          <div className="space-y-2">
+            {Object.entries(data.ventas_por_dia)
+              .sort(([a], [b]) => b.localeCompare(a))
+              .map(([fecha, valores]) => (
+              <div key={fecha} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <span className="font-medium">
+                  {new Date(fecha + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+                </span>
+                <div className="text-right">
+                  <p className="font-bold">${valores.total.toFixed(2)}</p>
+                  <p className="text-xs text-slate-500">{valores.cantidad} ventas</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-function ReporteVentas({ data }) {
-  if (!data) return null;
+function ReporteArticulo({ facturas }) {
+  const ventasPorArticulo = {};
+  
+  facturas.forEach(factura => {
+    factura.items?.forEach(item => {
+      const key = item.producto_nombre || item.nombre || 'Sin nombre';
+      if (!ventasPorArticulo[key]) {
+        ventasPorArticulo[key] = { cantidad: 0, total: 0 };
+      }
+      ventasPorArticulo[key].cantidad += item.cantidad || 1;
+      ventasPorArticulo[key].total += item.subtotal || 0;
+    });
+  });
+  
+  const sortedItems = Object.entries(ventasPorArticulo)
+    .sort(([, a], [, b]) => b.total - a.total);
+  
+  if (sortedItems.length === 0) {
+    return <p className="text-slate-500 text-center py-8">No hay datos de artículos en el período seleccionado</p>;
+  }
   
   return (
-    <div className="space-y-6">
-      {/* Resumen */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <DollarSign className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Total Ingresos</p>
-              <p className="text-2xl font-bold text-slate-900">
-                ${(data.total_ingresos || 0).toFixed(2)}
-              </p>
-            </div>
+    <div className="space-y-2">
+      {sortedItems.map(([nombre, valores], index) => (
+        <div key={nombre} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-mono text-slate-400 w-6">{index + 1}.</span>
+            <Package size={18} className="text-slate-400" />
+            <span className="font-medium">{nombre}</span>
           </div>
-        </Card>
-        
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <FileText className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Total Ventas</p>
-              <p className="text-2xl font-bold text-slate-900">
-                {data.total_ventas || 0}
-              </p>
-            </div>
+          <div className="text-right">
+            <p className="font-bold">${valores.total.toFixed(2)}</p>
+            <p className="text-xs text-slate-500">{valores.cantidad} unidades</p>
           </div>
-        </Card>
-        
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Ticket Promedio</p>
-              <p className="text-2xl font-bold text-slate-900">
-                ${data.total_ventas > 0 
-                  ? (data.total_ingresos / data.total_ventas).toFixed(2) 
-                  : '0.00'}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
-      
-      {/* Ventas por Método de Pago */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Ventas por Método de Pago</h3>
-        {data.ventas_por_metodo && Object.keys(data.ventas_por_metodo).length > 0 ? (
-          <div className="space-y-3">
-            {Object.entries(data.ventas_por_metodo).map(([metodo, valores]) => (
-              <div key={metodo} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <CreditCard size={18} className="text-slate-500" />
-                  <span className="font-medium">{metodo}</span>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-slate-900">${valores.total.toFixed(2)}</p>
-                  <p className="text-sm text-slate-500">{valores.cantidad} ventas</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-slate-500 text-center py-4">No hay datos disponibles</p>
-        )}
-      </Card>
-      
-      {/* Ventas por Día */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Ventas por Día</h3>
-        {data.ventas_por_dia && Object.keys(data.ventas_por_dia).length > 0 ? (
-          <div className="space-y-2">
-            {Object.entries(data.ventas_por_dia)
-              .sort(([a], [b]) => b.localeCompare(a))
-              .slice(0, 7)
-              .map(([fecha, valores]) => (
-              <div key={fecha} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Calendar size={18} className="text-slate-500" />
-                  <span className="font-medium">
-                    {new Date(fecha + 'T00:00:00').toLocaleDateString('es-ES', { 
-                      weekday: 'short', 
-                      day: 'numeric', 
-                      month: 'short' 
-                    })}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-slate-900">${valores.total.toFixed(2)}</p>
-                  <p className="text-sm text-slate-500">{valores.cantidad} ventas</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-slate-500 text-center py-4">No hay datos disponibles</p>
-        )}
-      </Card>
-      
-      {/* Facturas Recientes */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Facturas Recientes</h3>
-        {data.facturas_recientes?.length > 0 ? (
-          <div className="space-y-2">
-            {data.facturas_recientes.map((factura) => (
-              <div key={factura.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                <div>
-                  <p className="font-semibold">{factura.numero}</p>
-                  <p className="text-sm text-slate-500">
-                    {factura.vendedor_nombre} · {new Date(factura.fecha).toLocaleDateString('es-ES')}
-                  </p>
-                </div>
-                <p className="font-bold text-blue-600">${factura.total.toFixed(2)}</p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-slate-500 text-center py-4">No hay facturas recientes</p>
-        )}
-      </Card>
+        </div>
+      ))}
     </div>
   );
 }
 
-function ReporteProductos({ data }) {
+function ReporteCategoria({ facturas }) {
+  const ventasPorCategoria = {};
+  
+  facturas.forEach(factura => {
+    factura.items?.forEach(item => {
+      const categoria = item.categoria || 'Sin categoría';
+      if (!ventasPorCategoria[categoria]) {
+        ventasPorCategoria[categoria] = { cantidad: 0, total: 0 };
+      }
+      ventasPorCategoria[categoria].cantidad += item.cantidad || 1;
+      ventasPorCategoria[categoria].total += item.subtotal || 0;
+    });
+  });
+  
+  const sortedItems = Object.entries(ventasPorCategoria)
+    .sort(([, a], [, b]) => b.total - a.total);
+  
+  if (sortedItems.length === 0) {
+    return <p className="text-slate-500 text-center py-8">No hay datos de categorías en el período seleccionado</p>;
+  }
+  
   return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">Productos Más Vendidos</h3>
-      <p className="text-slate-500 text-center py-8">
-        Próximamente: Análisis de productos más vendidos
-      </p>
-    </Card>
+    <div className="space-y-2">
+      {sortedItems.map(([categoria, valores]) => (
+        <div key={categoria} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Tag size={18} className="text-slate-400" />
+            <span className="font-medium">{categoria}</span>
+          </div>
+          <div className="text-right">
+            <p className="font-bold">${valores.total.toFixed(2)}</p>
+            <p className="text-xs text-slate-500">{valores.cantidad} productos</p>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
-function ReporteCajas() {
-  const [cajas, setCajas] = useState([]);
-  const [loading, setLoading] = useState(true);
+function ReporteEmpleado({ facturas }) {
+  const ventasPorEmpleado = {};
   
-  useEffect(() => {
-    fetchCajas();
-  }, []);
-  
-  const fetchCajas = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/caja/historial`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCajas(response.data);
-    } catch (error) {
-      console.error('Error al cargar historial de cajas:', error);
-    } finally {
-      setLoading(false);
+  facturas.forEach(factura => {
+    const empleado = factura.vendedor_nombre || 'Sin asignar';
+    if (!ventasPorEmpleado[empleado]) {
+      ventasPorEmpleado[empleado] = { cantidad: 0, total: 0 };
     }
-  };
+    ventasPorEmpleado[empleado].cantidad += 1;
+    ventasPorEmpleado[empleado].total += factura.total || 0;
+  });
   
-  if (loading) {
-    return (
-      <Card className="p-8">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+  const sortedItems = Object.entries(ventasPorEmpleado)
+    .sort(([, a], [, b]) => b.total - a.total);
+  
+  if (sortedItems.length === 0) {
+    return <p className="text-slate-500 text-center py-8">No hay datos de empleados en el período seleccionado</p>;
+  }
+  
+  return (
+    <div className="space-y-2">
+      {sortedItems.map(([empleado, valores], index) => (
+        <div key={empleado} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-mono text-slate-400 w-6">{index + 1}.</span>
+            <User size={18} className="text-slate-400" />
+            <span className="font-medium">{empleado}</span>
+          </div>
+          <div className="text-right">
+            <p className="font-bold">${valores.total.toFixed(2)}</p>
+            <p className="text-xs text-slate-500">{valores.cantidad} ventas</p>
+          </div>
         </div>
-      </Card>
+      ))}
+    </div>
+  );
+}
+
+function ReporteTipoPago({ data }) {
+  if (!data?.ventas_por_metodo || Object.keys(data.ventas_por_metodo).length === 0) {
+    return <p className="text-slate-500 text-center py-8">No hay datos de métodos de pago en el período seleccionado</p>;
+  }
+  
+  const total = Object.values(data.ventas_por_metodo).reduce((sum, v) => sum + v.total, 0);
+  
+  return (
+    <div className="space-y-3">
+      {Object.entries(data.ventas_por_metodo).map(([metodo, valores]) => {
+        const porcentaje = total > 0 ? ((valores.total / total) * 100).toFixed(1) : 0;
+        return (
+          <div key={metodo} className="p-4 bg-slate-50 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <CreditCard size={18} className="text-slate-400" />
+                <span className="font-medium">{metodo || 'Sin especificar'}</span>
+              </div>
+              <div className="text-right">
+                <p className="font-bold">${valores.total.toFixed(2)}</p>
+                <p className="text-xs text-slate-500">{valores.cantidad} ventas · {porcentaje}%</p>
+              </div>
+            </div>
+            <div className="w-full bg-slate-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all"
+                style={{ width: `${porcentaje}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ReporteIngresos({ data, facturas }) {
+  if (!data) return <p className="text-slate-500 text-center py-8">No hay datos disponibles</p>;
+  
+  const totalBruto = facturas.reduce((sum, f) => sum + (f.subtotal || f.total || 0), 0);
+  const totalImpuestos = facturas.reduce((sum, f) => sum + (f.total_impuestos || 0), 0);
+  const totalNeto = data.total_ingresos || 0;
+  
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-4 bg-slate-50 rounded-lg border">
+          <p className="text-sm text-slate-600 mb-1">Subtotal (sin impuestos)</p>
+          <p className="text-2xl font-bold">${totalBruto.toFixed(2)}</p>
+        </div>
+        <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+          <p className="text-sm text-orange-600 mb-1">Impuestos</p>
+          <p className="text-2xl font-bold text-orange-700">${totalImpuestos.toFixed(2)}</p>
+        </div>
+        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+          <p className="text-sm text-green-600 mb-1">Total Neto</p>
+          <p className="text-2xl font-bold text-green-700">${totalNeto.toFixed(2)}</p>
+        </div>
+      </div>
+      
+      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="flex justify-between items-center">
+          <span className="text-blue-700">Total de transacciones</span>
+          <span className="font-bold text-blue-800">{facturas.length}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReporteDescuentos({ facturas }) {
+  // Por ahora no hay sistema de descuentos implementado
+  const totalDescuentos = facturas.reduce((sum, f) => sum + (f.descuento || 0), 0);
+  
+  return (
+    <div className="text-center py-8">
+      <Percent size={48} className="mx-auto text-slate-300 mb-4" />
+      <p className="text-slate-500">Total descuentos aplicados: <strong>${totalDescuentos.toFixed(2)}</strong></p>
+      <p className="text-sm text-slate-400 mt-2">
+        El sistema de descuentos se puede habilitar en Configuración
+      </p>
+    </div>
+  );
+}
+
+function ReporteImpuestos({ facturas }) {
+  const impuestosPorTipo = {};
+  
+  facturas.forEach(factura => {
+    factura.desglose_impuestos?.forEach(imp => {
+      const key = imp.nombre || 'Impuesto';
+      if (!impuestosPorTipo[key]) {
+        impuestosPorTipo[key] = { tasa: imp.tasa, monto: 0 };
+      }
+      impuestosPorTipo[key].monto += imp.monto || 0;
+    });
+  });
+  
+  const totalImpuestos = Object.values(impuestosPorTipo).reduce((sum, v) => sum + v.monto, 0);
+  
+  if (Object.keys(impuestosPorTipo).length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Receipt size={48} className="mx-auto text-slate-300 mb-4" />
+        <p className="text-slate-500">No hay impuestos registrados en el período seleccionado</p>
+      </div>
     );
   }
   
   return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">Historial de Cierres de Caja</h3>
-      {cajas.length > 0 ? (
-        <div className="space-y-3">
-          {cajas.map((caja) => (
-            <div key={caja.id} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">{caja.numero}</span>
-                  {caja.tpv_nombre && (
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                      {caja.tpv_nombre}
-                    </span>
-                  )}
-                  <span className={`text-xs px-2 py-0.5 rounded ${
-                    caja.estado === 'abierta' 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-slate-200 text-slate-700'
-                  }`}>
-                    {caja.estado}
-                  </span>
-                </div>
-                <span className="text-sm text-slate-500">
-                  {new Date(caja.fecha_apertura).toLocaleDateString('es-ES')}
-                </span>
+    <div className="space-y-4">
+      <div className="space-y-2">
+        {Object.entries(impuestosPorTipo).map(([nombre, valores]) => (
+          <div key={nombre} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Receipt size={18} className="text-slate-400" />
+              <div>
+                <span className="font-medium">{nombre}</span>
+                <span className="text-sm text-slate-500 ml-2">({valores.tasa}%)</span>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <p className="text-slate-500">Monto Inicial</p>
-                  <p className="font-semibold">${caja.monto_inicial.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-slate-500">Ventas</p>
-                  <p className="font-semibold">${caja.monto_ventas.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-slate-500">Total Esperado</p>
-                  <p className="font-semibold">${caja.monto_final.toFixed(2)}</p>
-                </div>
-                {caja.estado === 'cerrada' && (
-                  <div>
-                    <p className="text-slate-500">Diferencia</p>
-                    <p className={`font-semibold ${
-                      caja.diferencia >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {caja.diferencia >= 0 ? '+' : ''}${caja.diferencia?.toFixed(2) || '0.00'}
-                    </p>
-                  </div>
-                )}
-              </div>
-              {caja.tienda_nombre && (
-                <p className="text-xs text-slate-500 mt-2">
-                  Tienda: {caja.tienda_nombre}
-                </p>
-              )}
             </div>
-          ))}
+            <p className="font-bold">${valores.monto.toFixed(2)}</p>
+          </div>
+        ))}
+      </div>
+      
+      <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+        <div className="flex justify-between items-center">
+          <span className="text-orange-700 font-medium">Total Impuestos</span>
+          <span className="text-xl font-bold text-orange-800">${totalImpuestos.toFixed(2)}</span>
         </div>
-      ) : (
-        <p className="text-slate-500 text-center py-8">No hay cierres de caja registrados</p>
-      )}
-    </Card>
+      </div>
+    </div>
   );
 }
