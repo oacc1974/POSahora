@@ -885,56 +885,6 @@ export default function POS() {
 
   const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
-  // Componente del menú de ticket
-  const TicketMenuDropdown = () => (
-    <div 
-      className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-2xl border z-[9999] py-2 w-52"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleDespejarTicket();
-        }}
-        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
-      >
-        <Eraser size={18} className="text-slate-500" />
-        <span>Despejar el ticket</span>
-      </button>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleDividirTicket();
-        }}
-        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
-      >
-        <Split size={18} className="text-slate-500" />
-        <span>Dividir ticket</span>
-      </button>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleCombinarTicket();
-        }}
-        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
-      >
-        <Combine size={18} className="text-slate-500" />
-        <span>Combinar ticket</span>
-      </button>
-      <div className="border-t my-1"></div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleSincronizar();
-        }}
-        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
-      >
-        <RefreshCw size={18} className="text-slate-500" />
-        <span>Sincronizar</span>
-      </button>
-    </div>
-  );
-
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-100" data-testid="pos-page">
       
