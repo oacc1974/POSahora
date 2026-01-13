@@ -919,7 +919,6 @@ export default function POS() {
       </button>
     </div>
   );
-  );
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-100" data-testid="pos-page">
