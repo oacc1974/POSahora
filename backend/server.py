@@ -2482,6 +2482,7 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
     
     new_invoice = {
         "_id": invoice_id,
+        "id": invoice_id,
         "numero": numero_factura,
         "items": [item.model_dump() for item in invoice.items],
         "subtotal": subtotal,
