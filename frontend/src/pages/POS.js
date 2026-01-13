@@ -1085,48 +1085,48 @@ export default function POS() {
               variant="outline"
               size="icon"
             >
-              <Scan size={20} />
-              Escanear
+              <Scan size={18} />
             </Button>
           </div>
 
-        <div className="flex-1 overflow-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
-            {filteredProductos.map((producto) => (
-              <Card
-                key={producto.id}
-                data-testid={`pos-product-${producto.id}`}
-                onClick={() => addToCart(producto)}
-                className="p-4 cursor-pointer hover:shadow-lg hover:border-blue-500 transition-all product-card"
-              >
-                <h3 className="font-bold text-sm mb-2 truncate">
-                  {producto.nombre}
-                </h3>
-                <p className="text-2xl font-bold font-mono text-blue-600 mb-2">
-                  ${producto.precio.toFixed(2)}
-                </p>
-                <p
-                  className={`text-sm ${
-                    producto.stock <= 5 ? 'text-red-600' : 'text-slate-500'
-                  }`}
+          {/* Grid de productos */}
+          <div className="flex-1 overflow-auto bg-slate-50 rounded-lg p-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {filteredProductos.map((producto) => (
+                <Card
+                  key={producto.id}
+                  data-testid={`pos-product-${producto.id}`}
+                  onClick={() => addToCart(producto)}
+                  className="p-3 cursor-pointer hover:shadow-lg hover:border-blue-500 transition-all bg-white"
                 >
-                  Stock: {producto.stock}
-                </p>
-              </Card>
-            ))}
+                  <h3 className="font-semibold text-sm mb-1 truncate">
+                    {producto.nombre}
+                  </h3>
+                  <p className="text-lg font-bold font-mono text-blue-600 mb-1">
+                    ${producto.precio.toFixed(2)}
+                  </p>
+                  <p
+                    className={`text-xs ${
+                      producto.stock <= 5 ? 'text-red-600' : 'text-slate-500'
+                    }`}
+                  >
+                    Stock: {producto.stock}
+                  </p>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Botón flotante para añadir cliente (solo móvil) */}
-      {cart.length > 0 && !clienteSeleccionado && (
-        <button
-          onClick={() => setShowClienteDialog(true)}
-          className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 hover:bg-blue-700 transition-colors"
-        >
-          <UserPlus size={24} />
-        </button>
-      )}
+        {/* Botón flotante para añadir cliente (solo móvil) */}
+        {cart.length > 0 && !clienteSeleccionado && (
+          <button
+            onClick={() => setShowClienteDialog(true)}
+            className="lg:hidden fixed bottom-20 right-4 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 hover:bg-blue-700 transition-colors"
+          >
+            <UserPlus size={24} />
+          </button>
+        )}
 
       {/* Carrito Desktop (siempre visible) */}
       <Card className="hidden md:flex w-full lg:w-96 flex-col shadow-xl lg:sticky lg:top-0">
