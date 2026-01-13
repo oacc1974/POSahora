@@ -921,53 +921,296 @@ export default function POS() {
   );
 
   return (
-    <div className="flex flex-col h-auto md:h-[calc(100vh-8rem)]" data-testid="pos-page">
-      {/* Header Móvil */}
-      <div className="md:hidden sticky top-0 z-50 bg-white border-b">
-        {/* Barra superior con iconos */}
-        <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Menu size={24} />
-            <button 
-              onClick={() => setShowMobileCart(true)}
-              className="flex items-center gap-2"
-            >
-              <span className="font-semibold">Ticket</span>
-              <span className="bg-white text-blue-600 rounded-full px-2 py-0.5 text-xs font-bold">
-                {cart.reduce((sum, item) => sum + item.cantidad, 0)}
-              </span>
-            </button>
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-100" data-testid="pos-page">
+      
+      {/* ============ HEADER VERDE (ESTILO LOYVERSE) ============ */}
+      <div className="bg-green-600 text-white px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button className="p-2 hover:bg-green-700 rounded-lg">
+            <Menu size={22} />
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm">
+              {categoriaSeleccionada === 'all' ? 'Todos los artículos' : categoriaSeleccionada}
+            </span>
+            <ChevronDown size={16} />
           </div>
-          <div className="flex items-center gap-3">
-            <Bell size={20} />
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowMobileSearch(!showMobileSearch)}
+            className="p-2 hover:bg-green-700 rounded-lg"
+          >
+            <Search size={20} />
+          </button>
+          <button 
+            onClick={() => setShowClienteDialog(true)}
+            className="p-2 hover:bg-green-700 rounded-lg relative"
+          >
+            <UserPlus size={20} />
+            {clienteSeleccionado && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
+            )}
+          </button>
+          <div className="relative">
             <button 
-              onClick={() => setShowClienteDialog(true)}
-              className="relative"
+              onClick={() => setShowTicketMenu(!showTicketMenu)}
+              className="p-2 hover:bg-green-700 rounded-lg"
             >
-              <User size={20} />
-              {clienteSeleccionado && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
-              )}
+              <MoreVertical size={20} />
             </button>
+            {showTicketMenu && <TicketMenuDropdown />}
+          </div>
+        </div>
+      </div>
+
+      {/* Barra de búsqueda (móvil - expandible) */}
+      {showMobileSearch && (
+        <div className="bg-green-600 px-4 pb-2 md:hidden">
+          <Input
+            placeholder="Buscar productos..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="bg-green-700 border-green-500 text-white placeholder:text-green-200"
+            autoFocus
+          />
+        </div>
+      )}
+
+      {/* ============ CONTENIDO PRINCIPAL ============ */}
+      <div className="flex flex-1 overflow-hidden">
+        
+        {/* PANEL DE PRODUCTOS */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          
+          {/* Barra de búsqueda (desktop) */}
+          <div className="hidden md:flex items-center gap-4 p-4 bg-white border-b">
+            <div className="flex-1 relative">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input
+                placeholder="Buscar productos por nombre o código..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button
+              onClick={() => setShowScanner(true)}
+              variant="outline"
+              size="icon"
+            >
+              <Scan size={18} />
+            </Button>
+          </div>
+
+          {/* Grid de productos */}
+          <div className="flex-1 overflow-auto p-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              {filteredProductos.map((producto) => (
+                <div
+                  key={producto.id}
+                  data-testid={`pos-product-${producto.id}`}
+                  onClick={() => addToCart(producto)}
+                  className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden cursor-pointer hover:shadow-md hover:border-green-400 transition-all group"
+                >
+                  {/* Imagen del producto */}
+                  <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center relative overflow-hidden">
+                    {producto.imagen ? (
+                      <img 
+                        src={producto.imagen} 
+                        alt={producto.nombre}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-3xl font-bold text-slate-300">
+                        {producto.nombre.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                    {producto.stock <= 5 && (
+                      <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] px-1 rounded">
+                        Bajo stock
+                      </span>
+                    )}
+                  </div>
+                  {/* Info del producto */}
+                  <div className="p-2 bg-slate-800 text-white">
+                    <p className="text-xs font-medium truncate">{producto.nombre}</p>
+                    <p className="text-sm font-bold text-green-400">${producto.precio.toFixed(2)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {filteredProductos.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-48 text-slate-400">
+                <Search size={48} className="mb-2" />
+                <p>No se encontraron productos</p>
+              </div>
+            )}
+          </div>
+
+          {/* Barra de categorías (abajo) */}
+          <div className="bg-white border-t px-2 py-2 flex items-center gap-2 overflow-x-auto">
+            <button
+              onClick={() => setCategoriaSeleccionada('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                categoriaSeleccionada === 'all'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              Todos
+            </button>
+            {categorias.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategoriaSeleccionada(cat)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                  categoriaSeleccionada === cat
+                    ? 'bg-green-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ============ PANEL DEL TICKET (DERECHA) ============ */}
+        <div className="hidden md:flex w-80 lg:w-96 flex-col bg-white border-l">
+          {/* Header del ticket */}
+          <div className="bg-green-600 text-white px-4 py-3 flex items-center justify-between">
+            <span className="font-semibold">Ticket</span>
             <div className="relative">
-              <button onClick={() => setShowTicketMenu(!showTicketMenu)}>
-                <MoreVertical size={20} />
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowTicketMenu(!showTicketMenu);
+                }}
+                className="p-1 hover:bg-green-700 rounded"
+                data-testid="ticket-menu-btn"
+              >
+                <MoreVertical size={18} />
               </button>
               {showTicketMenu && <TicketMenuDropdown />}
             </div>
           </div>
-        </div>
 
-        {/* Botones GUARDAR, TICKETS ABIERTOS y COBRAR */}
-        <div className="bg-blue-600 px-4 pb-3">
-          {ticketsAbiertosFuncionActiva ? (
+          {/* Cliente seleccionado */}
+          {clienteSeleccionado && (
+            <div className="p-3 bg-blue-50 border-b flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-900">{clienteSeleccionado.nombre}</p>
+                <p className="text-xs text-blue-700">{clienteSeleccionado.cedula_ruc}</p>
+              </div>
+              <button onClick={() => setClienteSeleccionado(null)} className="text-blue-600">
+                <X size={16} />
+              </button>
+            </div>
+          )}
+
+          {/* Lista de items del ticket */}
+          <div className="flex-1 overflow-auto">
+            {cart.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-slate-400 p-4">
+                <p className="text-sm">Selecciona productos</p>
+                <p className="text-xs">para agregar al ticket</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {cart.map((item) => (
+                  <div key={item.producto_id} className="p-3 hover:bg-slate-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{item.nombre}</p>
+                        <p className="text-xs text-slate-500">${item.precio.toFixed(2)} c/u</p>
+                      </div>
+                      <button
+                        onClick={() => removeFromCart(item.producto_id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 bg-slate-100 rounded-lg">
+                        <button
+                          onClick={() => updateQuantity(item.producto_id, -1)}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-slate-200 rounded-l-lg"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="w-8 text-center font-semibold text-sm">{item.cantidad}</span>
+                        <button
+                          onClick={() => updateQuantity(item.producto_id, 1)}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-slate-200 rounded-r-lg"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                      <span className="font-bold text-green-600">${item.subtotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Botones del ticket */}
+          <div className="border-t p-4 space-y-3">
+            {/* Total */}
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-semibold text-slate-700">Total</span>
+              <span className="text-2xl font-bold text-slate-900">${total.toFixed(2)}</span>
+            </div>
+
+            {/* Botones TICKETS ABIERTOS y COBRAR */}
             <div className="grid grid-cols-2 gap-2">
-              {/* GUARDAR solo si hay productos */}
-              {cart.length > 0 && (
-                <Button
-                  onClick={handleClickGuardar}
-                  className="bg-blue-500 hover:bg-blue-400 h-10 font-semibold"
-                >
+              <Button
+                onClick={() => {
+                  fetchTicketsAbiertos();
+                  setShowTicketsAbiertosDialog(true);
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+              >
+                TICKETS
+              </Button>
+              <Button
+                onClick={handleCheckout}
+                disabled={cart.length === 0}
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+              >
+                COBRAR
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ============ BARRA INFERIOR MÓVIL ============ */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-3 flex gap-2 z-40">
+        <Button
+          onClick={() => setShowMobileCart(true)}
+          variant="outline"
+          className="flex-1 relative"
+        >
+          <span>Ticket</span>
+          {cart.length > 0 && (
+            <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+              {cart.length}
+            </span>
+          )}
+        </Button>
+        <Button
+          onClick={handleCheckout}
+          disabled={cart.length === 0}
+          className="flex-1 bg-green-600 hover:bg-green-700 font-semibold"
+        >
+          COBRAR ${total.toFixed(2)}
+        </Button>
+      </div>
                   {ticketActualId ? 'ACTUALIZAR' : 'GUARDAR'}
                 </Button>
               )}
