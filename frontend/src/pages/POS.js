@@ -54,10 +54,14 @@ export default function POS() {
   const [ticketsParaCombinar, setTicketsParaCombinar] = useState([]);
   const [productosParaDividir, setProductosParaDividir] = useState([]);
   const [nombreNuevoTicket, setNombreNuevoTicket] = useState('');
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('all');
   
   // Obtener usuario actual
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const esMesero = currentUser?.rol === 'mesero';
+  
+  // Obtener categorías únicas
+  const categorias = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
   const [nuevoClienteForm, setNuevoClienteForm] = useState({
     nombre: '',
     cedula_ruc: '',
