@@ -71,7 +71,8 @@ export default function POS() {
   const esMesero = currentUser?.rol === 'mesero';
   const esCajero = currentUser?.rol === 'cajero';
   const esEmpleado = esMesero || esCajero; // Empleados con acceso limitado
-  const esDueno = currentUser?.rol === 'propietario' || currentUser?.rol === 'administrador';
+  const esAdministrador = currentUser?.rol === 'administrador';
+  const esPropietario = currentUser?.rol === 'propietario';
   
   // Obtener categorías únicas
   const categorias = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
