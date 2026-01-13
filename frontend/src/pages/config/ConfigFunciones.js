@@ -89,6 +89,8 @@ export default function ConfigFunciones() {
       description: 'Permite guardar y editar pedidos antes de completar un pago.',
       enabled: funciones.tickets_abiertos,
       active: true,
+      hasWarning: funciones.tickets_abiertos && funciones.tickets_abiertos_count > 0,
+      warningMessage: `Tienes ${funciones.tickets_abiertos_count} ticket(s) guardado(s)`,
     },
     {
       id: 'tipo_pedido',
