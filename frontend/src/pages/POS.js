@@ -860,10 +860,12 @@ export default function POS() {
   };
 
   const filteredProductos = productos.filter(
-    (p) =>
-      p.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.codigo_barras &&
-        p.codigo_barras.toLowerCase().includes(searchQuery.toLowerCase()))
+    (p) => {
+      const matchesSearch = p.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.codigo_barras && p.codigo_barras.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesCategoria = categoriaSeleccionada === 'all' || p.categoria === categoriaSeleccionada;
+      return matchesSearch && matchesCategoria;
+    }
   );
 
   const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
