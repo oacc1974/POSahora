@@ -195,9 +195,13 @@ function AppRouter() {
           path="/facturas"
           element={
             user ? (
-              <Layout user={user} onLogout={handleLogout}>
-                <Facturas />
-              </Layout>
+              ['cajero', 'mesero'].includes(user.rol) ? (
+                <Navigate to="/pos" replace />
+              ) : (
+                <Layout user={user} onLogout={handleLogout}>
+                  <Facturas />
+                </Layout>
+              )
             ) : (
               <Navigate to="/login" replace />
             )
@@ -207,9 +211,13 @@ function AppRouter() {
           path="/reportes"
           element={
             user ? (
-              <Layout user={user} onLogout={handleLogout}>
-                <Reportes />
-              </Layout>
+              ['cajero', 'mesero'].includes(user.rol) ? (
+                <Navigate to="/pos" replace />
+              ) : (
+                <Layout user={user} onLogout={handleLogout}>
+                  <Reportes />
+                </Layout>
+              )
             ) : (
               <Navigate to="/login" replace />
             )
