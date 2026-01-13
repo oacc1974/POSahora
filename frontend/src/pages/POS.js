@@ -1031,7 +1031,7 @@ export default function POS() {
       <div className="flex flex-col lg:flex-row h-full gap-0 lg:gap-4">
         
         {/* Columna izquierda - Categorías (solo desktop) */}
-        <div className="hidden lg:flex flex-col w-48 bg-white rounded-lg border p-3">
+        <div className="hidden lg:flex flex-col w-44 shrink-0 bg-white rounded-lg border p-3 h-fit">
           <h3 className="font-semibold text-sm text-slate-700 mb-3">Categorías</h3>
           <div className="space-y-1">
             <button className="w-full text-left px-3 py-2 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium">
