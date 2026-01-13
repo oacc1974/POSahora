@@ -49,6 +49,7 @@ export default function POS() {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showTicketMenu, setShowTicketMenu] = useState(false);
+  const [showMobileTicketMenu, setShowMobileTicketMenu] = useState(false);
   const [showDividirDialog, setShowDividirDialog] = useState(false);
   const [showCombinarDialog, setShowCombinarDialog] = useState(false);
   const [ticketsParaCombinar, setTicketsParaCombinar] = useState([]);
@@ -58,6 +59,7 @@ export default function POS() {
   const [showCobroDialog, setShowCobroDialog] = useState(false);
   const [efectivoRecibido, setEfectivoRecibido] = useState('');
   const [showSidebar, setShowSidebar] = useState(false);
+  const [showNavSidebar, setShowNavSidebar] = useState(false);
   
   // Obtener usuario actual
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
