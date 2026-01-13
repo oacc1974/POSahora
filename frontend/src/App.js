@@ -14,6 +14,7 @@ import Caja from './pages/Caja';
 import Clientes from './pages/Clientes';
 import Organizaciones from './pages/Organizaciones';
 import Reportes from './pages/Reportes';
+import TicketsAbiertosAdmin from './pages/TicketsAbiertosAdmin';
 import Layout from './components/Layout';
 import { Toaster } from './components/ui/sonner';
 import axios from 'axios';
