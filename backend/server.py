@@ -270,6 +270,7 @@ class InvoiceResponse(BaseModel):
     metodo_pago_nombre: Optional[str] = None
     tipo_pedido_id: Optional[str] = None
     tipo_pedido_nombre: Optional[str] = None
+    estado: Optional[str] = "completado"
     fecha: str
 
 class TicketAbiertoCreate(BaseModel):
