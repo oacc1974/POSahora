@@ -34,6 +34,23 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { format, subMonths } from 'date-fns';
 import DateRangePicker from '../components/DateRangePicker';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from 'recharts';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
