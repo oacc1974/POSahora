@@ -2051,6 +2051,16 @@ async def update_cliente(cliente_id: str, cliente: ClienteCreate, current_user: 
     if not existing:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     
+    # Validar cédula/RUC única si se proporciona (excluyendo el cliente actual)
+    if cliente.cedula_ruc:
+        duplicate = await db.clientes.find_one({
+            "cedula_ruc": cliente.cedula_ruc,
+            "organizacion_id": current_user["organizacion_id"],
+            "_id": {"$ne": cliente_id}
+        })
+        if duplicate:
+            raise HTTPException(status_code=400, detail="Ya existe un cliente con esta cédula/RUC")
+    
     updated_cliente = {
         "nombre": cliente.nombre,
         "email": cliente.email,
