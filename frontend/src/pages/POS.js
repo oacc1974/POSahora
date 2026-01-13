@@ -768,7 +768,7 @@ export default function POS() {
         total: productosNuevoTicket.reduce((sum, item) => sum + item.subtotal, 0)
       };
 
-      await axios.post(`${API_URL}/api/tickets`, nuevoTicket, {
+      await axios.post(`${API_URL}/api/tickets-abiertos-pos`, nuevoTicket, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
