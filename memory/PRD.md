@@ -69,5 +69,6 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 - **Contraseña:** admin*88
 
 ## Test Reports
+- `/app/test_reports/iteration_3.json` - Tests de funciones del menú del TPV (Dividir, Combinar, Despejar, Guardar) - 100% passed
 - `/app/test_reports/iteration_2.json` - Tests de DateRangePicker y ConfigFunciones
 - `/app/tests/test_funciones_api.py` - Pytest para API de funciones
