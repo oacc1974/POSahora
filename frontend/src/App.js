@@ -251,13 +251,9 @@ function AppRouter() {
           path="/caja"
           element={
             user ? (
-              ['cajero', 'mesero'].includes(user.rol) ? (
-                <Navigate to="/pos" replace />
-              ) : (
-                <Layout user={user} onLogout={handleLogout}>
-                  <Caja />
-                </Layout>
-              )
+              <Layout user={user} onLogout={handleLogout} hideSidebar={['cajero', 'mesero'].includes(user.rol)}>
+                <Caja />
+              </Layout>
             ) : (
               <Navigate to="/login" replace />
             )
