@@ -102,8 +102,8 @@ export default function Reportes() {
       const token = localStorage.getItem('token');
       const params = new URLSearchParams();
       
-      if (fechaDesde) params.append('fecha_desde', fechaDesde);
-      if (fechaHasta) params.append('fecha_hasta', fechaHasta);
+      if (dateRange?.from) params.append('fecha_desde', format(dateRange.from, 'yyyy-MM-dd'));
+      if (dateRange?.to) params.append('fecha_hasta', format(dateRange.to, 'yyyy-MM-dd'));
       if (tiendaId) params.append('tienda_id', tiendaId);
       if (empleadoId) params.append('cajero_id', empleadoId);
       
@@ -125,29 +125,22 @@ export default function Reportes() {
     }
   };
 
-  const formatDateRange = () => {
-    if (!fechaDesde || !fechaHasta) return '';
-    const desde = new Date(fechaDesde + 'T00:00:00');
-    const hasta = new Date(fechaHasta + 'T00:00:00');
-    const options = { day: 'numeric', month: 'long', year: 'numeric' };
-    return `${desde.toLocaleDateString('es-ES', options)} - ${hasta.toLocaleDateString('es-ES', options)}`;
-  };
-
   const moveDateRange = (direction) => {
-    const desde = new Date(fechaDesde);
-    const hasta = new Date(fechaHasta);
-    const days = Math.ceil((hasta - desde) / (1000 * 60 * 60 * 24));
+    if (!dateRange?.from || !dateRange?.to) return;
+    const days = Math.ceil((dateRange.to - dateRange.from) / (1000 * 60 * 60 * 24)) + 1;
+    
+    const newFrom = new Date(dateRange.from);
+    const newTo = new Date(dateRange.to);
     
     if (direction === 'prev') {
-      desde.setDate(desde.getDate() - days);
-      hasta.setDate(hasta.getDate() - days);
+      newFrom.setDate(newFrom.getDate() - days);
+      newTo.setDate(newTo.getDate() - days);
     } else {
-      desde.setDate(desde.getDate() + days);
-      hasta.setDate(hasta.getDate() + days);
+      newFrom.setDate(newFrom.getDate() + days);
+      newTo.setDate(newTo.getDate() + days);
     }
     
-    setFechaDesde(desde.toISOString().split('T')[0]);
-    setFechaHasta(hasta.toISOString().split('T')[0]);
+    setDateRange({ from: newFrom, to: newTo });
   };
 
   const renderReportContent = () => {
