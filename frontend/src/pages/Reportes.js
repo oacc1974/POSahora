@@ -620,39 +620,83 @@ function ReporteCategoria({ facturas }) {
   });
   
   const sortedItems = Object.entries(ventasPorCategoria).sort(([, a], [, b]) => b.total - a.total);
+  const colores = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6'];
+  
+  // Datos para gráfico de barras
+  const barData = sortedItems.slice(0, 7).map(([cat, datos], i) => ({
+    categoria: cat.length > 12 ? cat.substring(0, 12) + '...' : cat,
+    ventas: datos.total,
+    fill: colores[i % colores.length]
+  }));
   
   return (
-    <div className="bg-white rounded-lg border">
-      <div className="flex items-center justify-between px-4 py-3 border-b">
-        <span className="font-semibold text-sm">EXPORTAR</span>
-        <Download size={18} className="text-slate-400" />
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium">Categoría</th>
-              <th className="text-right px-4 py-3 font-medium">Artículos vendidos</th>
-              <th className="text-right px-4 py-3 font-medium">Ventas netas</th>
-              <th className="text-right px-4 py-3 font-medium">Costo de los bienes</th>
-              <th className="text-right px-4 py-3 font-medium">Beneficio bruto</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedItems.map(([cat, datos]) => (
-              <tr key={cat} className="border-t hover:bg-slate-50">
-                <td className="px-4 py-3">{cat}</td>
-                <td className="text-right px-4 py-3">{datos.cantidad}</td>
-                <td className="text-right px-4 py-3">${datos.total.toFixed(2)}</td>
-                <td className="text-right px-4 py-3">$0.00</td>
-                <td className="text-right px-4 py-3">${datos.total.toFixed(2)}</td>
+    <div className="space-y-6">
+      {/* Gráfico de barras */}
+      {barData.length > 0 && (
+        <div className="bg-white rounded-lg border p-4">
+          <h3 className="font-semibold mb-4">Ventas por categoría</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={barData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+              <XAxis 
+                dataKey="categoria" 
+                tick={{ fontSize: 11 }} 
+                tickLine={false}
+                axisLine={{ stroke: '#e5e7eb' }}
+              />
+              <YAxis 
+                tick={{ fontSize: 11 }} 
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => `$${value}`}
+              />
+              <Tooltip 
+                formatter={(value) => [`$${value.toFixed(2)}`, 'Ventas']}
+                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+              />
+              <Bar dataKey="ventas" radius={[4, 4, 0, 0]}>
+                {barData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Tabla */}
+      <div className="bg-white rounded-lg border">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <span className="font-semibold text-sm">EXPORTAR</span>
+          <Download size={18} className="text-slate-400" />
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="text-left px-4 py-3 font-medium">Categoría</th>
+                <th className="text-right px-4 py-3 font-medium">Artículos vendidos</th>
+                <th className="text-right px-4 py-3 font-medium">Ventas netas</th>
+                <th className="text-right px-4 py-3 font-medium">Costo de los bienes</th>
+                <th className="text-right px-4 py-3 font-medium">Beneficio bruto</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="px-4 py-2 border-t text-sm text-slate-500">
-        Página: 1 de 1
+            </thead>
+            <tbody>
+              {sortedItems.map(([cat, datos]) => (
+                <tr key={cat} className="border-t hover:bg-slate-50">
+                  <td className="px-4 py-3">{cat}</td>
+                  <td className="text-right px-4 py-3">{datos.cantidad}</td>
+                  <td className="text-right px-4 py-3">${datos.total.toFixed(2)}</td>
+                  <td className="text-right px-4 py-3">$0.00</td>
+                  <td className="text-right px-4 py-3">${datos.total.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-4 py-2 border-t text-sm text-slate-500">
+          Página: 1 de 1
+        </div>
       </div>
     </div>
   );
