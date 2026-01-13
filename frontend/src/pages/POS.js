@@ -797,8 +797,8 @@ export default function POS() {
   };
 
   const ejecutarCombinarTickets = async () => {
-    if (ticketsParaCombinar.length < 2) {
-      toast.error('Selecciona al menos 2 tickets para combinar');
+    if (ticketsParaCombinar.length === 0) {
+      toast.error('Selecciona al menos un ticket para combinar');
       return;
     }
 
@@ -835,7 +835,7 @@ export default function POS() {
       setShowCombinarDialog(false);
       setTicketsParaCombinar([]);
       setTicketActualId(null);
-      toast.success('Tickets combinados correctamente');
+      toast.success(`${ticketsParaCombinar.length} ticket(s) combinados en el ticket actual`);
     } catch (error) {
       toast.error('Error al combinar tickets');
     }
