@@ -782,14 +782,18 @@ export default function POS() {
   };
 
   const handleCombinarTicket = async () => {
-    if (ticketsAbiertos.length < 2) {
-      toast.error('Necesitas al menos 2 tickets abiertos para combinar');
-      return;
-    }
-    setTicketsParaCombinar([]);
-    setShowCombinarDialog(true);
-    setShowTicketMenu(false);
     await fetchTicketsAbiertos();
+    
+    // Esperar un poco para que se actualice el estado
+    setTimeout(() => {
+      if (ticketsAbiertos.length === 0) {
+        toast.error('No hay tickets abiertos para combinar');
+        return;
+      }
+      setTicketsParaCombinar([]);
+      setShowCombinarDialog(true);
+      setShowTicketMenu(false);
+    }, 100);
   };
 
   const ejecutarCombinarTickets = async () => {
