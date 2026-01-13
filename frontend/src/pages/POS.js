@@ -1223,24 +1223,26 @@ export default function POS() {
             </div>
 
             {/* Botones GUARDAR/TICKETS y COBRAR */}
-            <div className="grid grid-cols-2 gap-2">
-              {cart.length > 0 ? (
-                <Button
-                  onClick={() => setShowGuardarTicketDialog(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                >
-                  GUARDAR
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => {
-                    fetchTicketsAbiertos();
-                    setShowTicketsAbiertosDialog(true);
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                >
-                  TICKETS
-                </Button>
+            <div className={`grid ${ticketsAbiertosFuncionActiva ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
+              {ticketsAbiertosFuncionActiva && (
+                cart.length > 0 ? (
+                  <Button
+                    onClick={() => setShowGuardarTicketDialog(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                  >
+                    GUARDAR
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      fetchTicketsAbiertos();
+                      setShowTicketsAbiertosDialog(true);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                  >
+                    TICKETS
+                  </Button>
+                )
               )}
               <Button
                 onClick={handleCheckout}
