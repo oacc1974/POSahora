@@ -93,6 +93,7 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 - **Contraseña:** admin*88
 
 ## Test Reports
+- `/app/test_reports/iteration_5.json` - Tests del nuevo header unificado y cajero indicator - 100% passed
 - `/app/test_reports/iteration_4.json` - Tests de UI del TPV (diálogo de cobro, botones billetes, tema azul) - 100% passed
 - `/app/test_reports/iteration_3.json` - Tests de funciones del menú del TPV (Dividir, Combinar, Despejar, Guardar) - 100% passed
 - `/app/test_reports/iteration_2.json` - Tests de DateRangePicker y ConfigFunciones
