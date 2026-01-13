@@ -76,6 +76,13 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
       show: ['propietario', 'administrador'].includes(user.rol),
     },
     {
+      name: 'Tickets Abiertos',
+      href: '/tickets-abiertos',
+      icon: ClipboardList,
+      testId: 'nav-tickets-abiertos',
+      show: ['propietario', 'administrador'].includes(user.rol),
+    },
+    {
       name: 'Clientes',
       href: '/clientes',
       icon: UserCircle,
