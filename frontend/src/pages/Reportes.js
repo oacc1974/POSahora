@@ -227,6 +227,18 @@ export default function Reportes() {
   };
 
   const renderReportContent = () => {
+    // Para tickets abiertos, no mostramos el loading general
+    if (selectedReport === 'tickets_abiertos') {
+      return <ReporteTicketsAbiertos 
+        tickets={ticketsAbiertos} 
+        loading={loadingTickets}
+        onRefresh={fetchTicketsAbiertos}
+        onDelete={handleDeleteTicket}
+        onDeleteAll={handleDeleteAllTickets}
+        deletingTicket={deletingTicket}
+      />;
+    }
+
     if (loading) {
       return (
         <div className="flex items-center justify-center py-12">
