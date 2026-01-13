@@ -9,7 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import { Wallet, DollarSign, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { Wallet, DollarSign, TrendingUp, Clock, CheckCircle, ShoppingCart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 
