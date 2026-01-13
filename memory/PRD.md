@@ -20,6 +20,17 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### Completadas (13 Enero 2026)
 
+- [x] **Rediseño completo del TPV:**
+  - **Nueva pantalla de cobro** con panel dual (Recibo izquierda, Pago derecha)
+  - **Botones de billetes dinámicos** calculados según el total
+  - **Cálculo de cambio** automático cuando el efectivo recibido es mayor
+  - **Sin opción de enviar correo** en la pantalla de cobro
+  - **Tema azul** en toda la UI (headers, botones, acentos)
+  - **Sidebar oculto por defecto** - solo visible con menú hamburguesa
+  - **Menú hamburguesa funcional** con opciones: Despejar, Dividir, Combinar, Sincronizar
+  - **Botón TICKETS/GUARDAR dinámico** cambia según estado del carrito (desktop y móvil)
+  - **Contador de artículos** suma cantidades totales en la barra inferior móvil
+
 - [x] **Corrección de Funciones del Menú del TPV:**
   - Dividir Ticket: Permite mover productos seleccionados a un nuevo ticket
   - Combinar Ticket: Combina tickets abiertos con el ticket actual (bug fix: subtotal ahora se muestra correctamente)
