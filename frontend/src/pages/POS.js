@@ -830,7 +830,7 @@ export default function POS() {
       // Eliminar los tickets combinados del servidor
       const token = localStorage.getItem('token');
       for (const ticketId of ticketsParaCombinar) {
-        await axios.delete(`${API_URL}/api/tickets/${ticketId}`, {
+        await axios.delete(`${API_URL}/api/tickets-abiertos-pos/${ticketId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
