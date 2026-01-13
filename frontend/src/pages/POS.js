@@ -69,6 +69,9 @@ export default function POS() {
   // Obtener usuario actual
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const esMesero = currentUser?.rol === 'mesero';
+  const esCajero = currentUser?.rol === 'cajero';
+  const esEmpleado = esMesero || esCajero; // Empleados con acceso limitado
+  const esDueno = currentUser?.rol === 'propietario' || currentUser?.rol === 'administrador';
   
   // Obtener categorías únicas
   const categorias = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
