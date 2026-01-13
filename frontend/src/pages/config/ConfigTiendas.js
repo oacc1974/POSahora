@@ -323,7 +323,17 @@ export default function ConfigTiendas() {
                       id="codigo_establecimiento"
                       placeholder="001"
                       value={formData.codigo_establecimiento}
-                      onChange={(e) => setFormData({ ...formData, codigo_establecimiento: e.target.value.replace(/\D/g, '').slice(0, 3).padStart(3, '0') })}
+                      onChange={(e) => {
+                        // Permitir solo números, máximo 3 dígitos
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 3);
+                        setFormData({ ...formData, codigo_establecimiento: value });
+                      }}
+                      onBlur={(e) => {
+                        // Al salir del campo, rellenar con ceros si es necesario
+                        if (formData.codigo_establecimiento && formData.codigo_establecimiento.length < 3) {
+                          setFormData({ ...formData, codigo_establecimiento: formData.codigo_establecimiento.padStart(3, '0') });
+                        }
+                      }}
                       maxLength={3}
                       className="pl-8 font-mono"
                       required
