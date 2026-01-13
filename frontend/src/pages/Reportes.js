@@ -325,12 +325,20 @@ function ReporteResumen({ data, facturas }) {
   const ventasPorDia = {};
   facturas.forEach(f => {
     const fecha = f.fecha?.split('T')[0] || '';
-    if (!ventasPorDia[fecha]) ventasPorDia[fecha] = 0;
-    ventasPorDia[fecha] += f.total || 0;
+    if (fecha) {
+      if (!ventasPorDia[fecha]) ventasPorDia[fecha] = 0;
+      ventasPorDia[fecha] += f.total || 0;
+    }
   });
   
   const diasOrdenados = Object.keys(ventasPorDia).sort();
-  const maxVenta = Math.max(...Object.values(ventasPorDia), 1);
+  
+  // Preparar datos para Recharts
+  const chartData = diasOrdenados.map(dia => ({
+    fecha: new Date(dia + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+    ventas: ventasPorDia[dia],
+    fechaCompleta: dia
+  }));
   
   return (
     <div className="space-y-6">
@@ -343,7 +351,7 @@ function ReporteResumen({ data, facturas }) {
         <MetricCard title="Beneficio bruto" value={`$${(data.total_ingresos || 0).toFixed(2)}`} />
       </div>
 
-      {/* Gráfico de área */}
+      {/* Gráfico de área con Recharts */}
       <div className="bg-white rounded-lg border p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Ventas brutas</h3>
@@ -359,30 +367,48 @@ function ReporteResumen({ data, facturas }) {
           </div>
         </div>
         
-        {/* Gráfico simple */}
-        <div className="h-48 flex items-end gap-1">
-          {diasOrdenados.map((dia, i) => {
-            const valor = ventasPorDia[dia];
-            const altura = (valor / maxVenta) * 100;
-            return (
-              <div key={dia} className="flex-1 flex flex-col items-center">
-                <div 
-                  className="w-full bg-green-500 rounded-t opacity-70 hover:opacity-100 transition-opacity"
-                  style={{ height: `${Math.max(altura, 2)}%` }}
-                  title={`${dia}: $${valor.toFixed(2)}`}
-                />
-              </div>
-            );
-          })}
-        </div>
-        <div className="flex justify-between text-xs text-slate-500 mt-2">
-          {diasOrdenados.length > 0 && (
-            <>
-              <span>{new Date(diasOrdenados[0] + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</span>
-              <span>{new Date(diasOrdenados[diasOrdenados.length - 1] + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}</span>
-            </>
-          )}
-        </div>
+        {chartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0.1}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+              <XAxis 
+                dataKey="fecha" 
+                tick={{ fontSize: 11 }} 
+                tickLine={false}
+                axisLine={{ stroke: '#e5e7eb' }}
+              />
+              <YAxis 
+                tick={{ fontSize: 11 }} 
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => `$${value}`}
+              />
+              <Tooltip 
+                formatter={(value) => [`$${value.toFixed(2)}`, 'Ventas']}
+                labelStyle={{ color: '#374151' }}
+                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="ventas" 
+                stroke="#22c55e" 
+                fillOpacity={1} 
+                fill="url(#colorVentas)" 
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-48 flex items-center justify-center text-slate-400">
+            No hay datos para mostrar en este período
+          </div>
+        )}
       </div>
 
       {/* Tabla */}
