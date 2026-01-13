@@ -1910,6 +1910,118 @@ export default function POS() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Dividir Ticket */}
+      <Dialog open={showDividirDialog} onOpenChange={setShowDividirDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Dividir Ticket</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">
+              Selecciona los productos que deseas mover a un nuevo ticket:
+            </p>
+            <div className="max-h-[300px] overflow-y-auto space-y-2">
+              {cart.map((item) => (
+                <div 
+                  key={item.producto_id}
+                  className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"
+                  onClick={() => {
+                    // Toggle selección (usar un estado separado)
+                  }}
+                >
+                  <input type="checkbox" className="w-4 h-4" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{item.nombre}</p>
+                    <p className="text-xs text-slate-500">Cantidad: {item.cantidad}</p>
+                  </div>
+                  <span className="font-mono text-sm">${item.subtotal.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDividirDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={() => {
+                toast.info('Funcionalidad de división en desarrollo');
+                setShowDividirDialog(false);
+              }}>
+                Dividir
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Combinar Tickets */}
+      <Dialog open={showCombinarDialog} onOpenChange={setShowCombinarDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Combinar Tickets</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">
+              Selecciona los tickets que deseas combinar con el actual:
+            </p>
+            <div className="max-h-[300px] overflow-y-auto space-y-2">
+              {ticketsAbiertos.map((ticket) => (
+                <div 
+                  key={ticket.id}
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                    ticketsParaCombinar.includes(ticket.id) 
+                      ? 'bg-blue-50 border-blue-300' 
+                      : 'hover:bg-slate-50'
+                  }`}
+                  onClick={() => {
+                    setTicketsParaCombinar(prev => 
+                      prev.includes(ticket.id)
+                        ? prev.filter(id => id !== ticket.id)
+                        : [...prev, ticket.id]
+                    );
+                  }}
+                >
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4" 
+                    checked={ticketsParaCombinar.includes(ticket.id)}
+                    onChange={() => {}}
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{ticket.nombre}</p>
+                    <p className="text-xs text-slate-500">
+                      {ticket.items?.length || 0} productos
+                    </p>
+                  </div>
+                  <span className="font-mono text-sm">${ticket.total?.toFixed(2) || '0.00'}</span>
+                </div>
+              ))}
+              {ticketsAbiertos.length === 0 && (
+                <p className="text-center text-slate-400 py-4">No hay tickets abiertos</p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCombinarDialog(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={ejecutarCombinarTickets}
+                disabled={ticketsParaCombinar.length < 2}
+              >
+                Combinar ({ticketsParaCombinar.length})
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Overlay para cerrar menú */}
+      {showTicketMenu && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowTicketMenu(false)}
+        />
+      )}
     </div>
   );
 }
