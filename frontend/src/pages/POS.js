@@ -1192,62 +1192,98 @@ export default function POS() {
               className="text-xs"
             />
           </div>
-        </div>
 
-        <div className="flex-1 overflow-auto p-4 lg:p-6 max-h-[300px] lg:max-h-none">
-          {cart.length === 0 ? (
-            <div
-              className="flex items-center justify-center h-full text-slate-400"
-              data-testid="empty-cart"
-            >
-              <p>Carrito vacío</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {cart.map((item) => (
-                <div
-                  key={item.producto_id}
-                  data-testid={`cart-item-${item.producto_id}`}
-                  className="p-3 bg-slate-50 rounded-lg border border-slate-200"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-sm flex-1">
-                      {item.nombre}
-                    </h3>
-                    <button
-                      onClick={() => removeFromCart(item.producto_id)}
-                      data-testid={`remove-cart-item-${item.producto_id}`}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+          {/* Items del carrito */}
+          <div className="flex-1 overflow-auto max-h-[250px]">
+            {cart.length === 0 ? (
+              <div className="flex items-center justify-center h-32 text-slate-400" data-testid="empty-cart">
+                <p className="text-sm">Carrito vacío</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {cart.map((item) => (
+                  <div
+                    key={item.producto_id}
+                    data-testid={`cart-item-${item.producto_id}`}
+                    className="p-2 bg-slate-50 rounded-lg border border-slate-200"
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="font-medium text-xs flex-1 truncate">{item.nombre}</h3>
                       <button
-                        onClick={() => updateQuantity(item.producto_id, -1)}
-                        data-testid={`decrease-quantity-${item.producto_id}`}
-                        className="w-8 h-8 flex items-center justify-center bg-white border border-slate-300 rounded hover:bg-slate-100"
+                        onClick={() => removeFromCart(item.producto_id)}
+                        data-testid={`remove-cart-item-${item.producto_id}`}
+                        className="text-red-600 hover:text-red-800 ml-2"
                       >
-                        <Minus size={16} />
-                      </button>
-                      <span
-                        className="w-12 text-center font-semibold"
-                        data-testid={`cart-item-quantity-${item.producto_id}`}
-                      >
-                        {item.cantidad}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(item.producto_id, 1)}
-                        data-testid={`increase-quantity-${item.producto_id}`}
-                        className="w-8 h-8 flex items-center justify-center bg-white border border-slate-300 rounded hover:bg-slate-100"
-                      >
-                        <Plus size={16} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
 
-                    <p className="font-mono font-bold text-blue-600">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => updateQuantity(item.producto_id, -1)}
+                          data-testid={`decrease-quantity-${item.producto_id}`}
+                          className="w-6 h-6 flex items-center justify-center bg-white border rounded hover:bg-slate-100 text-xs"
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span className="w-8 text-center font-semibold text-xs" data-testid={`cart-item-quantity-${item.producto_id}`}>
+                          {item.cantidad}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item.producto_id, 1)}
+                          data-testid={`increase-quantity-${item.producto_id}`}
+                          className="w-6 h-6 flex items-center justify-center bg-white border rounded hover:bg-slate-100 text-xs"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+                      <p className="font-mono font-bold text-blue-600 text-sm">${item.subtotal.toFixed(2)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Total y botones */}
+          <div className="border-t pt-3 mt-3">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-lg font-bold">Total</span>
+              <span className="text-xl font-bold font-mono text-blue-600" data-testid="cart-total">
+                ${total.toFixed(2)}
+              </span>
+            </div>
+
+            {ticketsAbiertosFuncionActiva && (
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <Button
+                  onClick={() => setShowGuardarTicketDialog(true)}
+                  disabled={cart.length === 0}
+                  className="bg-blue-500 hover:bg-blue-400 text-xs h-9"
+                >
+                  GUARDAR
+                </Button>
+                <Button
+                  onClick={() => setShowTicketsAbiertosDialog(true)}
+                  className="bg-blue-500 hover:bg-blue-400 text-xs h-9"
+                >
+                  TICKETS
+                </Button>
+              </div>
+            )}
+
+            <Button
+              onClick={handleCobrar}
+              disabled={cart.length === 0}
+              data-testid="cobrar-button"
+              className="w-full h-10 bg-green-600 hover:bg-green-500 text-white font-bold"
+            >
+              COBRAR ${total.toFixed(2)}
+            </Button>
+          </div>
+        </Card>
+      </div>
                       ${item.subtotal.toFixed(2)}
                     </p>
                   </div>
