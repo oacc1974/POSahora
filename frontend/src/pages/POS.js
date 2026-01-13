@@ -162,6 +162,7 @@ export default function POS() {
       });
       setRequiereCierres(response.data.cierres_caja);
       setTicketsAbiertosFuncionActiva(response.data.tickets_abiertos);
+      setTipoPedidoFuncionActiva(response.data.tipo_pedido);
       setVentaConStock(response.data.venta_con_stock);
       
       // Si tickets abiertos está activo, cargar la lista
