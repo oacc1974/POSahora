@@ -1672,6 +1672,7 @@ def main():
         return 1
     else:
         print("✅ All tests passed!")
+        print("✅ New functionality is working correctly!")
         print("✅ POS SRI Ecuador system is working correctly!")
         print("✅ Payment methods system is working correctly!")
         print("✅ Tax system is working correctly!")
