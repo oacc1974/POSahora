@@ -1128,58 +1128,60 @@ export default function POS() {
           </button>
         )}
 
-      {/* Carrito Desktop (siempre visible) */}
-      <Card className="hidden md:flex w-full lg:w-96 flex-col shadow-xl lg:sticky lg:top-0">
-        <div className="p-4 lg:p-6 border-b border-slate-200">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl lg:text-2xl font-bold">Ticket</h2>
-            <div className="relative">
-              <button 
-                onClick={() => setShowTicketMenu(!showTicketMenu)}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                data-testid="ticket-menu-btn"
-              >
-                <MoreVertical size={20} className="text-slate-600" />
-              </button>
-              {showTicketMenu && <TicketMenuDropdown />}
-            </div>
-          </div>
-          
-          {/* Cliente */}
-          <div className="mb-3">
-            {clienteSeleccionado ? (
-              <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-blue-900 truncate">
-                    {clienteSeleccionado.nombre}
-                  </p>
-                  <p className="text-xs text-blue-700">
-                    Cédula: {clienteSeleccionado.cedula_ruc}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setClienteSeleccionado(null)}
-                  className="ml-2 text-blue-600 hover:text-blue-800"
+        {/* Columna derecha - Carrito/Ticket (Desktop) */}
+        <Card className="hidden lg:flex w-80 xl:w-96 flex-col shadow-lg h-fit sticky top-4">
+          <div className="p-4 border-b border-slate-200">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold">Ticket</h2>
+              <div className="relative">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowTicketMenu(!showTicketMenu);
+                  }}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                  data-testid="ticket-menu-btn"
                 >
-                  <X size={16} />
+                  <MoreVertical size={18} className="text-slate-600" />
                 </button>
+                {showTicketMenu && <TicketMenuDropdown />}
               </div>
-            ) : (
-              <Button
-                onClick={() => setShowClienteDialog(true)}
-                data-testid="add-cliente-button"
-                variant="outline"
-                size="sm"
-                className="w-full gap-2"
-              >
-                <Plus size={16} />
-                Agregar Cliente
-              </Button>
-            )}
-          </div>
+            </div>
+            
+            {/* Cliente */}
+            <div className="mb-3">
+              {clienteSeleccionado ? (
+                <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-blue-900 truncate">
+                      {clienteSeleccionado.nombre}
+                    </p>
+                    <p className="text-xs text-blue-700">
+                      {clienteSeleccionado.cedula_ruc}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setClienteSeleccionado(null)}
+                    className="ml-2 text-blue-600 hover:text-blue-800"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => setShowClienteDialog(true)}
+                  data-testid="add-cliente-button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-2 text-xs"
+                >
+                  <Plus size={14} />
+                  Agregar Cliente
+                </Button>
+              )}
+            </div>
 
-          {/* Comentarios */}
-          <div>
+            {/* Comentarios */}
             <Textarea
               placeholder="Comentarios (opcional)"
               data-testid="comentarios-input"
@@ -1187,7 +1189,7 @@ export default function POS() {
               onChange={(e) => setComentarios(e.target.value)}
               rows={2}
               maxLength={255}
-              className="text-sm"
+              className="text-xs"
             />
           </div>
         </div>
