@@ -225,6 +225,54 @@ backend:
           agent: "testing"
           comment: "✅ SISTEMA DE IMPUESTOS COMPLETAMENTE FUNCIONAL. Pruebas realizadas: 1) Login admin exitoso, 2) Creación de impuestos tipo 'agregado' (IVA 12%) y 'incluido' (5%) - ambos activos, 3) Listado de impuestos muestra todos activos correctamente, 4) Creación de facturas con cálculo automático de impuestos - matemáticamente correcto, 5) Desglose de impuestos incluye nombre, tasa, tipo y monto, 6) Retrocompatibilidad verificada - facturas antiguas muestran subtotal=total y desglose_impuestos=[], 7) Facturas nuevas incluyen todos los campos requeridos. CORRECCIÓN APLICADA: Fijo bug en backend donde tipo 'no_incluido' se calculaba como 'incluido' pero no se agregaba al total. Ahora 'no_incluido' se trata igual que 'agregado'. Todos los cálculos matemáticos verificados y correctos."
 
+  - task: "Validación de Cédula Única en Clientes"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ VALIDACIÓN DE CÉDULA ÚNICA COMPLETAMENTE FUNCIONAL. Pruebas realizadas: 1) POST /api/clientes con cedula_ruc '1234567890001' - creación exitosa, 2) POST /api/clientes con misma cedula_ruc - FALLA correctamente con status 400 'Ya existe un cliente con esta cédula/RUC', 3) PUT /api/clientes/{id} cambiando cedula_ruc a una existente - FALLA correctamente con status 400. Validación de unicidad implementada y funcionando perfectamente en creación y actualización de clientes."
+
+  - task: "Rol de Mesero"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ ROL DE MESERO COMPLETAMENTE FUNCIONAL. Pruebas realizadas: 1) Usuario mesero1 ya existe en el sistema con rol='mesero', 2) POST /api/login con credenciales mesero1/mesero123 - login exitoso, 3) Verificación de rol 'mesero' en respuesta de login, 4) Usuario mesero puede acceder a funcionalidades del sistema. Rol de mesero implementado y operativo."
+
+  - task: "Apertura de Caja para Meseros"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ APERTURA DE CAJA PARA MESEROS COMPLETAMENTE FUNCIONAL. Pruebas realizadas: 1) Login como mesero1 exitoso, 2) POST /api/caja/abrir con tpv_id sin especificar monto_inicial - funciona correctamente, 3) Caja creada con monto_inicial=0.0 automáticamente, 4) Verificación de que meseros pueden abrir caja sin requerir monto inicial, 5) Cierre de caja exitoso para cleanup. Sistema permite a meseros abrir cajas sin restricciones de monto inicial."
+
+  - task: "Reportes con Filtros"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ REPORTES CON FILTROS COMPLETAMENTE FUNCIONAL. Pruebas realizadas: 1) GET /api/dashboard con filtros fecha_inicio y fecha_fin - retorna estadísticas filtradas (54 ventas, $3018.11), 2) GET /api/facturas con filtro de fechas - retorna 54 facturas filtradas, 3) GET /api/facturas con filtro cajero_id - retorna 53 facturas del cajero específico, 4) GET /api/facturas con filtros combinados (fecha + limit) - funciona correctamente. Todos los filtros de reportes implementados y operativos."
+
 frontend:
   - task: "Mostrar desglose de impuestos en recibo"
     implemented: true
