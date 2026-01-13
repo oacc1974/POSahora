@@ -1005,8 +1005,8 @@ export default function POS() {
               </button>
             </div>
             <nav className="p-2">
-              {/* Menú completo para todos excepto cajeros y meseros */}
-              {!esEmpleado && (
+              {/* Menú para propietarios - acceso completo */}
+              {esPropietario && (
                 <>
                   <a href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
                     <LayoutDashboard size={18} />
@@ -1032,6 +1032,25 @@ export default function POS() {
                   <a href="/caja" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
                     <Wallet size={18} />
                     <span>Caja</span>
+                  </a>
+                </>
+              )}
+              
+              {/* Menú para administradores - POS, Caja y Back Office */}
+              {esAdministrador && (
+                <>
+                  <a href="/pos" className="flex items-center gap-3 px-4 py-3 text-blue-600 bg-blue-50 rounded-lg font-medium">
+                    <ShoppingCart size={18} />
+                    <span>Punto de Venta</span>
+                  </a>
+                  <a href="/caja" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                    <Wallet size={18} />
+                    <span>Caja</span>
+                  </a>
+                  <div className="border-t my-2"></div>
+                  <a href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-purple-600 hover:bg-purple-50 rounded-lg font-medium">
+                    <Briefcase size={18} />
+                    <span>Back Office</span>
                   </a>
                 </>
               )}
