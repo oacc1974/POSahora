@@ -2584,7 +2584,7 @@ async def get_facturas(
     facturas = await db.facturas.find(query).sort("fecha", -1).to_list(1000)
     return [
         InvoiceResponse(
-            id=f["_id"],
+            id=f["id"],
             numero=f["numero"],
             items=[InvoiceItem(**item) for item in f["items"]],
             subtotal=f.get("subtotal", f["total"]),
@@ -2602,6 +2602,7 @@ async def get_facturas(
             metodo_pago_nombre=f.get("metodo_pago_nombre"),
             tipo_pedido_id=f.get("tipo_pedido_id"),
             tipo_pedido_nombre=f.get("tipo_pedido_nombre"),
+            estado=f.get("estado", "completado"),
             fecha=f["fecha"]
         )
         for f in facturas
