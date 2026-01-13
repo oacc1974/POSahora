@@ -1114,14 +1114,16 @@ export default function POS() {
       <Dialog open={showAperturaCaja} onOpenChange={setShowAperturaCaja}>
         <DialogContent data-testid="apertura-caja-dialog" className="max-w-md mx-4">
           <DialogHeader>
-            <DialogTitle>Abrir Caja para Vender</DialogTitle>
+            <DialogTitle>{esMesero ? 'Asignar TPV para Tomar Pedidos' : 'Abrir Caja para Vender'}</DialogTitle>
           </DialogHeader>
 
           <div className="mb-4">
             <p className="text-slate-600">
-              {requiereCierres 
-                ? 'Antes de realizar ventas, debes abrir tu caja con una base inicial.'
-                : 'Confirma para abrir la caja y comenzar a vender.'
+              {esMesero 
+                ? 'Selecciona un TPV para comenzar a tomar pedidos. Como mesero, no necesitas manejar dinero.'
+                : requiereCierres 
+                  ? 'Antes de realizar ventas, debes abrir tu caja con una base inicial.'
+                  : 'Confirma para abrir la caja y comenzar a vender.'
               }
             </p>
           </div>
@@ -1130,14 +1132,15 @@ export default function POS() {
             {/* Selección de TPV */}
             {tpvsDisponibles.length > 0 && (
               <div>
-                <Label htmlFor="tpv_seleccion">Selecciona un TPV (Punto de Venta)</Label>
+                <Label htmlFor="tpv_seleccion">Selecciona un TPV (Punto de Venta) {esMesero && '*'}</Label>
                 <select
                   id="tpv_seleccion"
                   value={tpvSeleccionado || ''}
                   onChange={(e) => setTpvSeleccionado(e.target.value || null)}
                   className="w-full mt-2 p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required={esMesero}
                 >
-                  <option value="">-- Sin TPV asignado --</option>
+                  <option value="">-- {esMesero ? 'Selecciona un TPV' : 'Sin TPV asignado'} --</option>
                   {tpvsDisponibles.map((tpv) => (
                     <option key={tpv.id} value={tpv.id}>
                       {tpv.nombre} ({tpv.tienda_nombre}) - Punto: {tpv.punto_emision}
@@ -1145,7 +1148,10 @@ export default function POS() {
                   ))}
                 </select>
                 <p className="text-xs text-slate-500 mt-2">
-                  Las facturas usarán la numeración del TPV seleccionado
+                  {esMesero 
+                    ? 'Debes seleccionar un TPV para poder tomar pedidos'
+                    : 'Las facturas usarán la numeración del TPV seleccionado'
+                  }
                 </p>
               </div>
             )}
@@ -1153,12 +1159,13 @@ export default function POS() {
             {tpvsDisponibles.length === 0 && (
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-yellow-800 text-sm">
-                  No hay TPVs disponibles. Puedes continuar sin TPV o contacta al administrador.
+                  No hay TPVs disponibles. {esMesero ? 'Contacta al administrador.' : 'Puedes continuar sin TPV o contacta al administrador.'}
                 </p>
               </div>
             )}
 
-            {requiereCierres && (
+            {/* Solo mostrar monto inicial para cajeros/admin cuando cierres está activo */}
+            {!esMesero && requiereCierres && (
               <div>
                 <Label htmlFor="monto_inicial_pos">Base de Caja (Monto Inicial) *</Label>
                 <Input
@@ -1183,8 +1190,14 @@ export default function POS() {
                 type="submit"
                 data-testid="confirmar-apertura-pos-button"
                 className="flex-1"
+                disabled={esMesero && tpvsDisponibles.length > 0 && !tpvSeleccionado}
               >
-                {requiereCierres ? 'Abrir Caja y Comenzar' : 'Comenzar a Vender'}
+                {esMesero 
+                  ? 'Comenzar a Tomar Pedidos'
+                  : requiereCierres 
+                    ? 'Abrir Caja y Comenzar' 
+                    : 'Comenzar a Vender'
+                }
               </Button>
             </div>
           </form>
