@@ -68,6 +68,13 @@ export default function Layout({ children, user, onLogout }) {
       show: true,
     },
     {
+      name: 'Reportes',
+      href: '/reportes',
+      icon: BarChart3,
+      testId: 'nav-reportes',
+      show: ['propietario', 'administrador'].includes(user.rol),
+    },
+    {
       name: 'Clientes',
       href: '/clientes',
       icon: UserCircle,
