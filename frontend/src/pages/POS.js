@@ -55,6 +55,9 @@ export default function POS() {
   const [productosParaDividir, setProductosParaDividir] = useState([]);
   const [nombreNuevoTicket, setNombreNuevoTicket] = useState('');
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('all');
+  const [showCobroDialog, setShowCobroDialog] = useState(false);
+  const [efectivoRecibido, setEfectivoRecibido] = useState('');
+  const [showSidebar, setShowSidebar] = useState(false);
   
   // Obtener usuario actual
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
