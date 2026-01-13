@@ -1157,19 +1157,15 @@ export default function POS() {
           {/* Header del ticket */}
           <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between relative z-50">
             <span className="font-semibold">Ticket</span>
-            <div className="relative">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowTicketMenu(!showTicketMenu);
-                }}
-                className="p-1 hover:bg-green-700 rounded"
-                data-testid="ticket-menu-btn"
-              >
-                <MoreVertical size={18} />
-              </button>
-              {showTicketMenu && <TicketMenuDropdown />}
-            </div>
+            <button 
+              onClick={() => setShowClienteDialog(true)}
+              className="p-1 hover:bg-blue-700 rounded relative"
+            >
+              <UserPlus size={18} />
+              {clienteSeleccionado && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
+              )}
+            </button>
           </div>
 
           {/* Cliente seleccionado */}
@@ -1224,7 +1220,7 @@ export default function POS() {
                           <Plus size={14} />
                         </button>
                       </div>
-                      <span className="font-bold text-green-600">${item.subtotal.toFixed(2)}</span>
+                      <span className="font-bold text-blue-600">${item.subtotal.toFixed(2)}</span>
                     </div>
                   </div>
                 ))}
