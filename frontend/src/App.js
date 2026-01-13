@@ -188,6 +188,18 @@ function AppRouter() {
           }
         />
         <Route
+          path="/reportes"
+          element={
+            user ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <Reportes />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
           path="/usuarios"
           element={
             user && user.rol === 'propietario' ? (
