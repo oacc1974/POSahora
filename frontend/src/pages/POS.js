@@ -1166,17 +1166,26 @@ export default function POS() {
               <span className="text-2xl font-bold text-slate-900">${total.toFixed(2)}</span>
             </div>
 
-            {/* Botones TICKETS ABIERTOS y COBRAR */}
+            {/* Botones GUARDAR/TICKETS y COBRAR */}
             <div className="grid grid-cols-2 gap-2">
-              <Button
-                onClick={() => {
-                  fetchTicketsAbiertos();
-                  setShowTicketsAbiertosDialog(true);
-                }}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold"
-              >
-                TICKETS
-              </Button>
+              {cart.length > 0 ? (
+                <Button
+                  onClick={() => setShowGuardarTicketDialog(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+                >
+                  GUARDAR
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    fetchTicketsAbiertos();
+                    setShowTicketsAbiertosDialog(true);
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+                >
+                  TICKETS
+                </Button>
+              )}
               <Button
                 onClick={handleCheckout}
                 disabled={cart.length === 0}
