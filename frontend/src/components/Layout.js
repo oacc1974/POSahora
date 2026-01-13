@@ -194,6 +194,7 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
           </Button>
         </div>
       </aside>
+      )}
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
