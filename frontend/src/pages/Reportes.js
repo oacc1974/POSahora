@@ -1235,7 +1235,7 @@ function ReporteTicketsAbiertos({ tickets, loading, onRefresh, onDelete, onDelet
           <AlertTriangle size={20} className="text-amber-600 flex-shrink-0" />
           <p className="text-sm text-amber-700">
             Tienes <strong>{tickets.length} ticket(s)</strong> abiertos con un valor de <strong>${totalAmount.toFixed(2)}</strong>. 
-            Mientras haya tickets abiertos, no podrás desactivar la función "Tickets abiertos".
+            Mientras haya tickets abiertos, no podrás desactivar la función Tickets abiertos.
           </p>
         </div>
       )}
