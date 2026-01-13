@@ -1294,7 +1294,7 @@ export default function POS() {
                       GUARDAR
                     </>
                   ) : (
-                    'TICKETS'
+                    'TICKETS ABIERTOS'
                   )}
                 </Button>
               )}
