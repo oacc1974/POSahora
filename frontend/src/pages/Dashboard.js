@@ -246,13 +246,13 @@ export default function Dashboard() {
                 {/* Cajero */}
                 <div className="space-y-1">
                   <Label className="text-xs text-slate-500">Cajero</Label>
-                  <Select value={cajeroId} onValueChange={setCajeroId}>
+                  <Select value={cajeroId || "all"} onValueChange={(v) => setCajeroId(v === "all" ? "" : v)}>
                     <SelectTrigger className="text-sm">
                       <User size={14} className="mr-2 text-slate-400" />
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los cajeros</SelectItem>
+                      <SelectItem value="all">Todos los cajeros</SelectItem>
                       {empleados.map((emp) => (
                         <SelectItem key={emp.id} value={emp.id}>
                           {emp.nombre} ({emp.rol})
@@ -266,13 +266,13 @@ export default function Dashboard() {
                 {tiendas.length > 0 && (
                   <div className="space-y-1">
                     <Label className="text-xs text-slate-500">Tienda</Label>
-                    <Select value={tiendaId} onValueChange={setTiendaId}>
+                    <Select value={tiendaId || "all"} onValueChange={(v) => setTiendaId(v === "all" ? "" : v)}>
                       <SelectTrigger className="text-sm">
                         <Store size={14} className="mr-2 text-slate-400" />
                         <SelectValue placeholder="Todas" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todas las tiendas</SelectItem>
+                        <SelectItem value="all">Todas las tiendas</SelectItem>
                         {tiendas.map((tienda) => (
                           <SelectItem key={tienda.id} value={tienda.id}>
                             {tienda.nombre}
