@@ -1086,7 +1086,7 @@ export default function POS() {
                   key={producto.id}
                   data-testid={`pos-product-${producto.id}`}
                   onClick={() => addToCart(producto)}
-                  className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden cursor-pointer hover:shadow-md hover:border-green-400 transition-all group"
+                  className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden cursor-pointer hover:shadow-md hover:border-blue-400 transition-all group"
                 >
                   {/* Imagen del producto */}
                   <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center relative overflow-hidden">
