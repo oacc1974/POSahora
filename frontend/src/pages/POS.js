@@ -1072,6 +1072,40 @@ export default function POS() {
                 <p>No se encontraron productos</p>
               </div>
             )}
+
+            {/* ============ BARRA DE BOTONES MÓVIL (debajo de productos) ============ */}
+            <div className="md:hidden bg-white border-t p-3 flex gap-2 mt-auto">
+              {cart.length > 0 ? (
+                <Button
+                  onClick={() => setShowGuardarTicketDialog(true)}
+                  variant="outline"
+                  className="flex-1 relative border-blue-600 text-blue-600"
+                >
+                  <span>GUARDAR</span>
+                  <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
+                    {cart.reduce((sum, item) => sum + item.cantidad, 0)}
+                  </span>
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => {
+                    fetchTicketsAbiertos();
+                    setShowTicketsAbiertosDialog(true);
+                  }}
+                  variant="outline"
+                  className="flex-1 relative border-blue-600 text-blue-600"
+                >
+                  <span>TICKETS</span>
+                </Button>
+              )}
+              <Button
+                onClick={handleCheckout}
+                disabled={cart.length === 0}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 font-semibold"
+              >
+                COBRAR ${total.toFixed(2)}
+              </Button>
+            </div>
           </div>
 
           {/* Barra de categorías (abajo) */}
@@ -1099,40 +1133,6 @@ export default function POS() {
                 {cat}
               </button>
             ))}
-          </div>
-
-          {/* ============ BARRA DE BOTONES MÓVIL (debajo de categorías) ============ */}
-          <div className="md:hidden bg-white border-t p-3 flex gap-2">
-            {cart.length > 0 ? (
-              <Button
-                onClick={() => setShowGuardarTicketDialog(true)}
-                variant="outline"
-                className="flex-1 relative border-blue-600 text-blue-600"
-              >
-                <span>GUARDAR</span>
-                <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
-                  {cart.reduce((sum, item) => sum + item.cantidad, 0)}
-                </span>
-              </Button>
-            ) : (
-              <Button
-                onClick={() => {
-                  fetchTicketsAbiertos();
-                  setShowTicketsAbiertosDialog(true);
-                }}
-                variant="outline"
-                className="flex-1 relative border-blue-600 text-blue-600"
-              >
-                <span>TICKETS</span>
-              </Button>
-            )}
-            <Button
-              onClick={handleCheckout}
-              disabled={cart.length === 0}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 font-semibold"
-            >
-              COBRAR ${total.toFixed(2)}
-            </Button>
           </div>
         </div>
 
