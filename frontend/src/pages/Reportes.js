@@ -1156,3 +1156,180 @@ function ReporteImpuestos({ facturas }) {
     </div>
   );
 }
+
+
+// REPORTE: Tickets Abiertos
+function ReporteTicketsAbiertos({ tickets, loading, onRefresh, onDelete, onDeleteAll, deletingTicket }) {
+  const totalAmount = tickets.reduce((sum, t) => sum + (t.subtotal || 0), 0);
+  const totalItems = tickets.reduce((sum, t) => sum + (t.items?.length || 0), 0);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Resumen */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <ClipboardList size={20} className="text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Tickets Abiertos</p>
+              <p className="text-2xl font-bold text-slate-900">{tickets.length}</p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <DollarSign size={20} className="text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Valor Total</p>
+              <p className="text-2xl font-bold text-slate-900">${totalAmount.toFixed(2)}</p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <ShoppingCart size={20} className="text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Total Productos</p>
+              <p className="text-2xl font-bold text-slate-900">{totalItems}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4 flex items-center justify-center gap-2">
+          <Button onClick={onRefresh} variant="outline" size="sm" disabled={loading}>
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            <span className="ml-1">Actualizar</span>
+          </Button>
+          {tickets.length > 0 && (
+            <Button onClick={onDeleteAll} variant="destructive" size="sm">
+              <Trash2 size={16} />
+              <span className="ml-1">Eliminar Todos</span>
+            </Button>
+          )}
+        </Card>
+      </div>
+
+      {/* Advertencia */}
+      {tickets.length > 0 && (
+        <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <AlertTriangle size={20} className="text-amber-600 flex-shrink-0" />
+          <p className="text-sm text-amber-700">
+            Tienes <strong>{tickets.length} ticket(s)</strong> abiertos con un valor de <strong>${totalAmount.toFixed(2)}</strong>. 
+            Mientras haya tickets abiertos, no podrás desactivar la función "Tickets abiertos".
+          </p>
+        </div>
+      )}
+
+      {/* Tabla */}
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 border-b">
+              <tr>
+                <th className="px-4 py-3 text-left font-semibold text-slate-700">Ticket</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-700">Productos</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-700">Subtotal</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-700">Fecha Creación</th>
+                <th className="px-4 py-3 text-center font-semibold text-slate-700">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
+                    <RefreshCw size={24} className="animate-spin mx-auto mb-2" />
+                    Cargando tickets...
+                  </td>
+                </tr>
+              ) : tickets.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
+                    <ClipboardList size={48} className="mx-auto mb-2 text-slate-300" />
+                    <p className="font-medium">No hay tickets abiertos</p>
+                    <p className="text-sm">Los pedidos guardados sin cobrar aparecerán aquí</p>
+                  </td>
+                </tr>
+              ) : (
+                tickets.map((ticket) => (
+                  <tr key={ticket.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <ClipboardList size={16} className="text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900">{ticket.nombre}</p>
+                          <p className="text-xs text-slate-500">ID: {ticket.id?.slice(0, 8)}...</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm">
+                        {ticket.items?.slice(0, 2).map((item, idx) => (
+                          <div key={idx} className="text-slate-600">
+                            {item.cantidad}x {item.nombre}
+                          </div>
+                        ))}
+                        {ticket.items?.length > 2 && (
+                          <div className="text-slate-400 text-xs">
+                            +{ticket.items.length - 2} más
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-mono font-semibold text-green-600">
+                        ${(ticket.subtotal || 0).toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1 text-sm text-slate-600">
+                        <Clock size={14} />
+                        {formatDate(ticket.fecha_creacion)}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <Button
+                        onClick={() => onDelete(ticket.id, ticket.nombre)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        disabled={deletingTicket === ticket.id}
+                      >
+                        {deletingTicket === ticket.id ? (
+                          <RefreshCw size={16} className="animate-spin" />
+                        ) : (
+                          <Trash2 size={16} />
+                        )}
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
