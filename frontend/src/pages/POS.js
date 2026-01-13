@@ -512,6 +512,12 @@ export default function POS() {
       return;
     }
 
+    // Abrir diálogo de cobro
+    setEfectivoRecibido(total.toFixed(2));
+    setShowCobroDialog(true);
+  };
+
+  const procesarCobro = async () => {
     if (!metodoPagoSeleccionado) {
       toast.error('Selecciona un método de pago');
       return;
@@ -520,13 +526,13 @@ export default function POS() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+      const totalVenta = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
       const response = await axios.post(
         `${API_URL}/api/facturas`,
         {
           items: cart,
-          total,
+          total: totalVenta,
           cliente_id: clienteSeleccionado?.id || null,
           comentarios: comentarios || null,
           metodo_pago_id: metodoPagoSeleccionado,
@@ -555,6 +561,8 @@ export default function POS() {
       setClienteSeleccionado(null);
       setComentarios('');
       setTicketActualId(null);
+      setShowCobroDialog(false);
+      setEfectivoRecibido('');
       fetchProductos();
       verificarCaja();
       printInvoice(response.data);
