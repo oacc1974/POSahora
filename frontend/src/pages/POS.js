@@ -902,7 +902,7 @@ export default function POS() {
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-100" data-testid="pos-page">
       
       {/* ============ HEADER AZUL - MÓVIL ============ */}
-      <div className="md:hidden bg-blue-600 text-white px-4 py-2 flex items-center justify-between">
+      <div className="md:hidden bg-blue-600 text-white px-2 py-2 flex items-center justify-between">
         {/* Izquierda: Menú hamburguesa (navegación) */}
         <button 
           onClick={() => setShowNavSidebar(true)}
@@ -910,6 +910,21 @@ export default function POS() {
         >
           <Menu size={22} />
         </button>
+        
+        {/* Selector de tipo de pedido */}
+        {tipoPedidoFuncionActiva && tiposPedido.length > 0 && (
+          <select
+            value={tipoPedidoSeleccionado || ''}
+            onChange={(e) => setTipoPedidoSeleccionado(e.target.value)}
+            className="text-xs bg-blue-700 text-white border-none rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-white"
+          >
+            {tiposPedido.map((tipo) => (
+              <option key={tipo.id} value={tipo.id}>
+                {tipo.nombre}
+              </option>
+            ))}
+          </select>
+        )}
         
         {/* Centro: Ticket con contador */}
         <button 
