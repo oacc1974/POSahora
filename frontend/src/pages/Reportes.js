@@ -28,7 +28,12 @@ import {
   Receipt,
   CreditCard,
   ChevronDown,
-  Info
+  Info,
+  ClipboardList,
+  Trash2,
+  RefreshCw,
+  AlertTriangle,
+  ShoppingCart
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
