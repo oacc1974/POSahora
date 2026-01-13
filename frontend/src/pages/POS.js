@@ -2059,7 +2059,7 @@ export default function POS() {
                   key={ticket.id}
                   className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
                     ticketsParaCombinar.includes(ticket.id) 
-                      ? 'bg-green-50 border-green-300' 
+                      ? 'bg-blue-50 border-blue-300' 
                       : 'hover:bg-slate-50'
                   }`}
                   onClick={() => {
@@ -2072,7 +2072,7 @@ export default function POS() {
                 >
                   <input 
                     type="checkbox" 
-                    className="w-4 h-4 accent-green-600" 
+                    className="w-4 h-4 accent-blue-600" 
                     checked={ticketsParaCombinar.includes(ticket.id)}
                     onChange={() => {}}
                   />
@@ -2082,7 +2082,7 @@ export default function POS() {
                       {ticket.items?.length || 0} producto(s)
                     </p>
                   </div>
-                  <span className="font-mono text-sm font-semibold text-green-600">${ticket.subtotal?.toFixed(2) || '0.00'}</span>
+                  <span className="font-mono text-sm font-semibold text-blue-600">${ticket.subtotal?.toFixed(2) || '0.00'}</span>
                 </div>
               ))}
               {ticketsAbiertos.length === 0 && (
@@ -2094,8 +2094,8 @@ export default function POS() {
             </div>
 
             {ticketsParaCombinar.length > 0 && (
-              <div className="p-3 bg-green-50 rounded-lg">
-                <p className="text-sm text-green-700">
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700">
                   <strong>{ticketsParaCombinar.length}</strong> ticket(s) seleccionado(s)
                 </p>
               </div>
@@ -2108,11 +2108,161 @@ export default function POS() {
               <Button 
                 onClick={ejecutarCombinarTickets}
                 disabled={ticketsParaCombinar.length === 0}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 Combinar ({ticketsParaCombinar.length})
               </Button>
             </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Cobro - Pantalla de Pago */}
+      <Dialog open={showCobroDialog} onOpenChange={setShowCobroDialog}>
+        <DialogContent className="max-w-4xl p-0 gap-0">
+          <div className="flex h-[80vh] max-h-[600px]">
+            {/* Panel izquierdo - Recibo */}
+            <div className="w-1/3 bg-slate-100 border-r flex flex-col">
+              <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
+                <span className="font-semibold">Recibo</span>
+                <button 
+                  onClick={() => setShowClienteDialog(true)}
+                  className="p-1 hover:bg-blue-700 rounded"
+                >
+                  <UserPlus size={18} />
+                </button>
+              </div>
+              
+              {/* Items del recibo */}
+              <div className="flex-1 overflow-auto p-4">
+                {cart.map((item) => (
+                  <div key={item.producto_id} className="flex justify-between items-center py-2 border-b border-slate-200">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{item.nombre}</p>
+                      <p className="text-xs text-slate-500">x {item.cantidad}</p>
+                    </div>
+                    <span className="font-mono text-sm">${item.subtotal.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Total del recibo */}
+              <div className="p-4 border-t bg-white">
+                <div className="flex justify-between text-sm text-slate-500 mb-1">
+                  <span>Impuesto (incluido)</span>
+                  <span>-</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span>${total.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Panel derecho - Pago */}
+            <div className="flex-1 flex flex-col bg-white">
+              {/* Header */}
+              <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
+                <button 
+                  onClick={() => setShowCobroDialog(false)}
+                  className="p-1 hover:bg-blue-700 rounded"
+                >
+                  <X size={18} />
+                </button>
+                <span className="font-semibold">Pago</span>
+                <div className="w-6"></div>
+              </div>
+              
+              {/* Contenido del pago */}
+              <div className="flex-1 p-6 overflow-auto">
+                {/* Total a pagar */}
+                <div className="text-center mb-6">
+                  <p className="text-4xl font-bold text-slate-900">${total.toFixed(2)}</p>
+                  <p className="text-sm text-slate-500">Cantidad total a pagar</p>
+                </div>
+                
+                {/* Efectivo recibido */}
+                <div className="mb-6">
+                  <Label className="text-sm text-slate-600 mb-2 block">Efectivo recibido</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={efectivoRecibido}
+                      onChange={(e) => setEfectivoRecibido(e.target.value)}
+                      className="pl-8 text-xl font-mono text-right h-12"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                
+                {/* Botones de billetes predefinidos */}
+                <div className="grid grid-cols-4 gap-2 mb-6">
+                  {[
+                    Math.ceil(total),
+                    Math.ceil(total / 5) * 5,
+                    Math.ceil(total / 10) * 10,
+                    Math.ceil(total / 20) * 20
+                  ].filter((v, i, a) => a.indexOf(v) === i && v >= total).slice(0, 4).map((monto) => (
+                    <button
+                      key={monto}
+                      onClick={() => setEfectivoRecibido(monto.toFixed(2))}
+                      className={`py-3 px-2 rounded-lg border-2 text-sm font-semibold transition-colors ${
+                        parseFloat(efectivoRecibido) === monto
+                          ? 'border-orange-400 bg-white text-slate-900'
+                          : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      ${monto.toFixed(2)}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Cambio */}
+                {parseFloat(efectivoRecibido) > total && (
+                  <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-green-700 font-medium">Cambio a devolver</span>
+                      <span className="text-2xl font-bold text-green-600">
+                        ${(parseFloat(efectivoRecibido) - total).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Métodos de pago */}
+                <div className="mb-6">
+                  <Label className="text-sm text-slate-600 mb-3 block">Método de pago</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {metodosPago.map((metodo) => (
+                      <button
+                        key={metodo.id}
+                        onClick={() => setMetodoPagoSeleccionado(metodo.id)}
+                        className={`py-3 px-4 rounded-lg border-2 text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+                          metodoPagoSeleccionado === metodo.id
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        {metodo.nombre}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Botón Cobrar */}
+              <div className="p-4 border-t">
+                <Button 
+                  onClick={procesarCobro}
+                  disabled={loading || !metodoPagoSeleccionado}
+                  className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700"
+                >
+                  {loading ? 'Procesando...' : 'COBRAR'}
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
