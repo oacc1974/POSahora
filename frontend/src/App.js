@@ -281,22 +281,6 @@ function AppRouter() {
           }
         />
         <Route
-          path="/tickets-abiertos"
-          element={
-            user ? (
-              ['cajero', 'mesero'].includes(user.rol) ? (
-                <Navigate to="/pos" replace />
-              ) : (
-                <Layout user={user} onLogout={handleLogout}>
-                  <TicketsAbiertosAdmin />
-                </Layout>
-              )
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        <Route
           path="/organizaciones"
           element={
             user && user.id === 'admin' ? (
