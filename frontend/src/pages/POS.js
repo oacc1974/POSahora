@@ -1049,7 +1049,7 @@ export default function POS() {
         </div>
 
         {/* Columna central - Productos */}
-        <div className="flex-1 flex flex-col md:order-1">
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Header Desktop */}
           <div className="hidden md:block mb-4">
             <div className="flex items-center justify-between">
