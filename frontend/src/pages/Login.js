@@ -28,6 +28,14 @@ export default function Login({ onLogin }) {
       });
 
       const { access_token, user } = response.data;
+      
+      // Solo propietarios y administradores pueden acceder desde el login principal
+      if (user.rol !== 'propietario' && user.rol !== 'administrador') {
+        toast.error('Acceso denegado. Por favor usa el Login POS para empleados.');
+        setLoading(false);
+        return;
+      }
+      
       onLogin(user, access_token);
       toast.success('¡Bienvenido!');
     } catch (error) {
