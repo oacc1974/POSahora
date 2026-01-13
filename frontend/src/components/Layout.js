@@ -15,7 +15,6 @@ import {
   UserCircle,
   Building2,
   BarChart3,
-  ClipboardList,
 } from 'lucide-react';
 import { Button } from './ui/button';
 
