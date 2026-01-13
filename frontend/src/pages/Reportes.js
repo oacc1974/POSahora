@@ -68,6 +68,7 @@ const REPORT_TYPES = [
   { id: 'ingresos', name: 'Ingresos', icon: DollarSign },
   { id: 'descuentos', name: 'Descuentos', icon: Percent },
   { id: 'impuestos', name: 'Impuestos', icon: Receipt },
+  { id: 'tickets_abiertos', name: 'Tickets Abiertos', icon: ClipboardList },
 ];
 
 export default function Reportes() {
