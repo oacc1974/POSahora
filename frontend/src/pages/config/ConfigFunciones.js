@@ -175,6 +175,15 @@ export default function ConfigFunciones() {
                 <p className="text-sm text-slate-600 mb-2">
                   {funcion.description}
                 </p>
+                {/* Mostrar advertencia si hay tickets abiertos */}
+                {funcion.hasWarning && (
+                  <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg mb-2">
+                    <AlertTriangle size={16} className="text-amber-600 flex-shrink-0" />
+                    <span className="text-xs text-amber-700">
+                      {funcion.warningMessage}. Para desactivar esta opción, primero elimina los tickets guardados.
+                    </span>
+                  </div>
+                )}
                 <button
                   type="button"
                   className="text-sm text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
