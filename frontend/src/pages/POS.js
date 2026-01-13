@@ -1484,6 +1484,19 @@ export default function POS() {
         </div>
       </div>
 
+      {/* ============ INDICADOR DE CAJERO ============ */}
+      {cajaActiva && (
+        <div className="fixed bottom-4 left-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-slate-200 z-40 flex items-center gap-2">
+          <User size={16} className="text-blue-600" />
+          <div className="text-sm">
+            <span className="text-slate-500">Cajero: </span>
+            <span className="font-semibold text-slate-800">
+              {cajaActiva.tpv_nombre || currentUser?.nombre || 'Sin asignar'}
+            </span>
+          </div>
+        </div>
+      )}
+
       <BarcodeScanner
         open={showScanner}
         onClose={() => setShowScanner(false)}
