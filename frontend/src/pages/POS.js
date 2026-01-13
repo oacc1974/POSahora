@@ -1264,17 +1264,6 @@ export default function POS() {
       )}
 
       {/* ============ CONTENIDO PRINCIPAL ============ */}
-        )}
-        <Button
-          onClick={handleCheckout}
-          disabled={cart.length === 0}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 font-semibold"
-        >
-          COBRAR ${total.toFixed(2)}
-        </Button>
-      </div>
-
-      {/* ============ CONTENIDO PRINCIPAL ============ */}
       <div className="flex flex-1 overflow-hidden">
         
         {/* PANEL DE PRODUCTOS */}
