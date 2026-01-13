@@ -1513,7 +1513,7 @@ export default function POS() {
 
       {/* ============ INDICADOR DE CAJERO ============ */}
       {cajaActiva && (
-        <div className="fixed bottom-4 left-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-slate-200 z-40 flex items-center gap-2">
+        <div className="fixed bottom-4 left-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-slate-200 z-40 flex items-center gap-3">
           <User size={16} className="text-blue-600" />
           <div className="text-sm">
             <span className="text-slate-500">Cajero: </span>
@@ -1521,6 +1521,21 @@ export default function POS() {
               {cajaActiva.tpv_nombre || currentUser?.nombre || 'Sin asignar'}
             </span>
           </div>
+          <div className="border-l border-slate-300 h-5"></div>
+          <button
+            onClick={() => {
+              if (window.confirm('¿Estás seguro de cerrar sesión?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+              }
+            }}
+            className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+            data-testid="logout-button"
+          >
+            <LogOut size={14} />
+            <span>Salir</span>
+          </button>
         </div>
       )}
 
