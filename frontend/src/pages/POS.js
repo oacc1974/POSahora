@@ -1004,26 +1004,50 @@ export default function POS() {
               </button>
             </div>
             <nav className="p-2">
-              <a href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
-                <LayoutDashboard size={18} />
-                <span>Dashboard</span>
-              </a>
-              <a href="/pos" className="flex items-center gap-3 px-4 py-3 text-blue-600 bg-blue-50 rounded-lg font-medium">
-                <ShoppingCart size={18} />
-                <span>Punto de Venta</span>
-              </a>
-              <a href="/facturas" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
-                <FileText size={18} />
-                <span>Ingresos</span>
-              </a>
-              <a href="/productos" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
-                <Package size={18} />
-                <span>Productos</span>
-              </a>
-              <a href="/clientes" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
-                <Users size={18} />
-                <span>Clientes</span>
-              </a>
+              {/* Menú completo para propietarios y administradores */}
+              {esDueno && (
+                <>
+                  <a href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                    <LayoutDashboard size={18} />
+                    <span>Dashboard</span>
+                  </a>
+                  <a href="/pos" className="flex items-center gap-3 px-4 py-3 text-blue-600 bg-blue-50 rounded-lg font-medium">
+                    <ShoppingCart size={18} />
+                    <span>Punto de Venta</span>
+                  </a>
+                  <a href="/facturas" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                    <FileText size={18} />
+                    <span>Ingresos</span>
+                  </a>
+                  <a href="/productos" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                    <Package size={18} />
+                    <span>Productos</span>
+                  </a>
+                  <a href="/clientes" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                    <Users size={18} />
+                    <span>Clientes</span>
+                  </a>
+                  <div className="border-t my-2"></div>
+                  <a href="/caja" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                    <Wallet size={18} />
+                    <span>Caja</span>
+                  </a>
+                </>
+              )}
+              
+              {/* Menú reducido para cajeros y meseros */}
+              {esEmpleado && (
+                <>
+                  <a href="/pos" className="flex items-center gap-3 px-4 py-3 text-blue-600 bg-blue-50 rounded-lg font-medium">
+                    <ShoppingCart size={18} />
+                    <span>Punto de Venta</span>
+                  </a>
+                  <a href="/caja" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                    <Wallet size={18} />
+                    <span>Caja</span>
+                  </a>
+                </>
+              )}
             </nav>
           </div>
         </div>
