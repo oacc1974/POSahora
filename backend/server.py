@@ -2660,6 +2660,22 @@ async def get_dashboard(
         "ventas_por_dia": ventas_por_dia
     }
 
+@app.get("/api/empleados-filtro")
+async def get_empleados_filtro(current_user: dict = Depends(get_current_user)):
+    """Obtiene la lista de empleados para filtros en reportes"""
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        return []
+    
+    empleados = await db.usuarios.find(
+        {"organizacion_id": current_user["organizacion_id"]},
+        {"_id": 1, "nombre": 1, "rol": 1}
+    ).to_list(1000)
+    
+    return [
+        {"id": e["_id"], "nombre": e["nombre"], "rol": e["rol"]}
+        for e in empleados
+    ]
+
 @app.get("/api/")
 async def root():
     return {"message": "Sistema de Facturación API"}
