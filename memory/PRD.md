@@ -20,11 +20,16 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### Completadas (13 Enero 2026)
 
+- [x] **Menú de Navegación por Rol:**
+  - **Propietarios/Administradores:** Menú completo con Dashboard, Punto de Venta, Ingresos, Productos, Clientes, y Caja
+  - **Cajeros/Meseros:** Menú reducido con solo Punto de Venta y Caja
+  - Los cajeros y meseros ahora pueden acceder a la página de Caja para hacer cierre de caja
+
 - [x] **Nuevo Header Unificado para TPV (Desktop y Móvil):**
   - **Menú hamburguesa (☰)** a la izquierda - Abre sidebar de navegación
   - **"Ticket"** en el centro con contador de artículos
   - **Iconos a la derecha:** Cliente (👤) + Menú de opciones (⋮ 3 puntos verticales)
-  - **Menú de navegación** con links a: Dashboard, Punto de Venta, Ingresos, Productos, Clientes
+  - **Menú de navegación** diferenciado por rol
   - **Menú de opciones del ticket** con: Despejar, Dividir, Combinar, Sincronizar
 
 - [x] **Indicador de Cajero:**
