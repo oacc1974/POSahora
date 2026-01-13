@@ -334,6 +334,7 @@ test_plan:
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
+  new_functionality_tested: true
 
 agent_communication:
     - agent: "main"
