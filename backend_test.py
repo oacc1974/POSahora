@@ -1486,7 +1486,7 @@ def main():
     
     tester = BillingSystemTester()
     
-    # Test sequence - focusing on POS SRI Ecuador functionality
+    # Test sequence - focusing on NEW FUNCTIONALITY and POS SRI Ecuador
     tests = [
         # Basic system tests
         tester.test_root_endpoint,
@@ -1500,6 +1500,24 @@ def main():
         tester.test_create_product,
         tester.test_update_product,
         tester.test_get_product_by_barcode,
+        
+        # === NEW FUNCTIONALITY TESTS ===
+        
+        # 1. Validación de Cédula Única en Clientes
+        tester.test_create_cliente_with_cedula,
+        tester.test_create_cliente_duplicate_cedula,
+        tester.test_update_cliente_duplicate_cedula,
+        
+        # 2. Rol de Mesero
+        tester.test_create_mesero_user,
+        tester.test_mesero_login,
+        
+        # 3. Apertura de Caja para Meseros
+        tester.test_mesero_open_cash_register,
+        
+        # 4. Reportes con Filtros
+        tester.test_dashboard_with_date_filters,
+        tester.test_facturas_with_filters,
         
         # === POS SRI ECUADOR FUNCTIONALITY TESTS ===
         
@@ -1553,6 +1571,8 @@ def main():
         tester.test_delete_taxes,
         tester.test_delete_tpv,
         tester.test_delete_tienda,
+        tester.test_delete_test_cliente,
+        tester.test_delete_mesero_user,
         tester.test_delete_product,
     ]
     
