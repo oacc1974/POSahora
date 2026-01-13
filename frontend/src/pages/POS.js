@@ -1041,7 +1041,19 @@ export default function POS() {
       {/* Carrito Desktop (siempre visible) */}
       <Card className="hidden md:flex w-full lg:w-96 flex-col shadow-xl lg:sticky lg:top-0">
         <div className="p-4 lg:p-6 border-b border-slate-200">
-          <h2 className="text-xl lg:text-2xl font-bold mb-3">Carrito</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl lg:text-2xl font-bold">Ticket</h2>
+            <div className="relative">
+              <button 
+                onClick={() => setShowTicketMenu(!showTicketMenu)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                data-testid="ticket-menu-btn"
+              >
+                <MoreVertical size={20} className="text-slate-600" />
+              </button>
+              {showTicketMenu && <TicketMenuDropdown />}
+            </div>
+          </div>
           
           {/* Cliente */}
           <div className="mb-3">
