@@ -1593,6 +1593,25 @@ def main():
     if failed_tests:
         print(f"❌ Failed tests: {', '.join(failed_tests)}")
         
+        # New functionality specific test summary
+        print("\n🔍 New Functionality Test Summary:")
+        new_functionality_tests = [
+            'test_create_cliente_with_cedula',
+            'test_create_cliente_duplicate_cedula',
+            'test_update_cliente_duplicate_cedula',
+            'test_create_mesero_user',
+            'test_mesero_login',
+            'test_mesero_open_cash_register',
+            'test_dashboard_with_date_filters',
+            'test_facturas_with_filters'
+        ]
+        
+        new_functionality_failures = [t for t in failed_tests if t in new_functionality_tests]
+        if new_functionality_failures:
+            print(f"❌ New functionality failures: {', '.join(new_functionality_failures)}")
+        else:
+            print("✅ New functionality tests passed!")
+        
         # POS SRI Ecuador specific test summary
         print("\n🔍 POS SRI Ecuador System Test Summary:")
         sri_tests = [
