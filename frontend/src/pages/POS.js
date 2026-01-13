@@ -1110,7 +1110,7 @@ export default function POS() {
                   {/* Info del producto */}
                   <div className="p-2 bg-slate-800 text-white">
                     <p className="text-xs font-medium truncate">{producto.nombre}</p>
-                    <p className="text-sm font-bold text-green-400">${producto.precio.toFixed(2)}</p>
+                    <p className="text-sm font-bold text-blue-400">${producto.precio.toFixed(2)}</p>
                   </div>
                 </div>
               ))}
