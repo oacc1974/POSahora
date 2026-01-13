@@ -1252,39 +1252,6 @@ export default function POS() {
         </div>
       </div>
 
-      {/* ============ BARRA INFERIOR MÓVIL ============ */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-3 flex gap-2 z-40">
-        {cart.length > 0 ? (
-          <Button
-            onClick={() => setShowGuardarTicketDialog(true)}
-            variant="outline"
-            className="flex-1 relative border-blue-600 text-blue-600"
-          >
-            <span>GUARDAR</span>
-            <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
-              {cart.reduce((sum, item) => sum + item.cantidad, 0)}
-            </span>
-          </Button>
-        ) : (
-          <Button
-            onClick={() => {
-              fetchTicketsAbiertos();
-              setShowTicketsAbiertosDialog(true);
-            }}
-            variant="outline"
-            className="flex-1 relative border-blue-600 text-blue-600"
-          >
-            <span>TICKETS</span>
-          </Button>
-        )}
-        <Button
-          onClick={handleCheckout}
-          disabled={cart.length === 0}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 font-semibold"
-        >
-          COBRAR ${total.toFixed(2)}
-        </Button>
-      </div>
       <BarcodeScanner
         open={showScanner}
         onClose={() => setShowScanner(false)}
