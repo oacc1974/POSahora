@@ -202,13 +202,13 @@ export default function Reportes() {
           {isAdmin && (
             <div className="space-y-1">
               <Label className="text-xs text-slate-500">Cajero</Label>
-              <Select value={cajeroId} onValueChange={setCajeroId}>
+              <Select value={cajeroId || "all"} onValueChange={(v) => setCajeroId(v === "all" ? "" : v)}>
                 <SelectTrigger className="text-sm">
                   <User size={14} className="mr-2 text-slate-400" />
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los cajeros</SelectItem>
+                  <SelectItem value="all">Todos los cajeros</SelectItem>
                   {empleados.map((emp) => (
                     <SelectItem key={emp.id} value={emp.id}>
                       {emp.nombre} ({emp.rol})
@@ -223,13 +223,13 @@ export default function Reportes() {
           {isAdmin && tiendas.length > 0 && (
             <div className="space-y-1">
               <Label className="text-xs text-slate-500">Tienda</Label>
-              <Select value={tiendaId} onValueChange={setTiendaId}>
+              <Select value={tiendaId || "all"} onValueChange={(v) => setTiendaId(v === "all" ? "" : v)}>
                 <SelectTrigger className="text-sm">
                   <Store size={14} className="mr-2 text-slate-400" />
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas las tiendas</SelectItem>
+                  <SelectItem value="all">Todas las tiendas</SelectItem>
                   {tiendas.map((tienda) => (
                     <SelectItem key={tienda.id} value={tienda.id}>
                       {tienda.nombre} ({tienda.codigo_establecimiento})
@@ -244,13 +244,13 @@ export default function Reportes() {
           {isAdmin && tpvs.length > 0 && (
             <div className="space-y-1">
               <Label className="text-xs text-slate-500">TPV</Label>
-              <Select value={tpvId} onValueChange={setTpvId}>
+              <Select value={tpvId || "all"} onValueChange={(v) => setTpvId(v === "all" ? "" : v)}>
                 <SelectTrigger className="text-sm">
                   <Monitor size={14} className="mr-2 text-slate-400" />
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los TPV</SelectItem>
+                  <SelectItem value="all">Todos los TPV</SelectItem>
                   {tpvs.map((tpv) => (
                     <SelectItem key={tpv.id} value={tpv.id}>
                       {tpv.nombre} ({tpv.punto_emision})
@@ -264,13 +264,13 @@ export default function Reportes() {
           {/* Método de Pago */}
           <div className="space-y-1">
             <Label className="text-xs text-slate-500">Método Pago</Label>
-            <Select value={metodoPagoId} onValueChange={setMetodoPagoId}>
+            <Select value={metodoPagoId || "all"} onValueChange={(v) => setMetodoPagoId(v === "all" ? "" : v)}>
               <SelectTrigger className="text-sm">
                 <CreditCard size={14} className="mr-2 text-slate-400" />
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los métodos</SelectItem>
+                <SelectItem value="all">Todos los métodos</SelectItem>
                 {metodosPago.map((mp) => (
                   <SelectItem key={mp.id} value={mp.id}>
                     {mp.nombre}
