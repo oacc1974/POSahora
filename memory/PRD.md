@@ -20,6 +20,18 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### Completadas (13 Enero 2026)
 
+- [x] **Nuevo Header Unificado para TPV (Desktop y Móvil):**
+  - **Menú hamburguesa (☰)** a la izquierda - Abre sidebar de navegación
+  - **"Ticket"** en el centro con contador de artículos
+  - **Iconos a la derecha:** Cliente (👤) + Menú de opciones (⋮ 3 puntos verticales)
+  - **Menú de navegación** con links a: Dashboard, Punto de Venta, Ingresos, Productos, Clientes
+  - **Menú de opciones del ticket** con: Despejar, Dividir, Combinar, Sincronizar
+
+- [x] **Indicador de Cajero:**
+  - Se muestra en la **esquina inferior izquierda** de todas las pantallas
+  - Formato: "Cajero: [nombre del TPV/caja]"
+  - Diseño con fondo blanco semi-transparente y sombra
+
 - [x] **Rediseño completo del TPV:**
   - **Nueva pantalla de cobro** con panel dual (Recibo izquierda, Pago derecha)
   - **Botones de billetes dinámicos** calculados según el total
