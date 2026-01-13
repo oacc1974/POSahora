@@ -2005,7 +2005,7 @@ export default function POS() {
                       {ticket.items?.length || 0} producto(s)
                     </p>
                   </div>
-                  <span className="font-mono text-sm font-semibold text-green-600">${ticket.total?.toFixed(2) || '0.00'}</span>
+                  <span className="font-mono text-sm font-semibold text-green-600">${ticket.subtotal?.toFixed(2) || '0.00'}</span>
                 </div>
               ))}
               {ticketsAbiertos.length === 0 && (
