@@ -19,6 +19,15 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 ## Funcionalidades Implementadas
 
 ### Completadas (13 Enero 2026)
+
+- [x] **Corrección de Funciones del Menú del TPV:**
+  - Dividir Ticket: Permite mover productos seleccionados a un nuevo ticket
+  - Combinar Ticket: Combina tickets abiertos con el ticket actual (bug fix: subtotal ahora se muestra correctamente)
+  - Despejar Ticket: Vacía el carrito actual
+  - Guardar Ticket: Guarda el carrito como ticket abierto (mesa o personalizado)
+  - Lógica de botones GUARDAR/TICKETS: Cambia correctamente según estado del carrito
+  - Contador de artículos móvil: Suma cantidades totales (no solo líneas de producto)
+
 - [x] **Selector de Rango de Fechas Personalizado** - DateRangePicker con:
   - Calendario interactivo (react-day-picker)
   - 8 opciones predefinidas: Hoy, Ayer, Esta semana, La semana pasada, Este mes, Mes pasado, Últimos 7 días, Últimos 30 días
