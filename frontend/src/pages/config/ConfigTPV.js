@@ -342,7 +342,17 @@ export default function ConfigTPV() {
                       id="punto_emision"
                       placeholder="001"
                       value={formData.punto_emision}
-                      onChange={(e) => setFormData({ ...formData, punto_emision: e.target.value.replace(/\D/g, '').slice(0, 3).padStart(3, '0') })}
+                      onChange={(e) => {
+                        // Permitir solo números, máximo 3 dígitos
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 3);
+                        setFormData({ ...formData, punto_emision: value });
+                      }}
+                      onBlur={(e) => {
+                        // Al salir del campo, rellenar con ceros si es necesario
+                        if (formData.punto_emision && formData.punto_emision.length < 3) {
+                          setFormData({ ...formData, punto_emision: formData.punto_emision.padStart(3, '0') });
+                        }
+                      }}
                       maxLength={3}
                       className="pl-8 font-mono"
                       required
