@@ -870,7 +870,12 @@ export default function POS() {
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
               )}
             </button>
-            <MoreVertical size={20} />
+            <div className="relative">
+              <button onClick={() => setShowTicketMenu(!showTicketMenu)}>
+                <MoreVertical size={20} />
+              </button>
+              {showTicketMenu && <TicketMenuDropdown />}
+            </div>
           </div>
         </div>
 
