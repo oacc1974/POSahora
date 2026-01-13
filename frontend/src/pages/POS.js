@@ -1130,7 +1130,7 @@ export default function POS() {
               onClick={() => setCategoriaSeleccionada('all')}
               className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                 categoriaSeleccionada === 'all'
-                  ? 'bg-green-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
@@ -1142,7 +1142,7 @@ export default function POS() {
                 onClick={() => setCategoriaSeleccionada(cat)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                   categoriaSeleccionada === cat
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
@@ -1155,7 +1155,7 @@ export default function POS() {
         {/* ============ PANEL DEL TICKET (DERECHA) ============ */}
         <div className="hidden md:flex w-80 lg:w-96 flex-col bg-white border-l relative">
           {/* Header del ticket */}
-          <div className="bg-green-600 text-white px-4 py-3 flex items-center justify-between relative z-50">
+          <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between relative z-50">
             <span className="font-semibold">Ticket</span>
             <div className="relative">
               <button 
