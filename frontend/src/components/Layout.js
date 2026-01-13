@@ -194,13 +194,13 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
-        <div className="p-4 md:p-8">{children}</div>
+        <div className={hideSidebar ? 'h-full' : 'p-4 md:p-8'}>{children}</div>
       </main>
 
       {/* Overlay for mobile menu */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 z-30"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
