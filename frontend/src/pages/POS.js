@@ -1027,24 +1027,41 @@ export default function POS() {
         </div>
       </div>
 
-      {/* Layout principal */}
-      <div className="flex flex-col md:flex-row h-full gap-0 md:gap-6">
-        {/* Columna de productos */}
+      {/* Layout principal - 3 columnas en desktop */}
+      <div className="flex flex-col lg:flex-row h-full gap-0 lg:gap-4">
+        
+        {/* Columna izquierda - Categorías (solo desktop) */}
+        <div className="hidden lg:flex flex-col w-48 bg-white rounded-lg border p-3">
+          <h3 className="font-semibold text-sm text-slate-700 mb-3">Categorías</h3>
+          <div className="space-y-1">
+            <button className="w-full text-left px-3 py-2 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium">
+              Todos
+            </button>
+            {[...new Set(productos.map(p => p.categoria).filter(Boolean))].map((cat) => (
+              <button 
+                key={cat}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-sm text-slate-600"
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Columna central - Productos */}
         <div className="flex-1 flex flex-col md:order-1">
           {/* Header Desktop */}
-          <div className="hidden md:block mb-4 lg:mb-6">
+          <div className="hidden md:block mb-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-2">
+                <h1 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">
                   Punto de Venta
                 </h1>
-                <p className="text-sm md:text-base text-slate-600">Selecciona productos para la venta</p>
+                <p className="text-sm text-slate-600">Selecciona productos</p>
               </div>
               {cajaActiva && (
-                <div className="px-4 py-2 bg-green-100 border border-green-300 rounded-lg">
-                  <p className="text-xs text-green-700 font-medium">
-                    Caja Abierta
-                  </p>
+                <div className="px-3 py-1.5 bg-green-100 border border-green-300 rounded-lg">
+                  <p className="text-xs text-green-700 font-medium">Caja Abierta</p>
                   <p className="text-sm font-mono font-bold text-green-900">
                     ${cajaActiva.monto_final.toFixed(2)}
                   </p>
@@ -1054,7 +1071,7 @@ export default function POS() {
           </div>
 
           {/* Búsqueda Desktop */}
-          <div className="hidden md:flex flex-col sm:flex-row gap-3 lg:gap-4 mb-4 lg:mb-6">
+          <div className="hidden md:flex gap-2 mb-4">
             <Input
               placeholder="Buscar productos..."
               data-testid="product-search-input"
@@ -1066,7 +1083,7 @@ export default function POS() {
               onClick={() => setShowScanner(true)}
               data-testid="open-scanner-button"
               variant="outline"
-              className="gap-2 w-full sm:w-auto"
+              size="icon"
             >
               <Scan size={20} />
               Escanear
