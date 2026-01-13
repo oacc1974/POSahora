@@ -866,23 +866,35 @@ export default function POS() {
 
   // Componente del menú de ticket
   const TicketMenuDropdown = () => (
-    <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 py-1 min-w-[200px]">
+    <div 
+      className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-[100] py-1 min-w-[200px]"
+      onClick={(e) => e.stopPropagation()}
+    >
       <button
-        onClick={handleDespejarTicket}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDespejarTicket();
+        }}
         className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
       >
         <Eraser size={18} className="text-slate-500" />
         <span>Despejar el ticket</span>
       </button>
       <button
-        onClick={handleDividirTicket}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDividirTicket();
+        }}
         className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
       >
         <Split size={18} className="text-slate-500" />
         <span>Dividir ticket</span>
       </button>
       <button
-        onClick={handleCombinarTicket}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleCombinarTicket();
+        }}
         className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
       >
         <Combine size={18} className="text-slate-500" />
@@ -890,7 +902,10 @@ export default function POS() {
       </button>
       <div className="border-t my-1"></div>
       <button
-        onClick={handleSincronizar}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleSincronizar();
+        }}
         className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
       >
         <RefreshCw size={18} className="text-slate-500" />
