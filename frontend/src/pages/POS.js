@@ -1274,7 +1274,7 @@ export default function POS() {
             )}
 
             <Button
-              onClick={handleCobrar}
+              onClick={handleCheckout}
               disabled={cart.length === 0}
               data-testid="cobrar-button"
               className="w-full h-10 bg-green-600 hover:bg-green-500 text-white font-bold"
