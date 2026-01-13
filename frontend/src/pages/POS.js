@@ -1207,8 +1207,8 @@ export default function POS() {
         >
           <span>Ticket</span>
           {cart.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-              {cart.length}
+            <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
+              {cart.reduce((sum, item) => sum + item.cantidad, 0)}
             </span>
           )}
         </Button>
