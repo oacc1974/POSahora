@@ -89,6 +89,11 @@ export default function Reportes() {
   const [empleados, setEmpleados] = useState([]);
   const [tiendas, setTiendas] = useState([]);
   
+  // Estados para Tickets Abiertos
+  const [ticketsAbiertos, setTicketsAbiertos] = useState([]);
+  const [loadingTickets, setLoadingTickets] = useState(false);
+  const [deletingTicket, setDeletingTicket] = useState(null);
+  
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = ['propietario', 'administrador'].includes(user?.rol);
 
@@ -97,10 +102,65 @@ export default function Reportes() {
   }, []);
 
   useEffect(() => {
-    if (dateRange?.from && dateRange?.to) {
+    if (selectedReport === 'tickets_abiertos') {
+      fetchTicketsAbiertos();
+    } else if (dateRange?.from && dateRange?.to) {
       fetchReportData();
     }
   }, [selectedReport, dateRange, tiendaId, empleadoId]);
+
+  const fetchTicketsAbiertos = async () => {
+    setLoadingTickets(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/tickets-abiertos-pos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTicketsAbiertos(response.data);
+    } catch (error) {
+      console.error('Error al cargar tickets:', error);
+      toast.error('Error al cargar los tickets abiertos');
+    } finally {
+      setLoadingTickets(false);
+    }
+  };
+
+  const handleDeleteTicket = async (ticketId, ticketNombre) => {
+    if (!window.confirm(`¿Estás seguro de eliminar el ticket "${ticketNombre}"?`)) return;
+    
+    setDeletingTicket(ticketId);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/tickets-abiertos-pos/${ticketId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success(`Ticket "${ticketNombre}" eliminado correctamente`);
+      fetchTicketsAbiertos();
+    } catch (error) {
+      console.error('Error al eliminar ticket:', error);
+      toast.error('Error al eliminar el ticket');
+    } finally {
+      setDeletingTicket(null);
+    }
+  };
+
+  const handleDeleteAllTickets = async () => {
+    if (!window.confirm(`¿Estás seguro de eliminar los ${ticketsAbiertos.length} ticket(s) abiertos?`)) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      for (const ticket of ticketsAbiertos) {
+        await axios.delete(`${API_URL}/api/tickets-abiertos-pos/${ticket.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+      toast.success(`${ticketsAbiertos.length} ticket(s) eliminado(s) correctamente`);
+      fetchTicketsAbiertos();
+    } catch (error) {
+      console.error('Error al eliminar tickets:', error);
+      toast.error('Error al eliminar los tickets');
+    }
+  };
 
   const loadFilterData = async () => {
     try {
