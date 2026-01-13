@@ -23,6 +23,10 @@ class BillingSystemTester:
         self.created_tienda_id = None
         self.created_tpv_id = None
         self.tpv_ocupado_id = None
+        # New functionality variables
+        self.created_cliente_id = None
+        self.created_mesero_id = None
+        self.mesero_token = None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
