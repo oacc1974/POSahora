@@ -984,10 +984,10 @@ export default function POS() {
         />
       )}
 
-      {/* Sidebar de Navegación - MÓVIL */}
+      {/* Sidebar de Navegación - TODAS LAS PANTALLAS */}
       {showNavSidebar && (
         <div 
-          className="md:hidden fixed inset-0 bg-black/50 z-50"
+          className="fixed inset-0 bg-black/50 z-50"
           onClick={() => setShowNavSidebar(false)}
         >
           <div 
