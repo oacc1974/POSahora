@@ -1128,6 +1128,333 @@ class BillingSystemTester:
         )
         return success
 
+    # ===== NEW FUNCTIONALITY TESTS =====
+    
+    def test_create_cliente_with_cedula(self):
+        """Test creating a client with cedula_ruc"""
+        cliente_data = {
+            "nombre": "Juan Carlos Pérez",
+            "email": "juan.perez@email.com",
+            "telefono": "0987654321",
+            "direccion": "Av. Principal 123",
+            "ciudad": "Quito",
+            "cedula_ruc": "1234567890001"
+        }
+        success, response = self.run_test(
+            "Create Cliente with Cédula/RUC",
+            "POST",
+            "api/clientes",
+            200,
+            data=cliente_data
+        )
+        if success and 'id' in response:
+            self.created_cliente_id = response['id']
+            print(f"   Created cliente ID: {self.created_cliente_id}")
+            print(f"   Cédula/RUC: {response.get('cedula_ruc')}")
+            
+            # Validate cedula_ruc is stored correctly
+            if response.get('cedula_ruc') != "1234567890001":
+                print(f"   ❌ Cédula/RUC mismatch")
+                return False
+                
+            print("   ✅ Cliente created with cédula/RUC successfully")
+        return success
+
+    def test_create_cliente_duplicate_cedula(self):
+        """Test creating a client with duplicate cedula_ruc - should fail"""
+        cliente_data = {
+            "nombre": "María González",
+            "email": "maria.gonzalez@email.com",
+            "telefono": "0987654322",
+            "cedula_ruc": "1234567890001"  # Same as previous client
+        }
+        success, response = self.run_test(
+            "Create Cliente with Duplicate Cédula/RUC (Should Fail)",
+            "POST",
+            "api/clientes",
+            400,  # Expecting 400 Bad Request
+            data=cliente_data
+        )
+        if success:
+            print("   ✅ Duplicate cédula/RUC correctly rejected")
+        return success
+
+    def test_update_cliente_duplicate_cedula(self):
+        """Test updating a client with existing cedula_ruc - should fail"""
+        if not self.created_cliente_id:
+            print("❌ No cliente ID available for update test")
+            return False
+            
+        # First create another client with different cedula
+        cliente_data2 = {
+            "nombre": "Pedro Ramírez",
+            "email": "pedro.ramirez@email.com",
+            "cedula_ruc": "0987654321001"
+        }
+        success1, response1 = self.run_test(
+            "Create Second Cliente for Update Test",
+            "POST",
+            "api/clientes",
+            200,
+            data=cliente_data2
+        )
+        
+        if not success1:
+            return False
+            
+        second_cliente_id = response1.get('id')
+        
+        # Now try to update second client with first client's cedula
+        update_data = {
+            "nombre": "Pedro Ramírez Actualizado",
+            "email": "pedro.ramirez@email.com",
+            "cedula_ruc": "1234567890001"  # Same as first client
+        }
+        success2, response2 = self.run_test(
+            "Update Cliente with Duplicate Cédula/RUC (Should Fail)",
+            "PUT",
+            f"api/clientes/{second_cliente_id}",
+            400,  # Expecting 400 Bad Request
+            data=update_data
+        )
+        
+        if success2:
+            print("   ✅ Duplicate cédula/RUC in update correctly rejected")
+        
+        return success2
+
+    def test_create_mesero_user(self):
+        """Test creating a user with rol='mesero'"""
+        mesero_data = {
+            "nombre": "Carlos Mesero",
+            "username": "mesero1",
+            "password": "mesero123",
+            "rol": "mesero"
+        }
+        success, response = self.run_test(
+            "Create Mesero User",
+            "POST",
+            "api/usuarios",
+            200,
+            data=mesero_data
+        )
+        if success and 'id' in response:
+            self.created_mesero_id = response['id']
+            print(f"   Created mesero ID: {self.created_mesero_id}")
+            print(f"   Rol: {response.get('rol')}")
+            
+            # Validate rol is stored correctly
+            if response.get('rol') != "mesero":
+                print(f"   ❌ Rol mismatch")
+                return False
+                
+            print("   ✅ Mesero user created successfully")
+        return success
+
+    def test_mesero_login(self):
+        """Test mesero login"""
+        success, response = self.run_test(
+            "Mesero Login",
+            "POST",
+            "api/login",
+            200,
+            data={"username": "mesero1", "password": "mesero123"}
+        )
+        if success and 'access_token' in response:
+            self.mesero_token = response['access_token']
+            mesero_user = response['user']
+            print(f"   Mesero user: {mesero_user}")
+            
+            # Validate mesero role
+            if mesero_user.get('rol') != "mesero":
+                print(f"   ❌ Mesero rol mismatch")
+                return False
+                
+            print("   ✅ Mesero login successful")
+            return True
+        return False
+
+    def test_mesero_open_cash_register(self):
+        """Test mesero opening cash register without monto_inicial requirement"""
+        if not self.mesero_token:
+            print("❌ No mesero token available")
+            return False
+            
+        # Save current token and switch to mesero
+        admin_token = self.token
+        self.token = self.mesero_token
+        
+        # Get available TPV for mesero
+        tpv_success, tpv_response = self.run_test(
+            "Get Available TPV for Mesero",
+            "GET",
+            "api/tpv/disponibles",
+            200
+        )
+        
+        if not tpv_success or not tpv_response:
+            print("❌ No available TPV for mesero test")
+            self.token = admin_token
+            return False
+            
+        tpv_id = tpv_response[0]['id']
+        
+        # Test opening cash register with TPV but without monto_inicial
+        cash_data = {
+            "tpv_id": tpv_id
+            # No monto_inicial specified
+        }
+        success, response = self.run_test(
+            "Mesero Open Cash Register (No monto_inicial required)",
+            "POST",
+            "api/caja/abrir",
+            200,
+            data=cash_data
+        )
+        
+        if success and 'id' in response:
+            print(f"   Opened cash register: {response.get('numero')}")
+            print(f"   Monto inicial: {response.get('monto_inicial')}")
+            print(f"   Requiere cierre: {response.get('requiere_cierre', 'N/A')}")
+            
+            # Validate mesero cash register properties
+            if response.get('monto_inicial') != 0.0:
+                print(f"   ❌ Mesero cash register should have monto_inicial=0")
+                self.token = admin_token
+                return False
+                
+            # Check if requiere_cierre is False (if this field exists)
+            requiere_cierre = response.get('requiere_cierre')
+            if requiere_cierre is not None and requiere_cierre != False:
+                print(f"   ❌ Mesero cash register should have requiere_cierre=False")
+                self.token = admin_token
+                return False
+                
+            print("   ✅ Mesero cash register opened with correct properties")
+            
+            # Close the cash register for cleanup
+            close_data = {"efectivo_contado": 0.0}
+            self.run_test(
+                "Close Mesero Cash Register (Cleanup)",
+                "POST",
+                "api/caja/cerrar",
+                200,
+                data=close_data
+            )
+        
+        # Restore admin token
+        self.token = admin_token
+        return success
+
+    def test_dashboard_with_date_filters(self):
+        """Test dashboard with date filters"""
+        from datetime import datetime, timedelta
+        
+        # Test with date range
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        
+        success, response = self.run_test(
+            "Dashboard with Date Filters",
+            "GET",
+            f"api/dashboard?fecha_inicio={start_date}&fecha_fin={end_date}",
+            200
+        )
+        if success:
+            print(f"   Stats with filters: Products={response.get('total_productos')}, Sales={response.get('total_ventas')}, Revenue=${response.get('total_ingresos')}")
+            print(f"   Date range: {start_date} to {end_date}")
+            print("   ✅ Dashboard with date filters working")
+        return success
+
+    def test_facturas_with_filters(self):
+        """Test facturas endpoint with various filters"""
+        from datetime import datetime, timedelta
+        
+        # Test with date filters
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        
+        success1, response1 = self.run_test(
+            "Get Facturas with Date Filters",
+            "GET",
+            f"api/facturas?fecha_inicio={start_date}&fecha_fin={end_date}",
+            200
+        )
+        
+        if success1:
+            print(f"   Found {len(response1)} facturas with date filter")
+        
+        # Test with cajero_id filter (using admin user ID)
+        if self.admin_user:
+            cajero_id = self.admin_user.get('id')
+            success2, response2 = self.run_test(
+                "Get Facturas with Cajero Filter",
+                "GET",
+                f"api/facturas?cajero_id={cajero_id}",
+                200
+            )
+            
+            if success2:
+                print(f"   Found {len(response2)} facturas with cajero filter")
+        else:
+            success2 = True  # Skip if no admin user info
+        
+        # Test with tienda_id filter (if we have created tienda)
+        if self.created_tienda_id:
+            success3, response3 = self.run_test(
+                "Get Facturas with Tienda Filter",
+                "GET",
+                f"api/facturas?tienda_id={self.created_tienda_id}",
+                200
+            )
+            
+            if success3:
+                print(f"   Found {len(response3)} facturas with tienda filter")
+        else:
+            success3 = True  # Skip if no tienda created
+        
+        # Test with combined filters
+        success4, response4 = self.run_test(
+            "Get Facturas with Combined Filters",
+            "GET",
+            f"api/facturas?fecha_inicio={start_date}&fecha_fin={end_date}&limit=10",
+            200
+        )
+        
+        if success4:
+            print(f"   Found {len(response4)} facturas with combined filters")
+            print("   ✅ Facturas filtering working correctly")
+        
+        return success1 and success2 and success3 and success4
+
+    def test_delete_test_cliente(self):
+        """Test deleting the test cliente"""
+        if not self.created_cliente_id:
+            print("❌ No cliente ID available for delete test")
+            return False
+            
+        success, response = self.run_test(
+            "Delete Test Cliente",
+            "DELETE",
+            f"api/clientes/{self.created_cliente_id}",
+            200
+        )
+        return success
+
+    def test_delete_mesero_user(self):
+        """Test deleting the mesero user"""
+        if not self.created_mesero_id:
+            print("❌ No mesero ID available for delete test")
+            return False
+            
+        success, response = self.run_test(
+            "Delete Mesero User",
+            "DELETE",
+            f"api/usuarios/{self.created_mesero_id}",
+            200
+        )
+        return success
+
     def test_delete_product(self):
         """Test deleting a product"""
         if not self.created_product_id:
