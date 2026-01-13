@@ -1987,33 +1987,62 @@ export default function POS() {
             <p className="text-sm text-slate-600">
               Selecciona los productos que deseas mover a un nuevo ticket:
             </p>
+            
+            {/* Nombre del nuevo ticket */}
+            <div>
+              <Label className="text-sm">Nombre del nuevo ticket (opcional)</Label>
+              <Input
+                placeholder="Ej: Mesa 5, Pedido 2..."
+                value={nombreNuevoTicket}
+                onChange={(e) => setNombreNuevoTicket(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
             <div className="max-h-[300px] overflow-y-auto space-y-2">
               {cart.map((item) => (
                 <div 
                   key={item.producto_id}
-                  className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-50 cursor-pointer"
-                  onClick={() => {
-                    // Toggle selección (usar un estado separado)
-                  }}
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                    productosParaDividir.includes(item.producto_id)
+                      ? 'bg-blue-50 border-blue-300'
+                      : 'hover:bg-slate-50'
+                  }`}
+                  onClick={() => toggleProductoDividir(item.producto_id)}
                 >
-                  <input type="checkbox" className="w-4 h-4" />
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4 accent-blue-600" 
+                    checked={productosParaDividir.includes(item.producto_id)}
+                    onChange={() => {}}
+                  />
                   <div className="flex-1">
                     <p className="font-medium text-sm">{item.nombre}</p>
                     <p className="text-xs text-slate-500">Cantidad: {item.cantidad}</p>
                   </div>
-                  <span className="font-mono text-sm">${item.subtotal.toFixed(2)}</span>
+                  <span className="font-mono text-sm font-semibold">${item.subtotal.toFixed(2)}</span>
                 </div>
               ))}
             </div>
+
+            {productosParaDividir.length > 0 && (
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  <strong>{productosParaDividir.length}</strong> producto(s) seleccionado(s) - 
+                  Total: <strong>${cart.filter(i => productosParaDividir.includes(i.producto_id)).reduce((s, i) => s + i.subtotal, 0).toFixed(2)}</strong>
+                </p>
+              </div>
+            )}
+
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowDividirDialog(false)}>
                 Cancelar
               </Button>
-              <Button onClick={() => {
-                toast.info('Funcionalidad de división en desarrollo');
-                setShowDividirDialog(false);
-              }}>
-                Dividir
+              <Button 
+                onClick={ejecutarDividirTicket}
+                disabled={productosParaDividir.length === 0 || productosParaDividir.length === cart.length}
+              >
+                Dividir Ticket
               </Button>
             </DialogFooter>
           </div>
