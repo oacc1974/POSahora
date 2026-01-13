@@ -1,61 +1,52 @@
 <analysis>**original_problem_statement:**
 El usuario solicitó la creación de un sistema de Punto de Venta (POS) con las siguientes características:
-- **Roles y Multi-tenancy:** Un sistema donde cada Propietario de una organización puede gestionar empleados (Admin, Cajero), productos, clientes y facturas de forma aislada.
+- **Roles y Multi-tenancy:** Un sistema donde cada Propietario de una organización puede gestionar empleados (Admin, Cajero, Mesero), productos, clientes y facturas de forma aislada.
 - **Autenticación:** Registro manual (correo/contraseña) y con Google (OAuth).
-- **Gestión de Caja:** Flujo de apertura y cierre de caja.
-- **Módulos:** Gestión de Productos, Clientes, Facturación, Impuestos, y Métodos de Pago.
-- **Login de Empleados:** Un sistema de Login POS separado para empleados, usando un Código de Tienda único.
-- **Configuración Avanzada:** Una página de configuración con un menú lateral para gestionar , , y  (con toggles para habilitar/deshabilitar características como , , etc.).
-- **Tickets Abiertos:** Funcionalidad para guardar pedidos en mesas o tickets personalizados y recuperarlos más tarde.
-- **Diseño Responsive:** El POS debe tener un diseño optimizado para dispositivos móviles.
-- **PRODUCT REQUIREMENTS (New):** Implementar una nueva sección de Tiendas para gestionar múltiples sucursales, tal como se describe en las imágenes proporcionadas por el usuario.
+- **Gestión de Tiendas (Sucursales):** Implementar una sección para crear y gestionar múltiples tiendas, cada una con un código de establecimiento para la facturación.
+- **Gestión de Dispositivos TPV (Puntos de Venta):** Cada TPV debe tener un nombre, un punto de emisión, estar asociado a una tienda y tener un estado (activo/inactivo, ocupado/libre).
+- **Flujo de Caja:**
+    - Al abrir caja, el empleado debe seleccionar un TPV disponible de una tienda específica.
+    - El rol Mesero no maneja dinero (no ve monto inicial) pero sí debe seleccionar un TPV.
+    - Al cerrar caja, el TPV se libera.
+- **Facturación con Numeración Secuencial por Punto de Emisión:** Las facturas deben seguir el formato --. Cada punto de emisión tiene su propia secuencia.
+- **Gestión de Clientes:** El cliente debe ser único y validado por su número de cédula/RUC.
+- **Reportes Avanzados:** Una sección de reportes con filtros (fecha, cajero, tienda, TPV) y vistas específicas (Resumen, Ventas por artículo, por empleado, etc.) con gráficos y tablas, siguiendo diseños proporcionados por el usuario.
+- **PRODUCT REQUIREMENTS (New):** Implementar un selector de rango de fechas personalizado para los reportes, con opciones predefinidas como Hoy, Ayer, Esta semana, etc., según una imagen proporcionada por el usuario.
 
 **User's preferred language**: Spanish. The next agent MUST respond in Spanish.
 
 **what currently exists?**
-Un sistema POS full-stack (React/FastAPI/MongoDB) funcional con arquitectura multi-tenant. Las características clave implementadas son:
-- **Autenticación completa** (manual y Google) con persistencia de sesión.
-- **Jerarquía de roles** (Propietario, Admin, Cajero) y **login de empleados** con código de tienda.
-- **Página de configuración** reestructurada con un menú lateral dinámico.
-- **CRUD completo** para **Impuestos**, **Métodos de Pago**, **Tipos de Pedido** y **Mesas** (para Tickets Abiertos).
-- **Cálculo de impuestos** en las facturas y desglose en el recibo.
-- **Sistema de Funciones** con toggles en el backend y frontend para habilitar/deshabilitar:
-    - Cierres de caja por turnos (hace que el monto inicial sea opcional).
-    - Tickets abiertos (habilita la funcionalidad de guardar/cargar pedidos).
-    - Tipo de pedido.
-    - Venta con stock (habilita/deshabilita la validación de inventario).
-- **Flujo completo de Tickets Abiertos en el POS**, incluyendo guardar, recuperar, y **actualizar** tickets existentes sin crear duplicados.
-- **Diseño de POS completamente responsive** que se adapta a pantallas de escritorio, tablet y móvil, con una interfaz optimizada para cada una, siguiendo los diseños del usuario.
+Un sistema POS full-stack (React/FastAPI/MongoDB) multi-tenant.
+- **Autenticación completa** (manual y Google).
+- **Gestión de Tiendas (Sucursales):** CRUD completo para tiendas, cada una con su  y  para el login de empleados.
+- **Gestión de TPV (Dispositivos):** CRUD completo para TPVs, asociados a tiendas y con un . El sistema gestiona su estado (libre/ocupado).
+- **Flujo de Caja con TPV:** La apertura de caja requiere seleccionar un TPV disponible. La lógica se adapta al rol (Cajero vs. Mesero).
+- **Numeración de Facturas SRI:** Implementada la lógica de numeración .
+- **Validación de Clientes:** Se impide crear clientes con cédula/RUC duplicado.
+- **Rol Mesero:** Creado el rol, con lógica diferenciada en el POS (no ve monto inicial).
+- **Sección de Reportes Rediseñada:** Una página de reportes completamente nueva con un menú lateral (Resumen de ventas, Ventas por artículo, etc.) y una UI con tarjetas de métricas, gráficos y tablas, basada en las imágenes del usuario. Incluye filtros funcionales por fecha, cajero, tienda y TPV.
+- **Dashboard con Filtros:** La página principal del dashboard también incluye filtros.
 
 **Last working item**:
-- **Last item agent was working**: El usuario solicitó implementar una nueva funcionalidad para gestionar múltiples **Tiendas** dentro de una organización. El agente recibió las imágenes con el diseño y el flujo esperado, y estaba a punto de comenzar el análisis para la implementación.
+- **Last item agent was working**: El agente estaba a punto de implementar un selector de rango de fechas personalizado para la sección de Reportes, tal como lo solicitó el usuario con una imagen de referencia. Este componente debe incluir un calendario para seleccionar rangos y botones con fechas predefinidas (Hoy, Ayer, Esta semana, etc.).
 - **Status**: NOT STARTED
 - **Agent Testing Done**: N
-- **Which testing method agent to use?**: both
+- **Which testing method agent to use?**: frontend testing agent
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Implementar la gestión de Múltiples Tiendas (P0)**
-    - **Attempted fixes**: Ninguno. Es una nueva solicitud de funcionalidad.
+- **Issue 1: Implementar selector de rango de fechas personalizado (P0)**
+    - **Attempted fixes**: Ninguno. El agente recibió el requisito justo al final de la sesión.
     - **Next debug checklist**:
-        1.  **Analizar las 3 imágenes** proporcionadas por el usuario para entender el flujo completo:
-            - Pantalla de listado de tiendas en Configuración.
-            - Formulario para crear/editar una tienda (con campos como nombre, dirección, etc.).
-            - Relación entre tiendas, TPV (POS) y empleados.
-        2.  **Backend ():**
-            - Crear un nuevo modelo Pydantic y una colección en MongoDB llamada .
-            - Implementar los endpoints CRUD para .
-            - Modificar los modelos de  y/o  (TPV) para asociarlos a una .
-            - Ajustar la lógica de negocio (ej. login, reportes) para que pueda ser filtrada por tienda.
-        3.  **Frontend:**
-            - Crear un nuevo componente  en .
-            - Añadir el enlace Tiendas al menú de .
-            - Implementar la interfaz para listar, crear, editar y eliminar tiendas.
-            - Actualizar la UI de gestión de empleados o TPVs para asignarles una tienda.
-    - **Why fix this issue and what will be achieved with this?**: Es un requisito fundamental para que el sistema pueda ser usado por negocios con múltiples sucursales, permitiendo una gestión centralizada.
+        1.  Analizar la imagen de referencia () para replicar el diseño del componente.
+        2.  Buscar e instalar una librería de React para rangos de fechas (ej.  o ).
+        3.  Reemplazar el filtro de fecha actual en  con el nuevo componente.
+        4.  Implementar la lógica para las fechas predefinidas (Hoy, Ayer, etc.).
+        5.  Asegurarse de que el estado de la fecha se actualice correctamente y dispare la recarga de los datos de los reportes.
+    - **Why fix this issue and what will be achieved with this?**: Mejorará la usabilidad de los reportes, permitiendo al usuario seleccionar fechas de forma más rápida e intuitiva, cumpliendo con un requisito explícito.
     - **Status**: NOT STARTED
     - **Is recurring issue?**: N
-    - **Should Test frontend/backend/both after fix?**: both
+    - **Should Test frontend/backend/both after fix?**: frontend
     - **Blocked on other issue**: No
 
 **In progress Task List**:
@@ -69,12 +60,16 @@ Un sistema POS full-stack (React/FastAPI/MongoDB) funcional con arquitectura mul
     - **P3: Escaneo de Código de Barras:** Probar y mejorar la funcionalidad de escaneo usando la cámara del móvil en el POS.
 
 **Completed work in this session**
-- **Cálculo de Impuestos:** Se completó la funcionalidad para que los impuestos creados se calculen en las ventas y se desglosen en el recibo.
-- **Gestión de Métodos de Pago:** Se implementó el CRUD completo en Configuración y su selección en el POS.
-- **Implementación de Funciones Avanzadas:** Se implementó la lógica backend y frontend para los toggles de , ,  y .
-- **Flujo de Tickets Abiertos Mejorado:** Se corrigió el flujo para que al recuperar un ticket y modificarlo, se **actualice el ticket original** en lugar de crear uno nuevo. Se solucionaron bugs relacionados con la unicidad de las mesas y el contador de productos.
-- **Diseño Responsive del POS:** Se rediseñó completamente la página del POS para que sea totalmente funcional y optimizada para dispositivos móviles, siguiendo las maquetas del usuario. Incluye un header y un carrito móvil (sheet).
-- **Corrección de Bugs y UI/UX:** Se unificó la paleta de colores (de verde a azul), se implementó la búsqueda de productos en móvil y se arreglaron múltiples errores de funcionamiento reportados por el usuario.
+- **Gestión de Tiendas (Sucursales):** Implementado el CRUD completo, incluyendo  y la visualización del .
+- **Gestión de Dispositivos TPV:** Implementado el CRUD completo, asociando TPVs a tiendas y gestionando su estado /.
+- **Lógica de Facturación SRI:** Se modificó la creación de facturas para usar la numeración secuencial por punto de emisión ().
+- **Flujo de Apertura de Caja con TPV:** Modificado el POS para obligar la selección de un TPV disponible al abrir caja.
+- **Validación Única de Clientes:** El backend ahora valida que no existan clientes con la misma .
+- **Implementación del Rol Mesero:** Se añadió el rol Mesero y se adaptó la lógica del POS para que no gestionen dinero.
+- **Nueva Página de Reportes con Filtros:** Se creó desde cero y luego se rediseñó por completo la página de Reportes para coincidir con las imágenes del usuario, incluyendo múltiples tipos de reportes, gráficos, tarjetas de métricas y filtros avanzados.
+- **Filtros en el Dashboard:** Se añadieron filtros de fecha, tienda y TPV al dashboard principal.
+- **Corrección de UI/UX:** Se permitió la edición libre de los campos  en TPV y  en Tiendas.
+- **Corrección de Bug CORS:** Se solucionó un problema con  que impedía cargar datos en el frontend.
 
 **Earlier issues found/mentioned but not fixed**
 - **Issue 1: Configuración avanzada de tickets incompleta.**
@@ -84,78 +79,77 @@ Un sistema POS full-stack (React/FastAPI/MongoDB) funcional con arquitectura mul
     - **Is recurring issue?**: N
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork**: La herramienta  falló una vez (). Aunque no fue un problema recurrente en esta sesión, es bueno tenerlo en cuenta. El agente lo resolvió inspeccionando el archivo.
-- **Recurrence count**: 1
-- **Status**: RESOLVED (workaround)
+- No hubo problemas recurrentes en esta sesión.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 - **Backend:** FastAPI, Motor, Pydantic, JWT.
-- **Frontend:** React, React Router, Axios, TailwindCSS.
-- **Database:** MongoDB.
-- **Responsive Design:** Uso intensivo de utilidades responsives de TailwindCSS (, , clases /) en  para adaptar el layout a diferentes tamaños de pantalla.
-- **State Management (React):**  maneja un estado complejo con  y  para la UI, datos del backend (productos, configuraciones, etc.), carrito, y tickets abiertos.
-- **Dynamic UI:** El menú de  ahora se renderiza condicionalmente basado en la configuración de  obtenida del backend.
+- **Frontend:** React (, ), React Router, Axios, TailwindCSS, **Recharts** (para los gráficos).
+- **Dynamic Invoice Numbering:** Lógica en  que busca el último número de factura para un  y  específicos para generar el siguiente.
+- **Conditional UI Rendering:** Uso intensivo en  (para rol Mesero) y  (para mostrar diferentes vistas de reporte).
+- **Complex State Management:** La página  gestiona un estado complejo para filtros, datos de reportes, tipo de reporte activo y estado de carga.
 
 **key DB schema**
-- **facturas:** Modificada para añadir , , , , , , .
-- **organizaciones:** Contiene un sub-documento  con los toggles booleanos (, , , etc.).
-- **metodos_pago (nueva colección):** .
-- **tipos_pedido (nueva colección):** .
-- **tickets_predefinidos (nueva colección):** Almacena las mesas .
-- **tickets_abiertos (nueva colección):** .
+- **tiendas (nueva colección):** 
+- **tpvs (nueva colección):** 
+- **cajas:** Modificada para incluir , , , .
+- **facturas:** Modificada para incluir el  de factura con formato completo SRI.
+- **usuarios:** Modificado el  para aceptar mesero.
+- **clientes:** Se aplica validación de  único a nivel de .
 
 **changes in tech stack**
-- Ninguno.
+- Se añadió la librería  en el frontend para los gráficos (instalada por el agente, visible en el código de ).
 
 **All files of reference**
-- : Contiene toda la lógica de negocio, incluyendo los nuevos endpoints para métodos de pago, funciones, y tickets.
-- : Archivo principal del punto de venta, ahora con una implementación responsive compleja y lógica para todas las nuevas funcionalidades.
-- : Contiene el layout de configuración y la lógica del menú dinámico.
-- : UI para gestionar los toggles de funciones.
-- : UI para el CRUD de métodos de pago.
-- : UI para gestionar las mesas.
-- : UI para gestionar los tipos de pedido.
+- : Modificado extensamente para añadir endpoints de Tiendas, TPVs, filtros en reportes/dashboard, y actualizar la lógica de facturas, cajas y usuarios.
+- : Componente completamente nuevo y complejo que contiene toda la lógica de la nueva sección de reportes.
+- : Reescribió para incluir filtros.
+- : Modificado para integrar la selección de TPV al abrir caja y la lógica para el rol Mesero.
+- : Nuevo componente para el CRUD de Tiendas.
+- : Nuevo componente para el CRUD de TPVs.
+- : Modificado para incluir el rol Mesero.
+-  y : Modificados para añadir la nueva ruta y enlace de Reportes.
 
 **Critical Info for New Agent**
-- **Complejidad de :** Este archivo es ahora el más complejo de la aplicación. Contiene JSX condicional para renderizar la UI de móvil y de escritorio, múltiples  y  (del carrito móvil), y toda la lógica de estado para el funcionamiento del POS. Cualquier cambio debe ser probado cuidadosamente en ambas vistas.
-- **Configuraciones por Defecto:** El backend ahora crea registros por defecto para ,  y  (mesas) al crear una nueva organización. Se ejecutó un script para añadirlos a las organizaciones existentes.
-- **La autenticación es con email completo**, y la sesión se mantiene con un sistema híbrido de token JWT y cookies.
+- **La nueva lógica de facturación es la piedra angular del sistema.** El número de factura depende del  de la **Tienda** y el  del **TPV**. Cualquier cambio en estas entidades debe considerar su impacto en la facturación.
+- **La página  es ahora muy compleja.** Fue reescrita para coincidir con un diseño específico del usuario, usando  para los gráficos y un estado local para manejar los diferentes tipos de reporte.
+- **El backend () es un monolito grande.** Los nuevos endpoints y modificaciones están intercalados con la lógica existente. Navegarlo con cuidado es clave.
 
-**documents created in this job**
-- No se crearon nuevos documentos de guía en esta sesión.
+**documents and test reports created in this job**
+- El agente utilizó el agente de testing de backend y frontend para validar las implementaciones, y los reportes deberían estar disponibles en el sistema de artifacts (no se guardaron en el workspace).
 
-**Last 10 User Messages and any pending user messages**
-1.  **User:** Reporta bugs en la función de Tickets Abiertos: el botón de tickets guardados desaparece, se pueden guardar mesas duplicadas y el contador de productos del ticket es incorrecto. (PENDING)
-2.  **Agent:** Confirma el entendimiento de los 3 bugs y comienza a trabajar en la solución.
-3.  **User:** Solicita una nueva función: un toggle para Venta con stock que permita vender sin validar el inventario. También reporta un bug al modificar la cantidad en tickets recuperados. (PENDING)
-4.  **Agent:** Confirma el entendimiento e implementa la función y la corrección del bug.
-5.  **User:** Reporta un bug crítico: al recuperar un ticket y añadir más productos, el sistema intenta crear un nuevo ticket en lugar de actualizar el existente. (PENDING)
-6.  **Agent:** Confirma el bug y lo corrige implementando una lógica de actualización.
-7.  **User:** Solicita una nueva funcionalidad mayor: **gestión de Tiendas**, y proporciona imágenes del flujo deseado. (PENDING - This is the current )
-8.  **Agent:** Agradece las imágenes y confirma que comenzará a analizarlas para la implementación.
-9.  **User:** Pide que se active la funcionalidad de tickets abiertos y tipo de pedido, y corrige la lógica del toggle de cierres de caja.
-10. **Agent:** Confirma el entendimiento e implementa los cambios.
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **User:** Pide continuar con las tareas pendientes. (COMPLETED - Agente implementó validación de clientes y rol mesero).
+2.  **Agent:** Confirma que la implementación de cliente único y rol mesero fue exitosa tras testing.
+3.  **User:** Solicita que los reportes se modelen según nuevos gráficos/imágenes proporcionadas. (COMPLETED - Agente rediseñó la página de reportes).
+4.  **Agent:** Muestra la nueva página de reportes rediseñada.
+5.  **User:** Solicita que al dar clic en la fecha, aparezca un selector de rango de fechas con opciones predefinidas. (PENDING - Este es el ).
+6.  **Agent:** Confirma el entendimiento del requisito del selector de rango de fechas.
+7.  **User:** Pide que los reportes se modelen según nuevos gráficos/imágenes proporcionadas. (COMPLETED)
+8.  **Agent:** Muestra la nueva página de reportes rediseñada.
+9.  **User:** Solicita que al dar clic en la fecha, aparezca un selector de rango de fechas con opciones predefinidas. (PENDING)
+10. **Agent:** Confirma el entendimiento del requisito del selector de rango de fechas y que lo implementará.
 
 **Project Health Check:**
-- **Broken:** Ninguna funcionalidad principal está rota. El último conjunto de correcciones dejó la aplicación en un estado estable.
-- **Mocked:** Algunas de las Funciones en la página de configuración (, ) siguen siendo placeholders sin lógica implementada.
+- **Broken:** Ninguna funcionalidad principal está rota.
+- **Mocked:** Las Funciones en la página de configuración (, , etc.) siguen siendo placeholders sin lógica implementada.
 
 **3rd Party Integrations**
 - **Google Auth:** Implementado usando la librería .
+- **Recharts:** Librería de gráficos para React, utilizada en la página de .
 
 **Testing status**
-- **Testing agent used after significant changes:** YES, el agente de backend se usó al principio para validar la funcionalidad de impuestos.
+- **Testing agent used after significant changes:** YES. Se utilizó el agente de testing de backend y de frontend para validar el gran conjunto de funcionalidades (TPV, Tiendas, Facturación, Roles) antes del rediseño final de reportes.
 - **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** Ninguno.
+- **Test files created:** No se crearon archivos de test persistentes.
 - **Known regressions:** Ninguno.
 
 **Credentials to test flow:**
-- **Admin:**  / 
+- **Propietario:**  / 
 - Se puede registrar un nuevo usuario para probar el flujo de creación de una nueva organización.
+- Se pueden crear empleados con roles de Cajero o Mesero para probar sus respectivos flujos.
 
 **What agent forgot to execute**
-- El requisito de **subir un logo para el recibo**, mencionado en la solicitud original, aún no se ha abordado y sigue pendiente como una tarea futura.
-- No se han implementado todas las Funciones que aparecían en la maqueta original del usuario (ej. ).</analysis>
+- El agente estaba a punto de ejecutar la última solicitud del usuario: la implementación del selector de rango de fechas personalizado. No fue un olvido, sino el punto de interrupción de la sesión.</analysis>
