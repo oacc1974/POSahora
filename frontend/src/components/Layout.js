@@ -14,6 +14,7 @@ import {
   Wallet,
   UserCircle,
   Building2,
+  BarChart3,
 } from 'lucide-react';
 import { Button } from './ui/button';
 
