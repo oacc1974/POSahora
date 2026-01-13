@@ -198,6 +198,15 @@ export default function Caja() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
+              onClick={() => navigate('/pos')}
+              data-testid="ir-pos-button"
+              size="lg"
+              className="flex-1 gap-2 bg-blue-600 hover:bg-blue-700"
+            >
+              <ShoppingCart size={20} />
+              Ir al Punto de Venta
+            </Button>
+            <Button
               onClick={() => setShowCierre(true)}
               data-testid="cerrar-caja-button"
               variant="destructive"
