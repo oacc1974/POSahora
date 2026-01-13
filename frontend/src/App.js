@@ -167,7 +167,7 @@ function AppRouter() {
           path="/pos"
           element={
             user ? (
-              <Layout user={user} onLogout={handleLogout}>
+              <Layout user={user} onLogout={handleLogout} hideSidebar={true}>
                 <POS />
               </Layout>
             ) : (
