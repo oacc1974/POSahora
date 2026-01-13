@@ -1385,6 +1385,22 @@ export default function POS() {
             )}
           </div>
 
+          {/* Botón Tickets Abiertos - SOLO MÓVIL */}
+          {ticketsAbiertosFuncionActiva && (
+            <div className="md:hidden bg-white border-t px-4 py-2">
+              <Button
+                onClick={() => {
+                  fetchTicketsAbiertos();
+                  setShowTicketsAbiertosDialog(true);
+                }}
+                variant="outline"
+                className="w-full border-blue-600 text-blue-600 font-semibold"
+              >
+                TICKETS ABIERTOS
+              </Button>
+            </div>
+          )}
+
           {/* Barra de categorías (abajo) */}
           <div className="bg-white border-t px-2 py-2 flex items-center gap-2 overflow-x-auto">
             <button
