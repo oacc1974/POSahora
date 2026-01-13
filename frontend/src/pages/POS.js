@@ -725,8 +725,60 @@ export default function POS() {
       toast.error('Necesitas al menos 2 productos para dividir el ticket');
       return;
     }
+    setProductosParaDividir([]);
+    setNombreNuevoTicket('');
     setShowDividirDialog(true);
     setShowTicketMenu(false);
+  };
+
+  const toggleProductoDividir = (productoId) => {
+    setProductosParaDividir(prev => 
+      prev.includes(productoId)
+        ? prev.filter(id => id !== productoId)
+        : [...prev, productoId]
+    );
+  };
+
+  const ejecutarDividirTicket = async () => {
+    if (productosParaDividir.length === 0) {
+      toast.error('Selecciona al menos un producto para dividir');
+      return;
+    }
+
+    if (productosParaDividir.length === cart.length) {
+      toast.error('No puedes mover todos los productos. Deja al menos uno en el ticket actual.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Separar productos
+      const productosNuevoTicket = cart.filter(item => productosParaDividir.includes(item.producto_id));
+      const productosTicketActual = cart.filter(item => !productosParaDividir.includes(item.producto_id));
+      
+      // Crear nuevo ticket con los productos seleccionados
+      const nuevoTicket = {
+        nombre: nombreNuevoTicket || `Dividido ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`,
+        items: productosNuevoTicket,
+        total: productosNuevoTicket.reduce((sum, item) => sum + item.subtotal, 0)
+      };
+
+      await axios.post(`${API_URL}/api/tickets`, nuevoTicket, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Actualizar carrito actual
+      setCart(productosTicketActual);
+      
+      await fetchTicketsAbiertos();
+      setShowDividirDialog(false);
+      setProductosParaDividir([]);
+      setNombreNuevoTicket('');
+      toast.success(`Ticket dividido. ${productosNuevoTicket.length} producto(s) movidos a nuevo ticket.`);
+    } catch (error) {
+      toast.error('Error al dividir el ticket');
+    }
   };
 
   const handleCombinarTicket = async () => {
