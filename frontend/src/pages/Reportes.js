@@ -455,8 +455,12 @@ function ReporteResumen({ data, facturas }) {
 // REPORTE: Ventas por Artículo
 function ReporteArticulo({ facturas }) {
   const ventasPorArticulo = {};
+  const ventasPorDia = {};
   
   facturas.forEach(factura => {
+    const fecha = factura.fecha?.split('T')[0] || '';
+    if (fecha && !ventasPorDia[fecha]) ventasPorDia[fecha] = 0;
+    
     factura.items?.forEach(item => {
       const key = item.producto_nombre || item.nombre || 'Sin nombre';
       if (!ventasPorArticulo[key]) {
@@ -464,13 +468,30 @@ function ReporteArticulo({ facturas }) {
       }
       ventasPorArticulo[key].cantidad += item.cantidad || 1;
       ventasPorArticulo[key].total += item.subtotal || 0;
+      
+      if (fecha) {
+        ventasPorDia[fecha] += item.subtotal || 0;
+      }
     });
   });
   
   const sortedItems = Object.entries(ventasPorArticulo).sort(([, a], [, b]) => b.total - a.total);
   const top5 = sortedItems.slice(0, 5);
-  const maxVenta = top5.length > 0 ? top5[0][1].total : 1;
   const colores = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+  
+  // Preparar datos para gráfico de barras
+  const barChartData = top5.map(([nombre, datos], i) => ({
+    nombre: nombre.length > 15 ? nombre.substring(0, 15) + '...' : nombre,
+    ventas: datos.total,
+    fill: colores[i]
+  }));
+  
+  // Preparar datos para gráfico de líneas (ventas por día)
+  const diasOrdenados = Object.keys(ventasPorDia).sort();
+  const lineChartData = diasOrdenados.map(dia => ({
+    fecha: new Date(dia + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+    ventas: ventasPorDia[dia]
+  }));
   
   return (
     <div className="space-y-6">
@@ -482,14 +503,17 @@ function ReporteArticulo({ facturas }) {
             {top5.map(([nombre, datos], i) => (
               <div key={nombre} className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: colores[i] }} />
-                <span className="flex-1 text-sm">{nombre}</span>
+                <span className="flex-1 text-sm truncate">{nombre}</span>
                 <span className="font-medium">${datos.total.toFixed(2)}</span>
               </div>
             ))}
+            {top5.length === 0 && (
+              <p className="text-slate-400 text-sm">No hay artículos vendidos</p>
+            )}
           </div>
         </div>
 
-        {/* Gráfico de líneas */}
+        {/* Gráfico de líneas con Recharts */}
         <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold">Ventas netas</h3>
@@ -503,24 +527,40 @@ function ReporteArticulo({ facturas }) {
               </select>
             </div>
           </div>
-          <div className="h-40 flex items-end gap-1 border-b border-l relative">
-            {/* Eje Y */}
-            <div className="absolute -left-8 top-0 h-full flex flex-col justify-between text-xs text-slate-400">
-              <span>${maxVenta.toFixed(0)}</span>
-              <span>$0</span>
+          {lineChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={160}>
+              <LineChart data={lineChartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="fecha" 
+                  tick={{ fontSize: 10 }} 
+                  tickLine={false}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 10 }} 
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `$${value}`}
+                />
+                <Tooltip 
+                  formatter={(value) => [`$${value.toFixed(2)}`, 'Ventas']}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="ventas" 
+                  stroke="#3B82F6" 
+                  strokeWidth={2}
+                  dot={{ fill: '#3B82F6', strokeWidth: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-40 flex items-center justify-center text-slate-400">
+              No hay datos para mostrar
             </div>
-            {top5.map(([nombre, datos], i) => {
-              const altura = (datos.total / maxVenta) * 100;
-              return (
-                <div key={nombre} className="flex-1 flex justify-center">
-                  <div 
-                    className="w-3 rounded-t"
-                    style={{ height: `${altura}%`, backgroundColor: colores[i] }}
-                  />
-                </div>
-              );
-            })}
-          </div>
+          )}
         </div>
       </div>
 
