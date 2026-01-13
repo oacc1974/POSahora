@@ -39,6 +39,11 @@ const getRolInfo = (rol) => {
       color: 'bg-green-100 text-green-700',
       text: 'Cajero',
     },
+    mesero: {
+      icon: UsersIcon,
+      color: 'bg-purple-100 text-purple-700',
+      text: 'Mesero',
+    },
   };
   return roles[rol] || roles.cajero;
 };
