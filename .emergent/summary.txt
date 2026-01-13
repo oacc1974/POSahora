@@ -2,154 +2,134 @@
 El usuario solicitó la creación de un sistema de Punto de Venta (POS) con las siguientes características:
 - **Roles y Multi-tenancy:** Un sistema donde cada Propietario de una organización puede gestionar empleados (Admin, Cajero, Mesero), productos, clientes y facturas de forma aislada.
 - **Autenticación:** Registro manual (correo/contraseña) y con Google (OAuth).
-- **Gestión de Tiendas (Sucursales):** Implementar una sección para crear y gestionar múltiples tiendas, cada una con un código de establecimiento para la facturación.
-- **Gestión de Dispositivos TPV (Puntos de Venta):** Cada TPV debe tener un nombre, un punto de emisión, estar asociado a una tienda y tener un estado (activo/inactivo, ocupado/libre).
-- **Flujo de Caja:**
-    - Al abrir caja, el empleado debe seleccionar un TPV disponible de una tienda específica.
-    - El rol Mesero no maneja dinero (no ve monto inicial) pero sí debe seleccionar un TPV.
-    - Al cerrar caja, el TPV se libera.
-- **Facturación con Numeración Secuencial por Punto de Emisión:** Las facturas deben seguir el formato --. Cada punto de emisión tiene su propia secuencia.
-- **Gestión de Clientes:** El cliente debe ser único y validado por su número de cédula/RUC.
-- **Reportes Avanzados:** Una sección de reportes con filtros (fecha, cajero, tienda, TPV) y vistas específicas (Resumen, Ventas por artículo, por empleado, etc.) con gráficos y tablas, siguiendo diseños proporcionados por el usuario.
-- **PRODUCT REQUIREMENTS (New):** Implementar un selector de rango de fechas personalizado para los reportes, con opciones predefinidas como Hoy, Ayer, Esta semana, etc., según una imagen proporcionada por el usuario.
+- **Gestión de Tiendas (Sucursales) y Dispositivos TPV.**
+- **Flujo de Caja y Facturación Secuencial.**
+- **Gestión de Clientes y Reportes Avanzados.**
+
+**PRODUCT REQUIREMENTS (Recientes):**
+1.  **Funcionalidad Completa del Menú del Ticket:** Implementar la lógica para las opciones Despejar ticket, Dividir ticket y Combinar ticket, que actualmente no funcionan o presentan errores.
+2.  **Rediseño de Layouts:**
+    *   Copiar el diseño de la pantalla de ventas del TPV de Loyverse (según un enlace proporcionado).
+    *   Mejorar el layout del TPV para pantallas grandes (tablets/PC).
+    *   En la página de Ingresos (Facturas), al hacer clic en una factura de la lista, se debe mostrar su detalle en un panel lateral.
+3.  **Correcciones de UI/UX en el TPV:**
+    *   El menú de opciones del ticket debe mostrar icono y texto, y estar presente tanto en la vista móvil como en la de escritorio.
+    *   El botón Tickets Abiertos debe cambiar a Guardar cuando hay productos en el carrito.
+    *   Tras guardar un ticket, el carrito debe limpiarse.
+    *   El contador de artículos en la vista móvil debe sumar las cantidades totales de los productos, no solo el número de líneas de producto.
 
 **User's preferred language**: Spanish. The next agent MUST respond in Spanish.
 
 **what currently exists?**
-Un sistema POS full-stack (React/FastAPI/MongoDB) multi-tenant.
-- **Autenticación completa** (manual y Google).
-- **Gestión de Tiendas (Sucursales):** CRUD completo para tiendas, cada una con su  y  para el login de empleados.
-- **Gestión de TPV (Dispositivos):** CRUD completo para TPVs, asociados a tiendas y con un . El sistema gestiona su estado (libre/ocupado).
-- **Flujo de Caja con TPV:** La apertura de caja requiere seleccionar un TPV disponible. La lógica se adapta al rol (Cajero vs. Mesero).
-- **Numeración de Facturas SRI:** Implementada la lógica de numeración .
-- **Validación de Clientes:** Se impide crear clientes con cédula/RUC duplicado.
-- **Rol Mesero:** Creado el rol, con lógica diferenciada en el POS (no ve monto inicial).
-- **Sección de Reportes Rediseñada:** Una página de reportes completamente nueva con un menú lateral (Resumen de ventas, Ventas por artículo, etc.) y una UI con tarjetas de métricas, gráficos y tablas, basada en las imágenes del usuario. Incluye filtros funcionales por fecha, cajero, tienda y TPV.
-- **Dashboard con Filtros:** La página principal del dashboard también incluye filtros.
+Un sistema POS full-stack (React/FastAPI/MongoDB) que incluye autenticación, gestión de tiendas, TPVs, y un flujo básico de ventas. La interfaz ha sido modificada significativamente para cumplir con los requisitos del usuario:
+- **Página de Reportes:** Cuenta con un selector de rango de fechas personalizado y gráficos funcionales (usando ) para varios tipos de reportes.
+- **Página de Ingresos (Facturas):** Rediseñada con un layout de dos paneles (lista a la izquierda, detalle a la derecha) y una opción de Reembolso.
+- **Página de TPV (POS):** Completamente reescrita para emular el diseño de Loyverse, con un grid de productos, una barra de categorías, y un panel de ticket a la derecha. El menú del ticket con las opciones (Despejar, Dividir, Combinar) está implementado visualmente.
 
 **Last working item**:
-- **Last item agent was working**: El agente estaba a punto de implementar un selector de rango de fechas personalizado para la sección de Reportes, tal como lo solicitó el usuario con una imagen de referencia. Este componente debe incluir un calendario para seleccionar rangos y botones con fechas predefinidas (Hoy, Ayer, Esta semana, etc.).
-- **Status**: NOT STARTED
+- **Last item agent was working**: El agente estaba en proceso de corregir una serie de errores críticos en la página del TPV, reportados por el usuario. Específicamente, estaba arreglando la lógica de las funciones Dividir Ticket y Combinar Ticket, la visualización de los botones Guardar/Tickets Abiertos, y el contador de artículos en la vista móvil.
+- **Status**: IN PROGRESS
 - **Agent Testing Done**: N
-- **Which testing method agent to use?**: frontend testing agent
+- **Which testing method agent to use?**: frontend testing agent. Es crucial validar el flujo completo de gestión de tickets: añadir productos, guardar ticket, dividir ticket entre dos mesas, y combinar dos tickets en uno.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Implementar selector de rango de fechas personalizado (P0)**
-    - **Attempted fixes**: Ninguno. El agente recibió el requisito justo al final de la sesión.
+- **Issue 1: Corregir y completar las funcionalidades del menú del TPV (P0)**
+    - **Description:** Las funciones principales para gestionar tickets en el TPV están rotas. Dividir y Combinar ticket lanzan errores (el usuario adjuntó capturas), la lógica de los botones Guardar vs Tickets Abiertos es incorrecta, y el contador de artículos en móvil no cuenta bien. Además, el flujo de usuario (limpiar carrito, cerrar diálogos) tras estas acciones es incorrecto.
+    - **Attempted fixes**:
+        - Se corrigieron las URLs de los endpoints en el frontend (de  a ).
+        - Se ajustó la lógica de renderizado de los botones GUARDAR / TICKETS ABIERTOS en .
+        - Se modificó el contador de artículos en el ticket para sumar las cantidades.
+        - Se ajustó el payload enviado al backend en la función  para usar el campo .
     - **Next debug checklist**:
-        1.  Analizar la imagen de referencia () para replicar el diseño del componente.
-        2.  Buscar e instalar una librería de React para rangos de fechas (ej.  o ).
-        3.  Reemplazar el filtro de fecha actual en  con el nuevo componente.
-        4.  Implementar la lógica para las fechas predefinidas (Hoy, Ayer, etc.).
-        5.  Asegurarse de que el estado de la fecha se actualice correctamente y dispare la recarga de los datos de los reportes.
-    - **Why fix this issue and what will be achieved with this?**: Mejorará la usabilidad de los reportes, permitiendo al usuario seleccionar fechas de forma más rápida e intuitiva, cumpliendo con un requisito explícito.
-    - **Status**: NOT STARTED
-    - **Is recurring issue?**: N
-    - **Should Test frontend/backend/both after fix?**: frontend
+        1.  Verificar que los  de los botones del menú del ticket (Dividir, Combinar) estén correctamente enlazados y funcionales.
+        2.  Realizar una prueba E2E del flujo de Dividir Ticket: añadir varios productos, dividirlos en un nuevo ticket y verificar que ambos tickets (el original modificado y el nuevo) se guardan correctamente.
+        3.  Realizar una prueba E2E del flujo de Combinar Tickets: crear dos tickets guardados, y luego combinarlos en uno solo, verificando que el ticket resultante contenga todos los productos.
+        4.  Confirmar que después de Guardar, Dividir o Combinar un ticket, el carrito de la compra se vacía y los diálogos se cierran.
+        5.  Revisar el backend () para asegurarse de que la lógica de los endpoints  es correcta y maneja todos los casos de borde.
+    - **Why fix this issue and what will be achieved with this?**: Es una funcionalidad central del TPV. Sin ella, los meseros no pueden gestionar pedidos complejos, lo que hace que la aplicación no sea usable en un entorno real.
+    - **Status**: IN PROGRESS
+    - **Is recurring issue?**: Y
+    - **Should Test frontend/backend/both after fix?**: both
     - **Blocked on other issue**: No
 
 **In progress Task List**:
-- No hay tareas en progreso.
+- No hay tareas adicionales en progreso.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P1: Completar la funcionalidad de los toggles en Funciones:** Implementar la lógica para las funciones restantes vistas en la imagen original del usuario: , , .
+    - **P1: Extender selectores de gráficos a todos los reportes:** Aplicar los selectores funcionales de tipo de gráfico (Área/Barra) y agrupación (Días/Semanas) a los reportes de Ventas por artículo y Ventas por categoría.
 - **Future Tasks:**
-    - **P2: Configuración Avanzada de Recibo:** Implementar la subida de un logo para la organización y añadirlo al recibo impreso.
-    - **P3: Escaneo de Código de Barras:** Probar y mejorar la funcionalidad de escaneo usando la cámara del móvil en el POS.
+    - **P2: Completar Funciones de configuración:** Implementar la lógica backend para las funciones de Reloj checador, Impresoras de cocina y Pantalla para clientes.
+    - **P3: Configuración Avanzada de Recibo:** Implementar la subida de un logo para la organización y añadirlo al recibo.
+    - **P4: Mejorar escaneo de código de barras.**
 
 **Completed work in this session**
-- **Gestión de Tiendas (Sucursales):** Implementado el CRUD completo, incluyendo  y la visualización del .
-- **Gestión de Dispositivos TPV:** Implementado el CRUD completo, asociando TPVs a tiendas y gestionando su estado /.
-- **Lógica de Facturación SRI:** Se modificó la creación de facturas para usar la numeración secuencial por punto de emisión ().
-- **Flujo de Apertura de Caja con TPV:** Modificado el POS para obligar la selección de un TPV disponible al abrir caja.
-- **Validación Única de Clientes:** El backend ahora valida que no existan clientes con la misma .
-- **Implementación del Rol Mesero:** Se añadió el rol Mesero y se adaptó la lógica del POS para que no gestionen dinero.
-- **Nueva Página de Reportes con Filtros:** Se creó desde cero y luego se rediseñó por completo la página de Reportes para coincidir con las imágenes del usuario, incluyendo múltiples tipos de reportes, gráficos, tarjetas de métricas y filtros avanzados.
-- **Filtros en el Dashboard:** Se añadieron filtros de fecha, tienda y TPV al dashboard principal.
-- **Corrección de UI/UX:** Se permitió la edición libre de los campos  en TPV y  en Tiendas.
-- **Corrección de Bug CORS:** Se solucionó un problema con  que impedía cargar datos en el frontend.
-
-**Earlier issues found/mentioned but not fixed**
-- **Issue 1: Configuración avanzada de tickets incompleta.**
-    - **Debug checklist**: El usuario solicitó poder subir un logo para el recibo. Esto está planificado como una tarea futura () en la sección .
-    - **Why to solve this issue and what will be achieved with this?**: Permitir una mayor personalización de la marca en los recibos.
-    - **Should Test frontend/backend/both after fix**: both
-    - **Is recurring issue?**: N
-
-**Known issue recurrence from previous fork**
-- No hubo problemas recurrentes en esta sesión.
+- **Rediseño del TPV al estilo Loyverse:** Se reescribió por completo la página  para que coincida con el diseño solicitado por el usuario, incluyendo un grid de productos, un panel de ticket lateral y una barra de categorías.
+- **Rediseño de la página de Ingresos/Facturas:** Se reescribió  para mostrar un layout de dos paneles (lista y detalle) y se añadió la opción de reembolso.
+- **Implementación de Reembolso:** Se añadió el endpoint backend  y la opción en la UI.
+- **Corrección de Gráficos en Reportes:** Se reemplazaron los gráficos de CSS por componentes de  en , solucionando el problema de que no se visualizaban.
+- **Selectores de Gráficos Funcionales:** Se implementó la lógica para que los selectores de tipo de gráfico y agrupación funcionen en el reporte Resumen de ventas.
+- **Implementación del Selector de Fechas Personalizado:** Se creó y finalizó el componente  para los reportes.
+- **Nuevas Funciones en Configuración:** Se añadieron las opciones para Función de reloj, Impresoras de cocina y Pantalla para clientes en la UI y el backend.
+- **Corrección de Layout del TPV:** Se corrigió el diseño del TPV para que el menú de opciones del ticket sea visible y muestre texto e iconos tanto en escritorio como en móvil.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Backend:** FastAPI, Motor, Pydantic, JWT.
-- **Frontend:** React (, ), React Router, Axios, TailwindCSS, **Recharts** (para los gráficos).
-- **Dynamic Invoice Numbering:** Lógica en  que busca el último número de factura para un  y  específicos para generar el siguiente.
-- **Conditional UI Rendering:** Uso intensivo en  (para rol Mesero) y  (para mostrar diferentes vistas de reporte).
-- **Complex State Management:** La página  gestiona un estado complejo para filtros, datos de reportes, tipo de reporte activo y estado de carga.
+- **Desincronización Backend-Frontend:** Un problema recurrente ha sido la discrepancia entre los endpoints de la API y los modelos de datos usados en el frontend versus el backend (e.g.,  vs uid=0(root) gid=0(root) groups=0(root),  vs ).
+- **Layouts Responsivos Complejos:** La página  ha sido reescrita para manejar layouts muy diferentes entre móvil y escritorio, lo que añade complejidad al mantenimiento.
 
 **key DB schema**
-- **tiendas (nueva colección):** 
-- **tpvs (nueva colección):** 
-- **cajas:** Modificada para incluir , , , .
-- **facturas:** Modificada para incluir el  de factura con formato completo SRI.
-- **usuarios:** Modificado el  para aceptar mesero.
-- **clientes:** Se aplica validación de  único a nivel de .
+- **facturas:** Se añadió un campo  para gestionar reembolsos.
+- **organizaciones:** Se extendió el documento de configuración para incluir las nuevas funciones (, , etc.).
 
 **changes in tech stack**
-- Se añadió la librería  en el frontend para los gráficos (instalada por el agente, visible en el código de ).
+- Ninguno. Se ha hecho un uso más profundo de , que ya estaba instalado.
 
 **All files of reference**
-- : Modificado extensamente para añadir endpoints de Tiendas, TPVs, filtros en reportes/dashboard, y actualizar la lógica de facturas, cajas y usuarios.
-- : Componente completamente nuevo y complejo que contiene toda la lógica de la nueva sección de reportes.
-- : Reescribió para incluir filtros.
-- : Modificado para integrar la selección de TPV al abrir caja y la lógica para el rol Mesero.
-- : Nuevo componente para el CRUD de Tiendas.
-- : Nuevo componente para el CRUD de TPVs.
-- : Modificado para incluir el rol Mesero.
--  y : Modificados para añadir la nueva ruta y enlace de Reportes.
+- 
+- 
+- 
+- 
+- 
 
 **Critical Info for New Agent**
-- **La nueva lógica de facturación es la piedra angular del sistema.** El número de factura depende del  de la **Tienda** y el  del **TPV**. Cualquier cambio en estas entidades debe considerar su impacto en la facturación.
-- **La página  es ahora muy compleja.** Fue reescrita para coincidir con un diseño específico del usuario, usando  para los gráficos y un estado local para manejar los diferentes tipos de reporte.
-- **El backend () es un monolito grande.** Los nuevos endpoints y modificaciones están intercalados con la lógica existente. Navegarlo con cuidado es clave.
+- **La máxima prioridad es arreglar las funciones del ticket en el TPV.** El agente anterior aplicó varias correcciones pero no llegó a probarlas. Debes empezar por verificar y depurar el flujo completo de Dividir y Combinar tickets.
+- **Presta mucha atención a la correspondencia entre frontend y backend.** Los errores suelen originarse en nombres de endpoints o campos de datos que no coinciden. Revisa el código de  para confirmar la estructura esperada por la API antes de finalizar una implementación en el frontend.
+- **El usuario valora mucho la UI/UX y proporciona referencias visuales.** El objetivo es replicar esos diseños de la forma más fiel posible.
 
 **documents and test reports created in this job**
-- El agente utilizó el agente de testing de backend y frontend para validar las implementaciones, y los reportes deberían estar disponibles en el sistema de artifacts (no se guardaron en el workspace).
+-  (Valida funcionalidades anteriores a los últimos reportes de bugs).
+-  (Creado y actualizado).
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Pide continuar con las tareas pendientes. (COMPLETED - Agente implementó validación de clientes y rol mesero).
-2.  **Agent:** Confirma que la implementación de cliente único y rol mesero fue exitosa tras testing.
-3.  **User:** Solicita que los reportes se modelen según nuevos gráficos/imágenes proporcionadas. (COMPLETED - Agente rediseñó la página de reportes).
-4.  **Agent:** Muestra la nueva página de reportes rediseñada.
-5.  **User:** Solicita que al dar clic en la fecha, aparezca un selector de rango de fechas con opciones predefinidas. (PENDING - Este es el ).
-6.  **Agent:** Confirma el entendimiento del requisito del selector de rango de fechas.
-7.  **User:** Pide que los reportes se modelen según nuevos gráficos/imágenes proporcionadas. (COMPLETED)
-8.  **Agent:** Muestra la nueva página de reportes rediseñada.
-9.  **User:** Solicita que al dar clic en la fecha, aparezca un selector de rango de fechas con opciones predefinidas. (PENDING)
-10. **Agent:** Confirma el entendimiento del requisito del selector de rango de fechas y que lo implementará.
+1.  **User (PENDING):** Reporta múltiples bugs en el TPV: los botones del menú de ticket (dividir/combinar) dan error, la lógica de los botones Guardar/Tickets Abiertos es incorrecta, el contador de artículos móvil está mal, y el flujo de la UI después de una acción no es el esperado.
+2.  **User (COMPLETED):** Pide copiar el diseño de la pantalla de ventas de Loyverse, proporcionando un enlace como referencia.
+3.  **User (COMPLETED):** Informa que el menú del TPV solo muestra iconos, no es visible en pantallas grandes y la vista de Ingresos no muestra el detalle del ticket.
+4.  **User (PENDING):** Solicita que las opciones del menú del TPV sean funcionales.
+5.  **User (COMPLETED):** Pide implementar las opciones activas del menú del ticket (dividir/combinar mesas) y rediseñar la vista de Ingresos para mostrar el detalle de la factura al hacer clic.
+6.  **User (PENDING):** Pide que los selectores de tipo de gráfico y agrupación se apliquen también a los reportes de Ventas por artículo y Ventas por categoría.
+7.  **User (COMPLETED):** Reporta que los gráficos en los reportes no se muestran.
+8.  **User (COMPLETED):** Solicita un selector de rango de fechas personalizado para los reportes, con opciones predefinidas.
+9.  **User (COMPLETED):** Pide añadir el rol Mesero y validar que los clientes sean únicos por cédula/RUC.
+10. **User (COMPLETED):** Solicita implementar la gestión de Tiendas y TPVs para la facturación secuencial.
 
 **Project Health Check:**
-- **Broken:** Ninguna funcionalidad principal está rota.
-- **Mocked:** Las Funciones en la página de configuración (, , etc.) siguen siendo placeholders sin lógica implementada.
+- **Broken:** Las funcionalidades de gestión de tickets (Dividir, Combinar) en el TPV están rotas y son críticas para el uso de la aplicación.
+- **Mocked:** Las Funciones en la página de configuración (Función de reloj, Impresoras de cocina, etc.) y la opción Sincronizar en el TPV son solo elementos de UI sin lógica funcional.
 
 **3rd Party Integrations**
-- **Google Auth:** Implementado usando la librería .
-- **Recharts:** Librería de gráficos para React, utilizada en la página de .
+- Google Auth (via )
+- Recharts (librería de gráficos en React)
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. Se utilizó el agente de testing de backend y de frontend para validar el gran conjunto de funcionalidades (TPV, Tiendas, Facturación, Roles) antes del rediseño final de reportes.
-- **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** No se crearon archivos de test persistentes.
-- **Known regressions:** Ninguno.
+- **Testing agent used after significant changes:** YES, pero para funcionalidades implementadas *antes* de los últimos cambios y reportes de bugs. Las últimas reescrituras de  y  no han sido validadas por el agente de testing.
+- **Known regressions:** La funcionalidad de dividir y combinar tickets está rota.
 
 **Credentials to test flow:**
 - **Propietario:**  / 
-- Se puede registrar un nuevo usuario para probar el flujo de creación de una nueva organización.
-- Se pueden crear empleados con roles de Cajero o Mesero para probar sus respectivos flujos.
 
 **What agent forgot to execute**
-- El agente estaba a punto de ejecutar la última solicitud del usuario: la implementación del selector de rango de fechas personalizado. No fue un olvido, sino el punto de interrupción de la sesión.</analysis>
+- El agente no completó el ciclo de depuración de los últimos errores reportados por el usuario. Aplicó varias correcciones en el código pero no llegó a probar si resolvían los problemas.</analysis>
