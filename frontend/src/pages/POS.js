@@ -2061,7 +2061,7 @@ export default function POS() {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-slate-600">
-              Selecciona los tickets que deseas combinar con el actual:
+              Selecciona los tickets que deseas combinar con el ticket actual:
             </p>
             <div className="max-h-[300px] overflow-y-auto space-y-2">
               {ticketsAbiertos.map((ticket) => (
@@ -2069,7 +2069,7 @@ export default function POS() {
                   key={ticket.id}
                   className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
                     ticketsParaCombinar.includes(ticket.id) 
-                      ? 'bg-blue-50 border-blue-300' 
+                      ? 'bg-green-50 border-green-300' 
                       : 'hover:bg-slate-50'
                   }`}
                   onClick={() => {
@@ -2082,30 +2082,43 @@ export default function POS() {
                 >
                   <input 
                     type="checkbox" 
-                    className="w-4 h-4" 
+                    className="w-4 h-4 accent-green-600" 
                     checked={ticketsParaCombinar.includes(ticket.id)}
                     onChange={() => {}}
                   />
                   <div className="flex-1">
                     <p className="font-medium text-sm">{ticket.nombre}</p>
                     <p className="text-xs text-slate-500">
-                      {ticket.items?.length || 0} productos
+                      {ticket.items?.length || 0} producto(s)
                     </p>
                   </div>
-                  <span className="font-mono text-sm">${ticket.total?.toFixed(2) || '0.00'}</span>
+                  <span className="font-mono text-sm font-semibold text-green-600">${ticket.total?.toFixed(2) || '0.00'}</span>
                 </div>
               ))}
               {ticketsAbiertos.length === 0 && (
-                <p className="text-center text-slate-400 py-4">No hay tickets abiertos</p>
+                <div className="text-center py-8">
+                  <p className="text-slate-400 mb-2">No hay tickets abiertos</p>
+                  <p className="text-xs text-slate-400">Guarda un ticket primero para poder combinarlo</p>
+                </div>
               )}
             </div>
+
+            {ticketsParaCombinar.length > 0 && (
+              <div className="p-3 bg-green-50 rounded-lg">
+                <p className="text-sm text-green-700">
+                  <strong>{ticketsParaCombinar.length}</strong> ticket(s) seleccionado(s)
+                </p>
+              </div>
+            )}
+
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowCombinarDialog(false)}>
                 Cancelar
               </Button>
               <Button 
                 onClick={ejecutarCombinarTickets}
-                disabled={ticketsParaCombinar.length < 2}
+                disabled={ticketsParaCombinar.length === 0}
+                className="bg-green-600 hover:bg-green-700"
               >
                 Combinar ({ticketsParaCombinar.length})
               </Button>
