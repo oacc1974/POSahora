@@ -323,6 +323,44 @@ class CajaResponse(BaseModel):
     codigo_establecimiento: Optional[str] = None
     punto_emision: Optional[str] = None
 
+# ============ MODELOS PARA ARTÍCULOS ============
+class CategoriaCreate(BaseModel):
+    nombre: str
+    color: Optional[str] = "#3B82F6"
+
+class CategoriaResponse(BaseModel):
+    id: str
+    nombre: str
+    color: str
+    organizacion_id: str
+    creado: str
+
+class ModificadorCreate(BaseModel):
+    nombre: str
+    precio: float = 0
+    tipo: str = "adicional"
+
+class ModificadorResponse(BaseModel):
+    id: str
+    nombre: str
+    precio: float
+    tipo: str
+    organizacion_id: str
+    creado: str
+
+class DescuentoCreate(BaseModel):
+    nombre: str
+    porcentaje: float
+    activo: bool = True
+
+class DescuentoResponse(BaseModel):
+    id: str
+    nombre: str
+    porcentaje: float
+    activo: bool
+    organizacion_id: str
+    creado: str
+
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
