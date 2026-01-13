@@ -1253,6 +1253,18 @@ async def update_funciones(funciones: FuncionesConfig, current_user: dict = Depe
     if current_user["rol"] not in ["propietario", "administrador"]:
         raise HTTPException(status_code=403, detail="No tienes permiso")
     
+    # Verificar si se está intentando desactivar tickets_abiertos
+    if not funciones.tickets_abiertos:
+        # Contar tickets abiertos de la organización
+        tickets_count = await db.tickets_abiertos.count_documents({
+            "organizacion_id": current_user["organizacion_id"]
+        })
+        if tickets_count > 0:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"No puedes desactivar 'Tickets abiertos' porque tienes {tickets_count} ticket(s) guardado(s). Elimínalos primero."
+            )
+    
     await db.funciones_config.update_one(
         {"organizacion_id": current_user["organizacion_id"]},
         {"$set": {
