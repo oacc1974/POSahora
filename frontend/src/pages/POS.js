@@ -1119,45 +1119,151 @@ export default function POS() {
         </div>
       )}
 
-      {/* Barra de búsqueda (móvil - expandible) */}
-      {showMobileSearch && (
-        <div className="bg-blue-600 px-4 pb-2 md:hidden">
-          <Input
-            placeholder="Buscar productos..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-blue-700 border-blue-500 text-white placeholder:text-blue-200"
-            autoFocus
-          />
+      {/* ============ CARRITO MÓVIL (Vista de Ticket) ============ */}
+      {showMobileCart && (
+        <div className="md:hidden fixed inset-0 bg-white z-50 flex flex-col">
+          {/* Header del carrito móvil */}
+          <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
+            <button 
+              onClick={() => setShowMobileCart(false)}
+              className="p-1 hover:bg-blue-700 rounded"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <span className="font-semibold text-lg">Ticket</span>
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => setShowClienteDialog(true)}
+                className="p-2 hover:bg-blue-700 rounded relative"
+              >
+                <UserPlus size={20} />
+              </button>
+              <button 
+                onClick={() => setShowMobileTicketMenu(!showMobileTicketMenu)}
+                className="p-2 hover:bg-blue-700 rounded"
+              >
+                <MoreVertical size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Lista de productos del carrito */}
+          <div className="flex-1 overflow-auto bg-slate-50">
+            {cart.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-slate-400 p-4">
+                <ShoppingCart size={48} className="mb-2" />
+                <p className="text-sm">El ticket está vacío</p>
+                <p className="text-xs">Añade productos para comenzar</p>
+              </div>
+            ) : (
+              <div className="divide-y bg-white">
+                {cart.map((item) => (
+                  <div key={item.producto_id} className="p-4 flex items-center gap-3">
+                    {/* Cantidad y controles */}
+                    <div className="flex items-center gap-1 bg-slate-100 rounded-lg">
+                      <button
+                        onClick={() => updateQuantity(item.producto_id, -1)}
+                        className="w-8 h-8 flex items-center justify-center hover:bg-slate-200 rounded-l-lg"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="w-8 text-center font-semibold text-sm">{item.cantidad}</span>
+                      <button
+                        onClick={() => updateQuantity(item.producto_id, 1)}
+                        className="w-8 h-8 flex items-center justify-center hover:bg-slate-200 rounded-r-lg"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                    
+                    {/* Nombre y precio */}
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{item.nombre}</p>
+                      <p className="text-xs text-slate-500">${item.precio.toFixed(2)} c/u</p>
+                    </div>
+                    
+                    {/* Subtotal */}
+                    <span className="font-bold text-blue-600">${item.subtotal.toFixed(2)}</span>
+                    
+                    {/* Botón eliminar */}
+                    <button
+                      onClick={() => removeFromCart(item.producto_id)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Selector de tipo de pedido y Total */}
+          <div className="bg-white border-t p-4 space-y-3">
+            {/* Tipo de pedido - solo si está activado */}
+            {tipoPedidoFuncionActiva && tiposPedido.length > 0 && (
+              <div className="flex items-center gap-2">
+                <select
+                  value={tipoPedidoSeleccionado || ''}
+                  onChange={(e) => setTipoPedidoSeleccionado(e.target.value)}
+                  className="text-sm border rounded-lg px-3 py-2 bg-white"
+                >
+                  {tiposPedido.map((tipo) => (
+                    <option key={tipo.id} value={tipo.id}>
+                      {tipo.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Total */}
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-semibold text-slate-700">Total</span>
+              <span className="text-2xl font-bold text-slate-900">${total.toFixed(2)}</span>
+            </div>
+
+            {/* Botones */}
+            <div className="grid grid-cols-2 gap-2">
+              {ticketsAbiertosFuncionActiva && (
+                <Button
+                  onClick={() => {
+                    if (cart.length > 0) {
+                      setShowGuardarTicketDialog(true);
+                    } else {
+                      fetchTicketsAbiertos();
+                      setShowTicketsAbiertosDialog(true);
+                    }
+                  }}
+                  variant={cart.length > 0 ? "default" : "outline"}
+                  className={cart.length > 0 ? "bg-blue-600 hover:bg-blue-700" : "border-blue-600 text-blue-600"}
+                >
+                  {cart.length > 0 ? (
+                    <>
+                      <Save size={18} className="mr-1" />
+                      GUARDAR
+                    </>
+                  ) : (
+                    'TICKETS'
+                  )}
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  setShowMobileCart(false);
+                  handleCheckout();
+                }}
+                disabled={cart.length === 0}
+                className={`bg-blue-600 hover:bg-blue-700 ${!ticketsAbiertosFuncionActiva ? 'col-span-2' : ''}`}
+              >
+                COBRAR ${total.toFixed(2)}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ============ BARRA DE BOTONES MÓVIL (debajo del header) ============ */}
-      <div className="md:hidden bg-white border-b p-3 flex gap-2">
-        {ticketsAbiertosFuncionActiva && (
-          cart.length > 0 ? (
-            <Button
-              onClick={() => setShowGuardarTicketDialog(true)}
-              variant="outline"
-              className="flex-1 relative border-blue-600 text-blue-600"
-            >
-              <span>GUARDAR</span>
-              <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">
-                {cart.reduce((sum, item) => sum + item.cantidad, 0)}
-              </span>
-            </Button>
-          ) : (
-            <Button
-              onClick={() => {
-                fetchTicketsAbiertos();
-                setShowTicketsAbiertosDialog(true);
-              }}
-              variant="outline"
-              className="flex-1 relative border-blue-600 text-blue-600"
-            >
-              <span>TICKETS</span>
-            </Button>
-          )
+      {/* ============ CONTENIDO PRINCIPAL ============ */}
         )}
         <Button
           onClick={handleCheckout}
