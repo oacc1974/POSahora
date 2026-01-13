@@ -27,7 +27,7 @@ const getRolBadge = (rol) => {
   return badges[rol] || badges.cajero;
 };
 
-export default function Layout({ children, user, onLogout }) {
+export default function Layout({ children, user, onLogout, hideSidebar = false }) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
