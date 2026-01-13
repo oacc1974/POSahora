@@ -1028,22 +1028,26 @@ export default function POS() {
 
       {/* ============ HEADER AZUL - DESKTOP ============ */}
       <div className="hidden md:flex bg-blue-600 text-white px-4 py-2 items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setShowSidebar(!showSidebar)}
-            className="p-2 hover:bg-blue-700 rounded-lg"
-          >
-            <Menu size={22} />
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm">
-              {categoriaSeleccionada === 'all' ? 'Todos los artículos' : categoriaSeleccionada}
+        {/* Izquierda: Menú hamburguesa (navegación) */}
+        <button 
+          onClick={() => setShowNavSidebar(true)}
+          className="p-2 hover:bg-blue-700 rounded-lg"
+        >
+          <Menu size={22} />
+        </button>
+        
+        {/* Centro: Ticket con contador */}
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-lg">Ticket</span>
+          {cartItemCount > 0 && (
+            <span className="bg-white text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full">
+              {cartItemCount}
             </span>
-            <ChevronDown size={16} />
-          </div>
+          )}
         </div>
         
-        <div className="flex items-center gap-2">
+        {/* Derecha: Cliente + Menú opciones (3 puntos) */}
+        <div className="flex items-center gap-1">
           <button 
             onClick={() => setShowClienteDialog(true)}
             className="p-2 hover:bg-blue-700 rounded-lg relative"
@@ -1053,8 +1057,69 @@ export default function POS() {
               <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
             )}
           </button>
+          <button 
+            onClick={() => setShowTicketMenu(!showTicketMenu)}
+            className="p-2 hover:bg-blue-700 rounded-lg"
+          >
+            <MoreVertical size={20} />
+          </button>
         </div>
       </div>
+
+      {/* Menú de opciones del ticket (3 puntos) - DESKTOP */}
+      {showTicketMenu && (
+        <div className="hidden md:block absolute right-2 top-12 bg-white rounded-lg shadow-xl border z-[60] py-2 w-52">
+          <button
+            onClick={() => {
+              handleDespejarTicket();
+              setShowTicketMenu(false);
+            }}
+            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
+          >
+            <Eraser size={18} className="text-slate-500" />
+            <span>Despejar ticket</span>
+          </button>
+          <button
+            onClick={() => {
+              handleDividirTicket();
+              setShowTicketMenu(false);
+            }}
+            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
+          >
+            <Split size={18} className="text-slate-500" />
+            <span>Dividir ticket</span>
+          </button>
+          <button
+            onClick={() => {
+              handleCombinarTicket();
+              setShowTicketMenu(false);
+            }}
+            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
+          >
+            <Combine size={18} className="text-slate-500" />
+            <span>Combinar ticket</span>
+          </button>
+          <div className="border-t my-2"></div>
+          <button
+            onClick={() => {
+              handleSincronizar();
+              setShowTicketMenu(false);
+            }}
+            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
+          >
+            <RefreshCw size={18} className="text-slate-500" />
+            <span>Sincronizar</span>
+          </button>
+        </div>
+      )}
+
+      {/* Overlay para cerrar menú desktop */}
+      {showTicketMenu && (
+        <div 
+          className="hidden md:block fixed inset-0 z-[55]" 
+          onClick={() => setShowTicketMenu(false)}
+        />
+      )}
 
       {/* Sidebar Overlay */}
       {showSidebar && (
