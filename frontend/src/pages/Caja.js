@@ -224,15 +224,27 @@ export default function Caja() {
           <p className="text-slate-500 mb-6">
             Debes abrir una caja antes de realizar ventas
           </p>
-          <Button
-            onClick={() => setShowApertura(true)}
-            data-testid="abrir-caja-button"
-            size="lg"
-            className="gap-2"
-          >
-            <DollarSign size={20} />
-            Abrir Caja
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              onClick={() => setShowApertura(true)}
+              data-testid="abrir-caja-button"
+              size="lg"
+              className="gap-2"
+            >
+              <DollarSign size={20} />
+              Abrir Caja
+            </Button>
+            <Button
+              onClick={() => navigate('/pos')}
+              data-testid="ir-pos-button-sin-caja"
+              variant="outline"
+              size="lg"
+              className="gap-2"
+            >
+              <ShoppingCart size={20} />
+              Ir al Punto de Venta
+            </Button>
+          </div>
         </Card>
       )}
 
