@@ -276,11 +276,13 @@ export default function Usuarios() {
                 <SelectContent>
                   <SelectItem value="administrador">Administrador</SelectItem>
                   <SelectItem value="cajero">Cajero</SelectItem>
+                  <SelectItem value="mesero">Mesero</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-slate-500 mt-2">
                 <strong>Administrador:</strong> Gestiona productos y hace ventas<br />
-                <strong>Cajero:</strong> Solo realiza ventas
+                <strong>Cajero:</strong> Realiza ventas y maneja dinero<br />
+                <strong>Mesero:</strong> Toma pedidos sin manejar dinero
               </p>
             </div>
 
