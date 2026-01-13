@@ -319,9 +319,31 @@ function MetricCard({ title, value, change, changePercent, icon: Icon, color = '
 
 // REPORTE: Resumen de Ventas
 function ReporteResumen({ data, facturas }) {
+  const [chartType, setChartType] = useState('area');
+  const [groupBy, setGroupBy] = useState('dias');
+  
   if (!data) return <p className="text-slate-500">No hay datos disponibles</p>;
   
-  // Calcular datos para el gráfico
+  // Función para obtener el número de semana
+  const getWeekNumber = (dateStr) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  };
+  
+  // Función para obtener rango de semana
+  const getWeekRange = (dateStr) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(date.setDate(diff));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return `${monday.getDate()} ${monday.toLocaleDateString('es-ES', { month: 'short' })} - ${sunday.getDate()} ${sunday.toLocaleDateString('es-ES', { month: 'short' })}`;
+  };
+  
+  // Calcular datos para el gráfico por día
   const ventasPorDia = {};
   facturas.forEach(f => {
     const fecha = f.fecha?.split('T')[0] || '';
@@ -331,14 +353,51 @@ function ReporteResumen({ data, facturas }) {
     }
   });
   
-  const diasOrdenados = Object.keys(ventasPorDia).sort();
+  // Calcular datos para el gráfico por semana
+  const ventasPorSemana = {};
+  facturas.forEach(f => {
+    const fecha = f.fecha?.split('T')[0] || '';
+    if (fecha) {
+      const weekKey = getWeekRange(fecha);
+      if (!ventasPorSemana[weekKey]) {
+        ventasPorSemana[weekKey] = { total: 0, firstDate: fecha };
+      }
+      ventasPorSemana[weekKey].total += f.total || 0;
+      if (fecha < ventasPorSemana[weekKey].firstDate) {
+        ventasPorSemana[weekKey].firstDate = fecha;
+      }
+    }
+  });
   
-  // Preparar datos para Recharts
-  const chartData = diasOrdenados.map(dia => ({
-    fecha: new Date(dia + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
-    ventas: ventasPorDia[dia],
-    fechaCompleta: dia
-  }));
+  // Preparar datos según la agrupación seleccionada
+  let chartData = [];
+  let tableData = [];
+  
+  if (groupBy === 'dias') {
+    const diasOrdenados = Object.keys(ventasPorDia).sort();
+    chartData = diasOrdenados.map(dia => ({
+      label: new Date(dia + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+      ventas: ventasPorDia[dia],
+      fechaCompleta: dia
+    }));
+    tableData = diasOrdenados.map(dia => ({
+      fecha: new Date(dia + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }),
+      ventas: ventasPorDia[dia]
+    }));
+  } else {
+    // Ordenar semanas por fecha
+    const semanasOrdenadas = Object.entries(ventasPorSemana)
+      .sort(([, a], [, b]) => a.firstDate.localeCompare(b.firstDate));
+    chartData = semanasOrdenadas.map(([semana, datos]) => ({
+      label: semana,
+      ventas: datos.total,
+      fechaCompleta: semana
+    }));
+    tableData = semanasOrdenadas.map(([semana, datos]) => ({
+      fecha: semana,
+      ventas: datos.total
+    }));
+  }
   
   return (
     <div className="space-y-6">
@@ -351,58 +410,94 @@ function ReporteResumen({ data, facturas }) {
         <MetricCard title="Beneficio bruto" value={`$${(data.total_ingresos || 0).toFixed(2)}`} />
       </div>
 
-      {/* Gráfico de área con Recharts */}
+      {/* Gráfico con selectores funcionales */}
       <div className="bg-white rounded-lg border p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Ventas brutas</h3>
           <div className="flex gap-2">
-            <select className="text-sm border rounded px-2 py-1">
-              <option>Área</option>
-              <option>Línea</option>
+            <select 
+              className="text-sm border rounded px-3 py-1.5 bg-white cursor-pointer"
+              value={chartType}
+              onChange={(e) => setChartType(e.target.value)}
+            >
+              <option value="area">Área</option>
+              <option value="bar">Bar</option>
             </select>
-            <select className="text-sm border rounded px-2 py-1">
-              <option>Días</option>
-              <option>Semanas</option>
+            <select 
+              className="text-sm border rounded px-3 py-1.5 bg-white cursor-pointer"
+              value={groupBy}
+              onChange={(e) => setGroupBy(e.target.value)}
+            >
+              <option value="dias">Días</option>
+              <option value="semanas">Semanas</option>
             </select>
           </div>
         </div>
         
         {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0.1}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-              <XAxis 
-                dataKey="fecha" 
-                tick={{ fontSize: 11 }} 
-                tickLine={false}
-                axisLine={{ stroke: '#e5e7eb' }}
-              />
-              <YAxis 
-                tick={{ fontSize: 11 }} 
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `$${value}`}
-              />
-              <Tooltip 
-                formatter={(value) => [`$${value.toFixed(2)}`, 'Ventas']}
-                labelStyle={{ color: '#374151' }}
-                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="ventas" 
-                stroke="#22c55e" 
-                fillOpacity={1} 
-                fill="url(#colorVentas)" 
-                strokeWidth={2}
-              />
-            </AreaChart>
+          <ResponsiveContainer width="100%" height={250}>
+            {chartType === 'area' ? (
+              <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#84cc16" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#84cc16" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="label" 
+                  tick={{ fontSize: 11 }} 
+                  tickLine={false}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 11 }} 
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `$${value.toFixed(2)}`}
+                />
+                <Tooltip 
+                  formatter={(value) => [`$${value.toFixed(2)}`, 'Ventas']}
+                  labelStyle={{ color: '#374151' }}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="ventas" 
+                  stroke="#84cc16" 
+                  fillOpacity={1} 
+                  fill="url(#colorVentas)" 
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            ) : (
+              <BarChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="label" 
+                  tick={{ fontSize: 11 }} 
+                  tickLine={false}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 11 }} 
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `$${value.toFixed(2)}`}
+                />
+                <Tooltip 
+                  formatter={(value) => [`$${value.toFixed(2)}`, 'Ventas']}
+                  labelStyle={{ color: '#374151' }}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                />
+                <Bar 
+                  dataKey="ventas" 
+                  fill="#84cc16" 
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            )}
           </ResponsiveContainer>
         ) : (
           <div className="h-48 flex items-center justify-center text-slate-400">
@@ -421,7 +516,7 @@ function ReporteResumen({ data, facturas }) {
           <table className="w-full text-sm">
             <thead className="bg-slate-50">
               <tr>
-                <th className="text-left px-4 py-3 font-medium">Fecha</th>
+                <th className="text-left px-4 py-3 font-medium">{groupBy === 'dias' ? 'Fecha' : 'Semana'}</th>
                 <th className="text-right px-4 py-3 font-medium">Ventas brutas</th>
                 <th className="text-right px-4 py-3 font-medium">Reembolsos</th>
                 <th className="text-right px-4 py-3 font-medium">Descuentos</th>
@@ -431,17 +526,15 @@ function ReporteResumen({ data, facturas }) {
               </tr>
             </thead>
             <tbody>
-              {diasOrdenados.map((dia) => (
-                <tr key={dia} className="border-t hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    {new Date(dia + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </td>
-                  <td className="text-right px-4 py-3">${ventasPorDia[dia].toFixed(2)}</td>
+              {tableData.map((row, idx) => (
+                <tr key={idx} className="border-t hover:bg-slate-50">
+                  <td className="px-4 py-3">{row.fecha}</td>
+                  <td className="text-right px-4 py-3">${row.ventas.toFixed(2)}</td>
                   <td className="text-right px-4 py-3">$0.00</td>
                   <td className="text-right px-4 py-3">$0.00</td>
-                  <td className="text-right px-4 py-3">${ventasPorDia[dia].toFixed(2)}</td>
+                  <td className="text-right px-4 py-3">${row.ventas.toFixed(2)}</td>
                   <td className="text-right px-4 py-3">$0.00</td>
-                  <td className="text-right px-4 py-3">${ventasPorDia[dia].toFixed(2)}</td>
+                  <td className="text-right px-4 py-3">${row.ventas.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
