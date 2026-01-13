@@ -2497,11 +2497,50 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
     )
 
 @app.get("/api/facturas", response_model=List[InvoiceResponse])
-async def get_facturas(current_user: dict = Depends(get_current_user)):
+async def get_facturas(
+    current_user: dict = Depends(get_current_user),
+    fecha_desde: Optional[str] = None,
+    fecha_hasta: Optional[str] = None,
+    cajero_id: Optional[str] = None,
+    tienda_id: Optional[str] = None,
+    tpv_id: Optional[str] = None,
+    metodo_pago_id: Optional[str] = None
+):
     query = {"organizacion_id": current_user["organizacion_id"]}
     
+    # Filtro por rol (cajeros solo ven sus propias facturas)
     if current_user["rol"] == "cajero":
         query["vendedor"] = current_user["_id"]
+    elif cajero_id:
+        query["vendedor"] = cajero_id
+    
+    # Filtro por fechas
+    if fecha_desde or fecha_hasta:
+        query["fecha"] = {}
+        if fecha_desde:
+            query["fecha"]["$gte"] = fecha_desde
+        if fecha_hasta:
+            # Agregar un día para incluir todo el día hasta
+            query["fecha"]["$lte"] = fecha_hasta + "T23:59:59"
+    
+    # Filtro por tienda (a través de la caja)
+    if tienda_id:
+        # Obtener las cajas de esa tienda
+        cajas_tienda = await db.cajas.find({"tienda_id": tienda_id}, {"_id": 1}).to_list(1000)
+        caja_ids = [c["_id"] for c in cajas_tienda]
+        if caja_ids:
+            query["caja_id"] = {"$in": caja_ids}
+    
+    # Filtro por TPV (a través de la caja)
+    if tpv_id:
+        cajas_tpv = await db.cajas.find({"tpv_id": tpv_id}, {"_id": 1}).to_list(1000)
+        caja_ids = [c["_id"] for c in cajas_tpv]
+        if caja_ids:
+            query["caja_id"] = {"$in": caja_ids}
+    
+    # Filtro por método de pago
+    if metodo_pago_id:
+        query["metodo_pago_id"] = metodo_pago_id
     
     facturas = await db.facturas.find(query).sort("fecha", -1).to_list(1000)
     return [
@@ -2509,7 +2548,7 @@ async def get_facturas(current_user: dict = Depends(get_current_user)):
             id=f["_id"],
             numero=f["numero"],
             items=[InvoiceItem(**item) for item in f["items"]],
-            subtotal=f.get("subtotal", f["total"]),  # Retrocompatibilidad
+            subtotal=f.get("subtotal", f["total"]),
             total_impuestos=f.get("total_impuestos", 0),
             desglose_impuestos=[ImpuestoDesglose(**imp) for imp in f.get("desglose_impuestos", [])],
             total=f["total"],
