@@ -1278,25 +1278,8 @@ export default function POS() {
             )}
           </div>
 
-          {/* Selector de tipo de pedido y Total */}
+          {/* Total y Botones */}
           <div className="bg-white border-t p-4 space-y-3">
-            {/* Tipo de pedido - solo si está activado */}
-            {tipoPedidoFuncionActiva && tiposPedido.length > 0 && (
-              <div className="flex items-center gap-2">
-                <select
-                  value={tipoPedidoSeleccionado || ''}
-                  onChange={(e) => setTipoPedidoSeleccionado(e.target.value)}
-                  className="text-sm border rounded-lg px-3 py-2 bg-white"
-                >
-                  {tiposPedido.map((tipo) => (
-                    <option key={tipo.id} value={tipo.id}>
-                      {tipo.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
             {/* Total */}
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-slate-700">Total</span>
