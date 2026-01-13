@@ -1998,8 +1998,16 @@ async def get_clientes(current_user: dict = Depends(get_current_user)):
 
 @app.post("/api/clientes", response_model=ClienteResponse)
 async def create_cliente(cliente: ClienteCreate, current_user: dict = Depends(get_current_user)):
-    import uuid
     cliente_id = str(uuid.uuid4())
+    
+    # Validar cédula/RUC única si se proporciona
+    if cliente.cedula_ruc:
+        existing = await db.clientes.find_one({
+            "cedula_ruc": cliente.cedula_ruc,
+            "organizacion_id": current_user["organizacion_id"]
+        })
+        if existing:
+            raise HTTPException(status_code=400, detail="Ya existe un cliente con esta cédula/RUC")
     
     nuevo_cliente = {
         "_id": cliente_id,
