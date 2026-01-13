@@ -14,7 +14,7 @@ import BarcodeScanner from '../components/BarcodeScanner';
 import { 
   Plus, Minus, Trash2, Scan, Printer, X, Search, Menu, Bell, User, 
   MoreVertical, ChevronDown, UserPlus, RefreshCw, Split, Combine, Eraser,
-  LayoutDashboard, ShoppingCart, FileText, Package, Users, ChevronLeft, Save, Wallet, LogOut
+  LayoutDashboard, ShoppingCart, FileText, Package, Users, ChevronLeft, Save, Wallet, LogOut, Briefcase
 } from 'lucide-react';
 import { Textarea } from '../components/ui/textarea';
 import axios from 'axios';
