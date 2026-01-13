@@ -56,6 +56,7 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 ## Backlog
 
 ### P1 - Próximas
+- [ ] Extender selectores de tipo de gráfico (Área/Barra) y agrupación (Días/Semanas) a reportes de "Ventas por artículo" y "Ventas por categoría"
 - [ ] Lógica interna de "Función de reloj" (UI de fichaje)
 - [ ] Lógica interna de "Impresoras de cocina"
 - [ ] Lógica interna de "Pantalla para clientes"
