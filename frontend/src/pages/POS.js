@@ -704,6 +704,99 @@ export default function POS() {
     }
   };
 
+  // Funciones del menú de ticket
+  const handleDespejarTicket = () => {
+    if (cart.length === 0) {
+      toast.info('El ticket ya está vacío');
+      return;
+    }
+    setCart([]);
+    setClienteSeleccionado(null);
+    setComentarios('');
+    setTicketActualId(null);
+    setShowTicketMenu(false);
+    toast.success('Ticket despejado');
+  };
+
+  const handleDividirTicket = () => {
+    if (cart.length < 2) {
+      toast.error('Necesitas al menos 2 productos para dividir el ticket');
+      return;
+    }
+    setShowDividirDialog(true);
+    setShowTicketMenu(false);
+  };
+
+  const handleCombinarTicket = async () => {
+    if (ticketsAbiertos.length < 2) {
+      toast.error('Necesitas al menos 2 tickets abiertos para combinar');
+      return;
+    }
+    setTicketsParaCombinar([]);
+    setShowCombinarDialog(true);
+    setShowTicketMenu(false);
+    await fetchTicketsAbiertos();
+  };
+
+  const ejecutarCombinarTickets = async () => {
+    if (ticketsParaCombinar.length < 2) {
+      toast.error('Selecciona al menos 2 tickets para combinar');
+      return;
+    }
+
+    try {
+      // Combinar todos los items de los tickets seleccionados
+      let itemsCombinados = [...cart];
+      
+      for (const ticketId of ticketsParaCombinar) {
+        const ticket = ticketsAbiertos.find(t => t.id === ticketId);
+        if (ticket && ticket.items) {
+          ticket.items.forEach(item => {
+            const existente = itemsCombinados.find(i => i.producto_id === item.producto_id);
+            if (existente) {
+              existente.cantidad += item.cantidad;
+              existente.subtotal = existente.cantidad * existente.precio;
+            } else {
+              itemsCombinados.push({ ...item });
+            }
+          });
+        }
+      }
+
+      setCart(itemsCombinados);
+
+      // Eliminar los tickets combinados del servidor
+      const token = localStorage.getItem('token');
+      for (const ticketId of ticketsParaCombinar) {
+        await axios.delete(`${API_URL}/api/tickets/${ticketId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+
+      await fetchTicketsAbiertos();
+      setShowCombinarDialog(false);
+      setTicketsParaCombinar([]);
+      setTicketActualId(null);
+      toast.success('Tickets combinados correctamente');
+    } catch (error) {
+      toast.error('Error al combinar tickets');
+    }
+  };
+
+  const handleSincronizar = async () => {
+    setShowTicketMenu(false);
+    try {
+      await Promise.all([
+        fetchProductos(),
+        fetchTicketsAbiertos(),
+        verificarCaja()
+      ]);
+      toast.success('Datos sincronizados');
+    } catch (error) {
+      toast.error('Error al sincronizar');
+    }
+  };
+
   const filteredProductos = productos.filter(
     (p) =>
       p.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -712,6 +805,41 @@ export default function POS() {
   );
 
   const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+
+  // Componente del menú de ticket
+  const TicketMenuDropdown = () => (
+    <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-50 py-1 min-w-[200px]">
+      <button
+        onClick={handleDespejarTicket}
+        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
+      >
+        <Eraser size={18} className="text-slate-500" />
+        <span>Despejar el ticket</span>
+      </button>
+      <button
+        onClick={handleDividirTicket}
+        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
+      >
+        <Split size={18} className="text-slate-500" />
+        <span>Dividir ticket</span>
+      </button>
+      <button
+        onClick={handleCombinarTicket}
+        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
+      >
+        <Combine size={18} className="text-slate-500" />
+        <span>Combinar ticket</span>
+      </button>
+      <div className="border-t my-1"></div>
+      <button
+        onClick={handleSincronizar}
+        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
+      >
+        <RefreshCw size={18} className="text-slate-500" />
+        <span>Sincronizar</span>
+      </button>
+    </div>
+  );
 
   return (
     <div className="flex flex-col h-auto md:h-[calc(100vh-8rem)]" data-testid="pos-page">
