@@ -1098,6 +1098,21 @@ export default function POS() {
           <Menu size={22} />
         </button>
         
+        {/* Selector de tipo de pedido */}
+        {tipoPedidoFuncionActiva && tiposPedido.length > 0 && (
+          <select
+            value={tipoPedidoSeleccionado || ''}
+            onChange={(e) => setTipoPedidoSeleccionado(e.target.value)}
+            className="text-sm bg-blue-700 text-white border-none rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-white"
+          >
+            {tiposPedido.map((tipo) => (
+              <option key={tipo.id} value={tipo.id}>
+                {tipo.nombre}
+              </option>
+            ))}
+          </select>
+        )}
+        
         {/* Centro: Ticket con contador */}
         <div className="flex items-center gap-2">
           <span className="font-semibold text-lg">Ticket</span>
