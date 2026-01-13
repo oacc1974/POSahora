@@ -873,7 +873,7 @@ export default function POS() {
   // Componente del menú de ticket
   const TicketMenuDropdown = () => (
     <div 
-      className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border z-[100] py-1 min-w-[200px]"
+      className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-2xl border z-[9999] py-2 w-52"
       onClick={(e) => e.stopPropagation()}
     >
       <button
@@ -881,7 +881,7 @@ export default function POS() {
           e.stopPropagation();
           handleDespejarTicket();
         }}
-        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
+        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
       >
         <Eraser size={18} className="text-slate-500" />
         <span>Despejar el ticket</span>
@@ -891,7 +891,7 @@ export default function POS() {
           e.stopPropagation();
           handleDividirTicket();
         }}
-        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
+        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
       >
         <Split size={18} className="text-slate-500" />
         <span>Dividir ticket</span>
@@ -901,7 +901,7 @@ export default function POS() {
           e.stopPropagation();
           handleCombinarTicket();
         }}
-        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
+        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
       >
         <Combine size={18} className="text-slate-500" />
         <span>Combinar ticket</span>
@@ -912,12 +912,13 @@ export default function POS() {
           e.stopPropagation();
           handleSincronizar();
         }}
-        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-50 flex items-center gap-3"
+        className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
       >
         <RefreshCw size={18} className="text-slate-500" />
         <span>Sincronizar</span>
       </button>
     </div>
+  );
   );
 
   return (
