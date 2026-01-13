@@ -1080,9 +1080,9 @@ export default function POS() {
         </div>
 
         {/* ============ PANEL DEL TICKET (DERECHA) ============ */}
-        <div className="hidden md:flex w-80 lg:w-96 flex-col bg-white border-l">
+        <div className="hidden md:flex w-80 lg:w-96 flex-col bg-white border-l relative">
           {/* Header del ticket */}
-          <div className="bg-green-600 text-white px-4 py-3 flex items-center justify-between">
+          <div className="bg-green-600 text-white px-4 py-3 flex items-center justify-between relative z-50">
             <span className="font-semibold">Ticket</span>
             <div className="relative">
               <button 
