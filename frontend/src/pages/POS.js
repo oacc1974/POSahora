@@ -886,12 +886,142 @@ export default function POS() {
   );
 
   const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+  const cartItemCount = cart.reduce((sum, item) => sum + item.cantidad, 0);
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-100" data-testid="pos-page">
       
-      {/* ============ HEADER AZUL ============ */}
-      <div className="bg-blue-600 text-white px-4 py-2 flex items-center justify-between">
+      {/* ============ HEADER AZUL - MÓVIL ============ */}
+      <div className="md:hidden bg-blue-600 text-white px-4 py-2 flex items-center justify-between">
+        {/* Izquierda: Menú hamburguesa (navegación) */}
+        <button 
+          onClick={() => setShowNavSidebar(true)}
+          className="p-2 hover:bg-blue-700 rounded-lg"
+        >
+          <Menu size={22} />
+        </button>
+        
+        {/* Centro: Ticket con contador */}
+        <button 
+          onClick={() => setShowMobileCart(true)}
+          className="flex items-center gap-2"
+        >
+          <span className="font-semibold text-lg">Ticket</span>
+          {cartItemCount > 0 && (
+            <span className="bg-white text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full">
+              {cartItemCount}
+            </span>
+          )}
+        </button>
+        
+        {/* Derecha: Cliente + Menú opciones (3 puntos) */}
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={() => setShowClienteDialog(true)}
+            className="p-2 hover:bg-blue-700 rounded-lg relative"
+          >
+            <UserPlus size={20} />
+            {clienteSeleccionado && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
+            )}
+          </button>
+          <button 
+            onClick={() => setShowMobileTicketMenu(!showMobileTicketMenu)}
+            className="p-2 hover:bg-blue-700 rounded-lg relative"
+          >
+            <MoreVertical size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Menú de opciones del ticket (3 puntos) - MÓVIL */}
+      {showMobileTicketMenu && (
+        <div className="md:hidden absolute right-2 top-12 bg-white rounded-lg shadow-xl border z-[60] py-2 w-52">
+          <button
+            onClick={() => {
+              handleDespejarTicket();
+              setShowMobileTicketMenu(false);
+            }}
+            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
+          >
+            <Eraser size={18} className="text-slate-500" />
+            <span>Despejar ticket</span>
+          </button>
+          <button
+            onClick={() => {
+              handleDividirTicket();
+              setShowMobileTicketMenu(false);
+            }}
+            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
+          >
+            <Split size={18} className="text-slate-500" />
+            <span>Dividir ticket</span>
+          </button>
+          <button
+            onClick={() => {
+              handleCombinarTicket();
+              setShowMobileTicketMenu(false);
+            }}
+            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
+          >
+            <Combine size={18} className="text-slate-500" />
+            <span>Combinar ticket</span>
+          </button>
+        </div>
+      )}
+
+      {/* Overlay para cerrar menú móvil */}
+      {showMobileTicketMenu && (
+        <div 
+          className="md:hidden fixed inset-0 z-[55]" 
+          onClick={() => setShowMobileTicketMenu(false)}
+        />
+      )}
+
+      {/* Sidebar de Navegación - MÓVIL */}
+      {showNavSidebar && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-50"
+          onClick={() => setShowNavSidebar(false)}
+        >
+          <div 
+            className="absolute left-0 top-0 h-full w-72 bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
+              <span className="font-semibold">Menú</span>
+              <button onClick={() => setShowNavSidebar(false)} className="p-1 hover:bg-blue-700 rounded">
+                <X size={20} />
+              </button>
+            </div>
+            <nav className="p-2">
+              <a href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                <LayoutDashboard size={18} />
+                <span>Dashboard</span>
+              </a>
+              <a href="/pos" className="flex items-center gap-3 px-4 py-3 text-blue-600 bg-blue-50 rounded-lg font-medium">
+                <ShoppingCart size={18} />
+                <span>Punto de Venta</span>
+              </a>
+              <a href="/facturas" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                <FileText size={18} />
+                <span>Ingresos</span>
+              </a>
+              <a href="/productos" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                <Package size={18} />
+                <span>Productos</span>
+              </a>
+              <a href="/clientes" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                <Users size={18} />
+                <span>Clientes</span>
+              </a>
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* ============ HEADER AZUL - DESKTOP ============ */}
+      <div className="hidden md:flex bg-blue-600 text-white px-4 py-2 items-center justify-between">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => setShowSidebar(!showSidebar)}
@@ -908,12 +1038,6 @@ export default function POS() {
         </div>
         
         <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setShowMobileSearch(!showMobileSearch)}
-            className="p-2 hover:bg-blue-700 rounded-lg md:hidden"
-          >
-            <Search size={20} />
-          </button>
           <button 
             onClick={() => setShowClienteDialog(true)}
             className="p-2 hover:bg-blue-700 rounded-lg relative"
