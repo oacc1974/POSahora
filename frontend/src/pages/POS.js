@@ -48,6 +48,10 @@ export default function POS() {
   const [ticketActualId, setTicketActualId] = useState(null);
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  
+  // Obtener usuario actual
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const esMesero = currentUser?.rol === 'mesero';
   const [nuevoClienteForm, setNuevoClienteForm] = useState({
     nombre: '',
     cedula_ruc: '',
