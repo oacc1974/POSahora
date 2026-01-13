@@ -1004,8 +1004,8 @@ export default function POS() {
               </button>
             </div>
             <nav className="p-2">
-              {/* Menú completo para propietarios y administradores */}
-              {esDueno && (
+              {/* Menú completo para todos excepto cajeros y meseros */}
+              {!esEmpleado && (
                 <>
                   <a href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
                     <LayoutDashboard size={18} />
