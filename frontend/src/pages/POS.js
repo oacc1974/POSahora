@@ -1418,15 +1418,6 @@ export default function POS() {
           {/* Header del ticket */}
           <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between relative z-50">
             <span className="font-semibold">Ticket</span>
-            <button 
-              onClick={() => setShowClienteDialog(true)}
-              className="p-1 hover:bg-blue-700 rounded relative"
-            >
-              <UserPlus size={18} />
-              {clienteSeleccionado && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
-              )}
-            </button>
           </div>
 
           {/* Cliente seleccionado */}
