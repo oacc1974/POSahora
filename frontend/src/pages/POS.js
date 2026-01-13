@@ -938,10 +938,13 @@ export default function POS() {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-100" data-testid="pos-page">
       
-      {/* ============ HEADER VERDE (ESTILO LOYVERSE) ============ */}
-      <div className="bg-green-600 text-white px-4 py-2 flex items-center justify-between">
+      {/* ============ HEADER AZUL ============ */}
+      <div className="bg-blue-600 text-white px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button className="p-2 hover:bg-green-700 rounded-lg">
+          <button 
+            onClick={() => setShowSidebar(!showSidebar)}
+            className="p-2 hover:bg-blue-700 rounded-lg"
+          >
             <Menu size={22} />
           </button>
           <div className="flex items-center gap-2">
@@ -955,39 +958,95 @@ export default function POS() {
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setShowMobileSearch(!showMobileSearch)}
-            className="p-2 hover:bg-green-700 rounded-lg"
+            className="p-2 hover:bg-blue-700 rounded-lg md:hidden"
           >
             <Search size={20} />
           </button>
           <button 
             onClick={() => setShowClienteDialog(true)}
-            className="p-2 hover:bg-green-700 rounded-lg relative"
+            className="p-2 hover:bg-blue-700 rounded-lg relative"
           >
             <UserPlus size={20} />
             {clienteSeleccionado && (
               <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
             )}
           </button>
-          <div className="relative">
-            <button 
-              onClick={() => setShowTicketMenu(!showTicketMenu)}
-              className="p-2 hover:bg-green-700 rounded-lg"
-            >
-              <MoreVertical size={20} />
-            </button>
-            {showTicketMenu && <TicketMenuDropdown />}
-          </div>
         </div>
       </div>
 
+      {/* Sidebar Overlay */}
+      {showSidebar && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50"
+          onClick={() => setShowSidebar(false)}
+        >
+          <div 
+            className="absolute left-0 top-0 h-full w-72 bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header del sidebar */}
+            <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
+              <span className="font-semibold">Menú</span>
+              <button onClick={() => setShowSidebar(false)} className="p-1 hover:bg-blue-700 rounded">
+                <X size={20} />
+              </button>
+            </div>
+            {/* Opciones del sidebar */}
+            <div className="p-2">
+              <button
+                onClick={() => {
+                  handleDespejarTicket();
+                  setShowSidebar(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700 rounded-lg"
+              >
+                <Eraser size={18} className="text-slate-500" />
+                <span>Despejar el ticket</span>
+              </button>
+              <button
+                onClick={() => {
+                  handleDividirTicket();
+                  setShowSidebar(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700 rounded-lg"
+              >
+                <Split size={18} className="text-slate-500" />
+                <span>Dividir ticket</span>
+              </button>
+              <button
+                onClick={() => {
+                  handleCombinarTicket();
+                  setShowSidebar(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700 rounded-lg"
+              >
+                <Combine size={18} className="text-slate-500" />
+                <span>Combinar ticket</span>
+              </button>
+              <div className="border-t my-2"></div>
+              <button
+                onClick={() => {
+                  handleSincronizar();
+                  setShowSidebar(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700 rounded-lg"
+              >
+                <RefreshCw size={18} className="text-slate-500" />
+                <span>Sincronizar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Barra de búsqueda (móvil - expandible) */}
       {showMobileSearch && (
-        <div className="bg-green-600 px-4 pb-2 md:hidden">
+        <div className="bg-blue-600 px-4 pb-2 md:hidden">
           <Input
             placeholder="Buscar productos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-green-700 border-green-500 text-white placeholder:text-green-200"
+            className="bg-blue-700 border-blue-500 text-white placeholder:text-blue-200"
             autoFocus
           />
         </div>
