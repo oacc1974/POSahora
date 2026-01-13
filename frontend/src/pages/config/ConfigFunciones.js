@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Wallet, ClipboardList, ShoppingBag, ExternalLink, Clock, Printer, Monitor } from 'lucide-react';
+import { Wallet, ClipboardList, ShoppingBag, ExternalLink, Clock, Printer, Monitor, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -16,6 +16,7 @@ export default function ConfigFunciones() {
     funcion_reloj: false,
     impresoras_cocina: false,
     pantalla_clientes: false,
+    tickets_abiertos_count: 0,
   });
 
   const [saving, setSaving] = useState(false);
@@ -40,6 +41,12 @@ export default function ConfigFunciones() {
   };
 
   const handleToggle = (key) => {
+    // Si intenta desactivar tickets_abiertos y hay tickets guardados, mostrar advertencia
+    if (key === 'tickets_abiertos' && funciones.tickets_abiertos && funciones.tickets_abiertos_count > 0) {
+      toast.error(`No puedes desactivar esta opción porque tienes ${funciones.tickets_abiertos_count} ticket(s) guardado(s). Elimínalos primero.`);
+      return;
+    }
+    
     setFunciones({
       ...funciones,
       [key]: !funciones[key]
