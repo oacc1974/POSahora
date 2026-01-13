@@ -2606,6 +2606,47 @@ async def get_facturas(
         for f in facturas
     ]
 
+class ReembolsoRequest(BaseModel):
+    motivo: Optional[str] = None
+
+@app.post("/api/facturas/{factura_id}/reembolso")
+async def reembolsar_factura(factura_id: str, request: ReembolsoRequest, current_user: dict = Depends(get_current_user)):
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para realizar reembolsos")
+    
+    factura = await db.facturas.find_one({
+        "id": factura_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if not factura:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    if factura.get("estado") == "reembolsado":
+        raise HTTPException(status_code=400, detail="Esta factura ya fue reembolsada")
+    
+    # Actualizar estado de la factura
+    await db.facturas.update_one(
+        {"id": factura_id},
+        {
+            "$set": {
+                "estado": "reembolsado",
+                "reembolso_fecha": datetime.now(timezone.utc).isoformat(),
+                "reembolso_motivo": request.motivo,
+                "reembolso_por": current_user["_id"]
+            }
+        }
+    )
+    
+    # Devolver stock de productos
+    for item in factura.get("items", []):
+        await db.productos.update_one(
+            {"id": item.get("producto_id")},
+            {"$inc": {"stock": item.get("cantidad", 0)}}
+        )
+    
+    return {"message": "Reembolso procesado correctamente"}
+
 @app.get("/api/dashboard")
 async def get_dashboard(
     current_user: dict = Depends(get_current_user),
