@@ -52,6 +52,8 @@ export default function POS() {
   const [showDividirDialog, setShowDividirDialog] = useState(false);
   const [showCombinarDialog, setShowCombinarDialog] = useState(false);
   const [ticketsParaCombinar, setTicketsParaCombinar] = useState([]);
+  const [productosParaDividir, setProductosParaDividir] = useState([]);
+  const [nombreNuevoTicket, setNombreNuevoTicket] = useState('');
   
   // Obtener usuario actual
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
