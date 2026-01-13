@@ -2569,14 +2569,47 @@ async def get_facturas(
     ]
 
 @app.get("/api/dashboard")
-async def get_dashboard(current_user: dict = Depends(get_current_user)):
+async def get_dashboard(
+    current_user: dict = Depends(get_current_user),
+    fecha_desde: Optional[str] = None,
+    fecha_hasta: Optional[str] = None,
+    cajero_id: Optional[str] = None,
+    tienda_id: Optional[str] = None,
+    tpv_id: Optional[str] = None
+):
     total_productos = await db.productos.count_documents({"organizacion_id": current_user["organizacion_id"]})
     
     facturas_query = {"organizacion_id": current_user["organizacion_id"]}
+    
+    # Filtro por rol
     if current_user["rol"] == "cajero":
         facturas_query["vendedor"] = current_user["_id"]
+    elif cajero_id:
+        facturas_query["vendedor"] = cajero_id
     
-    facturas = await db.facturas.find(facturas_query).to_list(1000)
+    # Filtro por fechas
+    if fecha_desde or fecha_hasta:
+        facturas_query["fecha"] = {}
+        if fecha_desde:
+            facturas_query["fecha"]["$gte"] = fecha_desde
+        if fecha_hasta:
+            facturas_query["fecha"]["$lte"] = fecha_hasta + "T23:59:59"
+    
+    # Filtro por tienda
+    if tienda_id:
+        cajas_tienda = await db.cajas.find({"tienda_id": tienda_id}, {"_id": 1}).to_list(1000)
+        caja_ids = [c["_id"] for c in cajas_tienda]
+        if caja_ids:
+            facturas_query["caja_id"] = {"$in": caja_ids}
+    
+    # Filtro por TPV
+    if tpv_id:
+        cajas_tpv = await db.cajas.find({"tpv_id": tpv_id}, {"_id": 1}).to_list(1000)
+        caja_ids = [c["_id"] for c in cajas_tpv]
+        if caja_ids:
+            facturas_query["caja_id"] = {"$in": caja_ids}
+    
+    facturas = await db.facturas.find(facturas_query).sort("fecha", -1).to_list(1000)
     total_ventas = len(facturas)
     total_ingresos = sum(f["total"] for f in facturas)
     
@@ -2588,6 +2621,24 @@ async def get_dashboard(current_user: dict = Depends(get_current_user)):
         "usuario_id": current_user["_id"],
         "estado": "abierta"
     })
+    
+    # Ventas por método de pago
+    ventas_por_metodo = {}
+    for f in facturas:
+        metodo = f.get("metodo_pago_nombre", "Sin especificar")
+        if metodo not in ventas_por_metodo:
+            ventas_por_metodo[metodo] = {"cantidad": 0, "total": 0}
+        ventas_por_metodo[metodo]["cantidad"] += 1
+        ventas_por_metodo[metodo]["total"] += f["total"]
+    
+    # Ventas por día (últimos 7 días)
+    ventas_por_dia = {}
+    for f in facturas:
+        fecha = f["fecha"][:10] if f.get("fecha") else "Sin fecha"
+        if fecha not in ventas_por_dia:
+            ventas_por_dia[fecha] = {"cantidad": 0, "total": 0}
+        ventas_por_dia[fecha]["cantidad"] += 1
+        ventas_por_dia[fecha]["total"] += f["total"]
     
     return {
         "total_productos": total_productos,
@@ -2604,7 +2655,9 @@ async def get_dashboard(current_user: dict = Depends(get_current_user)):
                 "fecha": f["fecha"]
             }
             for f in facturas[:5]
-        ]
+        ],
+        "ventas_por_metodo": ventas_por_metodo,
+        "ventas_por_dia": ventas_por_dia
     }
 
 @app.get("/api/")
