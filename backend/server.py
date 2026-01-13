@@ -2018,6 +2018,203 @@ async def delete_producto(product_id: str, current_user: dict = Depends(get_prop
     
     return {"message": "Producto eliminado correctamente"}
 
+# ============ ENDPOINTS CATEGORÍAS ============
+@app.get("/api/categorias", response_model=List[CategoriaResponse])
+async def get_categorias(current_user: dict = Depends(get_current_user)):
+    categorias = await db.categorias.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
+    return [
+        CategoriaResponse(
+            id=cat["_id"],
+            nombre=cat["nombre"],
+            color=cat.get("color", "#3B82F6"),
+            organizacion_id=cat["organizacion_id"],
+            creado=cat["creado"]
+        )
+        for cat in categorias
+    ]
+
+@app.post("/api/categorias", response_model=CategoriaResponse)
+async def create_categoria(categoria: CategoriaCreate, current_user: dict = Depends(get_propietario_or_admin)):
+    categoria_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    categoria_doc = {
+        "_id": categoria_id,
+        "nombre": categoria.nombre,
+        "color": categoria.color,
+        "organizacion_id": current_user["organizacion_id"],
+        "creado": now
+    }
+    
+    await db.categorias.insert_one(categoria_doc)
+    
+    return CategoriaResponse(
+        id=categoria_id,
+        nombre=categoria.nombre,
+        color=categoria.color,
+        organizacion_id=current_user["organizacion_id"],
+        creado=now
+    )
+
+@app.put("/api/categorias/{categoria_id}", response_model=CategoriaResponse)
+async def update_categoria(categoria_id: str, categoria: CategoriaCreate, current_user: dict = Depends(get_propietario_or_admin)):
+    result = await db.categorias.update_one(
+        {"_id": categoria_id, "organizacion_id": current_user["organizacion_id"]},
+        {"$set": {"nombre": categoria.nombre, "color": categoria.color}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    
+    updated = await db.categorias.find_one({"_id": categoria_id})
+    return CategoriaResponse(
+        id=updated["_id"],
+        nombre=updated["nombre"],
+        color=updated.get("color", "#3B82F6"),
+        organizacion_id=updated["organizacion_id"],
+        creado=updated["creado"]
+    )
+
+@app.delete("/api/categorias/{categoria_id}")
+async def delete_categoria(categoria_id: str, current_user: dict = Depends(get_propietario_or_admin)):
+    result = await db.categorias.delete_one({"_id": categoria_id, "organizacion_id": current_user["organizacion_id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    return {"message": "Categoría eliminada"}
+
+# ============ ENDPOINTS MODIFICADORES ============
+@app.get("/api/modificadores", response_model=List[ModificadorResponse])
+async def get_modificadores(current_user: dict = Depends(get_current_user)):
+    modificadores = await db.modificadores.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
+    return [
+        ModificadorResponse(
+            id=mod["_id"],
+            nombre=mod["nombre"],
+            precio=mod.get("precio", 0),
+            tipo=mod.get("tipo", "adicional"),
+            organizacion_id=mod["organizacion_id"],
+            creado=mod["creado"]
+        )
+        for mod in modificadores
+    ]
+
+@app.post("/api/modificadores", response_model=ModificadorResponse)
+async def create_modificador(modificador: ModificadorCreate, current_user: dict = Depends(get_propietario_or_admin)):
+    modificador_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    modificador_doc = {
+        "_id": modificador_id,
+        "nombre": modificador.nombre,
+        "precio": modificador.precio,
+        "tipo": modificador.tipo,
+        "organizacion_id": current_user["organizacion_id"],
+        "creado": now
+    }
+    
+    await db.modificadores.insert_one(modificador_doc)
+    
+    return ModificadorResponse(
+        id=modificador_id,
+        nombre=modificador.nombre,
+        precio=modificador.precio,
+        tipo=modificador.tipo,
+        organizacion_id=current_user["organizacion_id"],
+        creado=now
+    )
+
+@app.put("/api/modificadores/{modificador_id}", response_model=ModificadorResponse)
+async def update_modificador(modificador_id: str, modificador: ModificadorCreate, current_user: dict = Depends(get_propietario_or_admin)):
+    result = await db.modificadores.update_one(
+        {"_id": modificador_id, "organizacion_id": current_user["organizacion_id"]},
+        {"$set": {"nombre": modificador.nombre, "precio": modificador.precio, "tipo": modificador.tipo}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Modificador no encontrado")
+    
+    updated = await db.modificadores.find_one({"_id": modificador_id})
+    return ModificadorResponse(
+        id=updated["_id"],
+        nombre=updated["nombre"],
+        precio=updated.get("precio", 0),
+        tipo=updated.get("tipo", "adicional"),
+        organizacion_id=updated["organizacion_id"],
+        creado=updated["creado"]
+    )
+
+@app.delete("/api/modificadores/{modificador_id}")
+async def delete_modificador(modificador_id: str, current_user: dict = Depends(get_propietario_or_admin)):
+    result = await db.modificadores.delete_one({"_id": modificador_id, "organizacion_id": current_user["organizacion_id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Modificador no encontrado")
+    return {"message": "Modificador eliminado"}
+
+# ============ ENDPOINTS DESCUENTOS ============
+@app.get("/api/descuentos", response_model=List[DescuentoResponse])
+async def get_descuentos(current_user: dict = Depends(get_current_user)):
+    descuentos = await db.descuentos.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
+    return [
+        DescuentoResponse(
+            id=desc["_id"],
+            nombre=desc["nombre"],
+            porcentaje=desc["porcentaje"],
+            activo=desc.get("activo", True),
+            organizacion_id=desc["organizacion_id"],
+            creado=desc["creado"]
+        )
+        for desc in descuentos
+    ]
+
+@app.post("/api/descuentos", response_model=DescuentoResponse)
+async def create_descuento(descuento: DescuentoCreate, current_user: dict = Depends(get_propietario_or_admin)):
+    descuento_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    descuento_doc = {
+        "_id": descuento_id,
+        "nombre": descuento.nombre,
+        "porcentaje": descuento.porcentaje,
+        "activo": descuento.activo,
+        "organizacion_id": current_user["organizacion_id"],
+        "creado": now
+    }
+    
+    await db.descuentos.insert_one(descuento_doc)
+    
+    return DescuentoResponse(
+        id=descuento_id,
+        nombre=descuento.nombre,
+        porcentaje=descuento.porcentaje,
+        activo=descuento.activo,
+        organizacion_id=current_user["organizacion_id"],
+        creado=now
+    )
+
+@app.put("/api/descuentos/{descuento_id}", response_model=DescuentoResponse)
+async def update_descuento(descuento_id: str, descuento: DescuentoCreate, current_user: dict = Depends(get_propietario_or_admin)):
+    result = await db.descuentos.update_one(
+        {"_id": descuento_id, "organizacion_id": current_user["organizacion_id"]},
+        {"$set": {"nombre": descuento.nombre, "porcentaje": descuento.porcentaje, "activo": descuento.activo}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Descuento no encontrado")
+    
+    updated = await db.descuentos.find_one({"_id": descuento_id})
+    return DescuentoResponse(
+        id=updated["_id"],
+        nombre=updated["nombre"],
+        porcentaje=updated["porcentaje"],
+        activo=updated.get("activo", True),
+        organizacion_id=updated["organizacion_id"],
+        creado=updated["creado"]
+    )
+
+@app.delete("/api/descuentos/{descuento_id}")
+async def delete_descuento(descuento_id: str, current_user: dict = Depends(get_propietario_or_admin)):
+    result = await db.descuentos.delete_one({"_id": descuento_id, "organizacion_id": current_user["organizacion_id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Descuento no encontrado")
+    return {"message": "Descuento eliminado"}
+
 @app.get("/api/clientes/buscar/{cedula}")
 async def buscar_cliente_por_cedula(cedula: str, current_user: dict = Depends(get_current_user)):
     cliente = await db.clientes.find_one({
