@@ -1506,7 +1506,7 @@ export default function POS() {
                     }}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                   >
-                    TICKETS
+                    TICKETS ABIERTOS
                   </Button>
                 )
               )}
