@@ -948,10 +948,9 @@ async def create_usuario(user: UserCreate, current_user: dict = Depends(get_prop
     if existing:
         raise HTTPException(status_code=400, detail="El username ya existe")
     
-    if user.rol not in ["administrador", "cajero"]:
-        raise HTTPException(status_code=400, detail="Solo puedes crear usuarios con rol administrador o cajero")
+    if user.rol not in ["administrador", "cajero", "mesero"]:
+        raise HTTPException(status_code=400, detail="Solo puedes crear usuarios con rol administrador, cajero o mesero")
     
-    import uuid
     user_id = str(uuid.uuid4())
     new_user = {
         "_id": user_id,
