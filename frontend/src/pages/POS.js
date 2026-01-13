@@ -765,7 +765,10 @@ export default function POS() {
       const nuevoTicket = {
         nombre: nombreNuevoTicket || `Dividido ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`,
         items: productosNuevoTicket,
-        total: productosNuevoTicket.reduce((sum, item) => sum + item.subtotal, 0)
+        subtotal: productosNuevoTicket.reduce((sum, item) => sum + item.subtotal, 0),
+        cliente_id: null,
+        cliente_nombre: null,
+        comentarios: null
       };
 
       await axios.post(`${API_URL}/api/tickets-abiertos-pos`, nuevoTicket, {
@@ -779,9 +782,10 @@ export default function POS() {
       setShowDividirDialog(false);
       setProductosParaDividir([]);
       setNombreNuevoTicket('');
-      toast.success(`Ticket dividido. ${productosNuevoTicket.length} producto(s) movidos a nuevo ticket.`);
+      toast.success(`Ticket dividido. ${productosNuevoTicket.length} producto(s) movidos a "${nuevoTicket.nombre}".`);
     } catch (error) {
-      toast.error('Error al dividir el ticket');
+      console.error('Error dividir:', error.response?.data || error);
+      toast.error(error.response?.data?.detail || 'Error al dividir el ticket');
     }
   };
 
