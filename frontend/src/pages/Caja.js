@@ -142,7 +142,7 @@ export default function Caja() {
       const response = await axios.post(
         `${API_URL}/api/caja/abrir`,
         { 
-          monto_inicial: parseFloat(montoInicial),
+          monto_inicial: cierresCajaActivo ? parseFloat(montoInicial || 0) : 0,
           tpv_id: selectedTpv
         },
         { headers: { Authorization: `Bearer ${token}` } }
