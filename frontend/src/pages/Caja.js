@@ -9,7 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import { Wallet, DollarSign, TrendingUp, Clock, CheckCircle, ShoppingCart } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
+import { Wallet, DollarSign, TrendingUp, Clock, CheckCircle, ShoppingCart, Monitor } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -25,6 +32,26 @@ export default function Caja() {
   const [showCierre, setShowCierre] = useState(false);
   const [montoInicial, setMontoInicial] = useState('');
   const [efectivoContado, setEfectivoContado] = useState('');
+  const [tpvsDisponibles, setTpvsDisponibles] = useState([]);
+  const [selectedTpv, setSelectedTpv] = useState('');
+
+  useEffect(() => {
+    fetchCajaActiva();
+    fetchHistorial();
+  }, []);
+
+  const fetchTpvsDisponibles = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/tpv/disponibles`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTpvsDisponibles(response.data);
+    } catch (error) {
+      console.error('Error al cargar TPVs:', error);
+      toast.error('Error al cargar dispositivos TPV');
+    }
+  };
 
   useEffect(() => {
     fetchCajaActiva();
