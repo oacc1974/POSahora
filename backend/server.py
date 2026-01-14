@@ -2731,7 +2731,8 @@ async def cerrar_caja(cierre: CajaCierre, current_user: dict = Depends(get_curre
         tienda_id=caja.get("tienda_id"),
         tienda_nombre=caja.get("tienda_nombre"),
         codigo_establecimiento=caja.get("codigo_establecimiento"),
-        punto_emision=caja.get("punto_emision")
+        punto_emision=caja.get("punto_emision"),
+        ventas_por_metodo=ventas_por_metodo
     )
 
 @app.get("/api/caja/historial", response_model=List[CajaResponse])
