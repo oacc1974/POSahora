@@ -472,13 +472,14 @@ export default function POS() {
   };
 
   const addToCart = (producto) => {
-    const existing = cart.find((item) => item.producto_id === producto.id);
+    const itemId = `${producto.id}_base`;
+    const existing = cart.find((item) => item.item_id === itemId || (item.producto_id === producto.id && !item.modificadores?.length));
     if (existing) {
       // Si venta con stock está desactivado O hay stock suficiente
       if (!ventaConStock || existing.cantidad < producto.stock) {
         setCart(
           cart.map((item) =>
-            item.producto_id === producto.id
+            (item.item_id === itemId || (item.producto_id === producto.id && !item.modificadores?.length))
               ? { 
                   ...item, 
                   cantidad: item.cantidad + 1,
@@ -496,12 +497,14 @@ export default function POS() {
         setCart([
           ...cart,
           {
+            item_id: itemId,
             producto_id: producto.id,
             nombre: producto.nombre,
             precio: producto.precio,
             cantidad: 1,
             subtotal: producto.precio,
             max_stock: producto.stock,
+            modificadores: [],
           },
         ]);
       } else {
