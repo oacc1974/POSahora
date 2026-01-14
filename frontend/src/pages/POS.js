@@ -59,6 +59,7 @@ export default function POS() {
   const [showCombinarDialog, setShowCombinarDialog] = useState(false);
   const [ticketsParaCombinar, setTicketsParaCombinar] = useState([]);
   const [productosParaDividir, setProductosParaDividir] = useState([]);
+  const [cantidadesParaDividir, setCantidadesParaDividir] = useState({});
   const [nombreNuevoTicket, setNombreNuevoTicket] = useState('');
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('all');
   const [showCobroDialog, setShowCobroDialog] = useState(false);
