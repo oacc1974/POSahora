@@ -3,6 +3,7 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Switch } from '../components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +12,7 @@ import {
 } from '../components/ui/dialog';
 import { 
   Plus, Pencil, Trash2, Package, ShoppingBasket, List, Tag, 
-  Layers, Percent, ChevronDown, ChevronRight 
+  Layers, Percent, ChevronDown, ChevronRight, X
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -35,6 +36,7 @@ export default function Productos() {
     descripcion: '',
     stock: '',
     categoria: '',
+    modificadores_activos: [],
   });
 
   // Estados para Categorías
@@ -47,7 +49,11 @@ export default function Productos() {
   const [modificadores, setModificadores] = useState([]);
   const [showModificadorDialog, setShowModificadorDialog] = useState(false);
   const [editingModificador, setEditingModificador] = useState(null);
-  const [modificadorForm, setModificadorForm] = useState({ nombre: '', precio: '', tipo: 'adicional' });
+  const [modificadorForm, setModificadorForm] = useState({ 
+    nombre: '', 
+    opciones: [],
+    obligatorio: false 
+  });
 
   // Estados para Descuentos
   const [descuentos, setDescuentos] = useState([]);
@@ -85,9 +91,7 @@ export default function Productos() {
       });
       setCategorias(response.data);
     } catch (error) {
-      // Si no existe el endpoint, usar categorías de productos
-      const cats = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
-      setCategorias(cats.map((c, i) => ({ id: i, nombre: c })));
+      setCategorias([]);
     }
   };
 
@@ -171,6 +175,7 @@ export default function Productos() {
         descripcion: product.descripcion || '',
         stock: product.stock.toString(),
         categoria: product.categoria || '',
+        modificadores_activos: product.modificadores_activos || [],
       });
     } else {
       resetForm();
@@ -187,6 +192,18 @@ export default function Productos() {
       descripcion: '',
       stock: '',
       categoria: '',
+      modificadores_activos: [],
+    });
+  };
+
+  const toggleModificador = (modId) => {
+    setFormData(prev => {
+      const activos = prev.modificadores_activos || [];
+      if (activos.includes(modId)) {
+        return { ...prev, modificadores_activos: activos.filter(id => id !== modId) };
+      } else {
+        return { ...prev, modificadores_activos: [...activos, modId] };
+      }
     });
   };
 
@@ -234,7 +251,12 @@ export default function Productos() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const data = { ...modificadorForm, precio: parseFloat(modificadorForm.precio) || 0 };
+      const data = { 
+        nombre: modificadorForm.nombre,
+        opciones: modificadorForm.opciones,
+        obligatorio: modificadorForm.obligatorio
+      };
+      
       if (editingModificador) {
         await axios.put(`${API_URL}/api/modificadores/${editingModificador.id}`, data, {
           headers: { Authorization: `Bearer ${token}` },
@@ -248,7 +270,7 @@ export default function Productos() {
       }
       setShowModificadorDialog(false);
       setEditingModificador(null);
-      setModificadorForm({ nombre: '', precio: '', tipo: 'adicional' });
+      setModificadorForm({ nombre: '', opciones: [], obligatorio: false });
       fetchModificadores();
     } catch (error) {
       toast.error('Error al guardar modificador');
@@ -267,6 +289,28 @@ export default function Productos() {
     } catch (error) {
       toast.error('Error al eliminar modificador');
     }
+  };
+
+  const addOpcion = () => {
+    setModificadorForm(prev => ({
+      ...prev,
+      opciones: [...prev.opciones, { id: Date.now().toString(), nombre: '', precio: 0 }]
+    }));
+  };
+
+  const updateOpcion = (index, field, value) => {
+    setModificadorForm(prev => {
+      const nuevasOpciones = [...prev.opciones];
+      nuevasOpciones[index] = { ...nuevasOpciones[index], [field]: field === 'precio' ? parseFloat(value) || 0 : value };
+      return { ...prev, opciones: nuevasOpciones };
+    });
+  };
+
+  const removeOpcion = (index) => {
+    setModificadorForm(prev => ({
+      ...prev,
+      opciones: prev.opciones.filter((_, i) => i !== index)
+    }));
   };
 
   // ============ DESCUENTOS HANDLERS ============
@@ -363,6 +407,11 @@ export default function Productos() {
                   {producto.stock} uds
                 </p>
               </div>
+              {producto.modificadores_activos?.length > 0 && (
+                <p className="text-xs text-slate-500 mb-2">
+                  {producto.modificadores_activos.length} modificador(es) activo(s)
+                </p>
+              )}
               <div className="flex gap-2">
                 <Button onClick={() => openDialog(producto)} variant="outline" size="sm" className="flex-1">
                   <Pencil size={14} className="mr-1" /> Editar
@@ -429,7 +478,7 @@ export default function Productos() {
           <h2 className="text-2xl font-bold text-slate-900">Modificadores</h2>
           <p className="text-slate-600 text-sm">Opciones adicionales para tus productos</p>
         </div>
-        <Button onClick={() => { setEditingModificador(null); setModificadorForm({ nombre: '', precio: '', tipo: 'adicional' }); setShowModificadorDialog(true); }} className="gap-2">
+        <Button onClick={() => { setEditingModificador(null); setModificadorForm({ nombre: '', opciones: [], obligatorio: false }); setShowModificadorDialog(true); }} className="gap-2">
           <Plus size={18} />
           Nuevo Modificador
         </Button>
@@ -439,7 +488,7 @@ export default function Productos() {
         <Card className="p-12 text-center">
           <Tag size={64} className="mx-auto mb-4 text-slate-300" />
           <h3 className="text-xl font-semibold mb-2">No hay modificadores</h3>
-          <p className="text-slate-500 mb-6">Crea modificadores como extras, tamaños, etc.</p>
+          <p className="text-slate-500 mb-6">Crea modificadores con opciones para tus productos</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -447,11 +496,33 @@ export default function Productos() {
             <Card key={mod.id} className="p-4 hover:shadow-lg transition-shadow">
               <div className="flex justify-between items-start mb-3">
                 <h3 className="font-bold text-slate-900">{mod.nombre}</h3>
-                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">{mod.tipo}</span>
+                {mod.obligatorio && (
+                  <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Obligatorio</span>
+                )}
               </div>
-              <p className="text-lg font-bold text-green-600 mb-3">+${mod.precio?.toFixed(2) || '0.00'}</p>
+              {mod.opciones?.length > 0 && (
+                <div className="space-y-1 mb-3">
+                  {mod.opciones.map((op, i) => (
+                    <div key={i} className="flex justify-between text-sm">
+                      <span className="text-slate-600">{op.nombre}</span>
+                      <span className="text-green-600 font-medium">${op.precio?.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(!mod.opciones || mod.opciones.length === 0) && (
+                <p className="text-sm text-slate-400 mb-3">Sin opciones</p>
+              )}
               <div className="flex gap-2">
-                <Button onClick={() => { setEditingModificador(mod); setModificadorForm({ nombre: mod.nombre, precio: mod.precio?.toString() || '', tipo: mod.tipo || 'adicional' }); setShowModificadorDialog(true); }} variant="outline" size="sm" className="flex-1">
+                <Button onClick={() => { 
+                  setEditingModificador(mod); 
+                  setModificadorForm({ 
+                    nombre: mod.nombre, 
+                    opciones: mod.opciones || [], 
+                    obligatorio: mod.obligatorio || false 
+                  }); 
+                  setShowModificadorDialog(true); 
+                }} variant="outline" size="sm" className="flex-1">
                   <Pencil size={14} className="mr-1" /> Editar
                 </Button>
                 <Button onClick={() => handleDeleteModificador(mod.id)} variant="destructive" size="sm" className="flex-1">
@@ -559,7 +630,7 @@ export default function Productos() {
 
       {/* Dialog Producto */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent data-testid="product-dialog">
+        <DialogContent data-testid="product-dialog" className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
           </DialogHeader>
@@ -590,6 +661,30 @@ export default function Productos() {
               <Label htmlFor="descripcion">Descripción</Label>
               <Input id="descripcion" value={formData.descripcion} onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })} />
             </div>
+
+            {/* Sección de Modificadores */}
+            {modificadores.length > 0 && (
+              <div className="border-t pt-4">
+                <Label className="text-base font-semibold mb-3 block">Modificadores</Label>
+                <div className="space-y-3">
+                  {modificadores.map((mod) => (
+                    <div key={mod.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-slate-900">{mod.nombre}</p>
+                        {mod.opciones?.length > 0 && (
+                          <p className="text-xs text-slate-500">{mod.opciones.length} opción(es)</p>
+                        )}
+                      </div>
+                      <Switch
+                        checked={formData.modificadores_activos?.includes(mod.id)}
+                        onCheckedChange={() => toggleModificador(mod.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setShowDialog(false)} className="flex-1">Cancelar</Button>
               <Button type="submit" className="flex-1">{editingProduct ? 'Actualizar' : 'Crear'}</Button>
@@ -623,27 +718,66 @@ export default function Productos() {
 
       {/* Dialog Modificador */}
       <Dialog open={showModificadorDialog} onOpenChange={setShowModificadorDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingModificador ? 'Editar Modificador' : 'Nuevo Modificador'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleModificadorSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="mod-nombre">Nombre *</Label>
-              <Input id="mod-nombre" value={modificadorForm.nombre} onChange={(e) => setModificadorForm({ ...modificadorForm, nombre: e.target.value })} required placeholder="Ej: Extra queso, Tamaño grande..." />
+              <Label htmlFor="mod-nombre">Nombre del modificador *</Label>
+              <Input 
+                id="mod-nombre" 
+                value={modificadorForm.nombre} 
+                onChange={(e) => setModificadorForm({ ...modificadorForm, nombre: e.target.value })} 
+                required 
+                placeholder="Ej: Tamaño, Extras, Preparación..." 
+              />
             </div>
+
+            <div className="flex items-center gap-2">
+              <Switch
+                id="mod-obligatorio"
+                checked={modificadorForm.obligatorio}
+                onCheckedChange={(checked) => setModificadorForm({ ...modificadorForm, obligatorio: checked })}
+              />
+              <Label htmlFor="mod-obligatorio">Obligatorio</Label>
+            </div>
+
+            {/* Opciones del modificador */}
             <div>
-              <Label htmlFor="mod-precio">Precio adicional</Label>
-              <Input id="mod-precio" type="number" step="0.01" value={modificadorForm.precio} onChange={(e) => setModificadorForm({ ...modificadorForm, precio: e.target.value })} placeholder="0.00" />
+              <Label className="mb-2 block">Opciones</Label>
+              <div className="space-y-2">
+                {modificadorForm.opciones.map((opcion, index) => (
+                  <div key={opcion.id || index} className="flex gap-2 items-center">
+                    <Input
+                      placeholder="Nombre de opción"
+                      value={opcion.nombre}
+                      onChange={(e) => updateOpcion(index, 'nombre', e.target.value)}
+                      className="flex-1"
+                    />
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-500">$</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={opcion.precio || ''}
+                        onChange={(e) => updateOpcion(index, 'precio', e.target.value)}
+                        className="w-24"
+                      />
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => removeOpcion(index)}>
+                      <X size={16} className="text-red-500" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Button type="button" variant="outline" onClick={addOpcion} className="w-full mt-2 gap-2">
+                <Plus size={16} />
+                AÑADIR OPCIÓN
+              </Button>
             </div>
-            <div>
-              <Label htmlFor="mod-tipo">Tipo</Label>
-              <select id="mod-tipo" value={modificadorForm.tipo} onChange={(e) => setModificadorForm({ ...modificadorForm, tipo: e.target.value })} className="w-full border rounded-lg px-3 py-2">
-                <option value="adicional">Adicional</option>
-                <option value="tamaño">Tamaño</option>
-                <option value="preparacion">Preparación</option>
-              </select>
-            </div>
+
             <div className="flex gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setShowModificadorDialog(false)} className="flex-1">Cancelar</Button>
               <Button type="submit" className="flex-1">{editingModificador ? 'Actualizar' : 'Crear'}</Button>
@@ -668,7 +802,11 @@ export default function Productos() {
               <Input id="desc-porcentaje" type="number" step="0.1" value={descuentoForm.porcentaje} onChange={(e) => setDescuentoForm({ ...descuentoForm, porcentaje: e.target.value })} required placeholder="10" />
             </div>
             <div className="flex items-center gap-2">
-              <input type="checkbox" id="desc-activo" checked={descuentoForm.activo} onChange={(e) => setDescuentoForm({ ...descuentoForm, activo: e.target.checked })} className="rounded" />
+              <Switch
+                id="desc-activo"
+                checked={descuentoForm.activo}
+                onCheckedChange={(checked) => setDescuentoForm({ ...descuentoForm, activo: checked })}
+              />
               <Label htmlFor="desc-activo">Activo</Label>
             </div>
             <div className="flex gap-3 pt-4">
