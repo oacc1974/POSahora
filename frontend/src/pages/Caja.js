@@ -35,6 +35,7 @@ export default function Caja() {
   const [tpvsDisponibles, setTpvsDisponibles] = useState([]);
   const [selectedTpv, setSelectedTpv] = useState('');
   const [loadingTpvs, setLoadingTpvs] = useState(false);
+  const [cierresCajaActivo, setCierresCajaActivo] = useState(true);
   
   // Estados para administración de cajas
   const [cajasAbiertas, setCajasAbiertas] = useState([]);
@@ -48,10 +49,23 @@ export default function Caja() {
   useEffect(() => {
     fetchCajaActiva();
     fetchHistorial();
+    fetchFunciones();
     if (isAdmin) {
       fetchCajasAbiertas();
     }
   }, []);
+
+  const fetchFunciones = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/funciones`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCierresCajaActivo(response.data.cierres_caja ?? true);
+    } catch (error) {
+      console.error('Error al cargar funciones:', error);
+    }
+  };
 
   const fetchCajasAbiertas = async () => {
     try {
