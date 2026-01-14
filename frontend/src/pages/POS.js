@@ -352,6 +352,125 @@ export default function POS() {
     }
   };
 
+  const fetchModificadores = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/modificadores`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setModificadores(response.data);
+    } catch (error) {
+      console.log('Error al cargar modificadores');
+    }
+  };
+
+  // Función para verificar si un producto tiene modificadores activos
+  const getModificadoresProducto = (producto) => {
+    if (!producto.modificadores_activos || producto.modificadores_activos.length === 0) {
+      return [];
+    }
+    return modificadores.filter(m => producto.modificadores_activos.includes(m.id));
+  };
+
+  // Función para manejar click en producto
+  const handleProductoClick = (producto) => {
+    const modsProducto = getModificadoresProducto(producto);
+    
+    if (modsProducto.length > 0) {
+      // Si tiene modificadores, mostrar diálogo
+      setProductoConModificadores(producto);
+      setModificadoresSeleccionados({});
+      setShowModificadorDialog(true);
+    } else {
+      // Si no tiene modificadores, añadir directamente
+      addToCart(producto);
+    }
+  };
+
+  // Función para añadir producto con modificadores al carrito
+  const addToCartConModificadores = () => {
+    if (!productoConModificadores) return;
+    
+    const modsProducto = getModificadoresProducto(productoConModificadores);
+    
+    // Verificar que los modificadores obligatorios estén seleccionados
+    for (const mod of modsProducto) {
+      if (mod.obligatorio && !modificadoresSeleccionados[mod.id]) {
+        toast.error(`Debes seleccionar una opción de "${mod.nombre}"`);
+        return;
+      }
+    }
+    
+    // Calcular precio adicional de modificadores
+    let precioModificadores = 0;
+    const modsSeleccionados = [];
+    
+    Object.entries(modificadoresSeleccionados).forEach(([modId, opcionId]) => {
+      const mod = modificadores.find(m => m.id === modId);
+      if (mod && opcionId) {
+        const opcion = mod.opciones.find(o => o.id === opcionId);
+        if (opcion) {
+          precioModificadores += opcion.precio || 0;
+          modsSeleccionados.push({
+            modificador_id: mod.id,
+            modificador_nombre: mod.nombre,
+            opcion_id: opcion.id,
+            opcion_nombre: opcion.nombre,
+            precio: opcion.precio || 0
+          });
+        }
+      }
+    });
+    
+    const precioFinal = productoConModificadores.precio + precioModificadores;
+    
+    // Crear un ID único para este item (producto + combinación de modificadores)
+    const itemId = `${productoConModificadores.id}_${modsSeleccionados.map(m => m.opcion_id).sort().join('_') || 'base'}`;
+    
+    const existing = cart.find((item) => item.item_id === itemId);
+    
+    if (existing) {
+      if (!ventaConStock || existing.cantidad < productoConModificadores.stock) {
+        setCart(
+          cart.map((item) =>
+            item.item_id === itemId
+              ? { 
+                  ...item, 
+                  cantidad: item.cantidad + 1,
+                  subtotal: (item.cantidad + 1) * item.precio
+                }
+              : item
+          )
+        );
+      } else {
+        toast.error('No hay suficiente stock');
+      }
+    } else {
+      if (!ventaConStock || productoConModificadores.stock > 0) {
+        setCart([
+          ...cart,
+          {
+            item_id: itemId,
+            producto_id: productoConModificadores.id,
+            nombre: productoConModificadores.nombre,
+            precio: precioFinal,
+            precio_base: productoConModificadores.precio,
+            cantidad: 1,
+            subtotal: precioFinal,
+            max_stock: productoConModificadores.stock,
+            modificadores: modsSeleccionados,
+          },
+        ]);
+      } else {
+        toast.error('Producto sin stock');
+      }
+    }
+    
+    setShowModificadorDialog(false);
+    setProductoConModificadores(null);
+    setModificadoresSeleccionados({});
+  };
+
   const addToCart = (producto) => {
     const existing = cart.find((item) => item.producto_id === producto.id);
     if (existing) {
