@@ -734,6 +734,54 @@ export default function Productos() {
               <Input id="descripcion" value={formData.descripcion} onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })} />
             </div>
 
+            {/* Imagen del producto */}
+            <div>
+              <Label>Imagen del Producto</Label>
+              <div className="mt-2 space-y-3">
+                {formData.imagen && (
+                  <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-slate-200">
+                    <img 
+                      src={`${API_URL}${formData.imagen}`} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, imagen: '' }))}
+                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+                <div className="flex items-center gap-3">
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploadingImage}
+                    />
+                    <div className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${uploadingImage ? 'bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700'}`}>
+                      {uploadingImage ? (
+                        <>
+                          <span className="animate-spin">⏳</span>
+                          Subiendo...
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={16} />
+                          {formData.imagen ? 'Cambiar imagen' : 'Subir imagen'}
+                        </>
+                      )}
+                    </div>
+                  </label>
+                  <span className="text-xs text-slate-500">JPG, PNG, GIF o WebP (máx. 5MB)</span>
+                </div>
+              </div>
+            </div>
+
             {/* Sección de Modificadores */}
             {modificadores.length > 0 && (
               <div className="border-t pt-4">
@@ -759,7 +807,7 @@ export default function Productos() {
 
             <div className="flex gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setShowDialog(false)} className="flex-1">Cancelar</Button>
-              <Button type="submit" className="flex-1">{editingProduct ? 'Actualizar' : 'Crear'}</Button>
+              <Button type="submit" disabled={uploadingImage} className="flex-1">{editingProduct ? 'Actualizar' : 'Crear'}</Button>
             </div>
           </form>
         </DialogContent>
