@@ -219,10 +219,13 @@ export default function Caja() {
     printWindow.document.write(`
       body { font-family: monospace; padding: 20px; font-size: 12px; }
       h1 { text-align: center; font-size: 16px; margin: 0; }
+      h2 { font-size: 14px; margin: 15px 0 10px 0; }
       .header { text-align: center; margin-bottom: 15px; }
       .divider { border-top: 1px dashed #000; margin: 10px 0; }
       .item { display: flex; justify-content: space-between; margin: 8px 0; }
+      .item-small { display: flex; justify-content: space-between; margin: 5px 0; font-size: 11px; }
       .total { border-top: 2px solid #000; margin-top: 10px; padding-top: 10px; font-weight: bold; font-size: 14px; }
+      .section { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; }
     `);
     printWindow.document.write('</style></head><body>');
     printWindow.document.write('<div class="header">');
@@ -231,6 +234,9 @@ export default function Caja() {
     printWindow.document.write('</div>');
     printWindow.document.write('<div class="divider"></div>');
     printWindow.document.write(`<p>Cajero: ${caja.usuario_nombre}</p>`);
+    if (caja.tpv_nombre) {
+      printWindow.document.write(`<p>TPV: ${caja.tpv_nombre}</p>`);
+    }
     printWindow.document.write(
       `<p>Apertura: ${new Date(caja.fecha_apertura).toLocaleString('es-ES')}</p>`
     );
@@ -238,6 +244,23 @@ export default function Caja() {
       `<p>Cierre: ${new Date(caja.fecha_cierre).toLocaleString('es-ES')}</p>`
     );
     printWindow.document.write('<div class="divider"></div>');
+    
+    // Detalle de ventas por método de pago
+    if (caja.ventas_por_metodo && caja.ventas_por_metodo.length > 0) {
+      printWindow.document.write('<h2>VENTAS POR MÉTODO DE PAGO</h2>');
+      printWindow.document.write('<div class="section">');
+      caja.ventas_por_metodo.forEach(metodo => {
+        printWindow.document.write(
+          `<div class="item-small">
+            <span>${metodo.metodo_nombre} (${metodo.cantidad}):</span>
+            <span>$${metodo.total.toFixed(2)}</span>
+          </div>`
+        );
+      });
+      printWindow.document.write('</div>');
+      printWindow.document.write('<div class="divider"></div>');
+    }
+    
     printWindow.document.write(
       `<div class="item"><span>Base de Caja:</span><span>$${caja.monto_inicial.toFixed(2)}</span></div>`
     );
