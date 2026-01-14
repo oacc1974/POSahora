@@ -1423,7 +1423,7 @@ export default function POS() {
                 <Button
                   onClick={() => {
                     if (cart.length > 0) {
-                      setShowGuardarTicketDialog(true);
+                      handleClickGuardar();
                     } else {
                       fetchTicketsAbiertos();
                       setShowTicketsAbiertosDialog(true);
