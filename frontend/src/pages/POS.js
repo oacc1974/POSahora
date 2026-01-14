@@ -1679,7 +1679,7 @@ export default function POS() {
               {ticketsAbiertosFuncionActiva && (
                 cart.length > 0 ? (
                   <Button
-                    onClick={() => setShowGuardarTicketDialog(true)}
+                    onClick={handleClickGuardar}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                   >
                     GUARDAR
