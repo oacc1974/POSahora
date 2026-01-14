@@ -1654,7 +1654,9 @@ async def get_tpvs_disponibles(current_user: dict = Depends(get_current_user)):
         "activo": True,
         "$or": [
             {"ocupado": False},
-            {"ocupado": {"$exists": False}}
+            {"ocupado": {"$exists": False}},
+            {"ocupado": None},
+            {"ocupado": {"$eq": None}}
         ]
     }, {"_id": 0}).to_list(1000)
     
