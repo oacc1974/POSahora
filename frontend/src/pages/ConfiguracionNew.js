@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/card';
 import { Settings, CreditCard, Receipt, FileText, ClipboardList, ShoppingBag, Store, Monitor } from 'lucide-react';
 import axios from 'axios';
@@ -14,7 +15,15 @@ import ConfigTPV from './config/ConfigTPV';
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function ConfiguracionNew() {
-  const [activeSection, setActiveSection] = useState('funciones');
+  const { seccion } = useParams();
+  const navigate = useNavigate();
+  const [activeSection, setActiveSection] = useState(seccion || 'funciones');
+  
+  useEffect(() => {
+    if (seccion) {
+      setActiveSection(seccion);
+    }
+  }, [seccion]);
   const [funcionesConfig, setFuncionesConfig] = React.useState({
     cierres_caja: true,
     tickets_abiertos: false,
