@@ -185,6 +185,7 @@ export default function Productos() {
         stock: product.stock.toString(),
         categoria: product.categoria || '',
         modificadores_activos: product.modificadores_activos || [],
+        imagen: product.imagen || '',
       });
     } else {
       resetForm();
@@ -202,7 +203,48 @@ export default function Productos() {
       stock: '',
       categoria: '',
       modificadores_activos: [],
+      imagen: '',
     });
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Tipo de archivo no permitido. Use JPG, PNG, GIF o WebP');
+      return;
+    }
+    
+    // Validar tamaño (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen no debe superar 5MB');
+      return;
+    }
+    
+    setUploadingImage(true);
+    try {
+      const token = localStorage.getItem('token');
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      
+      const response = await axios.post(`${API_URL}/api/productos/upload-imagen`, formDataUpload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      setFormData(prev => ({ ...prev, imagen: response.data.url }));
+      toast.success('Imagen subida correctamente');
+    } catch (error) {
+      console.error('Error al subir imagen:', error);
+      toast.error('Error al subir la imagen');
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const toggleModificador = (modId) => {
