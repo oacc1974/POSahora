@@ -2202,10 +2202,10 @@ export default function POS() {
                       Cargar
                     </Button>
                     <Button
-                      onClick={() => handleEliminarTicket(ticket.id)}
+                      onClick={(e) => handleEliminarTicket(ticket.id, e)}
                       variant="outline"
                       size="sm"
-                      className="text-red-600 hover:text-red-700"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       Eliminar
                     </Button>
