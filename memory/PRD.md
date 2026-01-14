@@ -18,6 +18,19 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ## Funcionalidades Implementadas
 
+### Completadas (14 Enero 2026)
+
+- [x] **Bug Fix: Página de Configuración de Recibo en blanco**
+  - **Problema:** La ruta `/configuracion/recibo` mostraba una página en blanco
+  - **Causa:** La ruta con parámetro no estaba definida en React Router
+  - **Solución:** Añadida ruta `/configuracion/:seccion` en App.js y actualizado ConfiguracionNew.js para leer el parámetro de la URL
+  - **Backend Fix:** El endpoint GET `/api/config` no devolvía el campo `imprimir_ticket` - corregido
+
+- [x] **Nueva opción: Imprimir ticket de venta automáticamente**
+  - Checkbox en Configuración → Recibo → Opciones Avanzadas
+  - Permite activar/desactivar la impresión automática del ticket de venta
+  - Persistido en MongoDB en la colección `configuraciones`
+
 ### Completadas (13 Enero 2026)
 
 - [x] **Menú de Navegación por Rol:**
