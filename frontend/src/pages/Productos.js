@@ -658,7 +658,28 @@ export default function Productos() {
             </div>
             <div>
               <Label htmlFor="categoria">Categoría</Label>
-              <Input id="categoria" value={formData.categoria} onChange={(e) => setFormData({ ...formData, categoria: e.target.value })} placeholder="Ej: Bebidas, Comida..." />
+              <Select 
+                value={formData.categoria || ''} 
+                onValueChange={(value) => setFormData({ ...formData, categoria: value })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Selecciona una categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sin categoría</SelectItem>
+                  {categorias.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.nombre}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: cat.color || '#3B82F6' }}
+                        />
+                        {cat.nombre}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="codigo_barras">Código de Barras</Label>
