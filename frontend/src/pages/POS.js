@@ -513,24 +513,25 @@ export default function POS() {
     }
   };
 
-  const updateQuantity = (producto_id, delta) => {
-    const item = cart.find((i) => i.producto_id === producto_id);
+  const updateQuantity = (item_id, delta) => {
+    const item = cart.find((i) => i.item_id === item_id);
+    if (!item) return;
     const newQty = item.cantidad + delta;
 
     if (newQty <= 0) {
-      removeFromCart(producto_id);
+      removeFromCart(item_id);
     } else {
       // Si venta con stock está desactivado O no excede el stock
       if (!ventaConStock || newQty <= item.max_stock) {
         setCart(
-          cart.map((item) =>
-            item.producto_id === producto_id
+          cart.map((cartItem) =>
+            cartItem.item_id === item_id
               ? {
-                  ...item,
+                  ...cartItem,
                   cantidad: newQty,
-                  subtotal: newQty * item.precio,
+                  subtotal: newQty * cartItem.precio,
                 }
-              : item
+              : cartItem
           )
         );
       } else {
@@ -539,8 +540,8 @@ export default function POS() {
     }
   };
 
-  const removeFromCart = (producto_id) => {
-    setCart(cart.filter((item) => item.producto_id !== producto_id));
+  const removeFromCart = (item_id) => {
+    setCart(cart.filter((item) => item.item_id !== item_id));
   };
 
   const handleScan = async (result) => {
