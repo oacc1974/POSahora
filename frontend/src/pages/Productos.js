@@ -659,14 +659,14 @@ export default function Productos() {
             <div>
               <Label htmlFor="categoria">Categoría</Label>
               <Select 
-                value={formData.categoria || ''} 
-                onValueChange={(value) => setFormData({ ...formData, categoria: value })}
+                value={formData.categoria || 'sin-categoria'} 
+                onValueChange={(value) => setFormData({ ...formData, categoria: value === 'sin-categoria' ? '' : value })}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin categoría</SelectItem>
+                  <SelectItem value="sin-categoria">Sin categoría</SelectItem>
                   {categorias.map((cat) => (
                     <SelectItem key={cat.id} value={cat.nombre}>
                       <div className="flex items-center gap-2">
