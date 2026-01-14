@@ -230,6 +230,7 @@ class ProductCreate(BaseModel):
     stock: Optional[int] = 0
     categoria: Optional[str] = None
     modificadores_activos: Optional[List[str]] = []
+    imagen: Optional[str] = None
 
 class ProductResponse(BaseModel):
     id: str
@@ -240,6 +241,7 @@ class ProductResponse(BaseModel):
     stock: int = 0
     categoria: Optional[str] = None
     modificadores_activos: Optional[List[str]] = []
+    imagen: Optional[str] = None
     organizacion_id: str
     creado: str
 
