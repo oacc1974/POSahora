@@ -335,16 +335,21 @@ class CategoriaResponse(BaseModel):
     organizacion_id: str
     creado: str
 
-class ModificadorCreate(BaseModel):
+class ModificadorOpcion(BaseModel):
+    id: Optional[str] = None
     nombre: str
     precio: float = 0
-    tipo: str = "adicional"
+
+class ModificadorCreate(BaseModel):
+    nombre: str
+    opciones: List[ModificadorOpcion] = []
+    obligatorio: bool = False
 
 class ModificadorResponse(BaseModel):
     id: str
     nombre: str
-    precio: float
-    tipo: str
+    opciones: List[dict] = []
+    obligatorio: bool
     organizacion_id: str
     creado: str
 
