@@ -67,12 +67,15 @@ export default function Caja() {
   const fetchTpvsDisponibles = async () => {
     try {
       const token = localStorage.getItem('token');
+      console.log('Fetching TPVs disponibles...');
       const response = await axios.get(`${API_URL}/api/tpv/disponibles`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('TPVs disponibles:', response.data);
       setTpvsDisponibles(response.data);
     } catch (error) {
       console.error('Error al cargar TPVs:', error);
+      console.error('Error response:', error.response?.data);
       toast.error('Error al cargar dispositivos TPV');
     }
   };
