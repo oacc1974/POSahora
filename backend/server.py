@@ -1915,14 +1915,22 @@ async def update_ticket_abierto(ticket_id: str, ticket: TicketAbiertoCreate, cur
 
 @app.delete("/api/tickets-abiertos-pos/{ticket_id}")
 async def delete_ticket_abierto(ticket_id: str, current_user: dict = Depends(get_current_user)):
-    result = await db.tickets_abiertos.delete_one({
-        "id": ticket_id,
-        "vendedor_id": current_user["_id"],
-        "organizacion_id": current_user["organizacion_id"]
-    })
+    # Propietarios y administradores pueden eliminar cualquier ticket de su organización
+    if current_user["rol"] in ["propietario", "administrador"]:
+        result = await db.tickets_abiertos.delete_one({
+            "id": ticket_id,
+            "organizacion_id": current_user["organizacion_id"]
+        })
+    else:
+        # Cajeros y meseros solo pueden eliminar sus propios tickets
+        result = await db.tickets_abiertos.delete_one({
+            "id": ticket_id,
+            "vendedor_id": current_user["_id"],
+            "organizacion_id": current_user["organizacion_id"]
+        })
     
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+        raise HTTPException(status_code=404, detail="Ticket no encontrado o sin permisos")
     
     return {"message": "Ticket eliminado correctamente"}
 
