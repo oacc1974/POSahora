@@ -1991,6 +1991,30 @@ async def get_producto_by_barcode(codigo: str, current_user: dict = Depends(get_
         creado=producto["creado"]
     )
 
+@app.post("/api/productos/upload-imagen")
+async def upload_producto_imagen(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_propietario_or_admin)
+):
+    """Sube una imagen para un producto y devuelve la URL"""
+    # Validar tipo de archivo
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Tipo de archivo no permitido. Use JPG, PNG, GIF o WebP")
+    
+    # Generar nombre único
+    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = UPLOADS_DIR / filename
+    
+    # Guardar archivo
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Devolver URL relativa
+    imagen_url = f"/api/uploads/productos/{filename}"
+    return {"url": imagen_url, "filename": filename}
+
 @app.post("/api/productos", response_model=ProductResponse)
 async def create_producto(product: ProductCreate, current_user: dict = Depends(get_propietario_or_admin)):
     import uuid
@@ -2005,6 +2029,7 @@ async def create_producto(product: ProductCreate, current_user: dict = Depends(g
         "stock": product.stock or 0,
         "categoria": product.categoria,
         "modificadores_activos": product.modificadores_activos or [],
+        "imagen": product.imagen,
         "organizacion_id": current_user["organizacion_id"],
         "creado": datetime.now(timezone.utc).isoformat()
     }
@@ -2019,6 +2044,7 @@ async def create_producto(product: ProductCreate, current_user: dict = Depends(g
         stock=product.stock or 0,
         categoria=product.categoria,
         modificadores_activos=product.modificadores_activos or [],
+        imagen=product.imagen,
         organizacion_id=current_user["organizacion_id"],
         creado=new_product["creado"]
     )
