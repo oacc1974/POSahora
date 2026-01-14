@@ -1359,7 +1359,7 @@ export default function POS() {
                     {/* Cantidad y controles */}
                     <div className="flex items-center gap-1 bg-slate-100 rounded-lg">
                       <button
-                        onClick={() => updateQuantity(item.producto_id, -1)}
+                        onClick={() => updateQuantity(item.item_id, -1)}
                         className="w-8 h-8 flex items-center justify-center hover:bg-slate-200 rounded-l-lg"
                       >
                         <Minus size={14} />
@@ -1622,7 +1622,7 @@ export default function POS() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1 bg-slate-100 rounded-lg">
                         <button
-                          onClick={() => updateQuantity(item.producto_id, -1)}
+                          onClick={() => updateQuantity(item.item_id, -1)}
                           className="w-8 h-8 flex items-center justify-center hover:bg-slate-200 rounded-l-lg"
                         >
                           <Minus size={14} />
