@@ -467,10 +467,14 @@ export default function Caja() {
             {/* Selector de TPV */}
             <div>
               <Label>Punto de Venta (TPV) *</Label>
-              {tpvsDisponibles.length === 0 ? (
+              {loadingTpvs ? (
+                <div className="mt-2 p-4 bg-slate-50 border border-slate-200 rounded-lg text-center">
+                  <p className="text-sm text-slate-600">Cargando dispositivos TPV...</p>
+                </div>
+              ) : tpvsDisponibles.length === 0 ? (
                 <div className="mt-2 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                   <p className="text-sm text-amber-700">
-                    No hay dispositivos TPV disponibles. Ve a Configuración → Dispositivos TPV para crear uno.
+                    No hay dispositivos TPV disponibles. Ve a Configuración → Dispositivos TPV para crear uno o verifica que no estén ocupados.
                   </p>
                 </div>
               ) : (
