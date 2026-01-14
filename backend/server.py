@@ -317,6 +317,12 @@ class CajaApertura(BaseModel):
 class CajaCierre(BaseModel):
     efectivo_contado: float
 
+class VentasPorMetodo(BaseModel):
+    metodo_id: Optional[str] = None
+    metodo_nombre: str
+    total: float
+    cantidad: int
+
 class CajaResponse(BaseModel):
     id: str
     numero: str
@@ -337,6 +343,7 @@ class CajaResponse(BaseModel):
     tienda_nombre: Optional[str] = None
     codigo_establecimiento: Optional[str] = None
     punto_emision: Optional[str] = None
+    ventas_por_metodo: Optional[List[VentasPorMetodo]] = None
 
 # ============ MODELOS PARA ARTÍCULOS ============
 class CategoriaCreate(BaseModel):
