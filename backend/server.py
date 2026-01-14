@@ -1963,6 +1963,7 @@ async def get_productos(current_user: dict = Depends(get_current_user)):
             stock=p.get("stock", 0),
             categoria=p.get("categoria"),
             modificadores_activos=p.get("modificadores_activos", []),
+            imagen=p.get("imagen"),
             organizacion_id=p["organizacion_id"],
             creado=p["creado"]
         )
@@ -1987,6 +1988,7 @@ async def get_producto_by_barcode(codigo: str, current_user: dict = Depends(get_
         stock=producto.get("stock", 0),
         categoria=producto.get("categoria"),
         modificadores_activos=producto.get("modificadores_activos", []),
+        imagen=producto.get("imagen"),
         organizacion_id=producto["organizacion_id"],
         creado=producto["creado"]
     )
