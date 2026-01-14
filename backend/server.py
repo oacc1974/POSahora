@@ -1649,19 +1649,23 @@ async def get_tpvs(current_user: dict = Depends(get_current_user)):
 @app.get("/api/tpv/disponibles", response_model=List[TPVResponse])
 async def get_tpvs_disponibles(current_user: dict = Depends(get_current_user)):
     """Obtiene solo los TPV activos y no ocupados para selección al abrir caja"""
+    # Buscar TPVs de la organización que estén activos (o sin el campo activo) y no ocupados
     tpvs = await db.tpv.find({
         "organizacion_id": current_user["organizacion_id"],
-        "activo": True,
         "$or": [
-            {"ocupado": False},
-            {"ocupado": {"$exists": False}},
-            {"ocupado": None},
-            {"ocupado": {"$eq": None}}
+            {"activo": True},
+            {"activo": {"$exists": False}}
         ]
     }, {"_id": 0}).to_list(1000)
     
+    # Filtrar los que no están ocupados
     result = []
     for t in tpvs:
+        # Considerar disponible si ocupado es False, None, o no existe
+        ocupado = t.get("ocupado")
+        if ocupado is True:
+            continue  # Este está ocupado, saltar
+            
         tienda = await db.tiendas.find_one({"id": t["tienda_id"]}, {"_id": 0, "nombre": 1})
         tienda_nombre = tienda["nombre"] if tienda else "Sin tienda"
         
