@@ -723,6 +723,11 @@ export default function POS() {
       });
       const config = configResponse.data;
       
+      // Verificar si la impresión automática está habilitada
+      if (!config.imprimir_ticket) {
+        return; // No imprimir si está deshabilitado
+      }
+      
       let clienteData = null;
       if (invoice.cliente_id) {
         try {
