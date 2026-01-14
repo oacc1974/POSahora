@@ -2679,6 +2679,86 @@ async def get_historial_cajas(current_user: dict = Depends(get_current_user)):
         for c in cajas
     ]
 
+@app.get("/api/caja/abiertas", response_model=List[CajaResponse])
+async def get_cajas_abiertas(current_user: dict = Depends(get_current_user)):
+    """Obtiene todas las cajas abiertas de la organización (solo para propietarios/administradores)"""
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para ver todas las cajas")
+    
+    cajas = await db.cajas.find({
+        "organizacion_id": current_user["organizacion_id"],
+        "estado": "abierta"
+    }).to_list(100)
+    
+    return [
+        CajaResponse(
+            id=c["_id"],
+            numero=c["numero"],
+            usuario_id=c["usuario_id"],
+            usuario_nombre=c["usuario_nombre"],
+            monto_inicial=c["monto_inicial"],
+            monto_ventas=c["monto_ventas"],
+            monto_final=c["monto_inicial"] + c["monto_ventas"],
+            efectivo_contado=c.get("efectivo_contado"),
+            diferencia=c.get("diferencia"),
+            total_ventas=c["total_ventas"],
+            fecha_apertura=c["fecha_apertura"],
+            fecha_cierre=c.get("fecha_cierre"),
+            estado=c["estado"],
+            tpv_id=c.get("tpv_id"),
+            tpv_nombre=c.get("tpv_nombre"),
+            tienda_id=c.get("tienda_id"),
+            tienda_nombre=c.get("tienda_nombre")
+        )
+        for c in cajas
+    ]
+
+@app.post("/api/caja/cerrar-admin/{caja_id}")
+async def cerrar_caja_admin(caja_id: str, cierre: CajaCierre, current_user: dict = Depends(get_current_user)):
+    """Permite a propietarios/administradores cerrar cualquier caja de su organización"""
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para cerrar cajas de otros usuarios")
+    
+    caja = await db.cajas.find_one({
+        "_id": caja_id,
+        "organizacion_id": current_user["organizacion_id"],
+        "estado": "abierta"
+    })
+    
+    if not caja:
+        raise HTTPException(status_code=404, detail="Caja no encontrada o ya cerrada")
+    
+    monto_final = caja["monto_inicial"] + caja["monto_ventas"]
+    diferencia = cierre.efectivo_contado - monto_final
+    fecha_cierre = datetime.now(timezone.utc).isoformat()
+    
+    # Liberar el TPV si estaba asociado
+    if caja.get("tpv_id"):
+        await db.tpv.update_one(
+            {"id": caja["tpv_id"]},
+            {"$set": {"ocupado": False, "ocupado_por": None, "ocupado_por_nombre": None}}
+        )
+    
+    await db.cajas.update_one(
+        {"_id": caja_id},
+        {
+            "$set": {
+                "estado": "cerrada",
+                "efectivo_contado": cierre.efectivo_contado,
+                "diferencia": diferencia,
+                "fecha_cierre": fecha_cierre,
+                "cerrada_por": current_user["_id"],
+                "cerrada_por_nombre": current_user["nombre"]
+            }
+        }
+    )
+    
+    return {
+        "message": "Caja cerrada correctamente",
+        "diferencia": diferencia,
+        "cerrada_por": current_user["nombre"]
+    }
+
 @app.post("/api/facturas", response_model=InvoiceResponse)
 async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(get_current_user)):
     caja_activa = await db.cajas.find_one({
