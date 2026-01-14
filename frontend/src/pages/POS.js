@@ -2486,6 +2486,109 @@ export default function POS() {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog de Modificadores */}
+      <Dialog open={showModificadorDialog} onOpenChange={setShowModificadorDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span>Seleccionar opciones</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {productoConModificadores && (
+            <div className="space-y-4">
+              {/* Info del producto */}
+              <div className="bg-slate-50 rounded-lg p-3">
+                <p className="font-semibold text-slate-900">{productoConModificadores.nombre}</p>
+                <p className="text-lg font-bold text-blue-600">${productoConModificadores.precio.toFixed(2)}</p>
+              </div>
+              
+              {/* Lista de modificadores */}
+              {getModificadoresProducto(productoConModificadores).map((mod) => (
+                <div key={mod.id} className="border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium text-slate-900">{mod.nombre}</p>
+                    {mod.obligatorio && (
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Obligatorio</span>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {mod.opciones?.map((opcion) => (
+                      <label
+                        key={opcion.id}
+                        className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
+                          modificadoresSeleccionados[mod.id] === opcion.id
+                            ? 'bg-blue-100 border-2 border-blue-500'
+                            : 'bg-slate-50 hover:bg-slate-100 border-2 border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name={mod.id}
+                            checked={modificadoresSeleccionados[mod.id] === opcion.id}
+                            onChange={() => setModificadoresSeleccionados({
+                              ...modificadoresSeleccionados,
+                              [mod.id]: opcion.id
+                            })}
+                            className="w-4 h-4 text-blue-600"
+                          />
+                          <span className="text-slate-700">{opcion.nombre}</span>
+                        </div>
+                        {opcion.precio > 0 && (
+                          <span className="text-green-600 font-medium">+${opcion.precio.toFixed(2)}</span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              
+              {/* Precio total con modificadores */}
+              <div className="bg-blue-50 rounded-lg p-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-600">Total:</span>
+                  <span className="text-xl font-bold text-blue-600">
+                    ${(
+                      productoConModificadores.precio +
+                      Object.entries(modificadoresSeleccionados).reduce((sum, [modId, opcionId]) => {
+                        const mod = modificadores.find(m => m.id === modId);
+                        const opcion = mod?.opciones?.find(o => o.id === opcionId);
+                        return sum + (opcion?.precio || 0);
+                      }, 0)
+                    ).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Botones */}
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowModificadorDialog(false);
+                    setProductoConModificadores(null);
+                    setModificadoresSeleccionados({});
+                  }}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={addToCartConModificadores}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  Añadir al ticket
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Overlay para cerrar menú */}
       {showTicketMenu && (
         <div 
