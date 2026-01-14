@@ -2293,36 +2293,93 @@ export default function POS() {
             </div>
 
             <div className="max-h-[300px] overflow-y-auto space-y-2">
-              {cart.map((item) => (
-                <div 
-                  key={item.producto_id}
-                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                    productosParaDividir.includes(item.producto_id)
-                      ? 'bg-blue-50 border-blue-300'
-                      : 'hover:bg-slate-50'
-                  }`}
-                  onClick={() => toggleProductoDividir(item.producto_id)}
-                >
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 accent-blue-600" 
-                    checked={productosParaDividir.includes(item.producto_id)}
-                    onChange={() => {}}
-                  />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{item.nombre}</p>
-                    <p className="text-xs text-slate-500">Cantidad: {item.cantidad}</p>
+              {cart.map((item) => {
+                const isSelected = productosParaDividir.includes(item.item_id);
+                const cantidadSeleccionada = cantidadesParaDividir[item.item_id] || item.cantidad;
+                
+                return (
+                  <div 
+                    key={item.item_id}
+                    className={`p-3 border rounded-lg transition-colors ${
+                      isSelected
+                        ? 'bg-blue-50 border-blue-300'
+                        : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <div 
+                      className="flex items-center gap-3 cursor-pointer"
+                      onClick={() => toggleProductoDividir(item.item_id, item.cantidad)}
+                    >
+                      <input 
+                        type="checkbox" 
+                        className="w-5 h-5 accent-blue-600" 
+                        checked={isSelected}
+                        onChange={() => {}}
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{item.nombre}</p>
+                        {item.modificadores_seleccionados && item.modificadores_seleccionados.length > 0 && (
+                          <div className="text-xs text-blue-600">
+                            {item.modificadores_seleccionados.map((mod, idx) => (
+                              <span key={idx}>+ {mod.opcion_nombre} {mod.opcion_precio > 0 && `($${mod.opcion_precio.toFixed(2)})`}</span>
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-xs text-slate-500">${(item.subtotal / item.cantidad).toFixed(2)} c/u</p>
+                      </div>
+                      <span className="font-mono text-sm font-semibold">${item.subtotal.toFixed(2)}</span>
+                    </div>
+                    
+                    {/* Control de cantidad cuando está seleccionado y tiene más de 1 */}
+                    {isSelected && item.cantidad > 1 && (
+                      <div className="mt-2 pt-2 border-t flex items-center justify-between">
+                        <span className="text-xs text-slate-600">Cantidad a mover:</span>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              actualizarCantidadDividir(item.item_id, cantidadSeleccionada - 1, item.cantidad);
+                            }}
+                            disabled={cantidadSeleccionada <= 1}
+                          >
+                            -
+                          </Button>
+                          <span className="w-8 text-center font-semibold">{cantidadSeleccionada}</span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 w-7 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              actualizarCantidadDividir(item.item_id, cantidadSeleccionada + 1, item.cantidad);
+                            }}
+                            disabled={cantidadSeleccionada >= item.cantidad}
+                          >
+                            +
+                          </Button>
+                          <span className="text-xs text-slate-500">/ {item.cantidad}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <span className="font-mono text-sm font-semibold">${item.subtotal.toFixed(2)}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {productosParaDividir.length > 0 && (
               <div className="p-3 bg-blue-50 rounded-lg">
                 <p className="text-sm text-blue-700">
-                  <strong>{productosParaDividir.length}</strong> producto(s) seleccionado(s) - 
-                  Total: <strong>${cart.filter(i => productosParaDividir.includes(i.producto_id)).reduce((s, i) => s + i.subtotal, 0).toFixed(2)}</strong>
+                  <strong>{productosParaDividir.reduce((sum, itemId) => sum + (cantidadesParaDividir[itemId] || 0), 0)}</strong> unidad(es) seleccionada(s) - 
+                  Total: <strong>${cart.filter(i => productosParaDividir.includes(i.item_id)).reduce((s, i) => {
+                    const cantMover = cantidadesParaDividir[i.item_id] || i.cantidad;
+                    const precioUnit = i.subtotal / i.cantidad;
+                    return s + (precioUnit * cantMover);
+                  }, 0).toFixed(2)}</strong>
                 </p>
               </div>
             )}
@@ -2333,7 +2390,7 @@ export default function POS() {
               </Button>
               <Button 
                 onClick={ejecutarDividirTicket}
-                disabled={productosParaDividir.length === 0 || productosParaDividir.length === cart.length}
+                disabled={productosParaDividir.length === 0}
               >
                 Dividir Ticket
               </Button>
