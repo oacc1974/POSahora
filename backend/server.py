@@ -1932,6 +1932,8 @@ async def get_productos(current_user: dict = Depends(get_current_user)):
             codigo_barras=p.get("codigo_barras"),
             descripcion=p.get("descripcion"),
             stock=p.get("stock", 0),
+            categoria=p.get("categoria"),
+            modificadores_activos=p.get("modificadores_activos", []),
             organizacion_id=p["organizacion_id"],
             creado=p["creado"]
         )
@@ -1954,6 +1956,8 @@ async def get_producto_by_barcode(codigo: str, current_user: dict = Depends(get_
         codigo_barras=producto.get("codigo_barras"),
         descripcion=producto.get("descripcion"),
         stock=producto.get("stock", 0),
+        categoria=producto.get("categoria"),
+        modificadores_activos=producto.get("modificadores_activos", []),
         organizacion_id=producto["organizacion_id"],
         creado=producto["creado"]
     )
@@ -1970,6 +1974,8 @@ async def create_producto(product: ProductCreate, current_user: dict = Depends(g
         "codigo_barras": product.codigo_barras,
         "descripcion": product.descripcion,
         "stock": product.stock or 0,
+        "categoria": product.categoria,
+        "modificadores_activos": product.modificadores_activos or [],
         "organizacion_id": current_user["organizacion_id"],
         "creado": datetime.now(timezone.utc).isoformat()
     }
@@ -1982,6 +1988,8 @@ async def create_producto(product: ProductCreate, current_user: dict = Depends(g
         codigo_barras=product.codigo_barras,
         descripcion=product.descripcion,
         stock=product.stock or 0,
+        categoria=product.categoria,
+        modificadores_activos=product.modificadores_activos or [],
         organizacion_id=current_user["organizacion_id"],
         creado=new_product["creado"]
     )
@@ -2000,7 +2008,9 @@ async def update_producto(product_id: str, product: ProductCreate, current_user:
         "precio": product.precio,
         "codigo_barras": product.codigo_barras,
         "descripcion": product.descripcion,
-        "stock": product.stock or 0
+        "stock": product.stock or 0,
+        "categoria": product.categoria,
+        "modificadores_activos": product.modificadores_activos or []
     }
     
     await db.productos.update_one({"_id": product_id}, {"$set": updated_product})
@@ -2012,6 +2022,8 @@ async def update_producto(product_id: str, product: ProductCreate, current_user:
         codigo_barras=product.codigo_barras,
         descripcion=product.descripcion,
         stock=product.stock or 0,
+        categoria=product.categoria,
+        modificadores_activos=product.modificadores_activos or [],
         organizacion_id=current_user["organizacion_id"],
         creado=existing["creado"]
     )
