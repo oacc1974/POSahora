@@ -66,6 +66,7 @@ export default function Caja() {
   };
 
   const fetchTpvsDisponibles = async () => {
+    setLoadingTpvs(true);
     try {
       const token = localStorage.getItem('token');
       console.log('Fetching TPVs disponibles...');
@@ -78,6 +79,8 @@ export default function Caja() {
       console.error('Error al cargar TPVs:', error);
       console.error('Error response:', error.response?.data);
       toast.error('Error al cargar dispositivos TPV');
+    } finally {
+      setLoadingTpvs(false);
     }
   };
 
