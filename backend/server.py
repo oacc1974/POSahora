@@ -46,6 +46,7 @@ class TicketConfig(BaseModel):
     email: Optional[str] = None
     sitio_web: Optional[str] = None
     mensaje_pie: Optional[str] = "¡Gracias por su compra!"
+    imprimir_ticket: bool = False
     mostrar_info_cliente: bool = False
     mostrar_comentarios: bool = False
     logo_email: Optional[str] = None
