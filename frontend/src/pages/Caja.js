@@ -34,11 +34,35 @@ export default function Caja() {
   const [efectivoContado, setEfectivoContado] = useState('');
   const [tpvsDisponibles, setTpvsDisponibles] = useState([]);
   const [selectedTpv, setSelectedTpv] = useState('');
+  
+  // Estados para administración de cajas
+  const [cajasAbiertas, setCajasAbiertas] = useState([]);
+  const [showCierreAdmin, setShowCierreAdmin] = useState(false);
+  const [cajaParaCerrar, setCajaParaCerrar] = useState(null);
+  const [efectivoContadoAdmin, setEfectivoContadoAdmin] = useState('');
+  
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = ['propietario', 'administrador'].includes(user.rol);
 
   useEffect(() => {
     fetchCajaActiva();
     fetchHistorial();
+    if (isAdmin) {
+      fetchCajasAbiertas();
+    }
   }, []);
+
+  const fetchCajasAbiertas = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/caja/abiertas`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCajasAbiertas(response.data);
+    } catch (error) {
+      console.error('Error al cargar cajas abiertas:', error);
+    }
+  };
 
   const fetchTpvsDisponibles = async () => {
     try {
