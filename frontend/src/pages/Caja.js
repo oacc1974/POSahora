@@ -132,6 +132,7 @@ export default function Caja() {
       setSelectedTpv('');
       toast.success('Caja abierta correctamente');
       fetchHistorial();
+      if (isAdmin) fetchCajasAbiertas();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error al abrir caja');
     }
@@ -154,9 +155,40 @@ export default function Caja() {
       setEfectivoContado('');
       toast.success('Caja cerrada correctamente');
       fetchHistorial();
+      if (isAdmin) fetchCajasAbiertas();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error al cerrar caja');
     }
+  };
+
+  const handleCerrarCajaAdmin = async (e) => {
+    e.preventDefault();
+    if (!cajaParaCerrar) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API_URL}/api/caja/cerrar-admin/${cajaParaCerrar.id}`,
+        { efectivo_contado: parseFloat(efectivoContadoAdmin) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      setShowCierreAdmin(false);
+      setCajaParaCerrar(null);
+      setEfectivoContadoAdmin('');
+      toast.success(`Caja "${cajaParaCerrar.numero}" cerrada correctamente`);
+      fetchHistorial();
+      fetchCajasAbiertas();
+      fetchCajaActiva();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Error al cerrar caja');
+    }
+  };
+
+  const abrirCierreAdmin = (caja) => {
+    setCajaParaCerrar(caja);
+    setEfectivoContadoAdmin((caja.monto_inicial + caja.monto_ventas).toFixed(2));
+    setShowCierreAdmin(true);
   };
 
   const printCierreCaja = (caja) => {
