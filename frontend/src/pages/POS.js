@@ -911,21 +911,6 @@ export default function POS() {
           <Menu size={22} />
         </button>
         
-        {/* Selector de tipo de pedido */}
-        {tipoPedidoFuncionActiva && tiposPedido.length > 0 && (
-          <select
-            value={tipoPedidoSeleccionado || ''}
-            onChange={(e) => setTipoPedidoSeleccionado(e.target.value)}
-            className="text-xs bg-blue-700 text-white border-none rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-white"
-          >
-            {tiposPedido.map((tipo) => (
-              <option key={tipo.id} value={tipo.id}>
-                {tipo.nombre}
-              </option>
-            ))}
-          </select>
-        )}
-        
         {/* Centro: Ticket con contador */}
         <button 
           onClick={() => setShowMobileCart(true)}
@@ -958,6 +943,23 @@ export default function POS() {
           </button>
         </div>
       </div>
+
+      {/* Selector de tipo de pedido - MÓVIL (debajo del header) */}
+      {tipoPedidoFuncionActiva && tiposPedido.length > 0 && (
+        <div className="md:hidden bg-slate-50 border-b px-4 py-2">
+          <select
+            value={tipoPedidoSeleccionado || ''}
+            onChange={(e) => setTipoPedidoSeleccionado(e.target.value)}
+            className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {tiposPedido.map((tipo) => (
+              <option key={tipo.id} value={tipo.id}>
+                {tipo.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Menú de opciones del ticket (3 puntos) - MÓVIL */}
       {showMobileTicketMenu && (
