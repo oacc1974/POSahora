@@ -927,17 +927,53 @@ export default function POS() {
       return;
     }
 
-    if (productosParaDividir.length === cart.length) {
-      toast.error('No puedes mover todos los productos. Deja al menos uno en el ticket actual.');
+    // Calcular cuántas unidades se van a mover
+    const unidadesAMover = productosParaDividir.reduce((sum, itemId) => {
+      return sum + (cantidadesParaDividir[itemId] || 0);
+    }, 0);
+    
+    // Calcular total de unidades en el carrito
+    const totalUnidades = cart.reduce((sum, item) => sum + item.cantidad, 0);
+    
+    if (unidadesAMover >= totalUnidades) {
+      toast.error('No puedes mover todas las unidades. Deja al menos una en el ticket actual.');
       return;
     }
 
     try {
       const token = localStorage.getItem('token');
       
-      // Separar productos
-      const productosNuevoTicket = cart.filter(item => productosParaDividir.includes(item.producto_id));
-      const productosTicketActual = cart.filter(item => !productosParaDividir.includes(item.producto_id));
+      // Construir los items para el nuevo ticket y actualizar el carrito actual
+      const productosNuevoTicket = [];
+      const productosTicketActual = [];
+      
+      cart.forEach(item => {
+        if (productosParaDividir.includes(item.item_id)) {
+          const cantidadAMover = cantidadesParaDividir[item.item_id] || item.cantidad;
+          const cantidadRestante = item.cantidad - cantidadAMover;
+          
+          // Agregar al nuevo ticket
+          const precioUnitario = item.subtotal / item.cantidad;
+          productosNuevoTicket.push({
+            ...item,
+            item_id: `${item.producto_id}_${Date.now()}_new`,
+            cantidad: cantidadAMover,
+            subtotal: precioUnitario * cantidadAMover
+          });
+          
+          // Si quedan unidades, mantener en ticket actual
+          if (cantidadRestante > 0) {
+            productosTicketActual.push({
+              ...item,
+              cantidad: cantidadRestante,
+              subtotal: precioUnitario * cantidadRestante
+            });
+          }
+        } else {
+          // No seleccionado, mantener completo en ticket actual
+          productosTicketActual.push(item);
+        }
+      });
       
       // Crear nuevo ticket con los productos seleccionados
       const nuevoTicket = {
@@ -959,8 +995,9 @@ export default function POS() {
       await fetchTicketsAbiertos();
       setShowDividirDialog(false);
       setProductosParaDividir([]);
+      setCantidadesParaDividir({});
       setNombreNuevoTicket('');
-      toast.success(`Ticket dividido. ${productosNuevoTicket.length} producto(s) movidos a "${nuevoTicket.nombre}".`);
+      toast.success(`Ticket dividido. ${unidadesAMover} unidad(es) movidas a "${nuevoTicket.nombre}".`);
     } catch (error) {
       console.error('Error dividir:', error.response?.data || error);
       toast.error(error.response?.data?.detail || 'Error al dividir el ticket');
