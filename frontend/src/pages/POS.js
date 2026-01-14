@@ -99,6 +99,7 @@ export default function POS() {
     fetchTiposPedido();
     fetchFuncionesConfig();
     fetchMesasPredefinidas();
+    fetchModificadores();
   }, []);
 
   const verificarCaja = async () => {
