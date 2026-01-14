@@ -518,24 +518,26 @@ export default function Caja() {
               )}
             </div>
             
-            {/* Monto inicial */}
-            <div>
-              <Label htmlFor="monto_inicial">Base de Caja (Monto Inicial) *</Label>
-              <Input
-                id="monto_inicial"
-                data-testid="monto-inicial-input"
-                type="number"
-                step="0.01"
-                value={montoInicial}
-                onChange={(e) => setMontoInicial(e.target.value)}
-                required
-                placeholder="0.00"
-                className="mt-2"
-              />
-              <p className="text-xs text-slate-500 mt-2">
-                Ingresa el monto con el que inicias la caja
-              </p>
-            </div>
+            {/* Monto inicial - solo si cierre de caja por turnos está activo */}
+            {cierresCajaActivo && (
+              <div>
+                <Label htmlFor="monto_inicial">Base de Caja (Monto Inicial) *</Label>
+                <Input
+                  id="monto_inicial"
+                  data-testid="monto-inicial-input"
+                  type="number"
+                  step="0.01"
+                  value={montoInicial}
+                  onChange={(e) => setMontoInicial(e.target.value)}
+                  required
+                  placeholder="0.00"
+                  className="mt-2"
+                />
+                <p className="text-xs text-slate-500 mt-2">
+                  Ingresa el monto con el que inicias la caja
+                </p>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4">
               <Button
