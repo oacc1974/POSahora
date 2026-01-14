@@ -1355,7 +1355,7 @@ export default function POS() {
             ) : (
               <div className="divide-y bg-white">
                 {cart.map((item) => (
-                  <div key={item.producto_id} className="p-4 flex items-center gap-3">
+                  <div key={item.item_id} className="p-4 flex items-center gap-3">
                     {/* Cantidad y controles */}
                     <div className="flex items-center gap-1 bg-slate-100 rounded-lg">
                       <button
@@ -1376,6 +1376,15 @@ export default function POS() {
                     {/* Nombre y precio */}
                     <div className="flex-1">
                       <p className="font-medium text-sm">{item.nombre}</p>
+                      {item.modificadores?.length > 0 && (
+                        <div>
+                          {item.modificadores.map((mod, idx) => (
+                            <p key={idx} className="text-xs text-blue-600">
+                              + {mod.opcion_nombre}
+                            </p>
+                          ))}
+                        </div>
+                      )}
                       <p className="text-xs text-slate-500">${item.precio.toFixed(2)} c/u</p>
                     </div>
                     
@@ -1384,7 +1393,7 @@ export default function POS() {
                     
                     {/* Botón eliminar */}
                     <button
-                      onClick={() => removeFromCart(item.producto_id)}
+                      onClick={() => removeFromCart(item.item_id)}
                       className="p-2 text-red-500 hover:bg-red-50 rounded"
                     >
                       <Trash2 size={18} />
