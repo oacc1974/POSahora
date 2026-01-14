@@ -883,22 +883,41 @@ export default function POS() {
   };
 
   const handleDividirTicket = () => {
-    if (cart.length < 2) {
-      toast.error('Necesitas al menos 2 productos para dividir el ticket');
+    // Calcular total de unidades en el carrito
+    const totalUnidades = cart.reduce((sum, item) => sum + item.cantidad, 0);
+    
+    if (totalUnidades < 2) {
+      toast.error('Necesitas al menos 2 unidades para dividir el ticket');
       return;
     }
     setProductosParaDividir([]);
+    setCantidadesParaDividir({});
     setNombreNuevoTicket('');
     setShowDividirDialog(true);
     setShowTicketMenu(false);
   };
 
-  const toggleProductoDividir = (productoId) => {
-    setProductosParaDividir(prev => 
-      prev.includes(productoId)
-        ? prev.filter(id => id !== productoId)
-        : [...prev, productoId]
-    );
+  const toggleProductoDividir = (itemId, maxCantidad) => {
+    setProductosParaDividir(prev => {
+      if (prev.includes(itemId)) {
+        // Deseleccionar
+        setCantidadesParaDividir(cant => {
+          const newCant = {...cant};
+          delete newCant[itemId];
+          return newCant;
+        });
+        return prev.filter(id => id !== itemId);
+      } else {
+        // Seleccionar con cantidad por defecto = toda la cantidad
+        setCantidadesParaDividir(cant => ({...cant, [itemId]: maxCantidad}));
+        return [...prev, itemId];
+      }
+    });
+  };
+
+  const actualizarCantidadDividir = (itemId, cantidad, maxCantidad) => {
+    const cantidadValida = Math.max(1, Math.min(cantidad, maxCantidad));
+    setCantidadesParaDividir(prev => ({...prev, [itemId]: cantidadValida}));
   };
 
   const ejecutarDividirTicket = async () => {
