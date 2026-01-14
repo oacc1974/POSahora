@@ -601,6 +601,81 @@ export default function Caja() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Cierre Admin */}
+      <Dialog open={showCierreAdmin} onOpenChange={setShowCierreAdmin}>
+        <DialogContent className="max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle>Cerrar Caja (Admin)</DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleCerrarCajaAdmin} className="space-y-4">
+            {cajaParaCerrar && (
+              <>
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="font-semibold text-amber-900">{cajaParaCerrar.numero}</p>
+                  <p className="text-sm text-amber-700">Cajero: {cajaParaCerrar.usuario_nombre}</p>
+                  <p className="text-xs text-amber-600">
+                    Abierta: {new Date(cajaParaCerrar.fecha_apertura).toLocaleString('es-ES')}
+                  </p>
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-lg">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Base de Caja:</span>
+                      <span className="font-mono">${cajaParaCerrar.monto_inicial.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Ventas:</span>
+                      <span className="font-mono">${cajaParaCerrar.monto_ventas.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold border-t pt-2">
+                      <span>Total Esperado:</span>
+                      <span className="font-mono">${cajaParaCerrar.monto_final.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div>
+              <Label htmlFor="efectivo_admin">Efectivo Contado *</Label>
+              <Input
+                id="efectivo_admin"
+                type="number"
+                step="0.01"
+                value={efectivoContadoAdmin}
+                onChange={(e) => setEfectivoContadoAdmin(e.target.value)}
+                required
+                placeholder="0.00"
+                className="mt-2"
+              />
+              <p className="text-xs text-slate-500 mt-2">
+                Ingresa el efectivo contado para cerrar esta caja
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowCierreAdmin(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="destructive"
+                className="flex-1"
+              >
+                Cerrar Caja
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
