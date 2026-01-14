@@ -2639,6 +2639,33 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         punto_emision=punto_emision
     )
 
+async def calcular_ventas_por_metodo(caja_id: str, organizacion_id: str):
+    """Calcula el resumen de ventas por método de pago para una caja"""
+    # Obtener todas las facturas de esta caja
+    facturas = await db.facturas.find({
+        "caja_id": caja_id,
+        "organizacion_id": organizacion_id
+    }).to_list(1000)
+    
+    # Agrupar por método de pago
+    ventas_por_metodo = {}
+    for f in facturas:
+        metodo_id = f.get("metodo_pago_id") or "efectivo"
+        metodo_nombre = f.get("metodo_pago_nombre") or "Efectivo"
+        
+        if metodo_id not in ventas_por_metodo:
+            ventas_por_metodo[metodo_id] = {
+                "metodo_id": metodo_id if metodo_id != "efectivo" else None,
+                "metodo_nombre": metodo_nombre,
+                "total": 0.0,
+                "cantidad": 0
+            }
+        
+        ventas_por_metodo[metodo_id]["total"] += f.get("total", 0)
+        ventas_por_metodo[metodo_id]["cantidad"] += 1
+    
+    return [VentasPorMetodo(**v) for v in ventas_por_metodo.values()]
+
 @app.post("/api/caja/cerrar")
 async def cerrar_caja(cierre: CajaCierre, current_user: dict = Depends(get_current_user)):
     caja = await db.cajas.find_one({
@@ -2648,6 +2675,9 @@ async def cerrar_caja(cierre: CajaCierre, current_user: dict = Depends(get_curre
     
     if not caja:
         raise HTTPException(status_code=404, detail="No tienes una caja abierta")
+    
+    # Calcular ventas por método de pago
+    ventas_por_metodo = await calcular_ventas_por_metodo(caja["_id"], current_user["organizacion_id"])
     
     monto_esperado = caja["monto_inicial"] + caja["monto_ventas"]
     diferencia = cierre.efectivo_contado - monto_esperado
