@@ -44,7 +44,9 @@ export default function Productos() {
     stock: '',
     categoria: '',
     modificadores_activos: [],
+    imagen: '',
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Estados para Categorías
   const [categorias, setCategorias] = useState([]);
