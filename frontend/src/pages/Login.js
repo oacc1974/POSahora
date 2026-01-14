@@ -198,18 +198,6 @@ export default function Login({ onLogin }) {
               Crear Cuenta Nueva
             </Button>
           </div>
-
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 font-medium mb-2">
-              Credenciales de prueba:
-            </p>
-            <p className="text-sm text-blue-700">
-              Usuario: <span className="font-mono">admin</span>
-            </p>
-            <p className="text-sm text-blue-700">
-              Contraseña: <span className="font-mono">admin*88</span>
-            </p>
-          </div>
         </Card>
       </div>
     </div>
