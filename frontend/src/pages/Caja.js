@@ -86,11 +86,20 @@ export default function Caja() {
 
   const handleAbrirCaja = async (e) => {
     e.preventDefault();
+    
+    if (!selectedTpv) {
+      toast.error('Debes seleccionar un punto de venta');
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
         `${API_URL}/api/caja/abrir`,
-        { monto_inicial: parseFloat(montoInicial) },
+        { 
+          monto_inicial: parseFloat(montoInicial),
+          tpv_id: selectedTpv
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setCajaActiva(response.data);
