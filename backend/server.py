@@ -2094,8 +2094,8 @@ async def get_modificadores(current_user: dict = Depends(get_current_user)):
         ModificadorResponse(
             id=mod["_id"],
             nombre=mod["nombre"],
-            precio=mod.get("precio", 0),
-            tipo=mod.get("tipo", "adicional"),
+            opciones=mod.get("opciones", []),
+            obligatorio=mod.get("obligatorio", False),
             organizacion_id=mod["organizacion_id"],
             creado=mod["creado"]
         )
@@ -2107,11 +2107,20 @@ async def create_modificador(modificador: ModificadorCreate, current_user: dict 
     modificador_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     
+    # Añadir IDs a las opciones
+    opciones_con_id = []
+    for opcion in modificador.opciones:
+        opciones_con_id.append({
+            "id": opcion.id or str(uuid.uuid4()),
+            "nombre": opcion.nombre,
+            "precio": opcion.precio
+        })
+    
     modificador_doc = {
         "_id": modificador_id,
         "nombre": modificador.nombre,
-        "precio": modificador.precio,
-        "tipo": modificador.tipo,
+        "opciones": opciones_con_id,
+        "obligatorio": modificador.obligatorio,
         "organizacion_id": current_user["organizacion_id"],
         "creado": now
     }
@@ -2121,17 +2130,26 @@ async def create_modificador(modificador: ModificadorCreate, current_user: dict 
     return ModificadorResponse(
         id=modificador_id,
         nombre=modificador.nombre,
-        precio=modificador.precio,
-        tipo=modificador.tipo,
+        opciones=opciones_con_id,
+        obligatorio=modificador.obligatorio,
         organizacion_id=current_user["organizacion_id"],
         creado=now
     )
 
 @app.put("/api/modificadores/{modificador_id}", response_model=ModificadorResponse)
 async def update_modificador(modificador_id: str, modificador: ModificadorCreate, current_user: dict = Depends(get_propietario_or_admin)):
+    # Añadir IDs a las opciones
+    opciones_con_id = []
+    for opcion in modificador.opciones:
+        opciones_con_id.append({
+            "id": opcion.id or str(uuid.uuid4()),
+            "nombre": opcion.nombre,
+            "precio": opcion.precio
+        })
+    
     result = await db.modificadores.update_one(
         {"_id": modificador_id, "organizacion_id": current_user["organizacion_id"]},
-        {"$set": {"nombre": modificador.nombre, "precio": modificador.precio, "tipo": modificador.tipo}}
+        {"$set": {"nombre": modificador.nombre, "opciones": opciones_con_id, "obligatorio": modificador.obligatorio}}
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Modificador no encontrado")
@@ -2140,8 +2158,8 @@ async def update_modificador(modificador_id: str, modificador: ModificadorCreate
     return ModificadorResponse(
         id=updated["_id"],
         nombre=updated["nombre"],
-        precio=updated.get("precio", 0),
-        tipo=updated.get("tipo", "adicional"),
+        opciones=updated.get("opciones", []),
+        obligatorio=updated.get("obligatorio", False),
         organizacion_id=updated["organizacion_id"],
         creado=updated["creado"]
     )
