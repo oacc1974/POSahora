@@ -326,7 +326,10 @@ export default function Caja() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
-              onClick={() => setShowApertura(true)}
+              onClick={() => {
+                setShowApertura(true);
+                fetchTpvsDisponibles();
+              }}
               data-testid="abrir-caja-button"
               size="lg"
               className="gap-2"
