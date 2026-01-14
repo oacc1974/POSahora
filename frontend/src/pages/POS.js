@@ -1366,7 +1366,7 @@ export default function POS() {
                       </button>
                       <span className="w-8 text-center font-semibold text-sm">{item.cantidad}</span>
                       <button
-                        onClick={() => updateQuantity(item.producto_id, 1)}
+                        onClick={() => updateQuantity(item.item_id, 1)}
                         className="w-8 h-8 flex items-center justify-center hover:bg-slate-200 rounded-r-lg"
                       >
                         <Plus size={14} />
@@ -1629,7 +1629,7 @@ export default function POS() {
                         </button>
                         <span className="w-8 text-center font-semibold text-sm">{item.cantidad}</span>
                         <button
-                          onClick={() => updateQuantity(item.producto_id, 1)}
+                          onClick={() => updateQuantity(item.item_id, 1)}
                           className="w-8 h-8 flex items-center justify-center hover:bg-slate-200 rounded-r-lg"
                         >
                           <Plus size={14} />
