@@ -1436,6 +1436,23 @@ export default function POS() {
             <span className="font-semibold">Ticket</span>
           </div>
 
+          {/* Selector de tipo de pedido - DESKTOP */}
+          {tipoPedidoFuncionActiva && tiposPedido.length > 0 && (
+            <div className="bg-slate-50 border-b px-3 py-2">
+              <select
+                value={tipoPedidoSeleccionado || ''}
+                onChange={(e) => setTipoPedidoSeleccionado(e.target.value)}
+                className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {tiposPedido.map((tipo) => (
+                  <option key={tipo.id} value={tipo.id}>
+                    {tipo.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Cliente seleccionado */}
           {clienteSeleccionado && (
             <div className="p-3 bg-blue-50 border-b flex items-center justify-between">
