@@ -66,6 +66,12 @@ export default function POS() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showNavSidebar, setShowNavSidebar] = useState(false);
   
+  // Estados para modificadores
+  const [modificadores, setModificadores] = useState([]);
+  const [showModificadorDialog, setShowModificadorDialog] = useState(false);
+  const [productoConModificadores, setProductoConModificadores] = useState(null);
+  const [modificadoresSeleccionados, setModificadoresSeleccionados] = useState({});
+  
   // Obtener usuario actual
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const esMesero = currentUser?.rol === 'mesero';
