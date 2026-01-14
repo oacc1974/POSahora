@@ -530,7 +530,7 @@ export default function Caja() {
               <Button
                 type="submit"
                 data-testid="confirmar-apertura-button"
-                disabled={tpvsDisponibles.length === 0 || !selectedTpv}
+                disabled={loadingTpvs || tpvsDisponibles.length === 0 || !selectedTpv}
                 className="flex-1"
               >
                 Abrir Caja
