@@ -2065,7 +2065,8 @@ async def update_producto(product_id: str, product: ProductCreate, current_user:
         "descripcion": product.descripcion,
         "stock": product.stock or 0,
         "categoria": product.categoria,
-        "modificadores_activos": product.modificadores_activos or []
+        "modificadores_activos": product.modificadores_activos or [],
+        "imagen": product.imagen
     }
     
     await db.productos.update_one({"_id": product_id}, {"$set": updated_product})
@@ -2079,6 +2080,7 @@ async def update_producto(product_id: str, product: ProductCreate, current_user:
         stock=product.stock or 0,
         categoria=product.categoria,
         modificadores_activos=product.modificadores_activos or [],
+        imagen=product.imagen,
         organizacion_id=current_user["organizacion_id"],
         creado=existing["creado"]
     )
