@@ -444,6 +444,17 @@ export default function Productos() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {productos.map((producto) => (
             <Card key={producto.id} data-testid={`product-card-${producto.id}`} className="p-4 hover:shadow-lg transition-shadow">
+              {/* Imagen del producto */}
+              {producto.imagen && (
+                <div className="w-full h-32 mb-3 rounded-lg overflow-hidden bg-slate-100">
+                  <img 
+                    src={`${API_URL}${producto.imagen}`} 
+                    alt={producto.nombre}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                </div>
+              )}
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
                   <h3 className="font-bold text-slate-900">{producto.nombre}</h3>
