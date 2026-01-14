@@ -105,6 +105,7 @@ export default function Caja() {
       setCajaActiva(response.data);
       setShowApertura(false);
       setMontoInicial('');
+      setSelectedTpv('');
       toast.success('Caja abierta correctamente');
       fetchHistorial();
     } catch (error) {
