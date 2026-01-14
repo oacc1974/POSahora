@@ -963,6 +963,7 @@ async def get_config(current_user: dict = Depends(get_current_user)):
         "email": config.get("email", ""),
         "sitio_web": config.get("sitio_web", ""),
         "mensaje_pie": config.get("mensaje_pie", "¡Gracias por su compra!"),
+        "imprimir_ticket": config.get("imprimir_ticket", False),
         "mostrar_info_cliente": config.get("mostrar_info_cliente", False),
         "mostrar_comentarios": config.get("mostrar_comentarios", False),
         "logo_email": config.get("logo_email"),
