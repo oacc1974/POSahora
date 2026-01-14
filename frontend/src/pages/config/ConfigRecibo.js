@@ -193,6 +193,20 @@ export default function ConfigRecibo() {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <Checkbox
+                  id="imprimir_ticket"
+                  data-testid="config-imprimir-ticket-checkbox"
+                  checked={formData.imprimir_ticket}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, imprimir_ticket: checked })
+                  }
+                />
+                <Label htmlFor="imprimir_ticket" className="cursor-pointer font-normal">
+                  Imprimir ticket de venta automáticamente
+                </Label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Checkbox
                   id="mostrar_info_cliente"
                   data-testid="config-mostrar-cliente-checkbox"
                   checked={formData.mostrar_info_cliente}
