@@ -1476,7 +1476,7 @@ export default function POS() {
                 <div
                   key={producto.id}
                   data-testid={`pos-product-${producto.id}`}
-                  onClick={() => addToCart(producto)}
+                  onClick={() => handleProductoClick(producto)}
                   className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden cursor-pointer hover:shadow-md hover:border-blue-400 transition-all group"
                 >
                   {/* Imagen del producto */}
