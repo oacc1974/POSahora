@@ -341,6 +341,54 @@ export default function Caja() {
         </Card>
       )}
 
+      {/* Sección de Cajas Abiertas - Solo para admins */}
+      {isAdmin && cajasAbiertas.length > 0 && (
+        <Card className="p-6 mb-6 border-2 border-amber-200 bg-amber-50">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="text-amber-600" size={24} />
+            <h2 className="text-xl font-bold text-amber-900">Cajas Abiertas ({cajasAbiertas.length})</h2>
+          </div>
+          <p className="text-sm text-amber-700 mb-4">
+            Como administrador, puedes cerrar cualquier caja abierta de tu organización.
+          </p>
+          <div className="space-y-3">
+            {cajasAbiertas.map((caja) => (
+              <div
+                key={caja.id}
+                className="p-4 bg-white rounded-lg border border-amber-300 flex flex-col md:flex-row md:justify-between md:items-center gap-3"
+              >
+                <div>
+                  <p className="font-semibold text-slate-900">{caja.numero}</p>
+                  <p className="text-sm text-slate-600">Cajero: {caja.usuario_nombre}</p>
+                  {caja.tpv_nombre && (
+                    <p className="text-xs text-slate-500">TPV: {caja.tpv_nombre}</p>
+                  )}
+                  <p className="text-xs text-slate-500">
+                    Abierta: {new Date(caja.fecha_apertura).toLocaleString('es-ES')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="text-sm text-slate-600">Base: ${caja.monto_inicial.toFixed(2)}</p>
+                    <p className="text-sm text-slate-600">Ventas: ${caja.monto_ventas.toFixed(2)}</p>
+                    <p className="text-lg font-bold font-mono text-blue-600">
+                      Total: ${caja.monto_final.toFixed(2)}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => abrirCierreAdmin(caja)}
+                    variant="destructive"
+                    size="sm"
+                  >
+                    Cerrar Caja
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {/* Historial */}
       <Card className="p-6">
         <h2 className="text-xl font-bold mb-4">Historial de Cajas</h2>
