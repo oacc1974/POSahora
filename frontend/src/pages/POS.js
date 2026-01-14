@@ -336,11 +336,12 @@ export default function POS() {
     toast.success(`Ticket "${ticket.nombre}" cargado`);
   };
 
-  const handleEliminarTicket = async (ticketId) => {
-    if (!window.confirm('¿Estás seguro de eliminar este ticket?')) {
-      return;
+  const handleEliminarTicket = async (ticketId, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-
+    
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${API_URL}/api/tickets-abiertos-pos/${ticketId}`, {
@@ -349,7 +350,8 @@ export default function POS() {
       toast.success('Ticket eliminado');
       fetchTicketsAbiertos();
     } catch (error) {
-      toast.error('Error al eliminar ticket');
+      console.error('Error al eliminar:', error);
+      toast.error(error.response?.data?.detail || 'Error al eliminar ticket');
     }
   };
 
