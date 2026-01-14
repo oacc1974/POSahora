@@ -1606,14 +1606,23 @@ export default function POS() {
             ) : (
               <div className="divide-y">
                 {cart.map((item) => (
-                  <div key={item.producto_id} className="p-3 hover:bg-slate-50">
+                  <div key={item.item_id} className="p-3 hover:bg-slate-50">
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1">
                         <p className="font-medium text-sm">{item.nombre}</p>
+                        {item.modificadores?.length > 0 && (
+                          <div className="mt-1">
+                            {item.modificadores.map((mod, idx) => (
+                              <p key={idx} className="text-xs text-blue-600">
+                                + {mod.opcion_nombre} {mod.precio > 0 && `($${mod.precio.toFixed(2)})`}
+                              </p>
+                            ))}
+                          </div>
+                        )}
                         <p className="text-xs text-slate-500">${item.precio.toFixed(2)} c/u</p>
                       </div>
                       <button
-                        onClick={() => removeFromCart(item.producto_id)}
+                        onClick={() => removeFromCart(item.item_id)}
                         className="text-red-500 hover:text-red-700 p-1"
                       >
                         <Trash2 size={14} />
