@@ -341,13 +341,50 @@ export default function Caja() {
       </Card>
 
       {/* Dialog Apertura */}
-      <Dialog open={showApertura} onOpenChange={setShowApertura}>
+      <Dialog open={showApertura} onOpenChange={(open) => {
+        setShowApertura(open);
+        if (open) {
+          fetchTpvsDisponibles();
+        }
+      }}>
         <DialogContent data-testid="apertura-dialog" className="max-w-md mx-4">
           <DialogHeader>
             <DialogTitle>Abrir Caja</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleAbrirCaja} className="space-y-4">
+            {/* Selector de TPV */}
+            <div>
+              <Label>Punto de Venta (TPV) *</Label>
+              {tpvsDisponibles.length === 0 ? (
+                <div className="mt-2 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-700">
+                    No hay dispositivos TPV disponibles. Ve a Configuración → Dispositivos TPV para crear uno.
+                  </p>
+                </div>
+              ) : (
+                <Select value={selectedTpv} onValueChange={setSelectedTpv}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Selecciona un punto de venta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tpvsDisponibles.map((tpv) => (
+                      <SelectItem key={tpv.id} value={tpv.id}>
+                        <div className="flex items-center gap-2">
+                          <Monitor size={16} />
+                          <span>{tpv.nombre}</span>
+                          {tpv.tienda_nombre && (
+                            <span className="text-xs text-slate-500">({tpv.tienda_nombre})</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            
+            {/* Monto inicial */}
             <div>
               <Label htmlFor="monto_inicial">Base de Caja (Monto Inicial) *</Label>
               <Input
@@ -378,6 +415,7 @@ export default function Caja() {
               <Button
                 type="submit"
                 data-testid="confirmar-apertura-button"
+                disabled={tpvsDisponibles.length === 0 || !selectedTpv}
                 className="flex-1"
               >
                 Abrir Caja
