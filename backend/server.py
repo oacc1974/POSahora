@@ -219,6 +219,8 @@ class ProductCreate(BaseModel):
     codigo_barras: Optional[str] = None
     descripcion: Optional[str] = None
     stock: Optional[int] = 0
+    categoria: Optional[str] = None
+    modificadores_activos: Optional[List[str]] = []
 
 class ProductResponse(BaseModel):
     id: str
@@ -227,6 +229,8 @@ class ProductResponse(BaseModel):
     codigo_barras: Optional[str] = None
     descripcion: Optional[str] = None
     stock: int = 0
+    categoria: Optional[str] = None
+    modificadores_activos: Optional[List[str]] = []
     organizacion_id: str
     creado: str
 
