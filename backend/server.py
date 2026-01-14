@@ -43,7 +43,7 @@ app.add_middleware(
 )
 
 # Montar carpeta de uploads como estática
-app.mount("/uploads", StaticFiles(directory=str(ROOT_DIR / "uploads")), name="uploads")
+app.mount("/api/uploads", StaticFiles(directory=str(ROOT_DIR / "uploads")), name="uploads")
 
 class TicketConfig(BaseModel):
     cabecera: Optional[str] = None
