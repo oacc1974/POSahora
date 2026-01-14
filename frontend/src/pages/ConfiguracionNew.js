@@ -118,7 +118,10 @@ export default function ConfiguracionNew() {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveSection(item.id)}
+                      onClick={() => {
+                        setActiveSection(item.id);
+                        navigate(`/configuracion/${item.id}`);
+                      }}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
                         isActive
                           ? 'bg-blue-50 text-blue-700 font-medium'
