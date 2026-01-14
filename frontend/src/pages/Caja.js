@@ -453,8 +453,10 @@ export default function Caja() {
 
       {/* Dialog Apertura */}
       <Dialog open={showApertura} onOpenChange={(open) => {
+        console.log('Dialog onOpenChange:', open);
         setShowApertura(open);
         if (open) {
+          console.log('Calling fetchTpvsDisponibles...');
           fetchTpvsDisponibles();
         }
       }}>
