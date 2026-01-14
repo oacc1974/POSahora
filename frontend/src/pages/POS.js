@@ -2169,7 +2169,7 @@ export default function POS() {
                   <button
                     key={producto.id}
                     onClick={() => {
-                      addToCart(producto);
+                      handleProductoClick(producto);
                       setShowMobileSearch(false);
                       setSearchQuery('');
                     }}
