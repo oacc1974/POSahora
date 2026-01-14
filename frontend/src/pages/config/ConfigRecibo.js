@@ -23,6 +23,7 @@ export default function ConfigRecibo() {
     email: '',
     sitio_web: '',
     mensaje_pie: '',
+    imprimir_ticket: false,
     mostrar_info_cliente: false,
     mostrar_comentarios: false,
     logo_email: '',
