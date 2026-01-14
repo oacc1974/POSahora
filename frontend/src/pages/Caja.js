@@ -34,6 +34,7 @@ export default function Caja() {
   const [efectivoContado, setEfectivoContado] = useState('');
   const [tpvsDisponibles, setTpvsDisponibles] = useState([]);
   const [selectedTpv, setSelectedTpv] = useState('');
+  const [loadingTpvs, setLoadingTpvs] = useState(false);
   
   // Estados para administración de cajas
   const [cajasAbiertas, setCajasAbiertas] = useState([]);
