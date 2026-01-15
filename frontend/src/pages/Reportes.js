@@ -334,9 +334,9 @@ export default function Reportes() {
       case 'tipo_pago':
         return <ReporteTipoPago data={data} facturas={facturas} />;
       case 'recibos':
-        return <ReporteRecibos facturas={facturas} onReembolso={loadData} />;
+        return <ReporteRecibos facturas={facturas} onReembolso={fetchReportData} />;
       case 'ingresos':
-        return <ReporteRecibos facturas={facturas} onReembolso={loadData} />;
+        return <ReporteRecibos facturas={facturas} onReembolso={fetchReportData} />;
       case 'descuentos':
         return <ReporteDescuentos facturas={facturas} />;
       case 'impuestos':
