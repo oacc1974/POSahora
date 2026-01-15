@@ -108,7 +108,22 @@ export default function POS() {
     fetchFuncionesConfig();
     fetchMesasPredefinidas();
     fetchModificadores();
+    fetchImpuestos();
   }, []);
+
+  const fetchImpuestos = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/impuestos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Solo cargar impuestos activos
+      const activos = response.data.filter(imp => imp.activo);
+      setImpuestosActivos(activos);
+    } catch (error) {
+      console.error('Error al cargar impuestos:', error);
+    }
+  };
 
   const verificarCaja = async () => {
     try {
