@@ -319,16 +319,38 @@ export default function Reportes() {
   return (
     <div className="space-y-0">
       {/* Header Verde */}
-      <div className="bg-green-600 text-white px-6 py-4 rounded-t-lg">
-        <h1 className="text-xl font-semibold">
-          {REPORT_TYPES.find(r => r.id === selectedReport)?.name || 'Reportes'}
-        </h1>
+      <div className="bg-green-600 text-white px-4 sm:px-6 py-4 rounded-t-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Botón para mostrar/ocultar menú en móvil */}
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="md:hidden p-2 hover:bg-green-700 rounded-lg"
+            >
+              {showMobileMenu ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+            </button>
+            <h1 className="text-lg sm:text-xl font-semibold">
+              {REPORT_TYPES.find(r => r.id === selectedReport)?.name || 'Reportes'}
+            </h1>
+          </div>
+          
+          {/* Botón Exportar CSV */}
+          <Button
+            onClick={exportToCSV}
+            variant="outline"
+            size="sm"
+            className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+          >
+            <Download size={16} className="mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Exportar</span> CSV
+          </Button>
+        </div>
       </div>
 
       {/* Barra de Filtros */}
-      <div className="bg-white border-x border-b px-4 py-3 flex flex-wrap items-center gap-4">
+      <div className="bg-white border-x border-b px-3 sm:px-4 py-3 flex flex-wrap items-center gap-2 sm:gap-4">
         {/* Navegación de Fechas con DateRangePicker */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <button 
             onClick={() => moveDateRange('prev')}
             className="p-1.5 hover:bg-slate-100 rounded-md border"
@@ -349,8 +371,8 @@ export default function Reportes() {
           </button>
         </div>
 
-        {/* Filtro Hora */}
-        <div className="flex items-center gap-2 px-3 py-1.5 border rounded-lg">
+        {/* Filtro Hora - oculto en móvil */}
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 border rounded-lg">
           <Clock size={16} className="text-slate-400" />
           <span className="text-sm">Todo el día</span>
           <ChevronDown size={14} className="text-slate-400" />
@@ -359,9 +381,9 @@ export default function Reportes() {
         {/* Filtro Tiendas */}
         {isAdmin && tiendas.length > 0 && (
           <Select value={tiendaId || "all"} onValueChange={(v) => setTiendaId(v === "all" ? "" : v)}>
-            <SelectTrigger className="w-[180px] text-sm">
+            <SelectTrigger className="w-[140px] sm:w-[180px] text-sm">
               <Store size={16} className="mr-2 text-slate-400" />
-              <SelectValue placeholder="Todas las tiendas" />
+              <SelectValue placeholder="Todas" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas las tiendas</SelectItem>
@@ -375,9 +397,9 @@ export default function Reportes() {
         {/* Filtro Empleados */}
         {isAdmin && (
           <Select value={empleadoId || "all"} onValueChange={(v) => setEmpleadoId(v === "all" ? "" : v)}>
-            <SelectTrigger className="w-[180px] text-sm">
+            <SelectTrigger className="w-[140px] sm:w-[180px] text-sm">
               <User size={16} className="mr-2 text-slate-400" />
-              <SelectValue placeholder="Todos los empleados" />
+              <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los empleados</SelectItem>
@@ -390,15 +412,18 @@ export default function Reportes() {
       </div>
 
       <div className="flex gap-0">
-        {/* Sidebar */}
-        <div className="w-56 bg-white border-l border-b rounded-bl-lg">
+        {/* Sidebar - oculto en móvil cuando showMobileMenu es false */}
+        <div className={`${showMobileMenu ? 'block' : 'hidden'} md:block w-full md:w-56 bg-white border-l border-b rounded-bl-lg absolute md:relative z-10 md:z-auto`}>
           <div className="py-2">
             {REPORT_TYPES.map((report) => {
               const Icon = report.icon;
               return (
                 <button
                   key={report.id}
-                  onClick={() => setSelectedReport(report.id)}
+                  onClick={() => {
+                    setSelectedReport(report.id);
+                    setShowMobileMenu(false); // Ocultar menú en móvil al seleccionar
+                  }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors text-sm ${
                     selectedReport === report.id
                       ? 'bg-green-50 text-green-700 border-l-4 border-green-600'
@@ -413,9 +438,15 @@ export default function Reportes() {
           </div>
         </div>
 
-        {/* Contenido */}
-        <div className="flex-1 bg-slate-50 border-r border-b rounded-br-lg p-6">
-          {renderReportContent()}
+        {/* Contenido - ocupa todo el ancho en móvil cuando menú está oculto */}
+        <div className={`${showMobileMenu ? 'hidden md:block' : 'block'} flex-1 bg-slate-50 border-r border-b rounded-br-lg p-3 sm:p-6`}>
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <RefreshCw className="animate-spin text-green-600" size={32} />
+            </div>
+          ) : (
+            renderReportContent()
+          )}
         </div>
       </div>
     </div>
