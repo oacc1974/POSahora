@@ -21,6 +21,8 @@ export default function Clientes() {
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editingCliente, setEditingCliente] = useState(null);
+  const [busqueda, setBusqueda] = useState('');
+  const [showBusqueda, setShowBusqueda] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
