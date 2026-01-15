@@ -1132,6 +1132,56 @@ export default function POS() {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-100" data-testid="pos-page">
       
+      {/* ============ ANIMACIÓN FLY-TO-CART ============ */}
+      {flyingProduct && (
+        <div
+          className="fixed z-[9999] pointer-events-none"
+          style={{
+            left: flyingProduct.startX,
+            top: flyingProduct.startY,
+            animation: 'flyToCart 400ms ease-out forwards',
+            '--end-x': `${flyingProduct.endX - flyingProduct.startX}px`,
+            '--end-y': `${flyingProduct.endY - flyingProduct.startY}px`,
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-2xl border-2 border-blue-500 p-2 flex items-center gap-2 transform -translate-x-1/2 -translate-y-1/2">
+            {flyingProduct.producto.imagen ? (
+              <img 
+                src={flyingProduct.producto.imagen} 
+                alt={flyingProduct.producto.nombre}
+                className="w-10 h-10 rounded object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                {flyingProduct.producto.nombre.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="max-w-[100px]">
+              <p className="text-xs font-semibold truncate">{flyingProduct.producto.nombre}</p>
+              <p className="text-xs text-blue-600 font-bold">${flyingProduct.producto.precio.toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Estilos para la animación */}
+      <style>{`
+        @keyframes flyToCart {
+          0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: translate(calc(var(--end-x) * 0.5), calc(var(--end-y) * 0.3)) scale(0.8);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(var(--end-x), var(--end-y)) scale(0.3);
+            opacity: 0;
+          }
+        }
+      `}</style>
+
       {/* ============ HEADER AZUL - MÓVIL ============ */}
       <div className="md:hidden bg-blue-600 text-white px-2 py-2 flex items-center justify-between">
         {/* Izquierda: Menú hamburguesa (navegación) */}
