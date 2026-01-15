@@ -1386,6 +1386,15 @@ function ReporteRecibos({ facturas, onReembolso }) {
     );
   }
   
+  // Calcular paginación
+  const totalPaginas = Math.ceil(facturasFiltradas.length / itemsPorPagina);
+  const indiceInicio = (paginaActual - 1) * itemsPorPagina;
+  const indiceFin = indiceInicio + itemsPorPagina;
+  const facturasPaginadas = facturasFiltradas.slice(indiceInicio, indiceFin);
+  
+  // Resetear a página 1 cuando cambian los filtros
+  const resetPagina = () => setPaginaActual(1);
+  
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
