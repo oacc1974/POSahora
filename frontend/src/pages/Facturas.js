@@ -21,6 +21,9 @@ export default function Facturas() {
   const [showMenu, setShowMenu] = useState(false);
   const [showReembolsoDialog, setShowReembolsoDialog] = useState(false);
   const [reembolsoMotivo, setReembolsoMotivo] = useState('');
+  
+  // Estado para mostrar detalle en móvil (debe estar antes de cualquier return condicional)
+  const [showDetail, setShowDetail] = useState(false);
 
   useEffect(() => {
     fetchFacturas();
@@ -125,8 +128,6 @@ export default function Facturas() {
       </div>
     );
   }
-
-  const [showDetail, setShowDetail] = useState(false);
 
   return (
     <div data-testid="invoices-page" className="h-[calc(100vh-8rem)]">

@@ -70,6 +70,9 @@ export default function Productos() {
   const [editingDescuento, setEditingDescuento] = useState(null);
   const [descuentoForm, setDescuentoForm] = useState({ nombre: '', porcentaje: '', activo: true });
 
+  // Estado para menú móvil (debe estar antes de cualquier return condicional)
+  const [showMobileMenu, setShowMobileMenu] = useState(true);
+
   useEffect(() => {
     fetchProductos();
     fetchCategorias();
@@ -642,8 +645,6 @@ export default function Productos() {
       )}
     </>
   );
-
-  const [showMobileMenu, setShowMobileMenu] = useState(true);
   
   return (
     <div data-testid="products-page">
