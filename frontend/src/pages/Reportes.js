@@ -1349,12 +1349,28 @@ function ReporteRecibos({ facturas, onReembolso }) {
   const [motivoReembolso, setMotivoReembolso] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [showBusqueda, setShowBusqueda] = useState(false);
+  const [ticketConfig, setTicketConfig] = useState(null);
   
   // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const [itemsPorPagina, setItemsPorPagina] = useState(20);
   
   const token = localStorage.getItem('token');
+  
+  // Cargar configuración del ticket al montar
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/config`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setTicketConfig(response.data);
+      } catch (error) {
+        console.error('Error al cargar configuración:', error);
+      }
+    };
+    fetchConfig();
+  }, [token]);
   
   // Separar facturas por estado
   const facturasCompletadas = facturas.filter(f => f.estado !== 'reembolsado');
