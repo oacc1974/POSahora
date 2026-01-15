@@ -703,12 +703,33 @@ function ReporteResumen({ data, facturas }) {
 
 // REPORTE: Ventas por Artículo
 function ReporteArticulo({ facturas }) {
+  const [chartType, setChartType] = useState('area');
+  const [groupBy, setGroupBy] = useState('dias');
+  
   const ventasPorArticulo = {};
   const ventasPorDia = {};
+  const ventasPorSemana = {};
+  
+  // Función para obtener rango de semana
+  const getWeekRange = (dateStr) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(date.setDate(diff));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return `${monday.getDate()} ${monday.toLocaleDateString('es-ES', { month: 'short' })} - ${sunday.getDate()} ${sunday.toLocaleDateString('es-ES', { month: 'short' })}`;
+  };
   
   facturas.forEach(factura => {
     const fecha = factura.fecha?.split('T')[0] || '';
-    if (fecha && !ventasPorDia[fecha]) ventasPorDia[fecha] = 0;
+    if (fecha) {
+      if (!ventasPorDia[fecha]) ventasPorDia[fecha] = 0;
+      const weekKey = getWeekRange(fecha);
+      if (!ventasPorSemana[weekKey]) {
+        ventasPorSemana[weekKey] = { total: 0, firstDate: fecha };
+      }
+    }
     
     factura.items?.forEach(item => {
       const key = item.producto_nombre || item.nombre || 'Sin nombre';
@@ -720,6 +741,11 @@ function ReporteArticulo({ facturas }) {
       
       if (fecha) {
         ventasPorDia[fecha] += item.subtotal || 0;
+        const weekKey = getWeekRange(fecha);
+        ventasPorSemana[weekKey].total += item.subtotal || 0;
+        if (fecha < ventasPorSemana[weekKey].firstDate) {
+          ventasPorSemana[weekKey].firstDate = fecha;
+        }
       }
     });
   });
@@ -728,19 +754,22 @@ function ReporteArticulo({ facturas }) {
   const top5 = sortedItems.slice(0, 5);
   const colores = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
   
-  // Preparar datos para gráfico de barras
-  const barChartData = top5.map(([nombre, datos], i) => ({
-    nombre: nombre.length > 15 ? nombre.substring(0, 15) + '...' : nombre,
-    ventas: datos.total,
-    fill: colores[i]
-  }));
-  
-  // Preparar datos para gráfico de líneas (ventas por día)
-  const diasOrdenados = Object.keys(ventasPorDia).sort();
-  const lineChartData = diasOrdenados.map(dia => ({
-    fecha: new Date(dia + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
-    ventas: ventasPorDia[dia]
-  }));
+  // Preparar datos según la agrupación seleccionada
+  let chartData = [];
+  if (groupBy === 'dias') {
+    const diasOrdenados = Object.keys(ventasPorDia).sort();
+    chartData = diasOrdenados.map(dia => ({
+      label: new Date(dia + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+      ventas: ventasPorDia[dia]
+    }));
+  } else {
+    const semanasOrdenadas = Object.entries(ventasPorSemana)
+      .sort(([, a], [, b]) => a.firstDate.localeCompare(b.firstDate));
+    chartData = semanasOrdenadas.map(([semana, datos]) => ({
+      label: semana,
+      ventas: datos.total
+    }));
+  }
   
   return (
     <div className="space-y-6">
@@ -762,48 +791,87 @@ function ReporteArticulo({ facturas }) {
           </div>
         </div>
 
-        {/* Gráfico de líneas con Recharts */}
+        {/* Gráfico con selectores funcionales */}
         <div className="bg-white rounded-lg border p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold">Ventas netas</h3>
             <div className="flex gap-2">
-              <select className="text-sm border rounded px-2 py-1">
-                <option>Línea</option>
-                <option>Área</option>
+              <select 
+                className="text-sm border rounded px-3 py-1.5 bg-white cursor-pointer"
+                value={chartType}
+                onChange={(e) => setChartType(e.target.value)}
+              >
+                <option value="area">Área</option>
+                <option value="bar">Bar</option>
               </select>
-              <select className="text-sm border rounded px-2 py-1">
-                <option>Días</option>
+              <select 
+                className="text-sm border rounded px-3 py-1.5 bg-white cursor-pointer"
+                value={groupBy}
+                onChange={(e) => setGroupBy(e.target.value)}
+              >
+                <option value="dias">Días</option>
+                <option value="semanas">Semanas</option>
               </select>
             </div>
           </div>
-          {lineChartData.length > 0 ? (
+          {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={160}>
-              <LineChart data={lineChartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="fecha" 
-                  tick={{ fontSize: 10 }} 
-                  tickLine={false}
-                  axisLine={{ stroke: '#e5e7eb' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 10 }} 
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `$${value}`}
-                />
-                <Tooltip 
-                  formatter={(value) => [`$${value.toFixed(2)}`, 'Ventas']}
-                  contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="ventas" 
-                  stroke="#3B82F6" 
-                  strokeWidth={2}
-                  dot={{ fill: '#3B82F6', strokeWidth: 2 }}
-                />
-              </LineChart>
+              {chartType === 'area' ? (
+                <AreaChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="colorVentasArticulo" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="label" 
+                    tick={{ fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `$${value}`}
+                  />
+                  <Tooltip 
+                    formatter={(value) => [`$${value.toFixed(2)}`, 'Ventas']}
+                    contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="ventas" 
+                    stroke="#3B82F6" 
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorVentasArticulo)"
+                  />
+                </AreaChart>
+              ) : (
+                <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="label" 
+                    tick={{ fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `$${value}`}
+                  />
+                  <Tooltip 
+                    formatter={(value) => [`$${value.toFixed(2)}`, 'Ventas']}
+                    contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                  />
+                  <Bar dataKey="ventas" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              )}
             </ResponsiveContainer>
           ) : (
             <div className="h-40 flex items-center justify-center text-slate-400">
