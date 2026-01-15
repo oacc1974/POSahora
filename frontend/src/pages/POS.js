@@ -1147,37 +1147,39 @@ export default function POS() {
   const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
   const cartItemCount = cart.reduce((sum, item) => sum + item.cantidad, 0);
   
-  // Calcular impuestos
-  const calcularImpuestos = () => {
-    let totalImpuestosAgregados = 0;
-    const desgloseImpuestos = [];
+  // Calcular impuestos con useMemo para mejor rendimiento
+  const { totalImpuestosAgregados, desgloseImpuestos, total } = useMemo(() => {
+    let totalImpAgregados = 0;
+    const desglose = [];
     
-    impuestosActivos.forEach(imp => {
-      let montoImpuesto = 0;
-      
-      if (imp.tipo === 'incluido') {
-        // El impuesto ya está incluido en el precio
-        // Calculamos cuánto del subtotal es impuesto: subtotal - (subtotal / (1 + tasa))
-        montoImpuesto = subtotal - (subtotal / (1 + imp.tasa / 100));
-      } else {
-        // Impuesto no incluido, se agrega al subtotal
-        montoImpuesto = subtotal * (imp.tasa / 100);
-        totalImpuestosAgregados += montoImpuesto;
-      }
-      
-      desgloseImpuestos.push({
-        nombre: imp.nombre,
-        tasa: imp.tasa,
-        tipo: imp.tipo,
-        monto: montoImpuesto
+    if (impuestosActivos.length > 0 && subtotal > 0) {
+      impuestosActivos.forEach(imp => {
+        let montoImpuesto = 0;
+        
+        if (imp.tipo === 'incluido') {
+          // El impuesto ya está incluido en el precio
+          montoImpuesto = subtotal - (subtotal / (1 + imp.tasa / 100));
+        } else {
+          // Impuesto no incluido, se agrega al subtotal
+          montoImpuesto = subtotal * (imp.tasa / 100);
+          totalImpAgregados += montoImpuesto;
+        }
+        
+        desglose.push({
+          nombre: imp.nombre,
+          tasa: imp.tasa,
+          tipo: imp.tipo,
+          monto: montoImpuesto
+        });
       });
-    });
+    }
     
-    return { totalImpuestosAgregados, desgloseImpuestos };
-  };
-  
-  const { totalImpuestosAgregados, desgloseImpuestos } = calcularImpuestos();
-  const total = subtotal + totalImpuestosAgregados;
+    return { 
+      totalImpuestosAgregados: totalImpAgregados, 
+      desgloseImpuestos: desglose,
+      total: subtotal + totalImpAgregados
+    };
+  }, [impuestosActivos, subtotal]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-100" data-testid="pos-page">
