@@ -227,6 +227,52 @@ export default function Reportes() {
     setDateRange({ from: newFrom, to: newTo });
   };
 
+  // Función para exportar a CSV
+  const exportToCSV = () => {
+    if (!facturas || facturas.length === 0) {
+      toast.error('No hay datos para exportar');
+      return;
+    }
+
+    // Crear encabezados y filas según el tipo de reporte
+    let csvContent = '';
+    let filename = `reporte_${selectedReport}_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+
+    if (selectedReport === 'resumen') {
+      csvContent = 'Fecha,Numero,Cliente,Total,Metodo Pago,Empleado\n';
+      facturas.forEach(f => {
+        csvContent += `"${f.fecha}","${f.numero}","${f.cliente_nombre || 'Sin cliente'}","${f.total}","${f.metodo_pago_nombre || 'Efectivo'}","${f.usuario_nombre || ''}"\n`;
+      });
+    } else if (selectedReport === 'articulo') {
+      csvContent = 'Producto,Cantidad,Total\n';
+      const grouped = {};
+      facturas.forEach(f => {
+        f.items?.forEach(item => {
+          if (!grouped[item.nombre]) grouped[item.nombre] = { cantidad: 0, total: 0 };
+          grouped[item.nombre].cantidad += item.cantidad;
+          grouped[item.nombre].total += item.subtotal;
+        });
+      });
+      Object.entries(grouped).forEach(([nombre, data]) => {
+        csvContent += `"${nombre}","${data.cantidad}","${data.total.toFixed(2)}"\n`;
+      });
+    } else {
+      // Exportación genérica
+      csvContent = 'Fecha,Numero,Total\n';
+      facturas.forEach(f => {
+        csvContent += `"${f.fecha}","${f.numero}","${f.total}"\n`;
+      });
+    }
+
+    // Crear y descargar archivo
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    toast.success('Reporte exportado correctamente');
+  };
+
   const renderReportContent = () => {
     // Para tickets abiertos, no mostramos el loading general
     if (selectedReport === 'tickets_abiertos') {
