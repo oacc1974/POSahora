@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -19,10 +19,32 @@ import {
 } from '../components/ui/dialog';
 import { 
   Plus, Pencil, Trash2, Package, ShoppingBasket, List, Tag, 
-  Layers, Percent, ChevronDown, ChevronRight, X
+  Layers, Percent, ChevronDown, ChevronRight, X, ScanLine, Camera, Volume2
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { Html5Qrcode } from 'html5-qrcode';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Sonido de confirmación de escaneo
+const playBeep = () => {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.frequency.value = 1200;
+    oscillator.type = 'sine';
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+  } catch (e) {
+    console.log('Audio not supported');
+  }
+};
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
