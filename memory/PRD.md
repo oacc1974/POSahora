@@ -20,6 +20,26 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### Completadas (15 Enero 2026)
 
+- [x] **Buscador en Productos**
+  - Icono de lupa junto al botón "Nuevo Producto"
+  - Campo de búsqueda con placeholder "Buscar producto..."
+  - Filtra por: nombre, categoría, código de barras, descripción
+  - Indicador: "Se encontraron X producto(s) para 'término'"
+  - Botón "Limpiar" para resetear la búsqueda
+
+- [x] **Buscador en Clientes**
+  - Icono de lupa junto al botón "Nuevo Cliente"
+  - Campo de búsqueda con placeholder "Buscar cliente..."
+  - Filtra por: nombre, email, teléfono, cédula/RUC, ciudad
+  - Indicador: "Se encontraron X cliente(s) para 'término'"
+  - Mensaje personalizado si no hay coincidencias
+
+- [x] **Paginación en Reporte de Recibos**
+  - Selector de items por página: 10, 20, 50, 100
+  - Indicador: "Mostrando X de Y recibos"
+  - Navegación completa: Primera, Anterior, Página X de Y, Siguiente, Última
+  - Reseteo automático a página 1 al cambiar filtros
+
 - [x] **Bug Fix: Errores de React Hooks en páginas responsivas**
   - **Problema:** Las páginas `/productos` y `/facturas` mostraban error "Rendered more hooks than during the previous render"
   - **Causa:** Variables `useState` declaradas después de retornos condicionales (`if (loading) return ...`)
