@@ -76,6 +76,7 @@ export default function Reportes() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
   const [facturas, setFacturas] = useState([]);
+  const [showMobileMenu, setShowMobileMenu] = useState(true);
   
   // Filtros - usando objeto de rango de fechas
   const [dateRange, setDateRange] = useState({
