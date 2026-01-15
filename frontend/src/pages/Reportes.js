@@ -741,6 +741,7 @@ function ReporteResumen({ data, facturas }) {
 function ReporteArticulo({ facturas }) {
   const [chartType, setChartType] = useState('area');
   const [groupBy, setGroupBy] = useState('dias');
+  const chartRef = useRef(null);
   
   const ventasPorArticulo = {};
   const ventasPorDia = {};
