@@ -1713,23 +1713,25 @@ async def get_tpvs_disponibles(current_user: dict = Depends(get_current_user)):
 
 @app.post("/api/tpv/crear-automatico")
 async def crear_tpv_automatico(current_user: dict = Depends(get_current_user)):
-    """Crea automáticamente una tienda y TPV por defecto si no existen"""
+    """Crea automáticamente una tienda y TPV por defecto si no existen disponibles"""
     org_id = current_user["organizacion_id"]
     
-    # Verificar si ya hay TPVs disponibles
-    tpvs_existentes = await db.tpv.find({
+    # Verificar si ya hay TPVs disponibles (activos y no ocupados)
+    tpv_disponible = await db.tpv.find_one({
         "organizacion_id": org_id,
-        "$or": [{"activo": True}, {"activo": {"$exists": False}}]
-    }).to_list(1)
+        "$and": [
+            {"$or": [{"activo": True}, {"activo": {"$exists": False}}]},
+            {"$or": [{"ocupado": False}, {"ocupado": {"$exists": False}}, {"ocupado": None}]}
+        ]
+    })
     
-    if tpvs_existentes:
-        # Ya hay TPVs, no crear más
-        tpv = tpvs_existentes[0]
-        tienda = await db.tiendas.find_one({"id": tpv["tienda_id"]}, {"_id": 0})
+    if tpv_disponible:
+        # Ya hay un TPV disponible
+        tienda = await db.tiendas.find_one({"id": tpv_disponible["tienda_id"]}, {"_id": 0})
         return {
             "mensaje": "Ya existe un TPV disponible",
-            "tpv_id": tpv["id"],
-            "tpv_nombre": tpv["nombre"],
+            "tpv_id": tpv_disponible["id"],
+            "tpv_nombre": tpv_disponible["nombre"],
             "tienda_nombre": tienda["nombre"] if tienda else "Sin tienda",
             "creado": False
         }
@@ -1754,12 +1756,19 @@ async def crear_tpv_automatico(current_user: dict = Depends(get_current_user)):
     else:
         tienda_id = tienda["id"]
     
-    # Crear TPV por defecto
+    # Contar TPVs existentes para determinar el siguiente número
+    tpvs_count = await db.tpv.count_documents({
+        "organizacion_id": org_id,
+        "tienda_id": tienda_id
+    })
+    siguiente_numero = tpvs_count + 1
+    
+    # Crear TPV con secuencia correcta
     tpv_id = str(uuid.uuid4())
     nuevo_tpv = {
         "id": tpv_id,
-        "nombre": "Caja 1",
-        "punto_emision": "001",
+        "nombre": f"Caja {siguiente_numero}",
+        "punto_emision": f"{siguiente_numero:03d}",
         "tienda_id": tienda_id,
         "activo": True,
         "ocupado": False,
