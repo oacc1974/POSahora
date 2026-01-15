@@ -505,6 +505,7 @@ function MetricCard({ title, value, change, changePercent, icon: Icon, color = '
 function ReporteResumen({ data, facturas }) {
   const [chartType, setChartType] = useState('area');
   const [groupBy, setGroupBy] = useState('dias');
+  const chartRef = useRef(null);
   
   if (!data) return <p className="text-slate-500">No hay datos disponibles</p>;
   
