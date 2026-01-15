@@ -1350,6 +1350,10 @@ function ReporteRecibos({ facturas, onReembolso }) {
   const [busqueda, setBusqueda] = useState('');
   const [showBusqueda, setShowBusqueda] = useState(false);
   
+  // Estados para paginación
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [itemsPorPagina, setItemsPorPagina] = useState(20);
+  
   const token = localStorage.getItem('token');
   
   // Separar facturas por estado
