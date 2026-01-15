@@ -1361,12 +1361,26 @@ function ReporteRecibos({ facturas, onReembolso }) {
   const montoVentas = facturasCompletadas.reduce((sum, f) => sum + (f.total || 0), 0);
   const montoReembolsos = facturasReembolsadas.reduce((sum, f) => sum + (f.total || 0), 0);
   
-  // Filtrar facturas según el filtro seleccionado
-  const facturasFiltradas = filtroEstado === 'todos' 
+  // Filtrar facturas según el filtro seleccionado y búsqueda
+  let facturasFiltradas = filtroEstado === 'todos' 
     ? facturas 
     : filtroEstado === 'ventas' 
       ? facturasCompletadas 
       : facturasReembolsadas;
+  
+  // Aplicar filtro de búsqueda
+  if (busqueda.trim()) {
+    const termino = busqueda.toLowerCase().trim();
+    facturasFiltradas = facturasFiltradas.filter(f => 
+      (f.numero || '').toLowerCase().includes(termino) ||
+      (f.cliente_nombre || '').toLowerCase().includes(termino) ||
+      (f.vendedor_nombre || '').toLowerCase().includes(termino) ||
+      (f.total?.toString() || '').includes(termino) ||
+      (f.items || []).some(item => 
+        (item.producto_nombre || item.nombre || '').toLowerCase().includes(termino)
+      )
+    );
+  }
   
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
