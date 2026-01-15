@@ -2059,8 +2059,8 @@ export default function POS() {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-blue-800 text-sm">
                   {esMesero 
-                    ? 'No hay TPVs disponibles. Contacta al administrador.'
-                    : 'No hay TPVs configurados. Se creará uno automáticamente al abrir la caja.'}
+                    ? 'No hay TPVs disponibles. Todos están ocupados o no existen. Contacta al administrador.'
+                    : 'No hay TPVs disponibles. Se creará uno automáticamente al abrir la caja.'}
                 </p>
               </div>
             )}
