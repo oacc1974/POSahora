@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://modifiers-pos.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://storefront-60.preview.emergentagent.com')
 
 class TestFuncionesAPI:
     """Tests for /api/funciones endpoints - 7 functions configuration"""
