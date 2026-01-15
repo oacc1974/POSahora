@@ -73,6 +73,9 @@ export default function POS() {
   const [productoConModificadores, setProductoConModificadores] = useState(null);
   const [modificadoresSeleccionados, setModificadoresSeleccionados] = useState({});
   
+  // Estado para impuestos activos
+  const [impuestosActivos, setImpuestosActivos] = useState([]);
+  
   // Estado para animación fly-to-cart
   const [flyingProduct, setFlyingProduct] = useState(null);
   const ticketButtonRef = React.useRef(null);
