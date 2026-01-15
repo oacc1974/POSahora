@@ -1544,6 +1544,85 @@ function ReporteRecibos({ facturas, onReembolso }) {
       
       {/* Panel izquierdo - Lista de recibos */}
       <div className={`flex-1 space-y-4 ${selectedFactura ? 'max-w-[60%]' : ''}`}>
+        {/* Barra de búsqueda */}
+        <div className="flex items-center gap-4">
+          <div className="flex-1 relative">
+            {showBusqueda ? (
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" 
+                    width="18" height="18" viewBox="0 0 24 24" fill="none" 
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <input
+                    type="text"
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    placeholder="Buscar por nº recibo, cliente, empleado, producto..."
+                    className="w-full pl-10 pr-10 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
+                  {busqueda && (
+                    <button
+                      onClick={() => setBusqueda('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    setShowBusqueda(false);
+                    setBusqueda('');
+                  }}
+                  className="px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
+                >
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-700">Recibos</h2>
+                <button
+                  onClick={() => setShowBusqueda(true)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg border"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" height="16" viewBox="0 0 24 24" fill="none" 
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  Buscar recibo
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Indicador de resultados de búsqueda */}
+        {busqueda && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-sm text-blue-700 flex items-center justify-between">
+            <span>
+              Se encontraron <strong>{facturasFiltradas.length}</strong> recibo(s) para "{busqueda}"
+            </span>
+            <button
+              onClick={() => setBusqueda('')}
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Limpiar búsqueda
+            </button>
+          </div>
+        )}
+
         {/* Tarjetas de métricas clickeables */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div 
