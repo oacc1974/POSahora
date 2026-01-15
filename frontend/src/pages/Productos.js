@@ -46,8 +46,6 @@ const playBeep = () => {
   }
 };
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
-
 export default function Productos() {
   // Estado del menú
   const [activeSection, setActiveSection] = useState('productos');
