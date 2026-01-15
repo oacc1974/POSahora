@@ -69,8 +69,11 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
   - Tarjetas clickeables para filtrar: Todos, Ventas, Reembolsos
   - Panel lateral con detalle del recibo al hacer clic en una fila
   - Detalle muestra: Total, Info pedido, Artículos, Subtotales, Método de pago
-  - Menú de 3 puntos (⋮) para reembolsar recibos
+  - Menú de 3 puntos (⋮) con opciones:
+    - **Reembolsar**: Abre diálogo con campo para motivo del reembolso
+    - **Imprimir**: Abre ventana de impresión con el recibo formateado
   - Filtro visual con borde coloreado en tarjeta seleccionada
+  - Corregido endpoint de reembolso (`/api/facturas/{id}/reembolso` con motivo requerido)
 
 ### Completadas (14 Enero 2026)
 
