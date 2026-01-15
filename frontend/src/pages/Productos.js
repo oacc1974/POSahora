@@ -669,7 +669,8 @@ export default function Productos() {
             </Card>
           ))}
         </div>
-      )}
+      );
+      })()}
     </>
   );
 
