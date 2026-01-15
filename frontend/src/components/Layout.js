@@ -61,13 +61,6 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
       show: true,
     },
     {
-      name: 'Facturas',
-      href: '/facturas',
-      icon: FileText,
-      testId: 'nav-invoices',
-      show: true,
-    },
-    {
       name: 'Reportes',
       href: '/reportes',
       icon: BarChart3,
