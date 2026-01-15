@@ -70,6 +70,12 @@ export default function Productos() {
   });
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  // Estados para escáner de código de barras
+  const [showScanner, setShowScanner] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const scannerRef = useRef(null);
+  const html5QrCodeRef = useRef(null);
+
   // Estados para Categorías
   const [categorias, setCategorias] = useState([]);
   const [showCategoriaDialog, setShowCategoriaDialog] = useState(false);
