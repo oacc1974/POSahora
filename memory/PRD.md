@@ -186,7 +186,7 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 - [x] ~~Exportar gráficos como imagen~~ ✓ Completado 15 Enero 2026
 - [x] ~~Buscador en páginas de Productos y Clientes~~ ✓ Completado 15 Enero 2026
 - [x] ~~Paginación en reporte de Recibos~~ ✓ Completado 15 Enero 2026
-- [ ] Mostrar logo de organización en el recibo impreso
+- [x] ~~Mostrar logo de organización en el recibo impreso~~ ✓ Completado 15 Enero 2026
 - [ ] Lógica interna de "Función de reloj" (UI de fichaje)
 - [ ] Lógica interna de "Impresoras de cocina"
 - [ ] Lógica interna de "Pantalla para clientes"
