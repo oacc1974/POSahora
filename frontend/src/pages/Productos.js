@@ -51,6 +51,10 @@ export default function Productos() {
   const [activeSection, setActiveSection] = useState('productos');
   const [menuExpanded, setMenuExpanded] = useState(true);
   
+  // Estado de búsqueda
+  const [busqueda, setBusqueda] = useState('');
+  const [showBusqueda, setShowBusqueda] = useState(false);
+  
   // Estados para Productos
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
