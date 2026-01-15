@@ -1458,6 +1458,19 @@ function ReporteRecibos({ facturas, onReembolso }) {
     const printWindow = window.open('', '_blank');
     const fecha = selectedFactura.fecha ? new Date(selectedFactura.fecha) : new Date();
     
+    // Construir HTML del logo si existe
+    const logoHtml = ticketConfig?.logo_url 
+      ? `<div class="logo"><img src="${API_URL}${ticketConfig.logo_url}" alt="Logo" /></div>` 
+      : '';
+    
+    // Construir HTML de la cabecera si existe
+    const cabeceraHtml = ticketConfig?.cabecera?.trim() 
+      ? `<div class="cabecera">${ticketConfig.cabecera}</div>` 
+      : '';
+    
+    // Construir HTML del nombre del negocio
+    const nombreNegocio = ticketConfig?.nombre_negocio || 'Mi Negocio';
+    
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -1465,6 +1478,9 @@ function ReporteRecibos({ facturas, onReembolso }) {
         <title>Recibo ${selectedFactura.numero}</title>
         <style>
           body { font-family: 'Courier New', monospace; padding: 20px; max-width: 300px; margin: 0 auto; font-size: 12px; }
+          .logo { text-align: center; margin-bottom: 10px; }
+          .logo img { max-width: 150px; max-height: 80px; }
+          .cabecera { text-align: center; font-size: 11px; font-weight: bold; margin-bottom: 8px; padding: 5px 0; border-bottom: 1px dashed #000; }
           .header { text-align: center; margin-bottom: 15px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
           .header h2 { margin: 0 0 5px 0; font-size: 16px; }
           .items { margin: 15px 0; }
@@ -1477,8 +1493,10 @@ function ReporteRecibos({ facturas, onReembolso }) {
         </style>
       </head>
       <body>
+        ${logoHtml}
+        ${cabeceraHtml}
         <div class="header">
-          <h2>RECIBO</h2>
+          <h2>${nombreNegocio}</h2>
           <p>Nº ${selectedFactura.numero}</p>
           <p>${fecha.toLocaleDateString('es-ES')} ${fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
           <p>Atendido por: ${selectedFactura.vendedor_nombre || '-'}</p>
