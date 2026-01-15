@@ -1624,60 +1624,104 @@ function ReporteRecibos({ facturas, onReembolso }) {
           </div>
         )}
 
-        {/* Tarjetas de métricas clickeables */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Tarjetas de métricas clickeables - compactas en móvil */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           <div 
-            className={`bg-white rounded-lg border p-4 cursor-pointer transition-all ${filtroEstado === 'todos' ? 'ring-2 ring-blue-500 border-blue-500' : 'hover:border-slate-300'}`}
+            className={`bg-white rounded-lg border p-2 md:p-4 cursor-pointer transition-all ${filtroEstado === 'todos' ? 'ring-2 ring-blue-500 border-blue-500' : 'hover:border-slate-300'}`}
             onClick={() => setFiltroEstado('todos')}
           >
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-                <FileText size={20} className="text-slate-600" />
+            <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                <FileText size={16} className="md:hidden text-slate-600" />
+                <FileText size={20} className="hidden md:block text-slate-600" />
               </div>
-              <div className="text-sm text-slate-600">Todos los recibos</div>
+              <div className="text-xs md:text-sm text-slate-600">Todos</div>
             </div>
-            <div className="text-2xl font-bold">{totalVentas + totalReembolsos}</div>
+            <div className="text-xl md:text-2xl font-bold">{totalVentas + totalReembolsos}</div>
           </div>
           <div 
-            className={`bg-white rounded-lg border p-4 cursor-pointer transition-all ${filtroEstado === 'ventas' ? 'ring-2 ring-green-500 border-green-500' : 'hover:border-slate-300'}`}
+            className={`bg-white rounded-lg border p-2 md:p-4 cursor-pointer transition-all ${filtroEstado === 'ventas' ? 'ring-2 ring-green-500 border-green-500' : 'hover:border-slate-300'}`}
             onClick={() => setFiltroEstado('ventas')}
           >
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Receipt size={20} className="text-green-600" />
+            <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Receipt size={16} className="md:hidden text-green-600" />
+                <Receipt size={20} className="hidden md:block text-green-600" />
               </div>
-              <div className="text-sm text-slate-600">Ventas</div>
+              <div className="text-xs md:text-sm text-slate-600">Ventas</div>
             </div>
-            <div className="text-2xl font-bold text-green-600">{totalVentas}</div>
-            <div className="text-sm text-slate-500">${montoVentas.toFixed(2)}</div>
+            <div className="text-xl md:text-2xl font-bold text-green-600">{totalVentas}</div>
+            <div className="text-xs md:text-sm text-slate-500 truncate">${montoVentas.toFixed(2)}</div>
           </div>
           <div 
-            className={`bg-white rounded-lg border p-4 cursor-pointer transition-all ${filtroEstado === 'reembolsos' ? 'ring-2 ring-red-500 border-red-500' : 'hover:border-slate-300'}`}
+            className={`bg-white rounded-lg border p-2 md:p-4 cursor-pointer transition-all ${filtroEstado === 'reembolsos' ? 'ring-2 ring-red-500 border-red-500' : 'hover:border-slate-300'}`}
             onClick={() => setFiltroEstado('reembolsos')}
           >
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                <Receipt size={20} className="text-red-600" />
+            <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <Receipt size={16} className="md:hidden text-red-600" />
+                <Receipt size={20} className="hidden md:block text-red-600" />
               </div>
-              <div className="text-sm text-slate-600">Reembolsos</div>
+              <div className="text-xs md:text-sm text-slate-600">Reembolsos</div>
             </div>
-            <div className="text-2xl font-bold text-red-600">{totalReembolsos}</div>
-            <div className="text-sm text-slate-500">-${montoReembolsos.toFixed(2)}</div>
+            <div className="text-xl md:text-2xl font-bold text-red-600">{totalReembolsos}</div>
+            <div className="text-xs md:text-sm text-slate-500 truncate">-${montoReembolsos.toFixed(2)}</div>
           </div>
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <DollarSign size={20} className="text-blue-600" />
+          <div className="bg-white rounded-lg border p-2 md:p-4">
+            <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <DollarSign size={16} className="md:hidden text-blue-600" />
+                <DollarSign size={20} className="hidden md:block text-blue-600" />
               </div>
-              <div className="text-sm text-slate-600">Ingresos netos</div>
+              <div className="text-xs md:text-sm text-slate-600">Netos</div>
             </div>
-            <div className="text-2xl font-bold text-blue-600">${(montoVentas - montoReembolsos).toFixed(2)}</div>
+            <div className="text-xl md:text-2xl font-bold text-blue-600 truncate">${(montoVentas - montoReembolsos).toFixed(2)}</div>
           </div>
         </div>
 
-        {/* Tabla de recibos */}
+        {/* Lista de recibos en móvil / Tabla en desktop */}
         <div className="bg-white rounded-lg border overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Vista móvil - Lista de cards */}
+          <div className="md:hidden">
+            {facturasFiltradas.slice(0, 50).map((factura) => (
+              <div 
+                key={factura.id} 
+                className={`p-3 border-b cursor-pointer transition-colors ${
+                  selectedFactura?.id === factura.id 
+                    ? 'bg-blue-50 border-l-4 border-l-blue-500' 
+                    : 'hover:bg-slate-50'
+                }`}
+                onClick={() => setSelectedFactura(factura)}
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <span className="font-mono font-medium text-blue-600 text-sm">
+                    #{factura.numero?.split('-').pop() || factura.numero}
+                  </span>
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                    factura.estado === 'reembolsado' 
+                      ? 'bg-red-100 text-red-700' 
+                      : 'bg-green-100 text-green-700'
+                  }`}>
+                    {factura.estado === 'reembolsado' ? 'Reemb.' : 'OK'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="text-xs text-slate-500">
+                    {formatDate(factura.fecha)} • {factura.vendedor_nombre || '-'}
+                    {factura.cliente_nombre && <span className="text-slate-400"> • {factura.cliente_nombre}</span>}
+                  </div>
+                  <span className={`font-mono font-semibold ${
+                    factura.estado === 'reembolsado' ? 'text-red-600 line-through' : 'text-green-600'
+                  }`}>
+                    ${factura.total?.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Vista desktop - Tabla */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b">
                 <tr>
