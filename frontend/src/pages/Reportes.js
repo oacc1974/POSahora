@@ -969,6 +969,7 @@ function ReporteArticulo({ facturas }) {
 function ReporteCategoria({ facturas }) {
   const [chartType, setChartType] = useState('bar');
   const [groupBy, setGroupBy] = useState('dias');
+  const chartRef = useRef(null);
   
   const ventasPorCategoria = {};
   const ventasPorDia = {};
