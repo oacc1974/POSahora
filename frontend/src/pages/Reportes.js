@@ -482,7 +482,7 @@ export default function Reportes() {
 }
 
 // Componente de Tarjeta de Métrica
-function MetricCard({ title, value, change, changePercent, icon: Icon, color = 'green' }) {
+function MetricCard({ title, value, change, changePercent, icon: Icon, color }) {
   const isPositive = change >= 0;
   return (
     <div className="bg-white rounded-lg border p-4">
@@ -490,7 +490,7 @@ function MetricCard({ title, value, change, changePercent, icon: Icon, color = '
         <span className="text-sm text-slate-600">{title}</span>
         <Info size={14} className="text-slate-400" />
       </div>
-      <div className="text-2xl font-bold">{value}</div>
+      <div className={`text-2xl font-bold ${color || ''}`}>{value}</div>
       {change !== undefined && (
         <div className={`text-xs mt-1 ${isPositive ? 'text-blue-600' : 'text-red-600'}`}>
           {isPositive ? '+' : ''}{typeof change === 'number' ? `$${change.toFixed(2)}` : change}
