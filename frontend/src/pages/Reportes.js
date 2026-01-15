@@ -1696,7 +1696,7 @@ function ReporteRecibos({ facturas, onReembolso }) {
         <div className="bg-white rounded-lg border overflow-hidden">
           {/* Vista móvil - Lista de cards */}
           <div className="md:hidden">
-            {facturasFiltradas.slice(0, 50).map((factura) => (
+            {facturasPaginadas.map((factura) => (
               <div 
                 key={factura.id} 
                 className={`p-3 border-b cursor-pointer transition-colors ${
