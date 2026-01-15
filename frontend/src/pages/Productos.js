@@ -289,6 +289,78 @@ export default function Productos() {
     });
   };
 
+  // ============ BARCODE SCANNER HANDLERS ============
+  const startScanner = async () => {
+    setShowScanner(true);
+    setIsScanning(true);
+    
+    // Esperar a que el elemento esté en el DOM
+    setTimeout(async () => {
+      if (!scannerRef.current) return;
+      
+      try {
+        const html5QrCode = new Html5Qrcode("barcode-reader-productos");
+        html5QrCodeRef.current = html5QrCode;
+        
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 150 },
+            aspectRatio: 1.777,
+            formatsToSupport: [
+              0, // QR_CODE
+              1, // AZTEC
+              2, // CODABAR
+              3, // CODE_39
+              4, // CODE_93
+              5, // CODE_128
+              6, // DATA_MATRIX
+              7, // MAXICODE
+              8, // ITF
+              9, // EAN_13
+              10, // EAN_8
+              11, // PDF_417
+              12, // RSS_14
+              13, // RSS_EXPANDED
+              14, // UPC_A
+              15, // UPC_E
+              16, // UPC_EAN_EXTENSION
+            ]
+          },
+          (decodedText) => {
+            // Éxito: código escaneado
+            playBeep();
+            setFormData(prev => ({ ...prev, codigo_barras: decodedText }));
+            toast.success(`Código escaneado: ${decodedText}`);
+            stopScanner();
+          },
+          (errorMessage) => {
+            // Ignorar errores de escaneo continuo
+          }
+        );
+      } catch (err) {
+        console.error("Error al iniciar escáner:", err);
+        toast.error("No se pudo acceder a la cámara. Verifica los permisos.");
+        setShowScanner(false);
+        setIsScanning(false);
+      }
+    }, 100);
+  };
+
+  const stopScanner = async () => {
+    try {
+      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+        await html5QrCodeRef.current.stop();
+        html5QrCodeRef.current.clear();
+      }
+    } catch (err) {
+      console.error("Error al detener escáner:", err);
+    }
+    setShowScanner(false);
+    setIsScanning(false);
+  };
+
   // ============ CATEGORIAS HANDLERS ============
   const handleCategoriaSubmit = async (e) => {
     e.preventDefault();
