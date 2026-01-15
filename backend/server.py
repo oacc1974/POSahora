@@ -2027,6 +2027,30 @@ async def upload_producto_imagen(
     imagen_url = f"/api/uploads/productos/{filename}"
     return {"url": imagen_url, "filename": filename}
 
+@app.post("/api/config/upload-logo")
+async def upload_logo(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_propietario_or_admin)
+):
+    """Sube un logo para el negocio y devuelve la URL"""
+    # Validar tipo de archivo
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Tipo de archivo no permitido. Use JPG, PNG, GIF o WebP")
+    
+    # Generar nombre único
+    ext = file.filename.split(".")[-1] if "." in file.filename else "png"
+    filename = f"logo_{current_user['organizacion_id']}_{uuid.uuid4()}.{ext}"
+    filepath = LOGOS_DIR / filename
+    
+    # Guardar archivo
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Devolver URL relativa
+    logo_url = f"/api/uploads/logos/{filename}"
+    return {"url": logo_url, "filename": filename}
+
 @app.post("/api/productos", response_model=ProductResponse)
 async def create_producto(product: ProductCreate, current_user: dict = Depends(get_propietario_or_admin)):
     import uuid
