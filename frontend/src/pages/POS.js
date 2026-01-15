@@ -811,8 +811,18 @@ export default function POS() {
         .item { display: flex; justify-content: space-between; margin: 5px 0; font-size: 11px; }
         .total { border-top: 2px solid #000; margin-top: 10px; padding-top: 10px; font-weight: bold; }
         .footer { margin-top: 15px; text-align: center; font-size: 11px; }
+        .logo { text-align: center; margin-bottom: 10px; }
+        .logo img { max-width: 150px; max-height: 80px; }
       `);
       printWindow.document.write('</style></head><body>');
+      
+      // Mostrar logo si existe
+      if (config.logo_url) {
+        printWindow.document.write('<div class="logo">');
+        printWindow.document.write(`<img src="${API_URL}${config.logo_url}" alt="Logo" />`);
+        printWindow.document.write('</div>');
+      }
+      
       if (config.cabecera && config.cabecera.trim() !== '') {
         printWindow.document.write('<div style="text-align:center; margin-bottom: 8px; padding: 5px 0;">');
         printWindow.document.write(`<p style="font-size: 11px; font-weight: bold; margin: 0;">${config.cabecera}</p>`);
