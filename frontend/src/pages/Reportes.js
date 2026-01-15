@@ -1338,75 +1338,132 @@ function ReporteTipoPago({ data, facturas }) {
 
 // REPORTE: Ingresos
 function ReporteIngresos({ facturas }) {
-  const totalVentas = facturas.filter(f => f.total > 0).length;
-  const totalReembolsos = 0; // No hay sistema de reembolsos implementado
-  const totalMonto = facturas.reduce((sum, f) => sum + (f.total || 0), 0);
+  const [selectedFactura, setSelectedFactura] = useState(null);
+  
+  // Separar facturas por estado
+  const facturasCompletadas = facturas.filter(f => f.estado !== 'reembolsado');
+  const facturasReembolsadas = facturas.filter(f => f.estado === 'reembolsado');
+  
+  const totalVentas = facturasCompletadas.length;
+  const totalReembolsos = facturasReembolsadas.length;
+  const montoVentas = facturasCompletadas.reduce((sum, f) => sum + (f.total || 0), 0);
+  const montoReembolsos = facturasReembolsadas.reduce((sum, f) => sum + (f.total || 0), 0);
+  
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+  
+  const formatTime = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  };
   
   return (
     <div className="space-y-6">
-      {/* Tarjetas */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border p-6 text-center">
-          <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <FileText size={24} className="text-slate-600" />
+      {/* Tarjetas de métricas */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg border p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+              <FileText size={20} className="text-slate-600" />
+            </div>
+            <div className="text-sm text-slate-600">Todos los recibos</div>
           </div>
-          <div className="text-sm text-slate-600 mb-1">Todos los recibos</div>
-          <div className="text-3xl font-bold">{totalVentas + totalReembolsos}</div>
+          <div className="text-2xl font-bold">{totalVentas + totalReembolsos}</div>
         </div>
-        <div className="bg-white rounded-lg border p-6 text-center">
-          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <Receipt size={24} className="text-blue-600" />
+        <div className="bg-white rounded-lg border p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <Receipt size={20} className="text-green-600" />
+            </div>
+            <div className="text-sm text-slate-600">Ventas</div>
           </div>
-          <div className="text-sm text-slate-600 mb-1">Ventas</div>
-          <div className="text-3xl font-bold text-blue-600">{totalVentas}</div>
+          <div className="text-2xl font-bold text-green-600">{totalVentas}</div>
+          <div className="text-sm text-slate-500">${montoVentas.toFixed(2)}</div>
         </div>
-        <div className="bg-white rounded-lg border p-6 text-center">
-          <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <Receipt size={24} className="text-pink-600" />
+        <div className="bg-white rounded-lg border p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+              <Receipt size={20} className="text-red-600" />
+            </div>
+            <div className="text-sm text-slate-600">Reembolsos</div>
           </div>
-          <div className="text-sm text-slate-600 mb-1">Reembolsos</div>
-          <div className="text-3xl font-bold text-pink-600">{totalReembolsos}</div>
+          <div className="text-2xl font-bold text-red-600">{totalReembolsos}</div>
+          <div className="text-sm text-slate-500">-${montoReembolsos.toFixed(2)}</div>
+        </div>
+        <div className="bg-white rounded-lg border p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <DollarSign size={20} className="text-blue-600" />
+            </div>
+            <div className="text-sm text-slate-600">Ingresos netos</div>
+          </div>
+          <div className="text-2xl font-bold text-blue-600">${(montoVentas - montoReembolsos).toFixed(2)}</div>
         </div>
       </div>
 
-      {/* Tabla */}
-      <div className="bg-white rounded-lg border">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <span className="font-semibold text-sm">EXPORTAR</span>
-          <Download size={18} className="text-slate-400" />
-        </div>
+      {/* Tabla estilo dashboard */}
+      <div className="bg-white rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50">
+            <thead className="bg-slate-50 border-b">
               <tr>
-                <th className="text-left px-4 py-3 font-medium">Recibo n.º</th>
-                <th className="text-left px-4 py-3 font-medium">Fecha</th>
-                <th className="text-left px-4 py-3 font-medium">Tienda</th>
-                <th className="text-left px-4 py-3 font-medium">Empleado</th>
-                <th className="text-left px-4 py-3 font-medium">Cliente</th>
-                <th className="text-left px-4 py-3 font-medium">Tipo</th>
-                <th className="text-right px-4 py-3 font-medium">Total</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-600">Recibo</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-600">Fecha</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-600">Hora</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-600">Empleado</th>
+                <th className="text-right px-4 py-3 font-medium text-slate-600">Total</th>
+                <th className="text-center px-4 py-3 font-medium text-slate-600">Estado</th>
               </tr>
             </thead>
             <tbody>
-              {facturas.slice(0, 20).map((factura) => (
-                <tr key={factura.id} className="border-t hover:bg-slate-50">
-                  <td className="px-4 py-3 font-mono text-blue-600">{factura.numero}</td>
+              {facturas.slice(0, 50).map((factura) => (
+                <tr 
+                  key={factura.id} 
+                  className={`border-b cursor-pointer transition-colors ${
+                    selectedFactura?.id === factura.id 
+                      ? 'bg-blue-50 border-l-4 border-l-blue-500' 
+                      : 'hover:bg-slate-50'
+                  }`}
+                  onClick={() => setSelectedFactura(factura)}
+                >
                   <td className="px-4 py-3">
-                    {factura.fecha ? new Date(factura.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
+                    <span className="font-mono font-medium">
+                      {factura.numero?.split('-').pop() || factura.numero}
+                    </span>
                   </td>
-                  <td className="px-4 py-3">-</td>
-                  <td className="px-4 py-3">{factura.vendedor_nombre || '-'}</td>
-                  <td className="px-4 py-3">{factura.cliente_nombre || '-'}</td>
-                  <td className="px-4 py-3">Venta</td>
-                  <td className="text-right px-4 py-3 font-medium">${factura.total?.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {factura.fecha ? formatDate(factura.fecha) : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {factura.fecha ? formatTime(factura.fecha) : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {factura.vendedor_nombre || '-'}
+                  </td>
+                  <td className={`text-right px-4 py-3 font-mono font-semibold ${
+                    factura.estado === 'reembolsado' ? 'text-red-600 line-through' : 'text-green-600'
+                  }`}>
+                    ${factura.total?.toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                      factura.estado === 'reembolsado' 
+                        ? 'bg-red-100 text-red-700' 
+                        : 'bg-green-100 text-green-700'
+                    }`}>
+                      {factura.estado === 'reembolsado' ? 'Reembolsado' : 'Completado'}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-2 border-t text-sm text-slate-500">
-          Página: 1 de {Math.ceil(facturas.length / 20)}
+        <div className="px-4 py-2 border-t text-sm text-slate-500 flex items-center justify-between">
+          <span>Mostrando {Math.min(50, facturas.length)} de {facturas.length} recibos</span>
+          <span className="text-xs">Página: 1 de {Math.ceil(facturas.length / 50)}</span>
         </div>
       </div>
     </div>
