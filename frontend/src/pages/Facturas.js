@@ -126,18 +126,20 @@ export default function Facturas() {
     );
   }
 
+  const [showDetail, setShowDetail] = useState(false);
+
   return (
     <div data-testid="invoices-page" className="h-[calc(100vh-8rem)]">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Ingresos</h1>
-          <p className="text-sm text-slate-500">Historial de recibos y ventas</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Ingresos</h1>
+          <p className="text-xs sm:text-sm text-slate-500">Historial de recibos y ventas</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="gap-2">
             <Calendar size={16} />
-            Hoy
+            <span className="hidden sm:inline">Hoy</span>
             <ChevronDown size={14} />
           </Button>
         </div>
@@ -150,11 +152,11 @@ export default function Facturas() {
           <p className="text-slate-500">Las facturas aparecerán aquí cuando realices ventas</p>
         </div>
       ) : (
-        <div className="flex gap-4 h-full">
-          {/* Tabla de recibos (izquierda) */}
-          <div className="flex-1 bg-white rounded-lg border overflow-hidden flex flex-col">
-            {/* Header de la tabla */}
-            <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-slate-50 border-b text-sm font-medium text-slate-600">
+        <div className="flex flex-col md:flex-row gap-4 h-full">
+          {/* Lista de recibos (izquierda) - visible en móvil si no hay detalle seleccionado */}
+          <div className={`${showDetail ? 'hidden md:flex' : 'flex'} flex-1 bg-white rounded-lg border overflow-hidden flex-col`}>
+            {/* Header de la tabla - oculto en móvil */}
+            <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-3 bg-slate-50 border-b text-sm font-medium text-slate-600">
               <div className="col-span-2">Recibo</div>
               <div className="col-span-2">Fecha</div>
               <div className="col-span-2">Hora</div>
@@ -163,58 +165,97 @@ export default function Facturas() {
               <div className="col-span-2 text-center">Estado</div>
             </div>
             
-            {/* Filas de la tabla */}
+            {/* Filas de la tabla/lista */}
             <div className="flex-1 overflow-auto">
               {facturas.map((factura) => (
                 <div
                   key={factura.id}
                   data-testid={`invoice-row-${factura.id}`}
-                  className={`grid grid-cols-12 gap-2 px-4 py-3 border-b cursor-pointer transition-colors ${
+                  className={`px-4 py-3 border-b cursor-pointer transition-colors ${
                     selectedFactura?.id === factura.id 
                       ? 'bg-blue-50 border-l-4 border-l-blue-500' 
                       : 'hover:bg-slate-50'
                   }`}
-                  onClick={() => setSelectedFactura(factura)}
+                  onClick={() => {
+                    setSelectedFactura(factura);
+                    setShowDetail(true); // Mostrar detalle en móvil
+                  }}
                 >
-                  <div className="col-span-2 font-mono text-sm font-medium">
-                    {factura.numero.split('-').pop()}
+                  {/* Vista móvil */}
+                  <div className="md:hidden">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono text-sm font-semibold">
+                        #{factura.numero.split('-').pop()}
+                      </span>
+                      <span className={`font-mono font-bold ${
+                        factura.estado === 'reembolsado' ? 'text-red-600 line-through' : 'text-green-600'
+                      }`}>
+                        ${factura.total.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span>{formatDate(factura.fecha)} {formatTime(factura.fecha)}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${
+                        factura.estado === 'reembolsado' 
+                          ? 'bg-red-100 text-red-700' 
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                        {factura.estado === 'reembolsado' ? 'Reemb.' : 'OK'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="col-span-2 text-sm text-slate-600">
-                    {formatDate(factura.fecha)}
-                  </div>
-                  <div className="col-span-2 text-sm text-slate-600">
-                    {formatTime(factura.fecha)}
-                  </div>
-                  <div className="col-span-2 text-sm text-slate-600 truncate">
-                    {factura.vendedor_nombre}
-                  </div>
-                  <div className={`col-span-2 text-right font-mono font-semibold ${
-                    factura.estado === 'reembolsado' ? 'text-red-600 line-through' : 'text-green-600'
-                  }`}>
-                    ${factura.total.toFixed(2)}
-                  </div>
-                  <div className="col-span-2 text-center">
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                      factura.estado === 'reembolsado' 
-                        ? 'bg-red-100 text-red-700' 
-                        : 'bg-green-100 text-green-700'
+                  
+                  {/* Vista desktop */}
+                  <div className="hidden md:grid grid-cols-12 gap-2">
+                    <div className="col-span-2 font-mono text-sm font-medium">
+                      {factura.numero.split('-').pop()}
+                    </div>
+                    <div className="col-span-2 text-sm text-slate-600">
+                      {formatDate(factura.fecha)}
+                    </div>
+                    <div className="col-span-2 text-sm text-slate-600">
+                      {formatTime(factura.fecha)}
+                    </div>
+                    <div className="col-span-2 text-sm text-slate-600 truncate">
+                      {factura.vendedor_nombre}
+                    </div>
+                    <div className={`col-span-2 text-right font-mono font-semibold ${
+                      factura.estado === 'reembolsado' ? 'text-red-600 line-through' : 'text-green-600'
                     }`}>
-                      {factura.estado === 'reembolsado' ? 'Reembolsado' : 'Completado'}
-                    </span>
+                      ${factura.total.toFixed(2)}
+                    </div>
+                    <div className="col-span-2 text-center">
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        factura.estado === 'reembolsado' 
+                          ? 'bg-red-100 text-red-700' 
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                        {factura.estado === 'reembolsado' ? 'Reembolsado' : 'Completado'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Panel de detalle del recibo (derecha) */}
+          {/* Panel de detalle del recibo (derecha) - pantalla completa en móvil */}
           {selectedFactura && (
-            <Card className="w-96 flex flex-col overflow-hidden">
+            <Card className={`${showDetail ? 'flex' : 'hidden md:flex'} w-full md:w-96 flex-col overflow-hidden`}>
               {/* Header del ticket */}
               <div className="p-4 border-b flex items-center justify-between bg-slate-50">
-                <div>
-                  <h3 className="font-bold text-lg">Recibo #{selectedFactura.numero.split('-').pop()}</h3>
-                  <p className="text-sm text-slate-500">{selectedFactura.numero}</p>
+                <div className="flex items-center gap-3">
+                  {/* Botón volver en móvil */}
+                  <button 
+                    onClick={() => setShowDetail(false)}
+                    className="md:hidden p-2 hover:bg-slate-200 rounded-lg"
+                  >
+                    <X size={18} />
+                  </button>
+                  <div>
+                    <h3 className="font-bold text-lg">Recibo #{selectedFactura.numero.split('-').pop()}</h3>
+                    <p className="text-sm text-slate-500">{selectedFactura.numero}</p>
+                  </div>
                 </div>
                 <div className="relative">
                   <button 
