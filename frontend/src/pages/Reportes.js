@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -33,12 +33,14 @@ import {
   Trash2,
   RefreshCw,
   AlertTriangle,
-  ShoppingCart
+  ShoppingCart,
+  Image
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { format, subMonths } from 'date-fns';
 import DateRangePicker from '../components/DateRangePicker';
+import html2canvas from 'html2canvas';
 import {
   AreaChart,
   Area,
@@ -58,6 +60,32 @@ import {
 } from 'recharts';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Función para exportar gráfico como imagen
+const exportChartAsImage = async (chartRef, filename = 'grafico') => {
+  if (!chartRef.current) {
+    toast.error('No se encontró el gráfico');
+    return;
+  }
+  
+  try {
+    const canvas = await html2canvas(chartRef.current, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      logging: false,
+    });
+    
+    const link = document.createElement('a');
+    link.download = `${filename}_${format(new Date(), 'yyyy-MM-dd_HHmm')}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    
+    toast.success('Gráfico exportado como imagen');
+  } catch (error) {
+    console.error('Error al exportar gráfico:', error);
+    toast.error('Error al exportar el gráfico');
+  }
+};
 
 const REPORT_TYPES = [
   { id: 'resumen', name: 'Resumen de ventas', icon: TrendingUp },
