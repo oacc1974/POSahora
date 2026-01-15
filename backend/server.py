@@ -1022,9 +1022,13 @@ async def get_usuarios(current_user: dict = Depends(get_propietario_user)):
 
 @app.post("/api/usuarios", response_model=UserResponse)
 async def create_usuario(user: UserCreate, current_user: dict = Depends(get_propietario_user)):
-    existing = await db.usuarios.find_one({"username": user.username})
+    # Verificar que el username sea único DENTRO de la organización
+    existing = await db.usuarios.find_one({
+        "username": user.username,
+        "organizacion_id": current_user["organizacion_id"]
+    })
     if existing:
-        raise HTTPException(status_code=400, detail="El username ya existe")
+        raise HTTPException(status_code=400, detail="El username ya existe en esta organización")
     
     if user.rol not in ["administrador", "cajero", "mesero"]:
         raise HTTPException(status_code=400, detail="Solo puedes crear usuarios con rol administrador, cajero o mesero")
