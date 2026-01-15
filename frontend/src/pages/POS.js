@@ -380,7 +380,8 @@ export default function POS() {
   };
 
   // Función para manejar click en producto
-  const handleProductoClick = (producto) => {
+  const handleProductoClick = (producto, event) => {
+    const startElement = event?.currentTarget;
     const modsProducto = getModificadoresProducto(producto);
     
     if (modsProducto.length > 0) {
@@ -389,8 +390,8 @@ export default function POS() {
       setModificadoresSeleccionados({});
       setShowModificadorDialog(true);
     } else {
-      // Si no tiene modificadores, añadir directamente
-      addToCart(producto);
+      // Si no tiene modificadores, añadir directamente con animación
+      addToCart(producto, startElement);
     }
   };
 
