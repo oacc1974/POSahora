@@ -478,7 +478,12 @@ export default function POS() {
     setModificadoresSeleccionados({});
   };
 
-  const addToCart = (producto) => {
+  const addToCart = (producto, startElement = null) => {
+    // Activar animación fly-to-cart en móvil
+    if (startElement && window.innerWidth < 768) {
+      triggerFlyAnimation(producto, startElement);
+    }
+    
     const itemId = `${producto.id}_base`;
     const existing = cart.find((item) => item.item_id === itemId || (item.producto_id === producto.id && !item.modificadores?.length));
     if (existing) {
@@ -495,6 +500,8 @@ export default function POS() {
               : item
           )
         );
+        // Vibración háptica en móvil
+        if (navigator.vibrate) navigator.vibrate(50);
       } else {
         toast.error('No hay suficiente stock');
       }
@@ -514,10 +521,35 @@ export default function POS() {
             modificadores: [],
           },
         ]);
+        // Vibración háptica en móvil
+        if (navigator.vibrate) navigator.vibrate(50);
       } else {
         toast.error('Producto sin stock');
       }
     }
+  };
+
+  // Función para animar el producto volando al carrito
+  const triggerFlyAnimation = (producto, startElement) => {
+    const startRect = startElement.getBoundingClientRect();
+    const ticketButton = ticketButtonRef.current;
+    
+    if (!ticketButton) return;
+    
+    const endRect = ticketButton.getBoundingClientRect();
+    
+    setFlyingProduct({
+      producto,
+      startX: startRect.left + startRect.width / 2,
+      startY: startRect.top + startRect.height / 2,
+      endX: endRect.left + endRect.width / 2,
+      endY: endRect.top + endRect.height / 2,
+    });
+    
+    // Remover la animación después de completarse
+    setTimeout(() => {
+      setFlyingProduct(null);
+    }, 450);
   };
 
   const updateQuantity = (item_id, delta) => {
