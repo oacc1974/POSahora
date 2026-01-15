@@ -1748,7 +1748,7 @@ function ReporteRecibos({ facturas, onReembolso }) {
                 </tr>
               </thead>
               <tbody>
-                {facturasFiltradas.slice(0, 50).map((factura) => (
+                {facturasPaginadas.map((factura) => (
                   <tr 
                     key={factura.id} 
                     className={`border-b cursor-pointer transition-colors ${
