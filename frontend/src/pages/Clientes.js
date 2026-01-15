@@ -139,6 +139,17 @@ export default function Clientes() {
     return <div>Cargando...</div>;
   }
 
+  // Filtrar clientes por búsqueda
+  const clientesFiltrados = busqueda
+    ? clientes.filter(c =>
+        (c.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+        (c.email || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+        (c.telefono || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+        (c.cedula_ruc || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+        (c.ciudad || '').toLowerCase().includes(busqueda.toLowerCase())
+      )
+    : clientes;
+
   return (
     <div data-testid="clientes-page">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 md:mb-8">
@@ -148,32 +159,90 @@ export default function Clientes() {
           </h1>
           <p className="text-slate-600">Gestiona tu cartera de clientes</p>
         </div>
-        <Button
-          onClick={() => openDialog()}
-          data-testid="create-cliente-button"
-          size="lg"
-          className="gap-2 w-full md:w-auto"
-        >
-          <Plus size={20} />
-          Nuevo Cliente
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Buscador */}
+          {showBusqueda ? (
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Buscar cliente..."
+                  className="pl-9 pr-8 py-2 border rounded-lg text-sm w-48 md:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+                {busqueda && (
+                  <button
+                    onClick={() => setBusqueda('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => { setShowBusqueda(false); setBusqueda(''); }}
+                className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowBusqueda(true)}
+              className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg border"
+              title="Buscar cliente"
+              data-testid="search-clientes-btn"
+            >
+              <Search size={18} />
+            </button>
+          )}
+          <Button
+            onClick={() => openDialog()}
+            data-testid="create-cliente-button"
+            size="lg"
+            className="gap-2"
+          >
+            <Plus size={20} />
+            <span className="hidden sm:inline">Nuevo Cliente</span>
+            <span className="sm:hidden">Nuevo</span>
+          </Button>
+        </div>
       </div>
 
-      {clientes.length === 0 ? (
+      {/* Indicador de búsqueda */}
+      {busqueda && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-sm text-blue-700 flex items-center justify-between mb-4">
+          <span>
+            Se encontraron <strong>{clientesFiltrados.length}</strong> cliente(s) para "{busqueda}"
+          </span>
+          <button onClick={() => setBusqueda('')} className="text-blue-600 hover:text-blue-800 font-medium">
+            Limpiar
+          </button>
+        </div>
+      )}
+
+      {clientesFiltrados.length === 0 ? (
         <Card className="p-8 md:p-12 text-center">
           <Users size={64} className="mx-auto mb-4 text-slate-300" />
-          <h3 className="text-xl font-semibold mb-2">No hay clientes</h3>
+          <h3 className="text-xl font-semibold mb-2">
+            {busqueda ? 'No se encontraron clientes' : 'No hay clientes'}
+          </h3>
           <p className="text-slate-500 mb-6">
-            Comienza agregando tu primer cliente
+            {busqueda ? `No hay clientes que coincidan con "${busqueda}"` : 'Comienza agregando tu primer cliente'}
           </p>
-          <Button onClick={() => openDialog()}>
-            <Plus size={20} className="mr-2" />
-            Crear Cliente
-          </Button>
+          {!busqueda && (
+            <Button onClick={() => openDialog()}>
+              <Plus size={20} className="mr-2" />
+              Crear Cliente
+            </Button>
+          )}
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {clientes.map((cliente) => (
+          {clientesFiltrados.map((cliente) => (
             <Card
               key={cliente.id}
               data-testid={`cliente-card-${cliente.id}`}
