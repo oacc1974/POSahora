@@ -1794,9 +1794,61 @@ function ReporteRecibos({ facturas, onReembolso }) {
               </tbody>
             </table>
           </div>
-          <div className="px-4 py-2 border-t text-sm text-slate-500 flex items-center justify-between">
-            <span>Mostrando {Math.min(50, facturasFiltradas.length)} de {facturasFiltradas.length} recibos</span>
-            <span className="text-xs">Página: 1 de {Math.ceil(facturasFiltradas.length / 50)}</span>
+          {/* Controles de paginación */}
+          <div className="px-4 py-3 border-t bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <span>Mostrando</span>
+              <select
+                value={itemsPorPagina}
+                onChange={(e) => {
+                  setItemsPorPagina(Number(e.target.value));
+                  setPaginaActual(1);
+                }}
+                className="border rounded px-2 py-1 text-sm bg-white"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span>de {facturasFiltradas.length} recibos</span>
+            </div>
+            
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPaginaActual(1)}
+                disabled={paginaActual === 1}
+                className="px-2 py-1 border rounded text-sm hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                «
+              </button>
+              <button
+                onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                disabled={paginaActual === 1}
+                className="px-3 py-1 border rounded text-sm hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ‹ Anterior
+              </button>
+              
+              <span className="px-3 py-1 text-sm font-medium">
+                Página {paginaActual} de {totalPaginas || 1}
+              </span>
+              
+              <button
+                onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                disabled={paginaActual >= totalPaginas}
+                className="px-3 py-1 border rounded text-sm hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Siguiente ›
+              </button>
+              <button
+                onClick={() => setPaginaActual(totalPaginas)}
+                disabled={paginaActual >= totalPaginas}
+                className="px-2 py-1 border rounded text-sm hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                »
+              </button>
+            </div>
           </div>
         </div>
       </div>
