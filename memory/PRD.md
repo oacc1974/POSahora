@@ -36,6 +36,23 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
   - **Ventas por categoría:** Añadido nuevo gráfico de tendencia con selectores funcionales (Área/Bar, Días/Semanas)
   - Mantiene consistencia con el estilo de "Resumen de ventas"
 
+- [x] **Subir logo de organización para recibo**
+  - Nueva sección "Logo del Negocio" en Configuración → Recibo
+  - Permite subir imagen JPG, PNG, GIF o WebP (máx. 2MB)
+  - Preview del logo subido con opción de eliminar
+  - Endpoint backend `/api/config/upload-logo` para guardar logos en `/uploads/logos/`
+
+- [x] **Escaneo de código de barras en creación de productos**
+  - Botón "Escanear" junto al campo de código de barras en el diálogo de nuevo producto
+  - Soporta múltiples formatos: EAN-13, EAN-8, UPC-A, UPC-E, Code 128, Code 39, etc.
+  - Sonido de confirmación (beep) al detectar un código
+  - Feedback visual con indicador de cámara activa
+
+- [x] **Exportar gráficos como imagen**
+  - Nuevo botón en cada gráfico de reportes para exportar como PNG
+  - Usa html2canvas para captura de alta calidad
+  - Nombre de archivo incluye tipo de reporte y fecha
+
 ### Completadas (14 Enero 2026)
 
 - [x] **Bug Fix: Página de Configuración de Recibo en blanco**
@@ -116,6 +133,9 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### P1 - Próximas
 - [x] ~~Extender selectores de tipo de gráfico (Área/Barra) y agrupación (Días/Semanas) a reportes de "Ventas por artículo" y "Ventas por categoría"~~ ✓ Completado 15 Enero 2026
+- [x] ~~Subir logo de organización para recibo~~ ✓ Completado 15 Enero 2026
+- [x] ~~Mejorar escaneo de código de barras~~ ✓ Completado 15 Enero 2026
+- [x] ~~Exportar gráficos como imagen~~ ✓ Completado 15 Enero 2026
 - [ ] Lógica interna de "Función de reloj" (UI de fichaje)
 - [ ] Lógica interna de "Impresoras de cocina"
 - [ ] Lógica interna de "Pantalla para clientes"
