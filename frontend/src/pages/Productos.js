@@ -859,7 +859,56 @@ export default function Productos() {
             </div>
             <div>
               <Label htmlFor="codigo_barras">Código de Barras</Label>
-              <Input id="codigo_barras" value={formData.codigo_barras} onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })} />
+              <div className="flex gap-2 mt-1">
+                <Input 
+                  id="codigo_barras" 
+                  value={formData.codigo_barras} 
+                  onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })}
+                  placeholder="Escanea o escribe el código"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={startScanner}
+                  disabled={isScanning}
+                  className="gap-2"
+                >
+                  <ScanLine size={18} />
+                  Escanear
+                </Button>
+              </div>
+              
+              {/* Área del escáner */}
+              {showScanner && (
+                <div className="mt-3 border rounded-lg overflow-hidden bg-slate-900">
+                  <div className="p-2 bg-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-white text-sm">
+                      <Camera size={16} className="text-green-400 animate-pulse" />
+                      <span>Apunta al código de barras</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={stopScanner}
+                      className="text-white hover:text-red-400"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                  <div 
+                    id="barcode-reader-productos" 
+                    ref={scannerRef}
+                    className="w-full"
+                    style={{ minHeight: '200px' }}
+                  />
+                  <div className="p-2 bg-slate-800 text-center">
+                    <p className="text-xs text-slate-400 flex items-center justify-center gap-1">
+                      <Volume2 size={12} />
+                      Sonará un beep al detectar el código
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="descripcion">Descripción</Label>
