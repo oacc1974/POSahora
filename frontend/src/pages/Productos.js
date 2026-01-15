@@ -529,13 +529,92 @@ export default function Productos() {
           <h2 className="text-2xl font-bold text-slate-900">Lista de productos</h2>
           <p className="text-slate-600 text-sm">Gestiona tu inventario de productos</p>
         </div>
-        <Button onClick={() => openDialog()} data-testid="create-product-button" className="gap-2">
-          <Plus size={18} />
-          Nuevo Producto
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* Buscador */}
+          {showBusqueda ? (
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" 
+                  width="16" height="16" viewBox="0 0 24 24" fill="none" 
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input
+                  type="text"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Buscar producto..."
+                  className="pl-9 pr-8 py-2 border rounded-lg text-sm w-48 md:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+                {busqueda && (
+                  <button
+                    onClick={() => setBusqueda('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => { setShowBusqueda(false); setBusqueda(''); }}
+                className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowBusqueda(true)}
+              className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg border"
+              title="Buscar producto"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </button>
+          )}
+          <Button onClick={() => openDialog()} data-testid="create-product-button" className="gap-2">
+            <Plus size={18} />
+            <span className="hidden sm:inline">Nuevo Producto</span>
+            <span className="sm:hidden">Nuevo</span>
+          </Button>
+        </div>
       </div>
 
-      {productos.length === 0 ? (
+      {/* Indicador de búsqueda */}
+      {busqueda && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-sm text-blue-700 flex items-center justify-between mb-4">
+          <span>
+            Se encontraron <strong>{productos.filter(p => 
+              p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+              (p.categoria || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+              (p.codigo_barras || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+              (p.descripcion || '').toLowerCase().includes(busqueda.toLowerCase())
+            ).length}</strong> producto(s) para "{busqueda}"
+          </span>
+          <button onClick={() => setBusqueda('')} className="text-blue-600 hover:text-blue-800 font-medium">
+            Limpiar
+          </button>
+        </div>
+      )}
+
+      {(() => {
+        const productosFiltrados = busqueda 
+          ? productos.filter(p => 
+              p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+              (p.categoria || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+              (p.codigo_barras || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+              (p.descripcion || '').toLowerCase().includes(busqueda.toLowerCase())
+            )
+          : productos;
+        
+        return productosFiltrados.length === 0 ? (
         <Card className="p-12 text-center">
           <Package size={64} className="mx-auto mb-4 text-slate-300" />
           <h3 className="text-xl font-semibold mb-2">No hay productos</h3>
