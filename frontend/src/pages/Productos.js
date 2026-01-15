@@ -643,30 +643,50 @@ export default function Productos() {
     </>
   );
 
+  const [showMobileMenu, setShowMobileMenu] = useState(true);
+  
   return (
-    <div data-testid="products-page" className="flex gap-6">
-      {/* Menú lateral */}
-      <div className="w-64 flex-shrink-0">
-        <Card className="p-2">
-          {/* Header del menú */}
+    <div data-testid="products-page">
+      {/* Header para móvil */}
+      <div className="md:hidden bg-blue-600 text-white px-4 py-3 rounded-t-lg flex items-center justify-between mb-0">
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setMenuExpanded(!menuExpanded)}
-            className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors"
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="p-2 hover:bg-blue-700 rounded-lg"
           >
-            <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
-              <ShoppingBasket size={20} className="text-pink-600" />
-            </div>
-            <span className="font-semibold text-slate-900 flex-1 text-left">Artículos</span>
-            {menuExpanded ? <ChevronDown size={18} className="text-slate-400" /> : <ChevronRight size={18} className="text-slate-400" />}
+            {showMobileMenu ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </button>
+          <h1 className="font-semibold">
+            {menuItems.find(m => m.id === activeSection)?.label || 'Productos'}
+          </h1>
+        </div>
+      </div>
 
-          {/* Items del menú */}
-          {menuExpanded && (
-            <div className="mt-1 space-y-1">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+        {/* Menú lateral - colapsable en móvil */}
+        <div className={`${showMobileMenu ? 'block' : 'hidden'} md:block w-full md:w-64 flex-shrink-0`}>
+          <Card className="p-2">
+            {/* Header del menú - oculto en móvil */}
+            <button
+              onClick={() => setMenuExpanded(!menuExpanded)}
+              className="hidden md:flex w-full items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                <ShoppingBasket size={20} className="text-pink-600" />
+              </div>
+              <span className="font-semibold text-slate-900 flex-1 text-left">Artículos</span>
+              {menuExpanded ? <ChevronDown size={18} className="text-slate-400" /> : <ChevronRight size={18} className="text-slate-400" />}
+            </button>
+
+            {/* Items del menú - siempre visible en móvil cuando showMobileMenu es true */}
+            <div className={`${menuExpanded || 'md:hidden'} mt-1 space-y-1`}>
               {menuItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveSection(item.id)}
+                  onClick={() => {
+                    setActiveSection(item.id);
+                    setShowMobileMenu(false); // Ocultar menú en móvil al seleccionar
+                  }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-colors ${
                     activeSection === item.id
                       ? 'bg-blue-50 text-blue-600 font-medium'
@@ -678,16 +698,16 @@ export default function Productos() {
                 </button>
               ))}
             </div>
-          )}
-        </Card>
-      </div>
+          </Card>
+        </div>
 
-      {/* Contenido principal */}
-      <div className="flex-1">
-        {activeSection === 'productos' && renderProductos()}
-        {activeSection === 'categorias' && renderCategorias()}
-        {activeSection === 'modificadores' && renderModificadores()}
-        {activeSection === 'descuentos' && renderDescuentos()}
+        {/* Contenido principal - oculto en móvil cuando menú está visible */}
+        <div className={`${showMobileMenu ? 'hidden md:block' : 'block'} flex-1`}>
+          {activeSection === 'productos' && renderProductos()}
+          {activeSection === 'categorias' && renderCategorias()}
+          {activeSection === 'modificadores' && renderModificadores()}
+          {activeSection === 'descuentos' && renderDescuentos()}
+        </div>
       </div>
 
       {/* Dialog Producto */}
