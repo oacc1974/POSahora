@@ -923,9 +923,34 @@ function ReporteArticulo({ facturas }) {
 
 // REPORTE: Ventas por Categoría
 function ReporteCategoria({ facturas }) {
+  const [chartType, setChartType] = useState('bar');
+  const [groupBy, setGroupBy] = useState('dias');
+  
   const ventasPorCategoria = {};
+  const ventasPorDia = {};
+  const ventasPorSemana = {};
+  
+  // Función para obtener rango de semana
+  const getWeekRange = (dateStr) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(date.setDate(diff));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return `${monday.getDate()} ${monday.toLocaleDateString('es-ES', { month: 'short' })} - ${sunday.getDate()} ${sunday.toLocaleDateString('es-ES', { month: 'short' })}`;
+  };
   
   facturas.forEach(factura => {
+    const fecha = factura.fecha?.split('T')[0] || '';
+    if (fecha) {
+      if (!ventasPorDia[fecha]) ventasPorDia[fecha] = 0;
+      const weekKey = getWeekRange(fecha);
+      if (!ventasPorSemana[weekKey]) {
+        ventasPorSemana[weekKey] = { total: 0, firstDate: fecha };
+      }
+    }
+    
     factura.items?.forEach(item => {
       const cat = item.categoria || 'Sin categoría';
       if (!ventasPorCategoria[cat]) {
@@ -933,22 +958,48 @@ function ReporteCategoria({ facturas }) {
       }
       ventasPorCategoria[cat].cantidad += item.cantidad || 1;
       ventasPorCategoria[cat].total += item.subtotal || 0;
+      
+      if (fecha) {
+        ventasPorDia[fecha] += item.subtotal || 0;
+        const weekKey = getWeekRange(fecha);
+        ventasPorSemana[weekKey].total += item.subtotal || 0;
+        if (fecha < ventasPorSemana[weekKey].firstDate) {
+          ventasPorSemana[weekKey].firstDate = fecha;
+        }
+      }
     });
   });
   
   const sortedItems = Object.entries(ventasPorCategoria).sort(([, a], [, b]) => b.total - a.total);
   const colores = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6'];
   
-  // Datos para gráfico de barras
+  // Datos para gráfico de barras por categoría
   const barData = sortedItems.slice(0, 7).map(([cat, datos], i) => ({
     categoria: cat.length > 12 ? cat.substring(0, 12) + '...' : cat,
     ventas: datos.total,
     fill: colores[i % colores.length]
   }));
   
+  // Preparar datos de tiempo según la agrupación seleccionada
+  let timeChartData = [];
+  if (groupBy === 'dias') {
+    const diasOrdenados = Object.keys(ventasPorDia).sort();
+    timeChartData = diasOrdenados.map(dia => ({
+      label: new Date(dia + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+      ventas: ventasPorDia[dia]
+    }));
+  } else {
+    const semanasOrdenadas = Object.entries(ventasPorSemana)
+      .sort(([, a], [, b]) => a.firstDate.localeCompare(b.firstDate));
+    timeChartData = semanasOrdenadas.map(([semana, datos]) => ({
+      label: semana,
+      ventas: datos.total
+    }));
+  }
+  
   return (
     <div className="space-y-6">
-      {/* Gráfico de barras */}
+      {/* Gráfico de barras por categoría */}
       {barData.length > 0 && (
         <div className="bg-white rounded-lg border p-4">
           <h3 className="font-semibold mb-4">Ventas por categoría</h3>
@@ -980,6 +1031,95 @@ function ReporteCategoria({ facturas }) {
           </ResponsiveContainer>
         </div>
       )}
+      
+      {/* Gráfico de tendencia con selectores funcionales */}
+      <div className="bg-white rounded-lg border p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">Tendencia de ventas</h3>
+          <div className="flex gap-2">
+            <select 
+              className="text-sm border rounded px-3 py-1.5 bg-white cursor-pointer"
+              value={chartType}
+              onChange={(e) => setChartType(e.target.value)}
+            >
+              <option value="area">Área</option>
+              <option value="bar">Bar</option>
+            </select>
+            <select 
+              className="text-sm border rounded px-3 py-1.5 bg-white cursor-pointer"
+              value={groupBy}
+              onChange={(e) => setGroupBy(e.target.value)}
+            >
+              <option value="dias">Días</option>
+              <option value="semanas">Semanas</option>
+            </select>
+          </div>
+        </div>
+        {timeChartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={180}>
+            {chartType === 'area' ? (
+              <AreaChart data={timeChartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="colorVentasCategoria" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="label" 
+                  tick={{ fontSize: 10 }} 
+                  tickLine={false}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 10 }} 
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `$${value}`}
+                />
+                <Tooltip 
+                  formatter={(value) => [`$${value.toFixed(2)}`, 'Ventas']}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="ventas" 
+                  stroke="#10B981" 
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorVentasCategoria)"
+                />
+              </AreaChart>
+            ) : (
+              <BarChart data={timeChartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="label" 
+                  tick={{ fontSize: 10 }} 
+                  tickLine={false}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
+                <YAxis 
+                  tick={{ fontSize: 10 }} 
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `$${value}`}
+                />
+                <Tooltip 
+                  formatter={(value) => [`$${value.toFixed(2)}`, 'Ventas']}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                />
+                <Bar dataKey="ventas" fill="#10B981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            )}
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-40 flex items-center justify-center text-slate-400">
+            No hay datos para mostrar
+          </div>
+        )}
+      </div>
 
       {/* Tabla */}
       <div className="bg-white rounded-lg border">
