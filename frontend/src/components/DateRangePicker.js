@@ -69,10 +69,10 @@ export default function DateRangePicker({ dateRange, onDateRangeChange }) {
           <span className="text-sm">{formatDisplayDate()}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <div className="flex" data-testid="date-range-picker-popover">
+      <PopoverContent className="w-auto p-0 max-h-[85vh] overflow-auto" align="start">
+        <div className="flex flex-col sm:flex-row" data-testid="date-range-picker-popover">
           {/* Calendar Section */}
-          <div className="border-r">
+          <div className="sm:border-r">
             <Calendar
               mode="range"
               selected={tempRange}
@@ -102,8 +102,8 @@ export default function DateRangePicker({ dateRange, onDateRangeChange }) {
           </div>
           
           {/* Preset Options */}
-          <div className="p-3 min-w-[160px]">
-            <div className="space-y-1">
+          <div className="p-3 min-w-[160px] border-t sm:border-t-0">
+            <div className="grid grid-cols-2 sm:grid-cols-1 gap-1">
               {PRESET_RANGES.map((preset) => (
                 <button
                   key={preset.label}
@@ -122,8 +122,8 @@ export default function DateRangePicker({ dateRange, onDateRangeChange }) {
           </div>
         </div>
         
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-2 px-4 py-3 border-t bg-slate-50">
+        {/* Action Buttons - siempre visibles */}
+        <div className="flex justify-end gap-2 px-4 py-3 border-t bg-slate-50 sticky bottom-0">
           <Button variant="ghost" size="sm" onClick={handleCancel}>
             CANCELAR
           </Button>
