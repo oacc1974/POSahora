@@ -93,7 +93,7 @@ const REPORT_TYPES = [
   { id: 'categoria', name: 'Ventas por categoría', icon: Tag },
   { id: 'empleado', name: 'Ventas por empleado', icon: Users },
   { id: 'tipo_pago', name: 'Ventas por tipo de pago', icon: CreditCard },
-  { id: 'ingresos', name: 'Ingresos', icon: DollarSign },
+  { id: 'recibos', name: 'Recibos', icon: DollarSign },
   { id: 'descuentos', name: 'Descuentos', icon: Percent },
   { id: 'impuestos', name: 'Impuestos', icon: Receipt },
   { id: 'tickets_abiertos', name: 'Tickets Abiertos', icon: ClipboardList },
@@ -333,8 +333,10 @@ export default function Reportes() {
         return <ReporteEmpleado facturas={facturas} />;
       case 'tipo_pago':
         return <ReporteTipoPago data={data} facturas={facturas} />;
+      case 'recibos':
+        return <ReporteRecibos facturas={facturas} onReembolso={loadData} />;
       case 'ingresos':
-        return <ReporteIngresos facturas={facturas} />;
+        return <ReporteRecibos facturas={facturas} onReembolso={loadData} />;
       case 'descuentos':
         return <ReporteDescuentos facturas={facturas} />;
       case 'impuestos':
