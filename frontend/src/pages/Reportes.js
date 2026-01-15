@@ -1345,6 +1345,8 @@ function ReporteRecibos({ facturas, onReembolso }) {
   const [filtroEstado, setFiltroEstado] = useState('todos'); // todos, ventas, reembolsos
   const [showMenuRecibo, setShowMenuRecibo] = useState(false);
   const [procesandoReembolso, setProcesandoReembolso] = useState(false);
+  const [showReembolsoDialog, setShowReembolsoDialog] = useState(false);
+  const [motivoReembolso, setMotivoReembolso] = useState('');
   
   const token = localStorage.getItem('token');
   
@@ -1379,20 +1381,23 @@ function ReporteRecibos({ facturas, onReembolso }) {
   const handleReembolso = async () => {
     if (!selectedFactura || selectedFactura.estado === 'reembolsado') return;
     
-    if (!window.confirm(`¿Estás seguro de que deseas reembolsar el recibo ${selectedFactura.numero}?`)) {
+    if (!motivoReembolso.trim()) {
+      toast.error('Por favor ingresa un motivo para el reembolso');
       return;
     }
     
     setProcesandoReembolso(true);
     try {
       await axios.post(
-        `${API_URL}/api/facturas/${selectedFactura.id}/reembolsar`,
-        {},
+        `${API_URL}/api/facturas/${selectedFactura.id}/reembolso`,
+        { motivo: motivoReembolso },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success('Recibo reembolsado correctamente');
       setSelectedFactura(null);
       setShowMenuRecibo(false);
+      setShowReembolsoDialog(false);
+      setMotivoReembolso('');
       if (onReembolso) onReembolso();
     } catch (error) {
       console.error('Error al reembolsar:', error);
@@ -1402,8 +1407,125 @@ function ReporteRecibos({ facturas, onReembolso }) {
     }
   };
   
+  const handleImprimir = () => {
+    if (!selectedFactura) return;
+    
+    const printWindow = window.open('', '_blank');
+    const fecha = selectedFactura.fecha ? new Date(selectedFactura.fecha) : new Date();
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Recibo ${selectedFactura.numero}</title>
+        <style>
+          body { font-family: 'Courier New', monospace; padding: 20px; max-width: 300px; margin: 0 auto; font-size: 12px; }
+          .header { text-align: center; margin-bottom: 15px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
+          .header h2 { margin: 0 0 5px 0; font-size: 16px; }
+          .items { margin: 15px 0; }
+          .item { display: flex; justify-content: space-between; margin: 5px 0; }
+          .totals { border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px; }
+          .total-row { display: flex; justify-content: space-between; margin: 3px 0; }
+          .total-row.final { font-weight: bold; font-size: 14px; border-top: 1px solid #000; padding-top: 5px; margin-top: 5px; }
+          .footer { text-align: center; margin-top: 20px; font-size: 10px; border-top: 1px dashed #000; padding-top: 10px; }
+          ${selectedFactura.estado === 'reembolsado' ? '.reembolsado { text-align: center; color: red; font-weight: bold; margin: 10px 0; border: 2px solid red; padding: 5px; }' : ''}
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>RECIBO</h2>
+          <p>Nº ${selectedFactura.numero}</p>
+          <p>${fecha.toLocaleDateString('es-ES')} ${fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
+          <p>Atendido por: ${selectedFactura.vendedor_nombre || '-'}</p>
+        </div>
+        ${selectedFactura.estado === 'reembolsado' ? '<div class="reembolsado">*** REEMBOLSADO ***</div>' : ''}
+        <div class="items">
+          ${(selectedFactura.items || []).map(item => `
+            <div class="item">
+              <span>${item.cantidad || 1}x ${item.producto_nombre || item.nombre}</span>
+              <span>$${(item.subtotal || item.precio * (item.cantidad || 1)).toFixed(2)}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="totals">
+          <div class="total-row">
+            <span>Subtotal:</span>
+            <span>$${(selectedFactura.subtotal || selectedFactura.total)?.toFixed(2)}</span>
+          </div>
+          ${selectedFactura.impuesto > 0 ? `
+            <div class="total-row">
+              <span>Impuestos:</span>
+              <span>$${selectedFactura.impuesto?.toFixed(2)}</span>
+            </div>
+          ` : ''}
+          ${selectedFactura.descuento > 0 ? `
+            <div class="total-row">
+              <span>Descuento:</span>
+              <span>-$${selectedFactura.descuento?.toFixed(2)}</span>
+            </div>
+          ` : ''}
+          <div class="total-row final">
+            <span>TOTAL:</span>
+            <span>$${selectedFactura.total?.toFixed(2)}</span>
+          </div>
+          <div class="total-row">
+            <span>Método de pago:</span>
+            <span>${selectedFactura.metodo_pago_nombre || 'Efectivo'}</span>
+          </div>
+        </div>
+        <div class="footer">
+          <p>¡Gracias por su compra!</p>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+    setShowMenuRecibo(false);
+  };
+  
   return (
     <div className="flex gap-6">
+      {/* Diálogo de reembolso */}
+      {showReembolsoDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Reembolsar Recibo</h3>
+            <p className="text-sm text-slate-600 mb-4">
+              ¿Estás seguro de que deseas reembolsar el recibo <strong>{selectedFactura?.numero}</strong> por <strong>${selectedFactura?.total?.toFixed(2)}</strong>?
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Motivo del reembolso *</label>
+              <textarea
+                value={motivoReembolso}
+                onChange={(e) => setMotivoReembolso(e.target.value)}
+                placeholder="Ingresa el motivo del reembolso..."
+                className="w-full border rounded-lg p-3 text-sm resize-none"
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowReembolsoDialog(false);
+                  setMotivoReembolso('');
+                }}
+                className="px-4 py-2 border rounded-lg hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleReembolso}
+                disabled={procesandoReembolso || !motivoReembolso.trim()}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {procesandoReembolso ? 'Procesando...' : 'Confirmar Reembolso'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Panel izquierdo - Lista de recibos */}
       <div className={`flex-1 space-y-4 ${selectedFactura ? 'max-w-[60%]' : ''}`}>
         {/* Tarjetas de métricas clickeables */}
