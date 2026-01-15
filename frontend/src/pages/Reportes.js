@@ -1684,6 +1684,7 @@ function ReporteRecibos({ facturas, onReembolso }) {
                   <th className="text-left px-4 py-3 font-medium text-slate-600">Fecha</th>
                   <th className="text-left px-4 py-3 font-medium text-slate-600">Hora</th>
                   <th className="text-left px-4 py-3 font-medium text-slate-600">Empleado</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Cliente</th>
                   <th className="text-right px-4 py-3 font-medium text-slate-600">Total</th>
                   <th className="text-center px-4 py-3 font-medium text-slate-600">Estado</th>
                 </tr>
@@ -1712,6 +1713,9 @@ function ReporteRecibos({ facturas, onReembolso }) {
                     </td>
                     <td className="px-4 py-3 text-slate-600">
                       {factura.vendedor_nombre || '-'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {factura.cliente_nombre || '-'}
                     </td>
                     <td className={`text-right px-4 py-3 font-mono font-semibold ${
                       factura.estado === 'reembolsado' ? 'text-red-600 line-through' : 'text-green-600'
