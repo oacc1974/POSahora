@@ -1144,15 +1144,18 @@ export default function POS() {
         
         {/* Centro: Ticket con contador */}
         <button 
+          ref={ticketButtonRef}
           onClick={() => setShowMobileCart(true)}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 relative"
         >
           <span className="font-semibold text-lg">Ticket</span>
-          {cartItemCount > 0 && (
-            <span className="bg-white text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full">
-              {cartItemCount}
-            </span>
-          )}
+          <span 
+            className={`bg-white text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full transition-transform ${
+              flyingProduct ? 'scale-125' : ''
+            }`}
+          >
+            {cartItemCount || 0}
+          </span>
         </button>
         
         {/* Derecha: Cliente + Menú opciones (3 puntos) */}
