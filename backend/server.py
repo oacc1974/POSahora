@@ -2683,15 +2683,17 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         # No se proporcionó TPV - verificar si hay alguno disponible o crear uno automáticamente
         org_id = current_user["organizacion_id"]
         
-        # Buscar TPV disponible
+        # Buscar TPV disponible (activo y NO ocupado)
         tpv_disponible = await db.tpv.find_one({
             "organizacion_id": org_id,
-            "$or": [{"activo": True}, {"activo": {"$exists": False}}],
-            "$or": [{"ocupado": False}, {"ocupado": {"$exists": False}}, {"ocupado": None}]
+            "$and": [
+                {"$or": [{"activo": True}, {"activo": {"$exists": False}}]},
+                {"$or": [{"ocupado": False}, {"ocupado": {"$exists": False}}, {"ocupado": None}]}
+            ]
         })
         
         if not tpv_disponible:
-            # No hay TPVs, crear uno automáticamente
+            # No hay TPVs disponibles - crear uno nuevo con secuencia correcta
             # Primero buscar o crear tienda
             tienda = await db.tiendas.find_one({"organizacion_id": org_id}, {"_id": 0})
             
@@ -2710,12 +2712,19 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
                 }
                 await db.tiendas.insert_one(tienda)
             
-            # Crear TPV por defecto
+            # Contar TPVs existentes para determinar el siguiente número
+            tpvs_count = await db.tpv.count_documents({
+                "organizacion_id": org_id,
+                "tienda_id": tienda["id"]
+            })
+            siguiente_numero = tpvs_count + 1
+            
+            # Crear TPV con el siguiente número en la secuencia
             nuevo_tpv_id = str(uuid.uuid4())
             tpv_disponible = {
                 "id": nuevo_tpv_id,
-                "nombre": "Caja 1",
-                "punto_emision": "001",
+                "nombre": f"Caja {siguiente_numero}",
+                "punto_emision": f"{siguiente_numero:03d}",
                 "tienda_id": tienda["id"],
                 "activo": True,
                 "ocupado": False,
