@@ -73,6 +73,10 @@ export default function POS() {
   const [productoConModificadores, setProductoConModificadores] = useState(null);
   const [modificadoresSeleccionados, setModificadoresSeleccionados] = useState({});
   
+  // Estado para animación fly-to-cart
+  const [flyingProduct, setFlyingProduct] = useState(null);
+  const ticketButtonRef = React.useRef(null);
+  
   // Obtener usuario actual
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const esMesero = currentUser?.rol === 'mesero';
