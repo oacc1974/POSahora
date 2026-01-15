@@ -1543,9 +1543,9 @@ function ReporteRecibos({ facturas, onReembolso }) {
       )}
       
       {/* Panel izquierdo - Lista de recibos */}
-      <div className={`flex-1 space-y-4 ${selectedFactura ? 'max-w-[60%]' : ''}`}>
+      <div className={`flex-1 space-y-4 ${selectedFactura ? 'hidden md:block md:max-w-[60%]' : ''}`}>
         {/* Barra de búsqueda */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           <div className="flex-1 relative">
             {showBusqueda ? (
               <div className="flex items-center gap-2">
@@ -1563,7 +1563,7 @@ function ReporteRecibos({ facturas, onReembolso }) {
                     type="text"
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    placeholder="Buscar por nº recibo, cliente, empleado, producto..."
+                    placeholder="Buscar recibo, cliente..."
                     className="w-full pl-10 pr-10 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     autoFocus
                   />
@@ -1581,17 +1581,18 @@ function ReporteRecibos({ facturas, onReembolso }) {
                     setShowBusqueda(false);
                     setBusqueda('');
                   }}
-                  className="px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-2 md:px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
                 >
-                  Cancelar
+                  <X size={18} className="md:hidden" />
+                  <span className="hidden md:inline">Cancelar</span>
                 </button>
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-700">Recibos</h2>
+                <h2 className="text-base md:text-lg font-semibold text-slate-700">Recibos</h2>
                 <button
                   onClick={() => setShowBusqueda(true)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg border"
+                  className="flex items-center gap-2 px-2 md:px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg border"
                 >
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
