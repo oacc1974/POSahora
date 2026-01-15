@@ -84,8 +84,8 @@ export default function DateRangePicker({ dateRange, onDateRangeChange }) {
               locale={es}
               defaultMonth={tempRange?.from}
               classNames={{
-                day_selected: "bg-green-600 text-white hover:bg-green-700 hover:text-white focus:bg-green-700 focus:text-white",
-                day_range_middle: "bg-green-100 text-green-900",
+                day_selected: "bg-blue-600 text-white hover:bg-blue-700 hover:text-white focus:bg-blue-700 focus:text-white",
+                day_range_middle: "bg-blue-100 text-green-900",
                 day_today: "ring-2 ring-red-500 ring-offset-1",
               }}
             />
@@ -110,7 +110,7 @@ export default function DateRangePicker({ dateRange, onDateRangeChange }) {
                   onClick={() => handlePresetClick(preset)}
                   className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
                     selectedPreset === preset.label
-                      ? 'bg-green-100 text-green-700 font-medium'
+                      ? 'bg-blue-100 text-blue-700 font-medium'
                       : 'hover:bg-slate-100 text-slate-700'
                   }`}
                   data-testid={`preset-${preset.label.toLowerCase().replace(/\s+/g, '-')}`}
@@ -130,7 +130,7 @@ export default function DateRangePicker({ dateRange, onDateRangeChange }) {
           <Button 
             size="sm" 
             onClick={handleApply}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-blue-600 hover:bg-blue-700"
             data-testid="date-range-apply-btn"
           >
             HECHO

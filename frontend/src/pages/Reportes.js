@@ -289,7 +289,7 @@ export default function Reportes() {
     if (loading) {
       return (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       );
     }
@@ -319,13 +319,13 @@ export default function Reportes() {
   return (
     <div className="space-y-0">
       {/* Header Verde */}
-      <div className="bg-green-600 text-white px-4 sm:px-6 py-4 rounded-t-lg">
+      <div className="bg-blue-600 text-white px-4 sm:px-6 py-4 rounded-t-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Botón para mostrar/ocultar menú en móvil */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="md:hidden p-2 hover:bg-green-700 rounded-lg"
+              className="md:hidden p-2 hover:bg-blue-700 rounded-lg"
             >
               {showMobileMenu ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
             </button>
@@ -426,7 +426,7 @@ export default function Reportes() {
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors text-sm ${
                     selectedReport === report.id
-                      ? 'bg-green-50 text-green-700 border-l-4 border-green-600'
+                      ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600'
                       : 'hover:bg-slate-50 text-slate-700 border-l-4 border-transparent'
                   }`}
                 >
@@ -442,7 +442,7 @@ export default function Reportes() {
         <div className={`${showMobileMenu ? 'hidden md:block' : 'block'} flex-1 bg-slate-50 border-r border-b rounded-br-lg p-3 sm:p-6`}>
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <RefreshCw className="animate-spin text-green-600" size={32} />
+              <RefreshCw className="animate-spin text-blue-600" size={32} />
             </div>
           ) : (
             renderReportContent()
@@ -464,7 +464,7 @@ function MetricCard({ title, value, change, changePercent, icon: Icon, color = '
       </div>
       <div className="text-2xl font-bold">{value}</div>
       {change !== undefined && (
-        <div className={`text-xs mt-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+        <div className={`text-xs mt-1 ${isPositive ? 'text-blue-600' : 'text-red-600'}`}>
           {isPositive ? '+' : ''}{typeof change === 'number' ? `$${change.toFixed(2)}` : change}
           {changePercent !== undefined && ` (${isPositive ? '+' : ''}${changePercent.toFixed(2)}%)`}
         </div>
@@ -1094,11 +1094,11 @@ function ReporteIngresos({ facturas }) {
           <div className="text-3xl font-bold">{totalVentas + totalReembolsos}</div>
         </div>
         <div className="bg-white rounded-lg border p-6 text-center">
-          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <Receipt size={24} className="text-green-600" />
+          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+            <Receipt size={24} className="text-blue-600" />
           </div>
           <div className="text-sm text-slate-600 mb-1">Ventas</div>
-          <div className="text-3xl font-bold text-green-600">{totalVentas}</div>
+          <div className="text-3xl font-bold text-blue-600">{totalVentas}</div>
         </div>
         <div className="bg-white rounded-lg border p-6 text-center">
           <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mx-auto mb-3">
@@ -1271,8 +1271,8 @@ function ReporteTicketsAbiertos({ tickets, loading, onRefresh, onDelete, onDelet
         
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <DollarSign size={20} className="text-green-600" />
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <DollarSign size={20} className="text-blue-600" />
             </div>
             <div>
               <p className="text-sm text-slate-500">Valor Total</p>
@@ -1376,7 +1376,7 @@ function ReporteTicketsAbiertos({ tickets, loading, onRefresh, onDelete, onDelet
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-mono font-semibold text-green-600">
+                      <span className="font-mono font-semibold text-blue-600">
                         ${(ticket.subtotal || 0).toFixed(2)}
                       </span>
                     </td>
