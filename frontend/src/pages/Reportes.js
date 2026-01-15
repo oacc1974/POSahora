@@ -1338,9 +1338,14 @@ function ReporteTipoPago({ data, facturas }) {
   );
 }
 
-// REPORTE: Ingresos
-function ReporteIngresos({ facturas }) {
+// REPORTE: Recibos (antes Ingresos)
+function ReporteRecibos({ facturas, onReembolso }) {
   const [selectedFactura, setSelectedFactura] = useState(null);
+  const [filtroEstado, setFiltroEstado] = useState('todos'); // todos, ventas, reembolsos
+  const [showMenuRecibo, setShowMenuRecibo] = useState(false);
+  const [procesandoReembolso, setProcesandoReembolso] = useState(false);
+  
+  const token = localStorage.getItem('token');
   
   // Separar facturas por estado
   const facturasCompletadas = facturas.filter(f => f.estado !== 'reembolsado');
@@ -1351,125 +1356,331 @@ function ReporteIngresos({ facturas }) {
   const montoVentas = facturasCompletadas.reduce((sum, f) => sum + (f.total || 0), 0);
   const montoReembolsos = facturasReembolsadas.reduce((sum, f) => sum + (f.total || 0), 0);
   
+  // Filtrar facturas según el filtro seleccionado
+  const facturasFiltradas = filtroEstado === 'todos' 
+    ? facturas 
+    : filtroEstado === 'ventas' 
+      ? facturasCompletadas 
+      : facturasReembolsadas;
+  
   const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
     const date = new Date(dateStr);
     return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
   };
   
   const formatTime = (dateStr) => {
+    if (!dateStr) return '-';
     const date = new Date(dateStr);
     return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   };
   
+  const handleReembolso = async () => {
+    if (!selectedFactura || selectedFactura.estado === 'reembolsado') return;
+    
+    if (!window.confirm(`¿Estás seguro de que deseas reembolsar el recibo ${selectedFactura.numero}?`)) {
+      return;
+    }
+    
+    setProcesandoReembolso(true);
+    try {
+      await axios.post(
+        `${API_URL}/api/facturas/${selectedFactura.id}/reembolsar`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Recibo reembolsado correctamente');
+      setSelectedFactura(null);
+      setShowMenuRecibo(false);
+      if (onReembolso) onReembolso();
+    } catch (error) {
+      console.error('Error al reembolsar:', error);
+      toast.error(error.response?.data?.detail || 'Error al procesar el reembolso');
+    } finally {
+      setProcesandoReembolso(false);
+    }
+  };
+  
   return (
-    <div className="space-y-6">
-      {/* Tarjetas de métricas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-              <FileText size={20} className="text-slate-600" />
+    <div className="flex gap-6">
+      {/* Panel izquierdo - Lista de recibos */}
+      <div className={`flex-1 space-y-4 ${selectedFactura ? 'max-w-[60%]' : ''}`}>
+        {/* Tarjetas de métricas clickeables */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div 
+            className={`bg-white rounded-lg border p-4 cursor-pointer transition-all ${filtroEstado === 'todos' ? 'ring-2 ring-blue-500 border-blue-500' : 'hover:border-slate-300'}`}
+            onClick={() => setFiltroEstado('todos')}
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                <FileText size={20} className="text-slate-600" />
+              </div>
+              <div className="text-sm text-slate-600">Todos los recibos</div>
             </div>
-            <div className="text-sm text-slate-600">Todos los recibos</div>
+            <div className="text-2xl font-bold">{totalVentas + totalReembolsos}</div>
           </div>
-          <div className="text-2xl font-bold">{totalVentas + totalReembolsos}</div>
-        </div>
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <Receipt size={20} className="text-green-600" />
+          <div 
+            className={`bg-white rounded-lg border p-4 cursor-pointer transition-all ${filtroEstado === 'ventas' ? 'ring-2 ring-green-500 border-green-500' : 'hover:border-slate-300'}`}
+            onClick={() => setFiltroEstado('ventas')}
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Receipt size={20} className="text-green-600" />
+              </div>
+              <div className="text-sm text-slate-600">Ventas</div>
             </div>
-            <div className="text-sm text-slate-600">Ventas</div>
+            <div className="text-2xl font-bold text-green-600">{totalVentas}</div>
+            <div className="text-sm text-slate-500">${montoVentas.toFixed(2)}</div>
           </div>
-          <div className="text-2xl font-bold text-green-600">{totalVentas}</div>
-          <div className="text-sm text-slate-500">${montoVentas.toFixed(2)}</div>
-        </div>
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <Receipt size={20} className="text-red-600" />
+          <div 
+            className={`bg-white rounded-lg border p-4 cursor-pointer transition-all ${filtroEstado === 'reembolsos' ? 'ring-2 ring-red-500 border-red-500' : 'hover:border-slate-300'}`}
+            onClick={() => setFiltroEstado('reembolsos')}
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <Receipt size={20} className="text-red-600" />
+              </div>
+              <div className="text-sm text-slate-600">Reembolsos</div>
             </div>
-            <div className="text-sm text-slate-600">Reembolsos</div>
+            <div className="text-2xl font-bold text-red-600">{totalReembolsos}</div>
+            <div className="text-sm text-slate-500">-${montoReembolsos.toFixed(2)}</div>
           </div>
-          <div className="text-2xl font-bold text-red-600">{totalReembolsos}</div>
-          <div className="text-sm text-slate-500">-${montoReembolsos.toFixed(2)}</div>
-        </div>
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <DollarSign size={20} className="text-blue-600" />
+          <div className="bg-white rounded-lg border p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <DollarSign size={20} className="text-blue-600" />
+              </div>
+              <div className="text-sm text-slate-600">Ingresos netos</div>
             </div>
-            <div className="text-sm text-slate-600">Ingresos netos</div>
+            <div className="text-2xl font-bold text-blue-600">${(montoVentas - montoReembolsos).toFixed(2)}</div>
           </div>
-          <div className="text-2xl font-bold text-blue-600">${(montoVentas - montoReembolsos).toFixed(2)}</div>
         </div>
-      </div>
 
-      {/* Tabla estilo dashboard */}
-      <div className="bg-white rounded-lg border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Recibo</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Fecha</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Hora</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Empleado</th>
-                <th className="text-right px-4 py-3 font-medium text-slate-600">Total</th>
-                <th className="text-center px-4 py-3 font-medium text-slate-600">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {facturas.slice(0, 50).map((factura) => (
-                <tr 
-                  key={factura.id} 
-                  className={`border-b cursor-pointer transition-colors ${
-                    selectedFactura?.id === factura.id 
-                      ? 'bg-blue-50 border-l-4 border-l-blue-500' 
-                      : 'hover:bg-slate-50'
-                  }`}
-                  onClick={() => setSelectedFactura(factura)}
-                >
-                  <td className="px-4 py-3">
-                    <span className="font-mono font-medium">
-                      {factura.numero?.split('-').pop() || factura.numero}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {factura.fecha ? formatDate(factura.fecha) : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {factura.fecha ? formatTime(factura.fecha) : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {factura.vendedor_nombre || '-'}
-                  </td>
-                  <td className={`text-right px-4 py-3 font-mono font-semibold ${
-                    factura.estado === 'reembolsado' ? 'text-red-600 line-through' : 'text-green-600'
-                  }`}>
-                    ${factura.total?.toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                      factura.estado === 'reembolsado' 
-                        ? 'bg-red-100 text-red-700' 
-                        : 'bg-green-100 text-green-700'
-                    }`}>
-                      {factura.estado === 'reembolsado' ? 'Reembolsado' : 'Completado'}
-                    </span>
-                  </td>
+        {/* Tabla de recibos */}
+        <div className="bg-white rounded-lg border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Recibo</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Fecha</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Hora</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Empleado</th>
+                  <th className="text-right px-4 py-3 font-medium text-slate-600">Total</th>
+                  <th className="text-center px-4 py-3 font-medium text-slate-600">Estado</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="px-4 py-2 border-t text-sm text-slate-500 flex items-center justify-between">
-          <span>Mostrando {Math.min(50, facturas.length)} de {facturas.length} recibos</span>
-          <span className="text-xs">Página: 1 de {Math.ceil(facturas.length / 50)}</span>
+              </thead>
+              <tbody>
+                {facturasFiltradas.slice(0, 50).map((factura) => (
+                  <tr 
+                    key={factura.id} 
+                    className={`border-b cursor-pointer transition-colors ${
+                      selectedFactura?.id === factura.id 
+                        ? 'bg-blue-50 border-l-4 border-l-blue-500' 
+                        : 'hover:bg-slate-50'
+                    }`}
+                    onClick={() => setSelectedFactura(factura)}
+                  >
+                    <td className="px-4 py-3">
+                      <span className="font-mono font-medium text-blue-600">
+                        {factura.numero?.split('-').pop() || factura.numero}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {formatDate(factura.fecha)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {formatTime(factura.fecha)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {factura.vendedor_nombre || '-'}
+                    </td>
+                    <td className={`text-right px-4 py-3 font-mono font-semibold ${
+                      factura.estado === 'reembolsado' ? 'text-red-600 line-through' : 'text-green-600'
+                    }`}>
+                      ${factura.total?.toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        factura.estado === 'reembolsado' 
+                          ? 'bg-red-100 text-red-700' 
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                        {factura.estado === 'reembolsado' ? 'Reembolsado' : 'Completado'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-2 border-t text-sm text-slate-500 flex items-center justify-between">
+            <span>Mostrando {Math.min(50, facturasFiltradas.length)} de {facturasFiltradas.length} recibos</span>
+            <span className="text-xs">Página: 1 de {Math.ceil(facturasFiltradas.length / 50)}</span>
+          </div>
         </div>
       </div>
+      
+      {/* Panel lateral - Detalle del recibo */}
+      {selectedFactura && (
+        <div className="w-[400px] bg-white rounded-lg border shadow-lg sticky top-4 h-fit">
+          {/* Header del panel */}
+          <div className="flex items-center justify-between p-4 border-b">
+            <button
+              onClick={() => setSelectedFactura(null)}
+              className="p-1 hover:bg-slate-100 rounded"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="font-semibold">Detalle del Recibo</h3>
+            <div className="relative">
+              <button
+                onClick={() => setShowMenuRecibo(!showMenuRecibo)}
+                className="p-1 hover:bg-slate-100 rounded"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="1"></circle>
+                  <circle cx="12" cy="5" r="1"></circle>
+                  <circle cx="12" cy="19" r="1"></circle>
+                </svg>
+              </button>
+              {/* Menú desplegable */}
+              {showMenuRecibo && (
+                <div className="absolute right-0 top-8 bg-white border rounded-lg shadow-lg py-1 z-10 min-w-[160px]">
+                  {selectedFactura.estado !== 'reembolsado' ? (
+                    <button
+                      onClick={handleReembolso}
+                      disabled={procesandoReembolso}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
+                    >
+                      <RefreshCw size={16} />
+                      {procesandoReembolso ? 'Procesando...' : 'Reembolsar recibo'}
+                    </button>
+                  ) : (
+                    <div className="px-4 py-2 text-sm text-slate-400">
+                      Ya reembolsado
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Contenido del recibo */}
+          <div className="p-4 space-y-4">
+            {/* Total */}
+            <div className="text-center py-4 border-b">
+              <div className="text-sm text-slate-600 mb-1">Total</div>
+              <div className={`text-4xl font-bold ${selectedFactura.estado === 'reembolsado' ? 'text-red-600 line-through' : ''}`}>
+                ${selectedFactura.total?.toFixed(2)}
+              </div>
+              {selectedFactura.estado === 'reembolsado' && (
+                <span className="inline-block mt-2 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+                  Reembolsado
+                </span>
+              )}
+            </div>
+            
+            {/* Info del pedido */}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-600">Pedido</span>
+                <span className="font-medium">{selectedFactura.numero}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-600">Empleado</span>
+                <span className="font-medium">{selectedFactura.vendedor_nombre || '-'}</span>
+              </div>
+              {selectedFactura.cliente_nombre && (
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Cliente</span>
+                  <span className="font-medium">{selectedFactura.cliente_nombre}</span>
+                </div>
+              )}
+              {selectedFactura.mesa && (
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Mesa</span>
+                  <span className="font-medium">{selectedFactura.mesa}</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Items */}
+            <div className="border-t pt-4">
+              <div className="text-sm font-medium mb-2">Artículos</div>
+              <div className="space-y-2">
+                {selectedFactura.items?.map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-sm">
+                    <div>
+                      <span className="text-slate-600">{item.cantidad || 1}x </span>
+                      <span>{item.producto_nombre || item.nombre}</span>
+                      {item.modificadores_aplicados?.length > 0 && (
+                        <div className="text-xs text-slate-400 ml-4">
+                          {item.modificadores_aplicados.map((m, i) => (
+                            <span key={i}>+ {m.nombre}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <span className="font-medium">${(item.subtotal || item.precio * (item.cantidad || 1)).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Subtotales */}
+            <div className="border-t pt-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-600">Subtotal</span>
+                <span>${(selectedFactura.subtotal || selectedFactura.total)?.toFixed(2)}</span>
+              </div>
+              {selectedFactura.impuesto > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Impuestos</span>
+                  <span>${selectedFactura.impuesto?.toFixed(2)}</span>
+                </div>
+              )}
+              {selectedFactura.descuento > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Descuento</span>
+                  <span>-${selectedFactura.descuento?.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                <span>Total</span>
+                <span>${selectedFactura.total?.toFixed(2)}</span>
+              </div>
+            </div>
+            
+            {/* Método de pago */}
+            <div className="border-t pt-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600">Método de pago</span>
+                <span className="font-medium">{selectedFactura.metodo_pago_nombre || 'Efectivo'}</span>
+              </div>
+            </div>
+            
+            {/* Footer - Fecha y número */}
+            <div className="border-t pt-4 text-sm text-slate-500 space-y-1">
+              <div className="flex justify-between">
+                <span>Fecha</span>
+                <span>{formatDate(selectedFactura.fecha)} {formatTime(selectedFactura.fecha)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Nº de Recibo</span>
+                <span className="font-mono">{selectedFactura.numero}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+// Mantener ReporteIngresos por compatibilidad (redirige a ReporteRecibos)
+function ReporteIngresos({ facturas }) {
+  return <ReporteRecibos facturas={facturas} />;
 }
 
 // REPORTE: Descuentos
