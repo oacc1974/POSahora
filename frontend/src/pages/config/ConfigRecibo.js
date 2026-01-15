@@ -164,6 +164,72 @@ export default function ConfigRecibo() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Sección de Logo */}
+          <div className="border-b pb-6">
+            <Label className="text-base font-semibold mb-3 block">Logo del Negocio</Label>
+            <p className="text-sm text-slate-500 mb-4">Este logo aparecerá en tus tickets impresos y enviados por email</p>
+            
+            <div className="flex items-start gap-6">
+              {/* Preview del logo */}
+              <div className="w-32 h-32 border-2 border-dashed border-slate-300 rounded-lg flex items-center justify-center bg-slate-50 overflow-hidden">
+                {formData.logo_url ? (
+                  <img 
+                    src={`${API_URL}${formData.logo_url}`} 
+                    alt="Logo del negocio" 
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="text-center text-slate-400">
+                    <Image size={32} className="mx-auto mb-1" />
+                    <span className="text-xs">Sin logo</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Botones de acción */}
+              <div className="flex-1 space-y-3">
+                <label className="cursor-pointer inline-block">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                    disabled={uploadingLogo}
+                  />
+                  <div className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${uploadingLogo ? 'bg-slate-100 text-slate-400' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}>
+                    {uploadingLogo ? (
+                      <>
+                        <span className="animate-spin">⏳</span>
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={16} />
+                        {formData.logo_url ? 'Cambiar logo' : 'Subir logo'}
+                      </>
+                    )}
+                  </div>
+                </label>
+                
+                {formData.logo_url && (
+                  <button
+                    type="button"
+                    onClick={removeLogo}
+                    className="px-4 py-2 border border-red-300 text-red-600 rounded-lg flex items-center gap-2 hover:bg-red-50"
+                  >
+                    <X size={16} />
+                    Eliminar logo
+                  </button>
+                )}
+                
+                <p className="text-xs text-slate-500">
+                  Formatos: JPG, PNG, GIF o WebP (máx. 2MB)<br/>
+                  Recomendado: 200x200 píxeles o superior
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div>
             <Label htmlFor="cabecera">Cabecera del Ticket</Label>
             <Textarea
