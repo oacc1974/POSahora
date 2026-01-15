@@ -98,50 +98,68 @@ export default function ConfiguracionNew() {
     }
   };
 
+  const [showMobileMenu, setShowMobileMenu] = useState(true);
+
   return (
-    <div className="flex flex-col md:flex-row gap-6 h-full">
-      {/* Menú Lateral */}
-      <div className="w-full md:w-64 flex-shrink-0">
-        <Card className="p-4">
-          <h2 className="text-lg font-bold mb-4">Configuración</h2>
-          
-          {menuSections.map((section, idx) => (
-            <div key={idx} className="mb-6">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase mb-2">
-                {section.title}
-              </h3>
-              <div className="space-y-1">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeSection === item.id;
-                  
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setActiveSection(item.id);
-                        navigate(`/configuracion/${item.id}`);
-                      }}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                        isActive
-                          ? 'bg-blue-50 text-blue-700 font-medium'
-                          : 'text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <Icon size={18} />
-                      <span className="text-sm">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </Card>
+    <div>
+      {/* Header móvil */}
+      <div className="md:hidden bg-blue-600 text-white px-4 py-3 rounded-t-lg flex items-center gap-3 mb-0">
+        <button
+          onClick={() => setShowMobileMenu(!showMobileMenu)}
+          className="p-2 hover:bg-blue-700 rounded-lg"
+        >
+          {showMobileMenu ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+        </button>
+        <h1 className="font-semibold">
+          {menuSections.flatMap(s => s.items).find(i => i.id === activeSection)?.label || 'Configuración'}
+        </h1>
       </div>
 
-      {/* Contenido Principal */}
-      <div className="flex-1">
-        {renderContent()}
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-full">
+        {/* Menú Lateral - colapsable en móvil */}
+        <div className={`${showMobileMenu ? 'block' : 'hidden'} md:block w-full md:w-64 flex-shrink-0`}>
+          <Card className="p-4">
+            <h2 className="hidden md:block text-lg font-bold mb-4">Configuración</h2>
+            
+            {menuSections.map((section, idx) => (
+              <div key={idx} className="mb-4 md:mb-6">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase mb-2">
+                  {section.title}
+                </h3>
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeSection === item.id;
+                    
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveSection(item.id);
+                          navigate(`/configuracion/${item.id}`);
+                          setShowMobileMenu(false); // Ocultar menú en móvil
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                          isActive
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Icon size={18} />
+                        <span className="text-sm">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </Card>
+        </div>
+
+        {/* Contenido Principal - oculto en móvil cuando menú está visible */}
+        <div className={`${showMobileMenu ? 'hidden md:block' : 'block'} flex-1`}>
+          {renderContent()}
+        </div>
       </div>
     </div>
   );
