@@ -2676,18 +2676,76 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         # El nombre de la caja será el nombre del TPV
         numero_caja = tpv_nombre
     else:
-        # Sin TPV, usar numeración secuencial antigua
-        counter = await db.contadores.find_one({"_id": f"caja_{current_user['organizacion_id']}"})
-        if not counter:
-            numero = 1
-            await db.contadores.insert_one({"_id": f"caja_{current_user['organizacion_id']}", "seq": 1})
-        else:
-            numero = counter["seq"] + 1
-            await db.contadores.update_one(
-                {"_id": f"caja_{current_user['organizacion_id']}"},
-                {"$set": {"seq": numero}}
-            )
-        numero_caja = f"CAJA-{numero:06d}"
+        # No se proporcionó TPV - verificar si hay alguno disponible o crear uno automáticamente
+        org_id = current_user["organizacion_id"]
+        
+        # Buscar TPV disponible
+        tpv_disponible = await db.tpv.find_one({
+            "organizacion_id": org_id,
+            "$or": [{"activo": True}, {"activo": {"$exists": False}}],
+            "$or": [{"ocupado": False}, {"ocupado": {"$exists": False}}, {"ocupado": None}]
+        })
+        
+        if not tpv_disponible:
+            # No hay TPVs, crear uno automáticamente
+            # Primero buscar o crear tienda
+            tienda = await db.tiendas.find_one({"organizacion_id": org_id}, {"_id": 0})
+            
+            if not tienda:
+                # Crear tienda por defecto
+                nueva_tienda_id = str(uuid.uuid4())
+                tienda = {
+                    "id": nueva_tienda_id,
+                    "nombre": "Tienda Principal",
+                    "codigo_establecimiento": "001",
+                    "direccion": "",
+                    "telefono": "",
+                    "organizacion_id": org_id,
+                    "activo": True,
+                    "fecha_creacion": datetime.now(timezone.utc).isoformat()
+                }
+                await db.tiendas.insert_one(tienda)
+            
+            # Crear TPV por defecto
+            nuevo_tpv_id = str(uuid.uuid4())
+            tpv_disponible = {
+                "id": nuevo_tpv_id,
+                "nombre": "Caja 1",
+                "punto_emision": "001",
+                "tienda_id": tienda["id"],
+                "activo": True,
+                "ocupado": False,
+                "ocupado_por": None,
+                "ocupado_por_nombre": None,
+                "organizacion_id": org_id,
+                "fecha_creacion": datetime.now(timezone.utc).isoformat()
+            }
+            await db.tpv.insert_one(tpv_disponible)
+        
+        # Ahora tenemos un TPV disponible, usarlo
+        tpv_id = tpv_disponible["id"]
+        tpv_nombre = tpv_disponible["nombre"]
+        
+        # Obtener datos de la tienda
+        tienda = await db.tiendas.find_one({"id": tpv_disponible["tienda_id"]}, {"_id": 0})
+        tienda_id = tienda["id"] if tienda else None
+        tienda_nombre = tienda["nombre"] if tienda else "Sin tienda"
+        codigo_establecimiento = tienda.get("codigo_establecimiento", "001") if tienda else "001"
+        punto_emision = tpv_disponible["punto_emision"]
+        
+        # Marcar el TPV como ocupado
+        await db.tpv.update_one(
+            {"id": tpv_id},
+            {
+                "$set": {
+                    "ocupado": True,
+                    "ocupado_por": current_user["_id"],
+                    "ocupado_por_nombre": current_user["nombre"]
+                }
+            }
+        )
+        
+        numero_caja = tpv_nombre
     
     caja_id = str(uuid.uuid4())
     
