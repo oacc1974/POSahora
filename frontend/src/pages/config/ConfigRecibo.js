@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
-import { Store, Save } from 'lucide-react';
+import { Store, Save, Upload, X, Image } from 'lucide-react';
 import { Checkbox } from '../../components/ui/checkbox';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 export default function ConfigRecibo() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [formData, setFormData] = useState({
     cabecera: '',
     nombre_negocio: '',
@@ -28,7 +29,52 @@ export default function ConfigRecibo() {
     mostrar_comentarios: false,
     logo_email: '',
     logo_impreso: '',
+    logo_url: '', // URL del logo subido
   });
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Tipo de archivo no permitido. Use JPG, PNG, GIF o WebP');
+      return;
+    }
+    
+    // Validar tamaño (max 2MB para logos)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('El logo no debe superar 2MB');
+      return;
+    }
+    
+    setUploadingLogo(true);
+    try {
+      const token = localStorage.getItem('token');
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      
+      const response = await axios.post(`${API_URL}/api/config/upload-logo`, formDataUpload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      setFormData(prev => ({ ...prev, logo_url: response.data.url }));
+      toast.success('Logo subido correctamente');
+    } catch (error) {
+      console.error('Error al subir logo:', error);
+      toast.error('Error al subir el logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const removeLogo = () => {
+    setFormData(prev => ({ ...prev, logo_url: '' }));
+  };
 
   useEffect(() => {
     fetchConfig();
