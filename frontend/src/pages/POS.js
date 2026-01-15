@@ -1614,6 +1614,24 @@ export default function POS() {
 
           {/* Total y Botones */}
           <div className="bg-white border-t p-4 space-y-3">
+            {/* Subtotal e Impuestos */}
+            {cart.length > 0 && desgloseImpuestos.length > 0 && (
+              <div className="space-y-1 text-sm border-b pb-2 mb-2">
+                <div className="flex justify-between text-slate-600">
+                  <span>Subtotal</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+                {desgloseImpuestos.map((imp, idx) => (
+                  <div key={idx} className="flex justify-between text-slate-500">
+                    <span>{imp.nombre} ({imp.tasa}%){imp.tipo === 'incluido' ? ' [Incl.]' : ''}</span>
+                    <span className={imp.tipo === 'incluido' ? 'text-slate-400' : ''}>
+                      {imp.tipo === 'incluido' ? '' : '+'} ${imp.monto.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            
             {/* Total */}
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-slate-700">Total</span>
