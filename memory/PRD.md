@@ -20,6 +20,12 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### Completadas (15 Enero 2026)
 
+- [x] **Logo de organización en recibo impreso**
+  - El logo configurado en Configuración → Recibo ahora aparece en la parte superior del recibo impreso
+  - Se muestra tanto en la impresión automática del TPV como en la reimpresión desde Reportes
+  - Tamaño máximo: 150px ancho × 80px alto
+  - Compatible con formatos JPG, PNG, GIF y WebP
+
 - [x] **Buscador en Productos**
   - Icono de lupa junto al botón "Nuevo Producto"
   - Campo de búsqueda con placeholder "Buscar producto..."
