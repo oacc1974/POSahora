@@ -1954,7 +1954,7 @@ function ReporteRecibos({ facturas, onReembolso }) {
             </div>
             
             {/* Footer - Fecha y número */}
-            <div className="border-t pt-4 text-sm text-slate-500 space-y-1">
+            <div className="border-t pt-4 text-sm text-slate-500 space-y-1 pb-4 md:pb-0">
               <div className="flex justify-between">
                 <span>Fecha</span>
                 <span>{formatDate(selectedFactura.fecha)} {formatTime(selectedFactura.fecha)}</span>
@@ -1964,6 +1964,7 @@ function ReporteRecibos({ facturas, onReembolso }) {
                 <span className="font-mono">{selectedFactura.numero}</span>
               </div>
             </div>
+          </div>
           </div>
         </div>
       )}
