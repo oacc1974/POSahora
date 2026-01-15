@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/card';
-import { Settings, CreditCard, Receipt, FileText, ClipboardList, ShoppingBag, Store, Monitor } from 'lucide-react';
+import { Settings, CreditCard, Receipt, FileText, ClipboardList, ShoppingBag, Store, Monitor, ChevronDown, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import ConfigRecibo from './config/ConfigRecibo';
 import ConfigFunciones from './config/ConfigFunciones';
