@@ -61,6 +61,7 @@ class TicketConfig(BaseModel):
     mostrar_comentarios: bool = False
     logo_email: Optional[str] = None
     logo_impreso: Optional[str] = None
+    logo_url: Optional[str] = None  # URL del logo subido
 
 class ClienteCreate(BaseModel):
     nombre: str
