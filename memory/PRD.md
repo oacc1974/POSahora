@@ -18,6 +18,24 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ## Funcionalidades Implementadas
 
+### Completadas (15 Enero 2026)
+
+- [x] **Bug Fix: Errores de React Hooks en páginas responsivas**
+  - **Problema:** Las páginas `/productos` y `/facturas` mostraban error "Rendered more hooks than during the previous render"
+  - **Causa:** Variables `useState` declaradas después de retornos condicionales (`if (loading) return ...`)
+  - **Solución:** Movidos los hooks `showMobileMenu` y `showDetail` al inicio de los componentes, antes de cualquier return
+
+- [x] **Verificación de responsividad móvil completa**
+  - `/reportes`: Menú colapsable azul con botón CSV funcional ✓
+  - `/productos`: Menú lateral colapsable con secciones de productos, categorías, modificadores, descuentos ✓
+  - `/facturas`: Lista de recibos adaptada con vista compacta en móvil ✓
+  - `/configuracion`: Menú colapsable con todas las secciones de configuración ✓
+
+- [x] **Selectores de gráficos extendidos a todos los reportes**
+  - **Ventas por artículo:** Añadidos selectores de tipo de gráfico (Área/Bar) y agrupación (Días/Semanas)
+  - **Ventas por categoría:** Añadido nuevo gráfico de tendencia con selectores funcionales (Área/Bar, Días/Semanas)
+  - Mantiene consistencia con el estilo de "Resumen de ventas"
+
 ### Completadas (14 Enero 2026)
 
 - [x] **Bug Fix: Página de Configuración de Recibo en blanco**
@@ -97,7 +115,7 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 ## Backlog
 
 ### P1 - Próximas
-- [ ] Extender selectores de tipo de gráfico (Área/Barra) y agrupación (Días/Semanas) a reportes de "Ventas por artículo" y "Ventas por categoría"
+- [x] ~~Extender selectores de tipo de gráfico (Área/Barra) y agrupación (Días/Semanas) a reportes de "Ventas por artículo" y "Ventas por categoría"~~ ✓ Completado 15 Enero 2026
 - [ ] Lógica interna de "Función de reloj" (UI de fichaje)
 - [ ] Lógica interna de "Impresoras de cocina"
 - [ ] Lógica interna de "Pantalla para clientes"
