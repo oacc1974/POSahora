@@ -1616,25 +1616,29 @@ export default function POS() {
 
           {/* Total y Botones */}
           <div className="bg-white border-t p-4 space-y-3">
-            {/* Subtotal e Impuestos - siempre visibles cuando hay productos */}
+            {/* Subtotal e Impuestos */}
             {cart.length > 0 && (
               <div className="space-y-1 text-sm border-b pb-3 mb-2">
                 <div className="flex justify-between text-slate-600">
                   <span>Subtotal</span>
                   <span className="font-medium">${subtotal.toFixed(2)}</span>
                 </div>
-                {desgloseImpuestos.map((imp, idx) => (
-                  <div key={idx} className={`flex justify-between ${imp.tipo === 'incluido' ? 'text-slate-400 text-xs' : 'text-slate-600'}`}>
-                    <span>
-                      {imp.nombre} ({imp.tasa}%)
-                      {imp.tipo === 'incluido' && <span className="ml-1 text-xs">[Incl.]</span>}
-                    </span>
-                    <span>
-                      {imp.tipo !== 'incluido' && <span className="text-green-600">+</span>}
-                      ${imp.monto.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
+                {desgloseImpuestos.length > 0 ? (
+                  desgloseImpuestos.map((imp, idx) => (
+                    <div key={idx} className={`flex justify-between ${imp.tipo === 'incluido' ? 'text-slate-400 text-xs' : 'text-slate-600'}`}>
+                      <span>
+                        {imp.nombre} ({imp.tasa}%)
+                        {imp.tipo === 'incluido' && <span className="ml-1">[Incl.]</span>}
+                      </span>
+                      <span>
+                        {imp.tipo !== 'incluido' && <span className="text-green-600">+</span>}
+                        ${imp.monto.toFixed(2)}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-xs text-slate-400">Sin impuestos configurados</div>
+                )}
               </div>
             )}
             
