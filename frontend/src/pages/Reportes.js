@@ -588,10 +588,10 @@ function ReporteResumen({ data, facturas }) {
     <div className="space-y-6">
       {/* Tarjetas de métricas */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <MetricCard title="Ventas brutas" value={`$${(data.total_ingresos || 0).toFixed(2)}`} />
-        <MetricCard title="Reembolsos" value="$0.00" />
+        <MetricCard title="Ventas brutas" value={`$${(data.total_ventas_brutas || data.total_ingresos || 0).toFixed(2)}`} />
+        <MetricCard title="Reembolsos" value={`-$${(data.total_reembolsos || 0).toFixed(2)}`} color="text-red-600" />
         <MetricCard title="Descuentos" value="$0.00" />
-        <MetricCard title="Ventas netas" value={`$${(data.total_ingresos || 0).toFixed(2)}`} />
+        <MetricCard title="Ventas netas" value={`$${(data.total_ingresos || 0).toFixed(2)}`} color="text-green-600" />
         <MetricCard title="Beneficio bruto" value={`$${(data.total_ingresos || 0).toFixed(2)}`} />
       </div>
 
