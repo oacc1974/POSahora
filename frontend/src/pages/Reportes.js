@@ -1669,21 +1669,39 @@ function ReporteRecibos({ facturas, onReembolso }) {
               </button>
               {/* Menú desplegable */}
               {showMenuRecibo && (
-                <div className="absolute right-0 top-8 bg-white border rounded-lg shadow-lg py-1 z-10 min-w-[160px]">
+                <div className="absolute right-0 top-8 bg-white border rounded-lg shadow-lg py-1 z-10 min-w-[180px]">
+                  {/* Opción Reembolsar */}
                   {selectedFactura.estado !== 'reembolsado' ? (
                     <button
-                      onClick={handleReembolso}
-                      disabled={procesandoReembolso}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
+                      onClick={() => {
+                        setShowMenuRecibo(false);
+                        setShowReembolsoDialog(true);
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3"
                     >
-                      <RefreshCw size={16} />
-                      {procesandoReembolso ? 'Procesando...' : 'Reembolsar recibo'}
+                      <RefreshCw size={16} className="text-slate-500" />
+                      Reembolsar
                     </button>
                   ) : (
-                    <div className="px-4 py-2 text-sm text-slate-400">
+                    <div className="px-4 py-2.5 text-sm text-slate-400 flex items-center gap-3">
+                      <RefreshCw size={16} />
                       Ya reembolsado
                     </div>
                   )}
+                  {/* Separador */}
+                  <div className="border-t my-1"></div>
+                  {/* Opción Imprimir */}
+                  <button
+                    onClick={handleImprimir}
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 flex items-center gap-3"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+                      <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                      <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                    Imprimir
+                  </button>
                 </div>
               )}
             </div>
