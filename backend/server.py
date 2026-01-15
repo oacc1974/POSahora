@@ -3192,8 +3192,17 @@ async def get_dashboard(
             facturas_query["caja_id"] = {"$in": caja_ids}
     
     facturas = await db.facturas.find(facturas_query).sort("fecha", -1).to_list(1000)
-    total_ventas = len(facturas)
-    total_ingresos = sum(f["total"] for f in facturas)
+    
+    # Separar facturas completadas y reembolsadas
+    facturas_completadas = [f for f in facturas if f.get("estado", "completado") == "completado"]
+    facturas_reembolsadas = [f for f in facturas if f.get("estado") == "reembolsado"]
+    
+    # Calcular totales
+    total_ventas = len(facturas_completadas)
+    total_ingresos = sum(f["total"] for f in facturas_completadas)  # Ventas netas (solo completadas)
+    total_reembolsos = sum(f["total"] for f in facturas_reembolsadas)
+    total_ventas_brutas = total_ingresos + total_reembolsos
+    num_reembolsos = len(facturas_reembolsadas)
     
     total_empleados = 0
     if current_user["rol"] == "propietario":
@@ -3204,18 +3213,18 @@ async def get_dashboard(
         "estado": "abierta"
     })
     
-    # Ventas por método de pago
+    # Ventas por método de pago (solo facturas completadas)
     ventas_por_metodo = {}
-    for f in facturas:
+    for f in facturas_completadas:
         metodo = f.get("metodo_pago_nombre", "Sin especificar")
         if metodo not in ventas_por_metodo:
             ventas_por_metodo[metodo] = {"cantidad": 0, "total": 0}
         ventas_por_metodo[metodo]["cantidad"] += 1
         ventas_por_metodo[metodo]["total"] += f["total"]
     
-    # Ventas por día (últimos 7 días)
+    # Ventas por día (solo facturas completadas)
     ventas_por_dia = {}
-    for f in facturas:
+    for f in facturas_completadas:
         fecha = f["fecha"][:10] if f.get("fecha") else "Sin fecha"
         if fecha not in ventas_por_dia:
             ventas_por_dia[fecha] = {"cantidad": 0, "total": 0}
@@ -3225,7 +3234,10 @@ async def get_dashboard(
     return {
         "total_productos": total_productos,
         "total_ventas": total_ventas,
-        "total_ingresos": total_ingresos,
+        "total_ingresos": total_ingresos,  # Ventas netas
+        "total_ventas_brutas": total_ventas_brutas,
+        "total_reembolsos": total_reembolsos,
+        "num_reembolsos": num_reembolsos,
         "total_empleados": total_empleados,
         "caja_activa": caja_activa is not None,
         "facturas_recientes": [
