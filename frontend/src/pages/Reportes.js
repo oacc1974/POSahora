@@ -1347,6 +1347,8 @@ function ReporteRecibos({ facturas, onReembolso }) {
   const [procesandoReembolso, setProcesandoReembolso] = useState(false);
   const [showReembolsoDialog, setShowReembolsoDialog] = useState(false);
   const [motivoReembolso, setMotivoReembolso] = useState('');
+  const [busqueda, setBusqueda] = useState('');
+  const [showBusqueda, setShowBusqueda] = useState(false);
   
   const token = localStorage.getItem('token');
   
