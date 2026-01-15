@@ -626,7 +626,7 @@ export default function Productos() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {productos.map((producto) => (
+          {productosFiltrados.map((producto) => (
             <Card key={producto.id} data-testid={`product-card-${producto.id}`} className="p-4 hover:shadow-lg transition-shadow">
               {/* Imagen del producto */}
               {producto.imagen && (

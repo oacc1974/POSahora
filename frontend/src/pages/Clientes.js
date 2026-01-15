@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import { Plus, Pencil, Trash2, Users, Mail, Phone, MapPin } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Mail, Phone, MapPin, Search, X } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
