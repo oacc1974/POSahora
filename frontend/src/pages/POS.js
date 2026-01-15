@@ -1317,6 +1317,10 @@ export default function POS() {
                     <ShoppingCart size={18} />
                     <span>Punto de Venta</span>
                   </a>
+                  <a href="/facturas" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
+                    <FileText size={18} />
+                    <span>Facturas</span>
+                  </a>
                   <a href="/reportes" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-lg">
                     <FileText size={18} />
                     <span>Reportes</span>
