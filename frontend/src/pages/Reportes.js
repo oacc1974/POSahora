@@ -34,7 +34,8 @@ import {
   RefreshCw,
   AlertTriangle,
   ShoppingCart,
-  Image
+  Image,
+  X
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
