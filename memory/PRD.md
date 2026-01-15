@@ -53,6 +53,18 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
   - Usa html2canvas para captura de alta calidad
   - Nombre de archivo incluye tipo de reporte y fecha
 
+- [x] **Reembolsos reflejados en reportes**
+  - El campo `estado` en facturas indica "completado" o "reembolsado"
+  - Dashboard API ahora calcula: ventas brutas, reembolsos, ventas netas
+  - **Resumen de ventas**: Muestra Ventas brutas, Reembolsos (negativo rojo), Ventas netas
+  - **Ingresos**: Muestra conteo y montos separados de ventas/reembolsos
+  - Tabla de Ingresos con indicador visual de estado (verde/rojo) y precio tachado
+
+- [x] **Reorganización de menú de navegación**
+  - Eliminado "Facturas" del menú principal (Layout.js y POS.js)
+  - Acceso a facturas/ingresos ahora está dentro de Reportes → Ingresos
+  - Dashboard de Ingresos rediseñado con estilo visual de tarjetas y tabla interactiva
+
 ### Completadas (14 Enero 2026)
 
 - [x] **Bug Fix: Página de Configuración de Recibo en blanco**
