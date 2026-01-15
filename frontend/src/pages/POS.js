@@ -2057,9 +2057,38 @@ export default function POS() {
 
             {tpvsDisponibles.length === 0 && (
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-yellow-800 text-sm">
-                  No hay TPVs disponibles. {esMesero ? 'Contacta al administrador.' : 'Puedes continuar sin TPV o contacta al administrador.'}
+                <p className="text-yellow-800 text-sm mb-3">
+                  No hay TPVs disponibles. {esMesero ? 'Contacta al administrador.' : 'Puedes crear uno automáticamente o continuar sin TPV.'}
                 </p>
+                {!esMesero && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={async () => {
+                      try {
+                        const response = await axios.post(
+                          `${API_URL}/api/tpv/crear-automatico`,
+                          {},
+                          { headers: { Authorization: `Bearer ${token}` } }
+                        );
+                        if (response.data.creado) {
+                          toast.success(`TPV "${response.data.tpv_nombre}" creado en "${response.data.tienda_nombre}". Puedes configurarlo después en Configuración → Dispositivos TPV`);
+                        } else {
+                          toast.info('Ya existe un TPV disponible');
+                        }
+                        // Recargar lista de TPVs
+                        fetchTpvsDisponibles();
+                      } catch (error) {
+                        toast.error('Error al crear TPV automático');
+                        console.error(error);
+                      }
+                    }}
+                  >
+                    Crear TPV Automático
+                  </Button>
+                )}
               </div>
             )}
 
