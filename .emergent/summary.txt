@@ -2,99 +2,102 @@
 El usuario solicitó la creación de un sistema de Punto de Venta (POS) con roles, multi-tenancy, autenticación, y gestión de tiendas, productos y facturación.
 
 **PRODUCT REQUIREMENTS (Recientes):**
-1.  **Gestión de Productos Avanzada:** Incluir modificadores con variantes y precios, y un menú dedicado para gestionar productos, categorías, modificadores y descuentos.
-2.  **Subida de Imágenes de Productos:** Permitir subir una foto de producto desde un archivo, no por link.
-3.  **Integración de Modificadores en el TPV:** Mostrar un diálogo para seleccionar modificadores al añadir un producto al ticket.
-4.  **Refinamiento de UI/UX en TPV y General:** Mejorar el flujo de trabajo, unificar diseños, añadir indicadores y botones para facilitar la navegación y el control.
-5.  **Control de Acceso y Flujo de Roles:** Limitar el login principal a propietarios y adaptar el menú de navegación del TPV según el rol (propietario, administrador, cajero).
-6.  **Configuración y Reportes:**
-    *   Añadir opción para habilitar/deshabilitar la impresión de tickets.
-    *   El reporte de cierre de caja debe mostrar el detalle de los métodos de pago.
-7.  **Corrección de Flujos de Trabajo:**
-    *   Al guardar un ticket recuperado, debe actualizarse en la misma mesa sin volver a preguntar.
-    *   La funcionalidad de Dividir Ticket debe permitir la selección individual de ítems (incluso con mismos productos y diferentes modificadores) y la división por cantidad.
-    *   El botón Eliminar en la pantalla de tickets abiertos debe funcionar para administradores/propietarios.
-    *   El flujo de Abrir Caja debe solicitar la selección de un TPV disponible y solo pedir la base de caja si la función de cierre por turnos está activa.
-8.  **Mejoras de Experiencia Móvil:**
-    *   Añadir una animación fly-to-cart en el TPV móvil al agregar productos.
-    *   Hacer que las páginas de Reportes, Productos, Facturación y Configuración sean totalmente responsivas en dispositivos móviles, con menús colapsables y selectores de fecha funcionales.
-    *   Añadir un botón para exportar reportes a CSV.
+1.  **Buscador en Productos y Clientes:** Añadir un icono de lupa para buscar en las páginas de  y  por cualquier criterio.
+2.  **Cálculo de Impuestos:** Corregir el cálculo del total en el TPV para que considere todos los impuestos activos y muestre el desglose.
+3.  **Reporte de Recibos:**
+    *   Hacer que el reporte sea totalmente responsivo.
+    *   Añadir la opción de Reembolsar e Imprimir en el menú de cada recibo.
+    *   Corregir el error Not Found al intentar reembolsar.
+    *   Añadir un buscador para filtrar por número de recibo, cliente, etc.
+    *   Añadir una columna Cliente en la tabla de recibos.
+4.  **Reembolsos en Reportes:** Asegurar que los tickets reembolsados se resten correctamente del total en todos los reportes (Resumen de ventas, Ingresos, etc.).
+5.  **Reorganización del Menú:** Mover la sección Facturas a Reportes y luego restaurarla al menú principal.
+6.  **Funcionalidades Adicionales:**
+    *   Permitir la subida de un logo de la organización para el recibo.
+    *   Añadir escaneo de código de barras al crear un producto.
+    *   Permitir exportar los gráficos de los reportes como una imagen.
 
 **User's preferred language**: Spanish. The next agent MUST respond in Spanish.
 
 **what currently exists?**
-Un sistema POS full-stack (React/FastAPI/MongoDB) funcional y robusto. El sistema incluye gestión avanzada de productos con modificadores, categorías y subida de imágenes. La autenticación y navegación están diferenciadas por roles. Se han resuelto numerosos bugs y se han implementado mejoras significativas en el flujo de trabajo del TPV, la gestión de caja y los reportes. Recientemente, se ha trabajado intensamente en mejorar la experiencia de usuario en dispositivos móviles, implementando animaciones y haciendo que varias páginas clave sean responsivas.
+Un sistema POS full-stack (React/FastAPI/MongoDB) funcional y robusto con autenticación por roles. El sistema incluye gestión de productos (con modificadores e imágenes), un TPV funcional y un módulo de reportes. Recientemente, se han implementado mejoras significativas:
+*   Se corrigieron errores críticos de renderizado de React Hooks.
+*   Se implementaron y verificaron diseños responsivos para las páginas de , ,  y .
+*   El reporte Recibos fue completamente rediseñado: ahora es responsivo, tiene un panel de detalles, permite búsquedas y filtros, y su funcionalidad de reembolso ha sido corregida.
+*   El cálculo de impuestos en el TPV fue arreglado; ahora el total es correcto y se muestra un desglose detallado de impuestos en el carrito de la versión de escritorio.
+*   Se añadieron nuevas funcionalidades como la subida de logos, el escaneo de códigos de barras en la creación de productos y la exportación de gráficos como imágenes.
 
 **Last working item**:
-- **Last item agent was working**: El agente estaba finalizando la tarea de hacer varias páginas de la aplicación responsivas para dispositivos móviles (, , , ) y cambiando el color del encabezado de la página de reportes de verde a azul. Justo al final, se encontró y corrigió un error de renderizado de React Hooks en  (Rendered more hooks than during the previous render) moviendo la declaración de un . La siguiente acción era verificar visualmente que esta corrección resolviera el fallo y que todas las páginas responsivas funcionaran como se esperaba.
+- **Last item agent was working**: El agente estaba añadiendo una funcionalidad de búsqueda (con un icono de lupa) a las páginas de  y . Ya había implementado parte de la lógica en  (el estado y la función de filtrado) y estaba a punto de añadir la interfaz de usuario del buscador y aplicarla a la lista de productos.
 - **Status**: IN PROGRESS
 - **Agent Testing Done**: N
-- **Which testing method agent to use?**: screenshot tool. Tomar screenshots de las siguientes rutas en vista móvil para verificar que los menús laterales se colapsan correctamente y que el contenido se muestra sin errores: , , , .
+- **Which testing method agent to use?**: screenshot tool. Después de implementar el buscador en ambas páginas, tomar screenshots para verificar que la barra de búsqueda aparece y filtra la lista correctamente al escribir un término de búsqueda.
+    - Probar en : buscar por nombre de producto.
+    - Probar en : buscar por nombre de cliente.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- No hay issues pendientes. La última tarea era una mejora de funcionalidad.
+- No hay issues pendientes. El trabajo actual es una nueva funcionalidad.
 
 **In progress Task List**:
-- **Task 1: Verificación de mejoras de responsividad móvil (P0)**
-    - **Where to resume**: El agente acaba de corregir un error de renderizado en  (). El siguiente paso es verificar visualmente que el error está resuelto y que las mejoras de responsividad en las páginas , ,  y  funcionan correctamente en vista móvil.
-    - **What will be achieved with this?**: Se completará la solicitud del usuario de mejorar la experiencia móvil en secciones clave de la aplicación.
+- **Task 1: Añadir buscador a las páginas de Productos y Clientes (P0)**
+    - **Where to resume**: El agente ha añadido el estado y la lógica de filtrado en . Los siguientes pasos son:
+        1.  En , añadir la UI del campo de búsqueda.
+        2.  Modificar la renderización de la lista de productos para que use el array filtrado ().
+        3.  Replicar la misma funcionalidad completa (estado, UI y lógica de filtrado) en el archivo .
+    - **What will be achieved with this?**: Los usuarios podrán buscar y encontrar productos y clientes fácilmente desde sus respectivas páginas de gestión.
     - **Status**: IN PROGRESS
     - **Should Test frontend/backend/both after fix?**: frontend
     - **Blocked on something**: None
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P1: Extender selectores de gráficos a todos los reportes:** Aplicar los selectores funcionales de tipo de gráfico (Área/Barra) y agrupación (Días/Semanas) a los reportes de Ventas por artículo y Ventas por categoría.
+    - **P1: Mostrar logo en el recibo impreso:** La funcionalidad para subir el logo de la organización ya existe, pero el logo aún no se muestra en la plantilla del ticket impreso.
+    - **P2: Implementar Funciones de configuración:** Añadir la lógica de backend para las funcionalidades de Reloj checador, Impresoras de cocina y Pantalla para clientes.
 - **Future Tasks:**
-    - **P2: Completar Funciones de configuración:** Implementar la lógica backend para las funciones de Reloj checador, Impresoras de cocina y Pantalla para clientes.
-    - **P3: Configuración Avanzada de Recibo:** Implementar la subida de un logo para la organización y añadirlo al recibo.
-    - **P4: Mejorar escaneo de código de barras.**
+    - **P3: Añadir paginación al reporte Recibos:** Implementar paginación para manejar eficientemente un gran volumen de datos.
+    - **P4: Añadir búsqueda por rango de montos:** En el reporte de Recibos, permitir filtrar por un rango de totales (ej: recibos entre 0 y 00).
+    - **P5: Añadir opción de enviar recibo por email:** Desde el menú de opciones de un recibo.
 
 **Completed work in this session**
-- **Resolución de Bug Crítico (P0):** Se corrigió la página  que se mostraba en blanco. La solución implicó parametrizar la ruta en  y ajustar  para leer dicho parámetro.
-- **Funcionalidad de Impresión de Tickets:** Se completó y verificó la opción para activar/desactivar la impresión de tickets, corrigiendo el endpoint del backend y la lógica en .
-- **Limpieza de UI:** Se eliminó el mensaje de Credenciales de prueba de la pantalla de login.
-- **Corrección de Flujos del TPV:**
-    - Se arregló el guardado de tickets abiertos para que actualice el ticket existente en lugar de crear uno nuevo.
-    - Se rediseñó la función Dividir Ticket para permitir la división por cantidad y la selección de ítems únicos ().
-    - Se reparó el botón para eliminar tickets abiertos, permitiendo que administradores y propietarios eliminen cualquier ticket.
-- **Gestión de Caja Mejorada:**
-    - Se corrigió el flujo de Abrir Caja para requerir la selección de un TPV y solo pedir la base si la función de turnos está activa.
-    - Se implementó una vista para que administradores vean y cierren todas las cajas abiertas.
-    - Se solucionó un bug que impedía ver TPVs disponibles debido a un estado  incorrecto y a un error en el evento  del frontend.
-- **Gestión de Productos Mejorada:**
-    - Se cambió el campo de texto Categoría a un selector desplegable.
-    - Se implementó la subida de imágenes de productos desde archivos, incluyendo backend para almacenamiento y frontend con previsualización.
-- **Reportes:** Se añadió el desglose de ventas por método de pago al reporte de cierre de caja.
-- **Mejoras de Experiencia Móvil:**
-    - Se implementó una animación fly-to-cart en la vista móvil del TPV.
-    - Se inició y avanzó en la adaptación responsiva de las páginas de Reportes, Productos, Facturas y Configuración.
+- **Corrección Crítica de Cálculo de Impuestos:** Se arregló el cálculo del total en el TPV. Ahora se leen los impuestos activos desde el backend y se calcula el total correctamente, mostrando un desglose completo (Subtotal, impuestos incluidos, impuestos agregados, Total) en el carrito de la versión de escritorio.
+- **Reporte de Recibos Mejorado:**
+    - Se hizo completamente responsivo para dispositivos móviles.
+    - Se añadió un buscador con icono de lupa para filtrar por múltiples criterios.
+    - Se añadió una columna Cliente a la tabla de recibos.
+    - Se corrigió el endpoint de reembolso (), solucionando un error 404. Ahora se muestra un diálogo para introducir el motivo del reembolso.
+    - Se añadió la opción Imprimir al menú de acciones del recibo.
+    - Se implementó un panel lateral para ver el detalle del recibo sin cambiar de página.
+- **Reflejo de Reembolsos en Reportes:** Se modificaron los endpoints del backend y los componentes del frontend para que los reembolsos se resten correctamente en los reportes de Resumen de ventas e Ingresos.
+- **Nuevas Funcionalidades Implementadas:**
+    - **Exportar Gráficos:** Se añadió un botón para descargar los gráficos de los reportes como imágenes PNG.
+    - **Escáner de Código de Barras:** Se añadió un botón Escanear en el diálogo de creación de productos.
+    - **Subida de Logo:** Se implementó la UI y el endpoint para que los usuarios puedan subir un logo para su organización.
+- **Corrección de Bugs de React Hooks:** Se solucionaron errores de tipo Rendered more hooks than during the previous render en  y .
+- **Verificación de Responsividad:** Se completó y verificó el diseño adaptable en las páginas de Reportes, Productos, Facturas y Configuración.
 
 **Earlier issues found/mentioned but not fixed**
 - Ninguno.
 
 **Known issue recurrence from previous fork**
-- **Desincronización Backend-Frontend:** Sigue siendo un punto de atención. Durante la sesión, fue necesario ajustar múltiples endpoints y modelos (,  en producto,  en caja) para que coincidieran con las necesidades del frontend.
+- **Desincronización Backend-Frontend:** Sigue siendo un punto a vigilar. En esta sesión se corrigió una discrepancia en la URL del endpoint de reembolso ( vs ).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Rutas Parametrizadas en React Router:** Se usó  para solucionar un problema de enrutamiento.
-- **Gestión de Estado de UI Responsiva:** Uso de  para controlar la visibilidad de menús laterales en vistas móviles (ej.  en ).
-- **Animaciones CSS/React:** Implementación de una animación fly-to-cart usando estado de React para controlar un elemento con transiciones CSS.
-- **Upload de Archivos en FastAPI:** Creación de un endpoint que recibe  y lo guarda en el servidor.
-- **Servir Archivos Estáticos en FastAPI:** Uso de  para exponer el directorio .
-- **Agregaciones en MongoDB:** Se usó el framework de agregación para calcular las ventas por método de pago.
+- **React Hooks ():** Se utilizó para optimizar el cálculo de impuestos en , asegurando que solo se recalcule cuando cambien el carrito o los impuestos activos.
+- **Cálculo de Impuestos en Frontend:** Se implementó la lógica en  para obtener los impuestos activos desde el backend y calcular el total del carrito, mostrando un desglose que diferencia entre impuestos incluidos y no incluidos.
+- **UI Responsiva con TailwindCSS:** Uso intensivo de prefijos (, ) para adaptar los layouts, especialmente en , donde se creó una vista de tarjetas para la lista de recibos en móvil.
+- **Librerías de UI:** Se añadió  para exportar gráficos como imágenes. Se utilizó  para el escaneo de códigos de barras.
+- **Component Refactoring:**  fue refactorizado para incluir el nuevo y complejo componente , que gestiona su propio estado para filtros, búsqueda y un panel de detalles.
 
 **key DB schema**
-- **productos:** Se añadió el campo  (string, contiene la URL relativa al archivo).
-- **cajas:** Al cerrar una caja, ahora se almacena el campo , un array de objetos .
-- **tpv:** Se depuró y corrigió el estado del campo  (booleano) en varias ocasiones.
+- **facturas:** El campo  (completado, reembolsado) es ahora crucial para la lógica de los reportes. El campo  se muestra en la UI.
+- **organizaciones:** El sub-documento  ahora incluye un campo .
 
 **changes in tech stack**
-- Ninguno.
+- **Nueva dependencia (frontend):** .
 
 **All files of reference**
 - 
@@ -104,58 +107,58 @@ Un sistema POS full-stack (React/FastAPI/MongoDB) funcional y robusto. El sistem
 - 
 - 
 - 
-- 
 
 **Areas that need refactoring**:
-- **, , , **: Estos archivos han crecido considerablemente en complejidad. Descomponerlos en componentes más pequeños y hooks personalizados mejoraría drásticamente su mantenimiento.
-- ****: El archivo sigue siendo un monolito. Es altamente recomendable dividirlo en routers de FastAPI por funcionalidad (ej. , , ).
+- ****: Este archivo es extremadamente grande (más de 2000 líneas) y contiene la lógica de múltiples reportes. Debería ser dividido urgentemente en archivos separados para cada componente de reporte (, , etc.).
+- ****: También es muy grande y complejo. Se beneficiaría de la extracción de la lógica del carrito y los impuestos a hooks personalizados.
+- ****: Sigue siendo un único archivo monolítico. Es muy recomendable dividirlo en routers de FastAPI por funcionalidad.
 
 **key api endpoints**
 - **NUEVOS Endpoints:**
-    - : Sube un archivo de imagen para un producto.
-    - : Devuelve todas las cajas abiertas de una organización (para administradores).
-    - : Permite a un administrador cerrar la caja de otro usuario.
+    - : Sube un logo para la organización.
 - **Endpoints ACTUALIZADOS:**
-    - : Ahora devuelve el campo .
-    - : Ahora permite a propietarios/admins borrar cualquier ticket.
-    - : La lógica ahora considera si  está activo para requerir .
-    -  y : Devuelven el desglose de ventas por método de pago.
-    - : Ahora incluyen el campo .
+    - : Endpoint corregido para procesar reembolsos, que ahora requiere un .
+    - : Ahora calcula y devuelve métricas de ventas brutas, netas y reembolsos.
+    - : Maneja el campo .
+    - : Es utilizado por el TPV para los cálculos de impuestos en el frontend.
 
 **Critical Info for New Agent**
-- **Prioridad Inmediata (P0):** La tarea actual es verificar la implementación de la responsividad móvil. El agente corrigió un crash en . El primer paso debe ser usar la herramienta de screenshot en vista móvil para confirmar que , ,  y  se renderizan correctamente y sus menús son funcionales.
-- **Complejidad de Componentes:** Varias páginas (, , ) son ahora muy grandes. Al realizar cambios, ten cuidado de no introducir efectos secundarios. Se recomienda encarecidamente la refactorización a componentes más pequeños.
-- **Coherencia de Datos:** Antes de implementar cambios, verifica siempre los modelos Pydantic (), el estado de React y la estructura de los payloads de la API para asegurar la consistencia.
+- **Prioridad Inmediata (P0):** Completar la funcionalidad de búsqueda en las páginas de  y . El trabajo ya ha comenzado en . Debes terminarlo y luego replicarlo en .
+- **Duplicación de UI en TPV:** El archivo  contiene código separado para el carrito de escritorio y el carrito móvil. La reciente corrección del desglose de impuestos solo se aplicó a la vista de escritorio. Cualquier cambio futuro en la lógica del carrito debe considerar ambas vistas para mantener la consistencia.
+- **Complejidad de Archivos:** Ten mucho cuidado al editar  y . Son archivos muy grandes y cualquier cambio puede tener efectos inesperados. La refactorización de estos archivos es una tarea importante para el futuro.
 
 **documents and test reports created in this job**
-- Ninguno.
+-  (actualizado varias veces)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **COMPLETED:** Solicitud de hacer responsivas las páginas de Reportes, Productos, Facturas y Configuración, cambiar el color de Reportes a azul y añadir un botón de exportar CSV.
-2.  **COMPLETED:** Solicitud de implementar animación fly-to-cart en el TPV móvil.
-3.  **COMPLETED:** Solicitud de agregar el detalle de métodos de pago al reporte de cierre de caja.
-4.  **COMPLETED:** Solicitud de implementar la subida de imágenes de productos por archivo.
-5.  **COMPLETED:** Reporte de que la previsualización de la imagen del producto no funcionaba.
-6.  **COMPLETED:** Solicitud de que la base de caja solo se pida si la opción de cierre por turnos está activa.
-7.  **COMPLETED:** Reporte de que no se podía desactivar la función Tickets abiertos por tickets guardados inexistentes.
-8.  **COMPLETED:** Reporte de que no aparecían TPVs disponibles para abrir caja.
-9.  **COMPLETED:** Reporte de que el botón Eliminar en tickets abiertos no funcionaba.
-10. **COMPLETED:** Reporte de que al guardar un ticket recuperado, pedía la mesa de nuevo en lugar de actualizar.
+1.  **IN PROGRESS:** Solicitud de añadir un buscador con lupa a las páginas de Productos y Clientes.
+2.  **COMPLETED:** Reporte de que el total del recibo no calculaba los impuestos correctamente.
+3.  **COMPLETED:** Solicitud de hacer el reporte Recibos responsivo.
+4.  **COMPLETED:** Solicitud de añadir opciones de Reembolsar e Imprimir al menú de recibos y corregir el error de reembolso.
+5.  **COMPLETED:** Solicitud de añadir un buscador y la columna Cliente al reporte de Recibos.
+6.  **COMPLETED:** Solicitud de restaurar Facturas al menú principal.
+7.  **COMPLETED:** Solicitud de reflejar los reembolsos en los reportes y mover Facturas a la sección Reportes.
+8.  **COMPLETED:** Solicitud de implementar subida de logo, escaneo de código de barras y exportación de gráficos.
+9.  **COMPLETED:** Aprobación del plan para implementar tareas P0 y P1.
+10. **COMPLETED:** Reporte de errores de React Hooks en las páginas de Productos y Facturas.
 
 **Project Health Check:**
 - **Broken:** Ninguna funcionalidad principal está rota.
-- **Mocked:** Las secciones Descuentos y Funciones en la configuración (Reloj checador, Impresoras de cocina, Pantalla para clientes) siguen siendo UI sin lógica de negocio completa.
+- **Mocked:** Las Funciones en la configuración (Reloj checador, Impresoras de cocina, Pantalla para clientes) siguen siendo solo UI.
 
 **3rd Party Integrations**
 - Google Auth (via )
-- Recharts (librería de gráficos en React)
+- Recharts (para gráficos)
 -  (para iconos)
+-  (para escaneo de código de barras)
+-  (para exportar gráficos como imágenes)
+-  (para notificaciones toast)
 
 **Testing status**
 - **Testing agent used after significant changes:** NO
 - **Troubleshoot agent used after agent stuck in loop:** NO
 - **Test files created:** []
-- **Known regressions:** Ninguna conocida. El último error de renderizado fue corregido pero no verificado.
+- **Known regressions:** Ninguno.
 
 **Credentials to test flow:**
 - **Propietario:**  / 
@@ -163,4 +166,4 @@ Un sistema POS full-stack (React/FastAPI/MongoDB) funcional y robusto. El sistem
 - **Cajero:**  / 
 
 **What agent forgot to execute**
-- El agente no olvidó ninguna tarea, pero fue interrumpido justo después de aplicar una corrección a un error de renderizado en . La verificación visual de esta corrección y del resto de las mejoras de responsividad está pendiente.</analysis>
+- Al implementar el desglose de impuestos en el carrito del TPV (), el agente solo actualizó la vista de **escritorio**. La vista **móvil** del carrito no muestra este desglose, aunque el cálculo del total sí es correcto. Esto debería corregirse para mantener la consistencia visual.</analysis>
