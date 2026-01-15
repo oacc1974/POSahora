@@ -596,10 +596,17 @@ function ReporteResumen({ data, facturas }) {
       </div>
 
       {/* Gráfico con selectores funcionales */}
-      <div className="bg-white rounded-lg border p-4">
+      <div ref={chartRef} className="bg-white rounded-lg border p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Ventas brutas</h3>
           <div className="flex gap-2">
+            <button
+              onClick={() => exportChartAsImage(chartRef, 'resumen_ventas')}
+              className="text-sm border rounded px-2 py-1.5 bg-white hover:bg-slate-50 flex items-center gap-1"
+              title="Exportar como imagen"
+            >
+              <Image size={14} />
+            </button>
             <select 
               className="text-sm border rounded px-3 py-1.5 bg-white cursor-pointer"
               value={chartType}
