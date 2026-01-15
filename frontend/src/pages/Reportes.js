@@ -1788,11 +1788,19 @@ function ReporteRecibos({ facturas, onReembolso }) {
         </div>
       </div>
       
-      {/* Panel lateral - Detalle del recibo */}
+      {/* Panel lateral - Detalle del recibo (Modal en móvil, Panel en desktop) */}
       {selectedFactura && (
-        <div className="w-[400px] bg-white rounded-lg border shadow-lg sticky top-4 h-fit">
+        <div className="fixed inset-0 z-40 md:relative md:inset-auto">
+          {/* Overlay en móvil */}
+          <div 
+            className="absolute inset-0 bg-black/50 md:hidden"
+            onClick={() => setSelectedFactura(null)}
+          />
+          
+          {/* Panel */}
+          <div className="absolute inset-x-0 bottom-0 max-h-[90vh] overflow-y-auto md:relative md:inset-auto md:w-[400px] bg-white rounded-t-2xl md:rounded-lg border shadow-lg md:sticky md:top-4 md:h-fit">
           {/* Header del panel */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
             <button
               onClick={() => setSelectedFactura(null)}
               className="p-1 hover:bg-slate-100 rounded"
