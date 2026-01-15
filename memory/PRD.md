@@ -61,9 +61,16 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
   - Tabla de Ingresos con indicador visual de estado (verde/rojo) y precio tachado
 
 - [x] **Reorganización de menú de navegación**
-  - Eliminado "Facturas" del menú principal (Layout.js y POS.js)
-  - Acceso a facturas/ingresos ahora está dentro de Reportes → Ingresos
-  - Dashboard de Ingresos rediseñado con estilo visual de tarjetas y tabla interactiva
+  - "Facturas" restaurado en el menú principal
+  - Acceso a recibos también disponible en Reportes → Recibos
+
+- [x] **Reporte "Recibos" rediseñado (antes "Ingresos")**
+  - Renombrado de "Ingresos" a "Recibos"
+  - Tarjetas clickeables para filtrar: Todos, Ventas, Reembolsos
+  - Panel lateral con detalle del recibo al hacer clic en una fila
+  - Detalle muestra: Total, Info pedido, Artículos, Subtotales, Método de pago
+  - Menú de 3 puntos (⋮) para reembolsar recibos
+  - Filtro visual con borde coloreado en tarjeta seleccionada
 
 ### Completadas (14 Enero 2026)
 
