@@ -178,13 +178,16 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 - [x] ~~Subir logo de organización para recibo~~ ✓ Completado 15 Enero 2026
 - [x] ~~Mejorar escaneo de código de barras~~ ✓ Completado 15 Enero 2026
 - [x] ~~Exportar gráficos como imagen~~ ✓ Completado 15 Enero 2026
+- [x] ~~Buscador en páginas de Productos y Clientes~~ ✓ Completado 15 Enero 2026
+- [x] ~~Paginación en reporte de Recibos~~ ✓ Completado 15 Enero 2026
+- [ ] Mostrar logo de organización en el recibo impreso
 - [ ] Lógica interna de "Función de reloj" (UI de fichaje)
 - [ ] Lógica interna de "Impresoras de cocina"
 - [ ] Lógica interna de "Pantalla para clientes"
 
 ### P2 - Futuras
-- [ ] Subir logo de organización para recibo
-- [ ] Escaneo de código de barras mejorado
+- [ ] Búsqueda por rango de montos en recibos
+- [ ] Enviar recibo por email
 
 ## Credenciales de Prueba
 - **Usuario:** admin
