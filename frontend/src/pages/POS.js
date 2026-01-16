@@ -3050,6 +3050,119 @@ export default function POS() {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog Agregar Descuento */}
+      <Dialog open={showDescuentoDialog} onOpenChange={setShowDescuentoDialog}>
+        <DialogContent className="max-w-sm mx-4">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Tag size={20} className="text-orange-500" />
+              Aplicar Descuento
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Tipo de descuento */}
+            <div>
+              <Label className="text-sm font-medium">Tipo de descuento</Label>
+              <div className="flex gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setNuevoDescuento({...nuevoDescuento, tipo: 'porcentaje', valor: ''})}
+                  className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                    nuevoDescuento.tipo === 'porcentaje' 
+                      ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <Percent size={16} className="inline mr-1" />
+                  Porcentaje
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNuevoDescuento({...nuevoDescuento, tipo: 'monto', valor: ''})}
+                  className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                    nuevoDescuento.tipo === 'monto' 
+                      ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  $ Monto Fijo
+                </button>
+              </div>
+            </div>
+            
+            {/* Valor */}
+            <div>
+              <Label htmlFor="descuento_valor" className="text-sm font-medium">
+                Valor {nuevoDescuento.tipo === 'porcentaje' ? '(%)' : '($)'}
+              </Label>
+              <div className="relative mt-2">
+                <Input
+                  id="descuento_valor"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max={nuevoDescuento.tipo === 'porcentaje' ? 100 : subtotal}
+                  value={nuevoDescuento.valor}
+                  onChange={(e) => setNuevoDescuento({...nuevoDescuento, valor: e.target.value})}
+                  placeholder={nuevoDescuento.tipo === 'porcentaje' ? 'Ej: 10' : 'Ej: 5.00'}
+                  className="pr-10"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+                  {nuevoDescuento.tipo === 'porcentaje' ? '%' : '$'}
+                </span>
+              </div>
+            </div>
+            
+            {/* Motivo */}
+            <div>
+              <Label htmlFor="descuento_motivo" className="text-sm font-medium">Motivo (opcional)</Label>
+              <Input
+                id="descuento_motivo"
+                type="text"
+                value={nuevoDescuento.motivo}
+                onChange={(e) => setNuevoDescuento({...nuevoDescuento, motivo: e.target.value})}
+                placeholder="Ej: Cliente frecuente, Cupón PROMO10"
+                className="mt-2"
+              />
+            </div>
+            
+            {/* Preview del descuento */}
+            {nuevoDescuento.valor && parseFloat(nuevoDescuento.valor) > 0 && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <div className="text-sm text-orange-700">
+                  <span className="font-medium">Descuento a aplicar:</span>
+                  <span className="float-right font-bold">
+                    -${nuevoDescuento.tipo === 'porcentaje' 
+                      ? (subtotal * parseFloat(nuevoDescuento.valor) / 100).toFixed(2)
+                      : parseFloat(nuevoDescuento.valor).toFixed(2)
+                    }
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDescuentoDialog(false);
+                setNuevoDescuento({ tipo: 'porcentaje', valor: '', motivo: '' });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={agregarDescuento}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              Aplicar Descuento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Overlay para cerrar menú */}
       {showTicketMenu && (
         <div 
