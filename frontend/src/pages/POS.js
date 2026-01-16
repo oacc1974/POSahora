@@ -1163,21 +1163,47 @@ export default function POS() {
   const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
   const cartItemCount = cart.reduce((sum, item) => sum + item.cantidad, 0);
   
+  // Calcular descuentos
+  const { totalDescuentos, descuentosCalculados } = useMemo(() => {
+    let totalDesc = 0;
+    const descCalc = [];
+    let baseParaDescuento = subtotal;
+    
+    descuentos.forEach(desc => {
+      let montoDescuento = 0;
+      if (desc.tipo === 'porcentaje') {
+        montoDescuento = baseParaDescuento * (desc.valor / 100);
+      } else {
+        montoDescuento = Math.min(desc.valor, baseParaDescuento - totalDesc); // No puede exceder el total
+      }
+      totalDesc += montoDescuento;
+      descCalc.push({
+        ...desc,
+        montoCalculado: montoDescuento
+      });
+    });
+    
+    return { totalDescuentos: totalDesc, descuentosCalculados: descCalc };
+  }, [descuentos, subtotal]);
+  
+  // Subtotal después de descuentos (base para impuestos)
+  const subtotalConDescuento = subtotal - totalDescuentos;
+  
   // Calcular impuestos con useMemo para mejor rendimiento
   const { totalImpuestosAgregados, desgloseImpuestos, total } = useMemo(() => {
     let totalImpAgregados = 0;
     const desglose = [];
     
-    if (impuestosActivos.length > 0 && subtotal > 0) {
+    if (impuestosActivos.length > 0 && subtotalConDescuento > 0) {
       impuestosActivos.forEach(imp => {
         let montoImpuesto = 0;
         
         if (imp.tipo === 'incluido') {
           // El impuesto ya está incluido en el precio
-          montoImpuesto = subtotal - (subtotal / (1 + imp.tasa / 100));
+          montoImpuesto = subtotalConDescuento - (subtotalConDescuento / (1 + imp.tasa / 100));
         } else {
           // Impuesto no incluido, se agrega al subtotal
-          montoImpuesto = subtotal * (imp.tasa / 100);
+          montoImpuesto = subtotalConDescuento * (imp.tasa / 100);
           totalImpAgregados += montoImpuesto;
         }
         
@@ -1193,9 +1219,49 @@ export default function POS() {
     return { 
       totalImpuestosAgregados: totalImpAgregados, 
       desgloseImpuestos: desglose,
-      total: subtotal + totalImpAgregados
+      total: subtotalConDescuento + totalImpAgregados
     };
-  }, [impuestosActivos, subtotal]);
+  }, [impuestosActivos, subtotalConDescuento]);
+  
+  // Funciones para manejar descuentos
+  const agregarDescuento = () => {
+    if (!nuevoDescuento.valor || parseFloat(nuevoDescuento.valor) <= 0) {
+      toast.error('Ingresa un valor válido para el descuento');
+      return;
+    }
+    
+    const valor = parseFloat(nuevoDescuento.valor);
+    
+    // Validar que el descuento no exceda el subtotal
+    if (nuevoDescuento.tipo === 'porcentaje' && valor > 100) {
+      toast.error('El porcentaje no puede ser mayor a 100%');
+      return;
+    }
+    
+    if (nuevoDescuento.tipo === 'monto' && valor > subtotal - totalDescuentos) {
+      toast.error('El descuento no puede ser mayor al subtotal disponible');
+      return;
+    }
+    
+    setDescuentos([...descuentos, {
+      id: Date.now(),
+      tipo: nuevoDescuento.tipo,
+      valor: valor,
+      motivo: nuevoDescuento.motivo || (nuevoDescuento.tipo === 'porcentaje' ? `${valor}% descuento` : `$${valor} descuento`)
+    }]);
+    
+    setNuevoDescuento({ tipo: 'porcentaje', valor: '', motivo: '' });
+    setShowDescuentoDialog(false);
+    toast.success('Descuento aplicado');
+  };
+  
+  const eliminarDescuento = (id) => {
+    setDescuentos(descuentos.filter(d => d.id !== id));
+  };
+  
+  const limpiarDescuentos = () => {
+    setDescuentos([]);
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-100" data-testid="pos-page">
