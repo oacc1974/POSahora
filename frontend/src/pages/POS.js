@@ -76,6 +76,11 @@ export default function POS() {
   // Estado para impuestos activos
   const [impuestosActivos, setImpuestosActivos] = useState([]);
   
+  // Estados para descuentos
+  const [descuentos, setDescuentos] = useState([]);
+  const [showDescuentoDialog, setShowDescuentoDialog] = useState(false);
+  const [nuevoDescuento, setNuevoDescuento] = useState({ tipo: 'porcentaje', valor: '', motivo: '' });
+  
   // Estado para animación fly-to-cart
   const [flyingProduct, setFlyingProduct] = useState(null);
   const ticketButtonRef = React.useRef(null);
