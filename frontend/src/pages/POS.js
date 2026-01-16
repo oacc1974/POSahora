@@ -733,13 +733,22 @@ export default function POS() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const totalVenta = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
       const response = await axios.post(
         `${API_URL}/api/facturas`,
         {
           items: cart,
-          total: totalVenta,
+          subtotal: subtotal,
+          descuento: totalDescuentos,
+          descuentos_detalle: descuentosCalculados.map(d => ({
+            tipo: d.tipo,
+            valor: d.valor,
+            motivo: d.motivo,
+            monto: d.montoCalculado
+          })),
+          impuesto: totalImpuestosAgregados,
+          desglose_impuestos: desgloseImpuestos,
+          total: total,
           cliente_id: clienteSeleccionado?.id || null,
           comentarios: comentarios || null,
           metodo_pago_id: metodoPagoSeleccionado,
