@@ -3091,58 +3091,34 @@ export default function POS() {
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            {/* Tipo de descuento */}
-            <div>
-              <Label className="text-sm font-medium">Tipo de descuento</Label>
-              <div className="flex gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setNuevoDescuento({...nuevoDescuento, tipo: 'porcentaje', valor: ''})}
-                  className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors ${
-                    nuevoDescuento.tipo === 'porcentaje' 
-                      ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
+            {/* Selector de descuento predefinido */}
+            {descuentosPredefinidos.length > 0 ? (
+              <div>
+                <Label htmlFor="descuento_selector" className="text-sm font-medium">Selecciona un descuento</Label>
+                <select
+                  id="descuento_selector"
+                  value={descuentoSeleccionado}
+                  onChange={(e) => setDescuentoSeleccionado(e.target.value)}
+                  className="w-full mt-2 p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
-                  <Percent size={16} className="inline mr-1" />
-                  Porcentaje
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setNuevoDescuento({...nuevoDescuento, tipo: 'monto', valor: ''})}
-                  className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors ${
-                    nuevoDescuento.tipo === 'monto' 
-                      ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  $ Monto Fijo
-                </button>
+                  <option value="">-- Selecciona un descuento --</option>
+                  {descuentosPredefinidos.map((desc) => (
+                    <option 
+                      key={desc.id} 
+                      value={desc.id}
+                      disabled={descuentos.some(d => d.descuentoId === desc.id)}
+                    >
+                      {desc.nombre} ({desc.porcentaje}%)
+                      {descuentos.some(d => d.descuentoId === desc.id) ? ' - Ya aplicado' : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
-            
-            {/* Valor */}
-            <div>
-              <Label htmlFor="descuento_valor" className="text-sm font-medium">
-                Valor {nuevoDescuento.tipo === 'porcentaje' ? '(%)' : '($)'}
-              </Label>
-              <div className="relative mt-2">
-                <Input
-                  id="descuento_valor"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max={nuevoDescuento.tipo === 'porcentaje' ? 100 : subtotal}
-                  value={nuevoDescuento.valor}
-                  onChange={(e) => setNuevoDescuento({...nuevoDescuento, valor: e.target.value})}
-                  placeholder={nuevoDescuento.tipo === 'porcentaje' ? 'Ej: 10' : 'Ej: 5.00'}
-                  className="pr-10"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
-                  {nuevoDescuento.tipo === 'porcentaje' ? '%' : '$'}
-                </span>
+            ) : (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-700">
+                No hay descuentos configurados. Ve a Configuración → Descuentos para crear uno.
               </div>
-            </div>
+            )}
             
             {/* Motivo */}
             <div>
@@ -3150,23 +3126,22 @@ export default function POS() {
               <Input
                 id="descuento_motivo"
                 type="text"
-                value={nuevoDescuento.motivo}
-                onChange={(e) => setNuevoDescuento({...nuevoDescuento, motivo: e.target.value})}
-                placeholder="Ej: Cliente frecuente, Cupón PROMO10"
+                value={motivoDescuento}
+                onChange={(e) => setMotivoDescuento(e.target.value)}
+                placeholder="Ej: Cliente frecuente, Promoción especial"
                 className="mt-2"
               />
             </div>
             
             {/* Preview del descuento */}
-            {nuevoDescuento.valor && parseFloat(nuevoDescuento.valor) > 0 && (
+            {descuentoSeleccionado && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                 <div className="text-sm text-orange-700">
                   <span className="font-medium">Descuento a aplicar:</span>
                   <span className="float-right font-bold">
-                    -${nuevoDescuento.tipo === 'porcentaje' 
-                      ? (subtotal * parseFloat(nuevoDescuento.valor) / 100).toFixed(2)
-                      : parseFloat(nuevoDescuento.valor).toFixed(2)
-                    }
+                    -{descuentosPredefinidos.find(d => d.id === descuentoSeleccionado)?.porcentaje}%
+                    {' '}
+                    (-${(subtotal * (descuentosPredefinidos.find(d => d.id === descuentoSeleccionado)?.porcentaje || 0) / 100).toFixed(2)})
                   </span>
                 </div>
               </div>
@@ -3178,7 +3153,8 @@ export default function POS() {
               variant="outline" 
               onClick={() => {
                 setShowDescuentoDialog(false);
-                setNuevoDescuento({ tipo: 'porcentaje', valor: '', motivo: '' });
+                setDescuentoSeleccionado('');
+                setMotivoDescuento('');
               }}
             >
               Cancelar
@@ -3186,6 +3162,7 @@ export default function POS() {
             <Button 
               onClick={agregarDescuento}
               className="bg-orange-500 hover:bg-orange-600"
+              disabled={!descuentoSeleccionado || descuentosPredefinidos.length === 0}
             >
               Aplicar Descuento
             </Button>
