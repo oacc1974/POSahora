@@ -1254,34 +1254,35 @@ export default function POS() {
   
   // Funciones para manejar descuentos
   const agregarDescuento = () => {
-    if (!nuevoDescuento.valor || parseFloat(nuevoDescuento.valor) <= 0) {
-      toast.error('Ingresa un valor válido para el descuento');
+    if (!descuentoSeleccionado) {
+      toast.error('Selecciona un descuento');
       return;
     }
     
-    const valor = parseFloat(nuevoDescuento.valor);
-    
-    // Validar que el descuento no exceda el subtotal
-    if (nuevoDescuento.tipo === 'porcentaje' && valor > 100) {
-      toast.error('El porcentaje no puede ser mayor a 100%');
+    const descPredefinido = descuentosPredefinidos.find(d => d.id === descuentoSeleccionado);
+    if (!descPredefinido) {
+      toast.error('Descuento no encontrado');
       return;
     }
     
-    if (nuevoDescuento.tipo === 'monto' && valor > subtotal - totalDescuentos) {
-      toast.error('El descuento no puede ser mayor al subtotal disponible');
+    // Verificar que no se haya aplicado ya este descuento
+    if (descuentos.some(d => d.descuentoId === descPredefinido.id)) {
+      toast.error('Este descuento ya está aplicado');
       return;
     }
     
     setDescuentos([...descuentos, {
       id: Date.now(),
-      tipo: nuevoDescuento.tipo,
-      valor: valor,
-      motivo: nuevoDescuento.motivo || (nuevoDescuento.tipo === 'porcentaje' ? `${valor}% descuento` : `$${valor} descuento`)
+      descuentoId: descPredefinido.id,
+      tipo: 'porcentaje',
+      valor: descPredefinido.porcentaje,
+      motivo: motivoDescuento || descPredefinido.nombre
     }]);
     
-    setNuevoDescuento({ tipo: 'porcentaje', valor: '', motivo: '' });
+    setDescuentoSeleccionado('');
+    setMotivoDescuento('');
     setShowDescuentoDialog(false);
-    toast.success('Descuento aplicado');
+    toast.success(`Descuento "${descPredefinido.nombre}" aplicado`);
   };
   
   const eliminarDescuento = (id) => {
