@@ -3102,40 +3102,49 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
     # Calcular subtotal de items (sin impuestos)
     subtotal = sum(item.subtotal for item in invoice.items)
     
-    # Obtener impuestos activos de la organización
-    impuestos_activos = await db.impuestos.find({
-        "organizacion_id": current_user["organizacion_id"],
-        "activo": True
-    }, {"_id": 0}).to_list(100)
+    # Usar descuentos enviados desde el frontend
+    descuento_total = invoice.descuento or 0
+    descuentos_detalle = invoice.descuentos_detalle or []
     
-    # Calcular impuestos
-    desglose_impuestos = []
-    total_impuestos = 0
+    # Subtotal después de descuentos
+    subtotal_con_descuento = subtotal - descuento_total
     
-    for impuesto in impuestos_activos:
-        if impuesto["tipo"] == "agregado" or impuesto["tipo"] == "no_incluido":
-            # Impuesto se agrega al subtotal
-            monto_impuesto = subtotal * (impuesto["tasa"] / 100)
-        else:  # tipo == "incluido"
-            # Impuesto ya está incluido en el precio
-            # Calculamos cuánto del subtotal corresponde al impuesto
-            monto_impuesto = subtotal - (subtotal / (1 + impuesto["tasa"] / 100))
-        
-        desglose_impuestos.append({
-            "nombre": impuesto["nombre"],
-            "tasa": impuesto["tasa"],
-            "tipo": impuesto["tipo"],
-            "monto": round(monto_impuesto, 2)
-        })
-        total_impuestos += monto_impuesto
-    
-    # Calcular total final
-    if impuestos_activos:
-        # Si hay impuestos del tipo "agregado" o "no_incluido", se suman al subtotal
-        total_agregado = sum(imp["monto"] for imp in desglose_impuestos if imp["tipo"] in ["agregado", "no_incluido"])
-        total_final = subtotal + total_agregado
+    # Si el frontend envió desglose de impuestos, usarlo; si no, calcular en backend
+    if invoice.desglose_impuestos and len(invoice.desglose_impuestos) > 0:
+        desglose_impuestos = invoice.desglose_impuestos
+        total_impuestos = invoice.impuesto or 0
+        total_final = invoice.total
     else:
-        total_final = subtotal
+        # Obtener impuestos activos de la organización
+        impuestos_activos = await db.impuestos.find({
+            "organizacion_id": current_user["organizacion_id"],
+            "activo": True
+        }, {"_id": 0}).to_list(100)
+        
+        # Calcular impuestos sobre el subtotal con descuento
+        desglose_impuestos = []
+        total_impuestos = 0
+        
+        for impuesto in impuestos_activos:
+            if impuesto["tipo"] == "agregado" or impuesto["tipo"] == "no_incluido":
+                monto_impuesto = subtotal_con_descuento * (impuesto["tasa"] / 100)
+            else:  # tipo == "incluido"
+                monto_impuesto = subtotal_con_descuento - (subtotal_con_descuento / (1 + impuesto["tasa"] / 100))
+            
+            desglose_impuestos.append({
+                "nombre": impuesto["nombre"],
+                "tasa": impuesto["tasa"],
+                "tipo": impuesto["tipo"],
+                "monto": round(monto_impuesto, 2)
+            })
+            total_impuestos += monto_impuesto
+        
+        # Calcular total final
+        if impuestos_activos:
+            total_agregado = sum(imp["monto"] for imp in desglose_impuestos if imp["tipo"] in ["agregado", "no_incluido"])
+            total_final = subtotal_con_descuento + total_agregado
+        else:
+            total_final = subtotal_con_descuento
     
     total_impuestos = round(total_impuestos, 2)
     total_final = round(total_final, 2)
@@ -3146,6 +3155,8 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         "numero": numero_factura,
         "items": [item.model_dump() for item in invoice.items],
         "subtotal": subtotal,
+        "descuento": descuento_total,
+        "descuentos_detalle": [d.model_dump() if hasattr(d, 'model_dump') else d for d in descuentos_detalle],
         "total_impuestos": total_impuestos,
         "desglose_impuestos": desglose_impuestos,
         "total": total_final,
@@ -3179,6 +3190,8 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         numero=numero_factura,
         items=invoice.items,
         subtotal=subtotal,
+        descuento=descuento_total,
+        descuentos_detalle=[d.model_dump() if hasattr(d, 'model_dump') else d for d in descuentos_detalle],
         total_impuestos=total_impuestos,
         desglose_impuestos=[ImpuestoDesglose(**imp) for imp in desglose_impuestos],
         total=total_final,
