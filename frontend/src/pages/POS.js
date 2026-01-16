@@ -1981,6 +1981,40 @@ export default function POS() {
 
           {/* Botones del ticket */}
           <div className="border-t p-4 space-y-3">
+            {/* Botón añadir descuento */}
+            {cart.length > 0 && (
+              <button
+                onClick={() => setShowDescuentoDialog(true)}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors text-sm"
+              >
+                <Tag size={16} />
+                <span>Añadir Descuento</span>
+              </button>
+            )}
+            
+            {/* Lista de descuentos aplicados */}
+            {descuentosCalculados.length > 0 && (
+              <div className="space-y-1">
+                {descuentosCalculados.map((desc) => (
+                  <div key={desc.id} className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Percent size={14} className="text-orange-500" />
+                      <span className="text-orange-700">{desc.motivo}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-orange-600 font-medium">-${desc.montoCalculado.toFixed(2)}</span>
+                      <button
+                        onClick={() => eliminarDescuento(desc.id)}
+                        className="text-orange-400 hover:text-red-500 p-1"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
             {/* Subtotal e Impuestos */}
             {cart.length > 0 && (
               <div className="space-y-1 text-sm border-b pb-3 mb-2">
@@ -1988,6 +2022,12 @@ export default function POS() {
                   <span>Subtotal</span>
                   <span className="font-medium">${subtotal.toFixed(2)}</span>
                 </div>
+                {totalDescuentos > 0 && (
+                  <div className="flex justify-between text-orange-600">
+                    <span>Descuentos</span>
+                    <span className="font-medium">-${totalDescuentos.toFixed(2)}</span>
+                  </div>
+                )}
                 {desgloseImpuestos.length > 0 ? (
                   desgloseImpuestos.map((imp, idx) => (
                     <div key={idx} className={`flex justify-between ${imp.tipo === 'incluido' ? 'text-slate-400 text-xs' : 'text-slate-600'}`}>
