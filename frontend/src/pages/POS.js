@@ -331,6 +331,7 @@ export default function POS() {
       }
 
       setCart([]);
+      setDescuentos([]);
       setClienteSeleccionado(null);
       setComentarios('');
       setTicketActualId(null);
