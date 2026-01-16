@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { format, subMonths } from 'date-fns';
+import { format, subMonths, addMonths } from 'date-fns';
 import DateRangePicker from '../components/DateRangePicker';
 import html2canvas from 'html2canvas';
 import {
