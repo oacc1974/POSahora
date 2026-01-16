@@ -2023,17 +2023,6 @@ export default function POS() {
 
           {/* Botones del ticket */}
           <div className="border-t p-4 space-y-3">
-            {/* Botón añadir descuento */}
-            {cart.length > 0 && (
-              <button
-                onClick={() => setShowDescuentoDialog(true)}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors text-sm"
-              >
-                <Tag size={16} />
-                <span>Añadir Descuento</span>
-              </button>
-            )}
-            
             {/* Lista de descuentos aplicados */}
             {descuentosCalculados.length > 0 && (
               <div className="space-y-1">
