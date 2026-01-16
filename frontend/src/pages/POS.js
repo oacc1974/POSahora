@@ -1442,6 +1442,18 @@ export default function POS() {
             <Combine size={18} className="text-slate-500" />
             <span>Combinar ticket</span>
           </button>
+          {descuentosPredefinidos.length > 0 && cart.length > 0 && (
+            <button
+              onClick={() => {
+                setShowDescuentoDialog(true);
+                setShowMobileTicketMenu(false);
+              }}
+              className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 flex items-center gap-3 text-slate-700"
+            >
+              <Tag size={18} className="text-orange-500" />
+              <span>Añadir descuento</span>
+            </button>
+          )}
         </div>
       )}
 
