@@ -79,8 +79,10 @@ export default function POS() {
   
   // Estados para descuentos
   const [descuentos, setDescuentos] = useState([]);
+  const [descuentosPredefinidos, setDescuentosPredefinidos] = useState([]);
   const [showDescuentoDialog, setShowDescuentoDialog] = useState(false);
-  const [nuevoDescuento, setNuevoDescuento] = useState({ tipo: 'porcentaje', valor: '', motivo: '' });
+  const [descuentoSeleccionado, setDescuentoSeleccionado] = useState('');
+  const [motivoDescuento, setMotivoDescuento] = useState('');
   
   // Estado para animación fly-to-cart
   const [flyingProduct, setFlyingProduct] = useState(null);
