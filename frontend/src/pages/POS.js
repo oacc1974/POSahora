@@ -117,7 +117,22 @@ export default function POS() {
     fetchMesasPredefinidas();
     fetchModificadores();
     fetchImpuestos();
+    fetchDescuentosPredefinidos();
   }, []);
+
+  const fetchDescuentosPredefinidos = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/descuentos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Solo cargar descuentos activos
+      const activos = response.data.filter(d => d.activo);
+      setDescuentosPredefinidos(activos);
+    } catch (error) {
+      console.error('Error al cargar descuentos:', error);
+    }
+  };
 
   const fetchImpuestos = async () => {
     try {
