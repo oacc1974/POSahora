@@ -109,8 +109,8 @@ export default function Reportes() {
   
   // Filtros - usando objeto de rango de fechas
   const [dateRange, setDateRange] = useState({
-    from: subMonths(new Date(), 1),
-    to: new Date()
+    from: subMonths(new Date(), 3),
+    to: addMonths(new Date(), 1)
   });
   const [tiendaId, setTiendaId] = useState('');
   const [empleadoId, setEmpleadoId] = useState('');
