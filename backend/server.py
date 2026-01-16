@@ -285,6 +285,8 @@ class InvoiceResponse(BaseModel):
     numero: str
     items: List[InvoiceItem]
     subtotal: float
+    descuento: Optional[float] = 0
+    descuentos_detalle: Optional[List[dict]] = []
     total_impuestos: float
     desglose_impuestos: List[ImpuestoDesglose]
     total: float
