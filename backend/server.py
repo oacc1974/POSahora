@@ -3277,7 +3277,9 @@ async def get_facturas(
             tipo_pedido_id=f.get("tipo_pedido_id"),
             tipo_pedido_nombre=f.get("tipo_pedido_nombre"),
             estado=f.get("estado", "completado"),
-            fecha=f["fecha"]
+            fecha=f["fecha"],
+            descuento=f.get("descuento", 0),
+            descuentos_detalle=f.get("descuentos_detalle", [])
         )
         for f in facturas
     ]
