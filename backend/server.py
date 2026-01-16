@@ -255,8 +255,19 @@ class InvoiceItem(BaseModel):
     cantidad: int
     subtotal: float
 
+class DescuentoDetalle(BaseModel):
+    tipo: str  # 'porcentaje' o 'monto'
+    valor: float
+    motivo: str
+    monto: float
+
 class InvoiceCreate(BaseModel):
     items: List[InvoiceItem]
+    subtotal: Optional[float] = None
+    descuento: Optional[float] = 0
+    descuentos_detalle: Optional[List[DescuentoDetalle]] = []
+    impuesto: Optional[float] = 0
+    desglose_impuestos: Optional[List[dict]] = []
     total: float
     cliente_id: Optional[str] = None
     comentarios: Optional[str] = None
