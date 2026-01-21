@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-export default function Caja() {
+export default function Caja({ onLogout }) {
   const navigate = useNavigate();
   const [cajaActiva, setCajaActiva] = useState(null);
   const [historial, setHistorial] = useState([]);
@@ -45,6 +45,29 @@ export default function Caja() {
   
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = ['propietario', 'administrador'].includes(user.rol);
+
+  // Función para cerrar sesión
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/auth/logout`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true
+      });
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+    
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('pos_tienda_codigo');
+    
+    if (onLogout) {
+      onLogout();
+    }
+    navigate('/login-pos');
+    toast.success('Sesión cerrada correctamente');
+  };
 
   useEffect(() => {
     fetchCajaActiva();
