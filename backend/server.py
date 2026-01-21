@@ -1282,11 +1282,11 @@ async def login_con_pin(pin_login: PINLogin):
         "access_token": access_token,
         "token_type": "bearer",
         "usuario": {
-            "id": user["_id"],
-            "nombre": user["nombre"],
+            "id": str(user["_id"]),
+            "nombre": user.get("nombre") or user.get("nombre_completo", "Usuario"),
             "username": user["username"],
             "rol": user["rol"],
-            "organizacion_id": user["organizacion_id"]
+            "organizacion_id": str(user["organizacion_id"])
         },
         "tienda": {
             "codigo": pin_login.codigo_tienda.upper(),
