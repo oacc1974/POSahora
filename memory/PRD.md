@@ -20,13 +20,23 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### Completadas (21 Enero 2026)
 
+- [x] **Sistema de Login por PIN con Código de Tienda (VERIFICADO)**
+  - **Flujo de 2 pasos:** Primero ingresa Código de Tienda, luego PIN
+  - Código de tienda se guarda en `localStorage` para no tenerlo que re-ingresar
+  - Opción "Cambiar" para usar un código de tienda diferente
+  - Pantalla de login con teclado numérico visual
+  - También acepta entrada de teclado físico
+  - Endpoint `/api/tienda/verificar/{codigo}` para validar código de tienda
+  - Endpoint `/api/auth/login-pin` para autenticación por PIN
+  - **Bug Fix:** Serialización de ObjectId en respuesta de login (convertir a string)
+  - **Bug Fix:** Búsqueda de usuarios compatible con ambos tipos de organizacion_id (ObjectId y string)
+
 - [x] **Sistema de PIN para Empleados**
   - Cajeros y Meseros acceden **obligatoriamente** con PIN de 4 dígitos
   - Propietarios y Administradores pueden **opcionalmente** activar PIN
   - PIN se genera automáticamente al crear cajero/mesero
   - PIN es único por organización (no se puede repetir)
   - Funciones: ver/ocultar PIN, editar PIN, regenerar PIN aleatorio
-  - Endpoint `/api/auth/login-pin` para autenticación por PIN
   - Tarjeta de empleado muestra PIN oculto con botón para revelar
 
 - [x] **Formulario de Empleados mejorado**
