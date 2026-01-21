@@ -1278,8 +1278,8 @@ async def login_con_pin(pin_login: PINLogin):
             detail="PIN inválido o no activo"
         )
     
-    # Crear token JWT
-    access_token = create_access_token(data={"sub": user["username"]})
+    # Crear token JWT - usar el _id como identificador (igual que en el login normal)
+    access_token = create_access_token(data={"sub": str(user["_id"])})
     
     # Obtener nombre de la tienda para mostrar
     tienda_nombre = tienda["nombre"] if tienda else "Tienda Principal"
