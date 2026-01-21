@@ -1060,7 +1060,9 @@ async def get_usuarios(current_user: dict = Depends(get_propietario_user)):
             rol=u["rol"],
             organizacion_id=u["organizacion_id"],
             creado_por=u.get("creado_por"),
-            creado=u["creado"]
+            creado=u["creado"],
+            pin=u.get("pin"),
+            pin_activo=u.get("pin_activo", False)
         )
         for u in usuarios
     ]
@@ -1079,15 +1081,37 @@ async def create_usuario(user: UserCreate, current_user: dict = Depends(get_prop
         raise HTTPException(status_code=400, detail="Solo puedes crear usuarios con rol administrador, cajero o mesero")
     
     user_id = str(uuid.uuid4())
+    
+    # Para cajeros y meseros, el PIN es obligatorio
+    pin = user.pin
+    pin_activo = user.pin_activo or False
+    
+    if user.rol in ["cajero", "mesero"]:
+        # Generar PIN automáticamente si no se proporciona
+        if not pin:
+            pin = await generar_pin_unico(current_user["organizacion_id"])
+        pin_activo = True  # Siempre activo para cajeros/meseros
+    
+    # Validar que el PIN sea único si se proporciona
+    if pin:
+        pin_existe = await db.usuarios.find_one({
+            "organizacion_id": current_user["organizacion_id"],
+            "pin": pin
+        })
+        if pin_existe:
+            raise HTTPException(status_code=400, detail="Este PIN ya está en uso. Por favor, elige otro.")
+    
     new_user = {
         "_id": user_id,
         "nombre": user.nombre,
         "username": user.username,
-        "password": get_password_hash(user.password),
+        "password": get_password_hash(user.password) if user.password else None,
         "rol": user.rol,
         "organizacion_id": current_user["organizacion_id"],
         "creado_por": current_user["_id"],
-        "creado": datetime.now(timezone.utc).isoformat()
+        "creado": datetime.now(timezone.utc).isoformat(),
+        "pin": pin,
+        "pin_activo": pin_activo
     }
     await db.usuarios.insert_one(new_user)
     
@@ -1098,7 +1122,9 @@ async def create_usuario(user: UserCreate, current_user: dict = Depends(get_prop
         rol=user.rol,
         organizacion_id=current_user["organizacion_id"],
         creado_por=current_user["_id"],
-        creado=new_user["creado"]
+        creado=new_user["creado"],
+        pin=pin,
+        pin_activo=pin_activo
     )
 
 @app.delete("/api/usuarios/{user_id}")
