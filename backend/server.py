@@ -1145,6 +1145,137 @@ async def delete_usuario(user_id: str, current_user: dict = Depends(get_propieta
     
     return {"message": "Usuario eliminado correctamente"}
 
+@app.put("/api/usuarios/{user_id}", response_model=UserResponse)
+async def update_usuario(user_id: str, user_update: UserUpdate, current_user: dict = Depends(get_propietario_user)):
+    """Actualizar un usuario existente"""
+    user_to_update = await db.usuarios.find_one({"_id": user_id})
+    if not user_to_update:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    if user_to_update["organizacion_id"] != current_user["organizacion_id"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para editar este usuario")
+    
+    update_data = {}
+    
+    if user_update.nombre:
+        update_data["nombre"] = user_update.nombre
+    
+    if user_update.username and user_update.username != user_to_update["username"]:
+        # Verificar que el nuevo username sea único
+        existing = await db.usuarios.find_one({
+            "username": user_update.username,
+            "organizacion_id": current_user["organizacion_id"],
+            "_id": {"$ne": user_id}
+        })
+        if existing:
+            raise HTTPException(status_code=400, detail="El username ya existe en esta organización")
+        update_data["username"] = user_update.username
+    
+    if user_update.password:
+        update_data["password"] = get_password_hash(user_update.password)
+    
+    if user_update.rol and user_update.rol in ["administrador", "cajero", "mesero"]:
+        update_data["rol"] = user_update.rol
+    
+    # Manejo de PIN
+    if user_update.pin is not None:
+        if user_update.pin:
+            # Validar que el PIN sea único
+            pin_existe = await db.usuarios.find_one({
+                "organizacion_id": current_user["organizacion_id"],
+                "pin": user_update.pin,
+                "_id": {"$ne": user_id}
+            })
+            if pin_existe:
+                raise HTTPException(status_code=400, detail="Este PIN ya está en uso. Por favor, elige otro.")
+            update_data["pin"] = user_update.pin
+        else:
+            update_data["pin"] = None
+    
+    if user_update.pin_activo is not None:
+        update_data["pin_activo"] = user_update.pin_activo
+    
+    if update_data:
+        await db.usuarios.update_one({"_id": user_id}, {"$set": update_data})
+    
+    # Obtener usuario actualizado
+    updated_user = await db.usuarios.find_one({"_id": user_id})
+    
+    return UserResponse(
+        id=updated_user["_id"],
+        nombre=updated_user["nombre"],
+        username=updated_user["username"],
+        rol=updated_user["rol"],
+        organizacion_id=updated_user["organizacion_id"],
+        creado_por=updated_user.get("creado_por"),
+        creado=updated_user["creado"],
+        pin=updated_user.get("pin"),
+        pin_activo=updated_user.get("pin_activo", False)
+    )
+
+@app.post("/api/usuarios/{user_id}/generar-pin")
+async def generar_nuevo_pin(user_id: str, current_user: dict = Depends(get_propietario_user)):
+    """Generar un nuevo PIN único para un usuario"""
+    user_to_update = await db.usuarios.find_one({"_id": user_id})
+    if not user_to_update:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    if user_to_update["organizacion_id"] != current_user["organizacion_id"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para editar este usuario")
+    
+    nuevo_pin = await generar_pin_unico(current_user["organizacion_id"])
+    
+    await db.usuarios.update_one(
+        {"_id": user_id},
+        {"$set": {"pin": nuevo_pin, "pin_activo": True}}
+    )
+    
+    return {"pin": nuevo_pin, "message": "PIN generado correctamente"}
+
+@app.post("/api/auth/login-pin")
+async def login_con_pin(pin_login: PINLogin):
+    """Login usando PIN (para cajeros, meseros y empleados con PIN activo)"""
+    query = {
+        "pin": pin_login.pin,
+        "pin_activo": True
+    }
+    
+    # Si se proporciona organizacion_id, filtrar por ella
+    if pin_login.organizacion_id:
+        query["organizacion_id"] = pin_login.organizacion_id
+    
+    user = await db.usuarios.find_one(query)
+    
+    if not user:
+        raise HTTPException(
+            status_code=401, 
+            detail="PIN inválido o no activo"
+        )
+    
+    # Crear token JWT
+    access_token = create_access_token(data={"sub": user["username"]})
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "usuario": {
+            "id": user["_id"],
+            "nombre": user["nombre"],
+            "username": user["username"],
+            "rol": user["rol"],
+            "organizacion_id": user["organizacion_id"]
+        }
+    }
+
+@app.get("/api/config/pin-mode")
+async def get_pin_mode(current_user: dict = Depends(get_current_user)):
+    """Obtener si el modo PIN está activo en la organización (si hay usuarios con PIN activo)"""
+    usuarios_con_pin = await db.usuarios.count_documents({
+        "organizacion_id": current_user["organizacion_id"],
+        "pin_activo": True
+    })
+    return {"pin_mode_activo": usuarios_con_pin > 0, "usuarios_con_pin": usuarios_con_pin}
+
 @app.get("/api/organizaciones", response_model=List[OrganizacionResponse])
 async def get_organizaciones(current_user: dict = Depends(get_current_user)):
     if current_user["_id"] != "admin":
