@@ -120,7 +120,7 @@ class UserLogin(BaseModel):
 
 class PINLogin(BaseModel):
     pin: str
-    organizacion_id: Optional[str] = None  # Para identificar la organización
+    codigo_tienda: str  # Código de tienda obligatorio para mayor seguridad
 
 class POSLogin(BaseModel):
     codigo_tienda: str
