@@ -18,9 +18,25 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ## Funcionalidades Implementadas
 
-### Completadas (15 Enero 2026)
+### Completadas (21 Enero 2026)
 
-- [x] **Logo de organización en recibo impreso**
+- [x] **Sistema de PIN para Empleados**
+  - Cajeros y Meseros acceden **obligatoriamente** con PIN de 4 dígitos
+  - Propietarios y Administradores pueden **opcionalmente** activar PIN
+  - PIN se genera automáticamente al crear cajero/mesero
+  - PIN es único por organización (no se puede repetir)
+  - Funciones: ver/ocultar PIN, editar PIN, regenerar PIN aleatorio
+  - Endpoint `/api/auth/login-pin` para autenticación por PIN
+  - Tarjeta de empleado muestra PIN oculto con botón para revelar
+
+- [x] **Formulario de Empleados mejorado**
+  - Para Administradores: muestra campo contraseña + opción de activar PIN
+  - Para Cajeros/Meseros: solo campos básicos (nombre, usuario, rol) + mensaje de PIN automático
+  - Descripción de roles y permisos
+
+### Completadas (15-16 Enero 2026)
+
+- [x] **Sistema de Descuentos en POS**
   - El logo configurado en Configuración → Recibo ahora aparece en la parte superior del recibo impreso
   - Se muestra tanto en la impresión automática del TPV como en la reimpresión desde Reportes
   - Tamaño máximo: 150px ancho × 80px alto
