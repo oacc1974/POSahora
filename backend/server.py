@@ -1260,10 +1260,15 @@ async def login_con_pin(pin_login: PINLogin):
         organizacion_id = tienda["organizacion_id"]
     
     # Buscar usuario con ese PIN en esa organización
+    # Convertir organizacion_id a string para la búsqueda (compatibilidad con datos existentes)
+    org_id_str = str(organizacion_id)
     user = await db.usuarios.find_one({
         "pin": pin_login.pin,
         "pin_activo": True,
-        "organizacion_id": organizacion_id
+        "$or": [
+            {"organizacion_id": organizacion_id},
+            {"organizacion_id": org_id_str}
+        ]
     })
     
     if not user:
