@@ -2363,48 +2363,91 @@ async def upload_producto_imagen(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_propietario_or_admin)
 ):
-    """Sube una imagen para un producto y devuelve la URL"""
+    """Sube una imagen para un producto, la comprime y devuelve como Base64"""
     # Validar tipo de archivo
     allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
     if file.content_type not in allowed_types:
         raise HTTPException(status_code=400, detail="Tipo de archivo no permitido. Use JPG, PNG, GIF o WebP")
     
-    # Generar nombre único
-    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
-    filename = f"{uuid.uuid4()}.{ext}"
-    filepath = UPLOADS_DIR / filename
-    
-    # Guardar archivo
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
-    # Devolver URL relativa
-    imagen_url = f"/api/uploads/productos/{filename}"
-    return {"url": imagen_url, "filename": filename}
+    try:
+        # Leer imagen
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents))
+        
+        # Convertir a RGB si es necesario (para JPEG)
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+        
+        # Redimensionar si es muy grande (max 800px de ancho)
+        max_width = 800
+        if img.width > max_width:
+            ratio = max_width / img.width
+            new_height = int(img.height * ratio)
+            img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+        
+        # Comprimir a JPEG con calidad 70%
+        buffer = io.BytesIO()
+        img.save(buffer, format='JPEG', quality=70, optimize=True)
+        buffer.seek(0)
+        
+        # Convertir a Base64
+        img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        imagen_data = f"data:image/jpeg;base64,{img_base64}"
+        
+        return {"url": imagen_data, "filename": "compressed.jpg"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al procesar imagen: {str(e)}")
 
 @app.post("/api/config/upload-logo")
 async def upload_logo(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_propietario_or_admin)
 ):
-    """Sube un logo para el negocio y devuelve la URL"""
+    """Sube un logo para el negocio, lo comprime y devuelve como Base64"""
     # Validar tipo de archivo
     allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
     if file.content_type not in allowed_types:
         raise HTTPException(status_code=400, detail="Tipo de archivo no permitido. Use JPG, PNG, GIF o WebP")
     
-    # Generar nombre único
-    ext = file.filename.split(".")[-1] if "." in file.filename else "png"
-    filename = f"logo_{current_user['organizacion_id']}_{uuid.uuid4()}.{ext}"
-    filepath = LOGOS_DIR / filename
-    
-    # Guardar archivo
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
-    # Devolver URL relativa
-    logo_url = f"/api/uploads/logos/{filename}"
-    return {"url": logo_url, "filename": filename}
+    try:
+        # Leer imagen
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents))
+        
+        # Para logos, mantener transparencia si es PNG
+        if img.mode == 'RGBA':
+            # Guardar como PNG para mantener transparencia
+            max_width = 300
+            if img.width > max_width:
+                ratio = max_width / img.width
+                new_height = int(img.height * ratio)
+                img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+            
+            buffer = io.BytesIO()
+            img.save(buffer, format='PNG', optimize=True)
+            buffer.seek(0)
+            img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            logo_data = f"data:image/png;base64,{img_base64}"
+        else:
+            # Convertir a RGB y guardar como JPEG
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            max_width = 300
+            if img.width > max_width:
+                ratio = max_width / img.width
+                new_height = int(img.height * ratio)
+                img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+            
+            buffer = io.BytesIO()
+            img.save(buffer, format='JPEG', quality=80, optimize=True)
+            buffer.seek(0)
+            img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            logo_data = f"data:image/jpeg;base64,{img_base64}"
+        
+        return {"url": logo_data, "filename": "logo_compressed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al procesar logo: {str(e)}")
 
 @app.post("/api/productos", response_model=ProductResponse)
 async def create_producto(product: ProductCreate, current_user: dict = Depends(get_propietario_or_admin)):
