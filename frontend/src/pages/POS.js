@@ -109,15 +109,31 @@ export default function POS() {
   const [tpvSeleccionado, setTpvSeleccionado] = useState(null);
 
   useEffect(() => {
-    fetchProductos();
-    verificarCaja();
-    fetchMetodosPago();
-    fetchTiposPedido();
-    fetchFuncionesConfig();
-    fetchMesasPredefinidas();
-    fetchModificadores();
-    fetchImpuestos();
-    fetchDescuentosPredefinidos();
+    // Esperar a que el token esté disponible en localStorage
+    const initializePOS = async () => {
+      // Pequeño delay para asegurar que el token se haya guardado
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('Token no disponible, esperando...');
+        // Reintentar después de un delay más largo
+        setTimeout(initializePOS, 500);
+        return;
+      }
+      
+      fetchProductos();
+      verificarCaja();
+      fetchMetodosPago();
+      fetchTiposPedido();
+      fetchFuncionesConfig();
+      fetchMesasPredefinidas();
+      fetchModificadores();
+      fetchImpuestos();
+      fetchDescuentosPredefinidos();
+    };
+    
+    initializePOS();
   }, []);
 
   const fetchDescuentosPredefinidos = async () => {
