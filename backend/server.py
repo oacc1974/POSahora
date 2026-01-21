@@ -1234,17 +1234,37 @@ async def generar_nuevo_pin(user_id: str, current_user: dict = Depends(get_propi
 
 @app.post("/api/auth/login-pin")
 async def login_con_pin(pin_login: PINLogin):
-    """Login usando PIN (para cajeros, meseros y empleados con PIN activo)"""
-    query = {
+    """Login usando PIN + Código de Tienda (para cajeros, meseros y empleados con PIN activo)"""
+    
+    # Primero buscar la tienda por su código
+    tienda = await db.tiendas.find_one({
+        "codigo_establecimiento": pin_login.codigo_tienda.upper()
+    })
+    
+    if not tienda:
+        # También buscar en organizaciones por si el código es el ID de la org
+        org = await db.organizaciones.find_one({
+            "$or": [
+                {"codigo": pin_login.codigo_tienda.upper()},
+                {"_id": pin_login.codigo_tienda}
+            ]
+        })
+        if org:
+            organizacion_id = org["_id"]
+        else:
+            raise HTTPException(
+                status_code=401, 
+                detail="Código de tienda no válido"
+            )
+    else:
+        organizacion_id = tienda["organizacion_id"]
+    
+    # Buscar usuario con ese PIN en esa organización
+    user = await db.usuarios.find_one({
         "pin": pin_login.pin,
-        "pin_activo": True
-    }
-    
-    # Si se proporciona organizacion_id, filtrar por ella
-    if pin_login.organizacion_id:
-        query["organizacion_id"] = pin_login.organizacion_id
-    
-    user = await db.usuarios.find_one(query)
+        "pin_activo": True,
+        "organizacion_id": organizacion_id
+    })
     
     if not user:
         raise HTTPException(
@@ -1255,6 +1275,9 @@ async def login_con_pin(pin_login: PINLogin):
     # Crear token JWT
     access_token = create_access_token(data={"sub": user["username"]})
     
+    # Obtener nombre de la tienda para mostrar
+    tienda_nombre = tienda["nombre"] if tienda else "Tienda Principal"
+    
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -1264,8 +1287,45 @@ async def login_con_pin(pin_login: PINLogin):
             "username": user["username"],
             "rol": user["rol"],
             "organizacion_id": user["organizacion_id"]
+        },
+        "tienda": {
+            "codigo": pin_login.codigo_tienda.upper(),
+            "nombre": tienda_nombre
         }
     }
+
+@app.get("/api/tienda/verificar/{codigo}")
+async def verificar_codigo_tienda(codigo: str):
+    """Verificar si un código de tienda es válido y devolver info básica"""
+    # Buscar en tiendas
+    tienda = await db.tiendas.find_one({
+        "codigo_establecimiento": codigo.upper()
+    })
+    
+    if tienda:
+        org = await db.organizaciones.find_one({"_id": tienda["organizacion_id"]})
+        return {
+            "valido": True,
+            "tienda_nombre": tienda["nombre"],
+            "organizacion_nombre": org.get("nombre", "Organización") if org else "Organización"
+        }
+    
+    # Buscar en organizaciones
+    org = await db.organizaciones.find_one({
+        "$or": [
+            {"codigo": codigo.upper()},
+            {"_id": codigo}
+        ]
+    })
+    
+    if org:
+        return {
+            "valido": True,
+            "tienda_nombre": "Tienda Principal",
+            "organizacion_nombre": org.get("nombre", "Organización")
+        }
+    
+    raise HTTPException(status_code=404, detail="Código de tienda no encontrado")
 
 @app.get("/api/config/pin-mode")
 async def get_pin_mode(current_user: dict = Depends(get_current_user)):
