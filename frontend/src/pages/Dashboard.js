@@ -176,9 +176,26 @@ export default function Dashboard() {
                   {codigoTienda}
                 </p>
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(codigoTienda);
-                    toast.success('Código copiado');
+                  onClick={async () => {
+                    try {
+                      // Método moderno
+                      if (navigator.clipboard && window.isSecureContext) {
+                        await navigator.clipboard.writeText(codigoTienda);
+                      } else {
+                        // Fallback para contextos no seguros
+                        const textArea = document.createElement('textarea');
+                        textArea.value = codigoTienda;
+                        textArea.style.position = 'fixed';
+                        textArea.style.left = '-999999px';
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                      }
+                      toast.success('Código copiado');
+                    } catch (err) {
+                      toast.error('No se pudo copiar el código');
+                    }
                   }}
                   className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
                 >
