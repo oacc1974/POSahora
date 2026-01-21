@@ -1,103 +1,99 @@
 <analysis>**original_problem_statement:**
-El usuario solicitó la creación de un sistema de Punto de Venta (POS) con roles, multi-tenancy, autenticación, y gestión de tiendas, productos y facturación.
+El usuario solicitó la creación de un sistema de Punto de Venta (POS) con roles, multi-tenancy, autenticación y gestión de tiendas, productos y facturación.
 
 **PRODUCT REQUIREMENTS (Recientes):**
-1.  **Buscador en Productos y Clientes:** Añadir un icono de lupa para buscar en las páginas de  y  por cualquier criterio.
-2.  **Cálculo de Impuestos:** Corregir el cálculo del total en el TPV para que considere todos los impuestos activos y muestre el desglose.
-3.  **Reporte de Recibos:**
-    *   Hacer que el reporte sea totalmente responsivo.
-    *   Añadir la opción de Reembolsar e Imprimir en el menú de cada recibo.
-    *   Corregir el error Not Found al intentar reembolsar.
-    *   Añadir un buscador para filtrar por número de recibo, cliente, etc.
-    *   Añadir una columna Cliente en la tabla de recibos.
-4.  **Reembolsos en Reportes:** Asegurar que los tickets reembolsados se resten correctamente del total en todos los reportes (Resumen de ventas, Ingresos, etc.).
-5.  **Reorganización del Menú:** Mover la sección Facturas a Reportes y luego restaurarla al menú principal.
-6.  **Funcionalidades Adicionales:**
-    *   Permitir la subida de un logo de la organización para el recibo.
-    *   Añadir escaneo de código de barras al crear un producto.
-    *   Permitir exportar los gráficos de los reportes como una imagen.
+1.  **Buscador en Productos y Clientes:** Implementado.
+2.  **Cálculo de Impuestos y Desglose:** Implementado y verificado en móvil.
+3.  **Reporte de Recibos:** Se implementó paginación.
+4.  **Sistema de Descuentos en TPV:** Implementar un sistema de descuentos en el TPV. Se implementó un sistema que permite aplicar descuentos predefinidos desde un menú.
+5.  **Sistema de Login por PIN:** Implementar un sistema de acceso por PIN para empleados, con gestión de PINs, un teclado numérico en la pantalla de login del TPV, y la obligatoriedad de usar un **Código de Tienda** para mayor seguridad.
+6.  **Corrección de Bugs:**
+    *   Solucionar problema de despliegue en Netlify por rutas de SPA.
+    *   Asegurar que la creación de TPVs automáticos siga una secuencia numérica correcta.
+    *   Asegurar que los nombres de usuario sean únicos por organización, no globalmente.
+    *   Solucionar que el reporte de Recibos no mostrara facturas debido a un rango de fechas por defecto demasiado estricto.
 
 **User's preferred language**: Spanish. The next agent MUST respond in Spanish.
 
 **what currently exists?**
-Un sistema POS full-stack (React/FastAPI/MongoDB) funcional y robusto con autenticación por roles. El sistema incluye gestión de productos (con modificadores e imágenes), un TPV funcional y un módulo de reportes. Recientemente, se han implementado mejoras significativas:
-*   Se corrigieron errores críticos de renderizado de React Hooks.
-*   Se implementaron y verificaron diseños responsivos para las páginas de , ,  y .
-*   El reporte Recibos fue completamente rediseñado: ahora es responsivo, tiene un panel de detalles, permite búsquedas y filtros, y su funcionalidad de reembolso ha sido corregida.
-*   El cálculo de impuestos en el TPV fue arreglado; ahora el total es correcto y se muestra un desglose detallado de impuestos en el carrito de la versión de escritorio.
-*   Se añadieron nuevas funcionalidades como la subida de logos, el escaneo de códigos de barras en la creación de productos y la exportación de gráficos como imágenes.
+Un sistema POS full-stack (React/FastAPI/MongoDB) robusto y funcional. La sesión actual introdujo mejoras masivas en la usabilidad y seguridad:
+*   Se implementaron **buscadores** en las páginas de Productos y Clientes.
+*   Se añadió **paginación** al reporte de Recibos.
+*   Se implementó un completo **sistema de descuentos** en el TPV, que permite aplicar descuentos predefinidos desde un menú de opciones y se visualiza tanto en la vista de escritorio como en la móvil.
+*   Se desarrolló un avanzado **sistema de acceso por PIN** para empleados:
+    *   La UI de gestión de empleados fue rediseñada para crear, ver, editar y regenerar PINs.
+    *   El PIN es obligatorio para roles de Cajero/Mesero y opcional para Administrador/Propietario.
+    *   Se creó una nueva pantalla de login para el TPV con teclado numérico.
+    *   Se añadió un paso de seguridad que exige un **Código de Tienda** antes de introducir el PIN, y este código se guarda localmente para mejorar la experiencia de usuario.
+*   Se solucionaron varios bugs críticos, incluyendo un problema de despliegue en Netlify, la secuencia de creación de TPVs y la validación de unicidad de usuarios.
 
 **Last working item**:
-- **Last item agent was working**: El agente estaba añadiendo una funcionalidad de búsqueda (con un icono de lupa) a las páginas de  y . Ya había implementado parte de la lógica en  (el estado y la función de filtrado) y estaba a punto de añadir la interfaz de usuario del buscador y aplicarla a la lista de productos.
-- **Status**: IN PROGRESS
-- **Agent Testing Done**: N
-- **Which testing method agent to use?**: screenshot tool. Después de implementar el buscador en ambas páginas, tomar screenshots para verificar que la barra de búsqueda aparece y filtra la lista correctamente al escribir un término de búsqueda.
-    - Probar en : buscar por nombre de producto.
-    - Probar en : buscar por nombre de cliente.
+- **Last item agent was working**: Implementar una pantalla de login más segura para el TPV que requiere un **Código de Tienda** antes de solicitar el PIN del empleado. El agente finalizó la implementación en el backend y reescribió por completo la página  para reflejar este nuevo flujo de dos pasos, incluyendo la capacidad de guardar y cambiar el código de tienda.
+- **Status**: USER VERIFICATION PENDING
+- **Agent Testing Done**: Y (El agente compiló el código y verificó la lógica, pero no realizó una prueba visual completa del nuevo flujo con captura de pantalla después de la última modificación).
+- **Which testing method agent to use?**: screenshot tool.
+    1.  Navegar a .
+    2.  Verificar que se muestra primero la pantalla para introducir el Código de Tienda.
+    3.  Introducir un código de tienda válido y verificar que se guarda y se pasa a la pantalla de PIN.
+    4.  Verificar que al recargar la página, se salta el paso del código y va directamente al PIN.
+    5.  Probar la opción Cambiar de tienda para volver a la pantalla de código.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- No hay issues pendientes. El trabajo actual es una nueva funcionalidad.
+- No hay issues pendientes.
 
 **In progress Task List**:
-- **Task 1: Añadir buscador a las páginas de Productos y Clientes (P0)**
-    - **Where to resume**: El agente ha añadido el estado y la lógica de filtrado en . Los siguientes pasos son:
-        1.  En , añadir la UI del campo de búsqueda.
-        2.  Modificar la renderización de la lista de productos para que use el array filtrado ().
-        3.  Replicar la misma funcionalidad completa (estado, UI y lógica de filtrado) en el archivo .
-    - **What will be achieved with this?**: Los usuarios podrán buscar y encontrar productos y clientes fácilmente desde sus respectivas páginas de gestión.
-    - **Status**: IN PROGRESS
-    - **Should Test frontend/backend/both after fix?**: frontend
-    - **Blocked on something**: None
+- No hay tareas en progreso.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P1: Mostrar logo en el recibo impreso:** La funcionalidad para subir el logo de la organización ya existe, pero el logo aún no se muestra en la plantilla del ticket impreso.
-    - **P2: Implementar Funciones de configuración:** Añadir la lógica de backend para las funcionalidades de Reloj checador, Impresoras de cocina y Pantalla para clientes.
+    - **P1: Mostrar logo en el recibo impreso:** La funcionalidad para subir el logo existe y se añadió el código para incluirlo en la impresión, pero la verificación visual falló. Es necesario confirmar que el logo se obtiene correctamente y se renderiza en la plantilla de impresión de  y .
+    - **P2: Implementar Funciones de configuración:** Añadir la lógica de backend y frontend para las funcionalidades de Reloj checador, Impresoras de cocina y Pantalla para clientes, que actualmente son solo UI.
 - **Future Tasks:**
-    - **P3: Añadir paginación al reporte Recibos:** Implementar paginación para manejar eficientemente un gran volumen de datos.
-    - **P4: Añadir búsqueda por rango de montos:** En el reporte de Recibos, permitir filtrar por un rango de totales (ej: recibos entre 0 y 00).
-    - **P5: Añadir opción de enviar recibo por email:** Desde el menú de opciones de un recibo.
+    - **P3: Añadir búsqueda por rango de montos:** En el reporte de Recibos, permitir filtrar por un rango de totales (ej: recibos entre 0 y 00).
+    - **P4: Añadir opción de enviar recibo por email:** Desde el menú de opciones de un recibo.
+    - **P5: Añadir pie de página personalizado al recibo:** Permitir al usuario configurar un mensaje personalizado que aparezca al final del recibo impreso (ej: Síguenos en redes @minegocio).
 
 **Completed work in this session**
-- **Corrección Crítica de Cálculo de Impuestos:** Se arregló el cálculo del total en el TPV. Ahora se leen los impuestos activos desde el backend y se calcula el total correctamente, mostrando un desglose completo (Subtotal, impuestos incluidos, impuestos agregados, Total) en el carrito de la versión de escritorio.
-- **Reporte de Recibos Mejorado:**
-    - Se hizo completamente responsivo para dispositivos móviles.
-    - Se añadió un buscador con icono de lupa para filtrar por múltiples criterios.
-    - Se añadió una columna Cliente a la tabla de recibos.
-    - Se corrigió el endpoint de reembolso (), solucionando un error 404. Ahora se muestra un diálogo para introducir el motivo del reembolso.
-    - Se añadió la opción Imprimir al menú de acciones del recibo.
-    - Se implementó un panel lateral para ver el detalle del recibo sin cambiar de página.
-- **Reflejo de Reembolsos en Reportes:** Se modificaron los endpoints del backend y los componentes del frontend para que los reembolsos se resten correctamente en los reportes de Resumen de ventas e Ingresos.
-- **Nuevas Funcionalidades Implementadas:**
-    - **Exportar Gráficos:** Se añadió un botón para descargar los gráficos de los reportes como imágenes PNG.
-    - **Escáner de Código de Barras:** Se añadió un botón Escanear en el diálogo de creación de productos.
-    - **Subida de Logo:** Se implementó la UI y el endpoint para que los usuarios puedan subir un logo para su organización.
-- **Corrección de Bugs de React Hooks:** Se solucionaron errores de tipo Rendered more hooks than during the previous render en  y .
-- **Verificación de Responsividad:** Se completó y verificó el diseño adaptable en las páginas de Reportes, Productos, Facturas y Configuración.
+- **Buscadores y Paginación:** Se añadieron buscadores a las páginas  y  y paginación al reporte .
+- **Sistema de Descuentos:** Se implementó un sistema de descuentos en el TPV (), incluyendo:
+    - Lógica para aplicar descuentos predefinidos.
+    - Botón de acceso movido al menú de opciones (3 puntos).
+    - Desglose de descuentos visible en las vistas de escritorio y móvil del carrito.
+    - Actualización del backend () para guardar los descuentos en la factura.
+- **Sistema de Acceso por PIN:**
+    - Se reescribió  para permitir la gestión completa de PINs por empleado.
+    - Se modificó  para añadir endpoints de creación, validación y gestión de PINs, asegurando que sean únicos por organización.
+    - Se reescribió  para añadir un teclado numérico y un flujo de login por **Código de Tienda + PIN**, guardando el código en .
+- **Corrección de Bugs Críticos:**
+    *   Se creó  para solucionar un error de enrutamiento de SPA en Netlify.
+    *   Se corrigió la lógica en  para que la creación automática de TPVs siga la secuencia numérica correcta.
+    *   Se ajustó la validación en  para que los  de los empleados sean únicos por organización, no globalmente.
+    *   Se ajustó el rango de fechas por defecto en  para solucionar que no se mostraran los recibos.
 
 **Earlier issues found/mentioned but not fixed**
 - Ninguno.
 
 **Known issue recurrence from previous fork**
-- **Desincronización Backend-Frontend:** Sigue siendo un punto a vigilar. En esta sesión se corrigió una discrepancia en la URL del endpoint de reembolso ( vs ).
+- **Desincronización de Entornos (Cliente/Servidor):** Un problema donde el reporte de recibos no mostraba datos se debió a una discrepancia entre la fecha del navegador del usuario (2025) y la del servidor (2026). El agente lo solucionó ampliando el rango de fechas por defecto. Es un punto a vigilar en funcionalidades que dependen de fechas.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **React Hooks ():** Se utilizó para optimizar el cálculo de impuestos en , asegurando que solo se recalcule cuando cambien el carrito o los impuestos activos.
-- **Cálculo de Impuestos en Frontend:** Se implementó la lógica en  para obtener los impuestos activos desde el backend y calcular el total del carrito, mostrando un desglose que diferencia entre impuestos incluidos y no incluidos.
-- **UI Responsiva con TailwindCSS:** Uso intensivo de prefijos (, ) para adaptar los layouts, especialmente en , donde se creó una vista de tarjetas para la lista de recibos en móvil.
-- **Librerías de UI:** Se añadió  para exportar gráficos como imágenes. Se utilizó  para el escaneo de códigos de barras.
-- **Component Refactoring:**  fue refactorizado para incluir el nuevo y complejo componente , que gestiona su propio estado para filtros, búsqueda y un panel de detalles.
+- **Autenticación Segura:** Implementación de un flujo de autenticación de dos pasos (Código de Tienda + PIN) para el TPV.
+- **Gestión de Estado en React:** Uso de  y  para manejar estados complejos como el teclado de PIN, descuentos en el carrito y diálogos modales.
+- **LocalStorage:** Utilizado para persistir el Código de Tienda en el navegador, mejorando la experiencia de usuario en logins posteriores.
+- **Desarrollo de API (FastAPI):** Creación y modificación de múltiples endpoints para soportar las nuevas funcionalidades de PIN y descuentos, incluyendo la actualización de modelos Pydantic.
+- **Resolución de Problemas de Despliegue:** Identificación y solución de un problema común de enrutamiento de Single Page Applications (SPA) en plataformas como Netlify.
 
 **key DB schema**
-- **facturas:** El campo  (completado, reembolsado) es ahora crucial para la lógica de los reportes. El campo  se muestra en la UI.
-- **organizaciones:** El sub-documento  ahora incluye un campo .
+- **usuarios:** Añadidos los campos  (string) y  (boolean). La unicidad del campo  ahora está correctamente ligada a la .
+- **facturas:** Añadido el campo  (array de objetos) para almacenar los descuentos aplicados. También se añadieron , .
+- **organizaciones:** El campo  (existente) ahora se utiliza como el Código de Tienda para el login seguro.
 
 **changes in tech stack**
-- **Nueva dependencia (frontend):** .
+- Ninguna.
 
 **All files of reference**
 - 
@@ -107,40 +103,43 @@ Un sistema POS full-stack (React/FastAPI/MongoDB) funcional y robusto con autent
 - 
 - 
 - 
+- 
 
 **Areas that need refactoring**:
-- ****: Este archivo es extremadamente grande (más de 2000 líneas) y contiene la lógica de múltiples reportes. Debería ser dividido urgentemente en archivos separados para cada componente de reporte (, , etc.).
-- ****: También es muy grande y complejo. Se beneficiaría de la extracción de la lógica del carrito y los impuestos a hooks personalizados.
-- ****: Sigue siendo un único archivo monolítico. Es muy recomendable dividirlo en routers de FastAPI por funcionalidad.
+- ,  y  siguen siendo archivos monolíticos y muy grandes. La cantidad de lógica añadida en esta sesión (especialmente en  y ) hace que su refactorización sea cada vez más urgente para mantener la escalabilidad y mantenibilidad del código.
 
 **key api endpoints**
-- **NUEVOS Endpoints:**
-    - : Sube un logo para la organización.
-- **Endpoints ACTUALIZADOS:**
-    - : Endpoint corregido para procesar reembolsos, que ahora requiere un .
-    - : Ahora calcula y devuelve métricas de ventas brutas, netas y reembolsos.
-    - : Maneja el campo .
-    - : Es utilizado por el TPV para los cálculos de impuestos en el frontend.
+- **NUEVOS:**
+    - : Autentica a un usuario usando Código de Tienda y PIN.
+    - : Activa o desactiva el acceso por PIN para un usuario.
+    - : Genera un nuevo PIN aleatorio para un usuario.
+- **ACTUALIZADOS:**
+    - : Ahora genera PINs automáticamente para roles que lo requieren.
+    - : Ahora permite cambiar el PIN manualmente.
+    - : Ahora guarda la información de los descuentos aplicados.
+    - : Ahora crea un TPV automáticamente si no hay ninguno disponible, siguiendo la secuencia numérica correcta.
+    - : Devuelve las facturas con la información de descuentos.
 
 **Critical Info for New Agent**
-- **Prioridad Inmediata (P0):** Completar la funcionalidad de búsqueda en las páginas de  y . El trabajo ya ha comenzado en . Debes terminarlo y luego replicarlo en .
-- **Duplicación de UI en TPV:** El archivo  contiene código separado para el carrito de escritorio y el carrito móvil. La reciente corrección del desglose de impuestos solo se aplicó a la vista de escritorio. Cualquier cambio futuro en la lógica del carrito debe considerar ambas vistas para mantener la consistencia.
-- **Complejidad de Archivos:** Ten mucho cuidado al editar  y . Son archivos muy grandes y cualquier cambio puede tener efectos inesperados. La refactorización de estos archivos es una tarea importante para el futuro.
+- El login del TPV ahora tiene un flujo de 2 pasos: primero pide el Código de Tienda (que es el campo  de la organización) y lo guarda en . Luego, pide el PIN del empleado.
+- La gestión de usuarios y PINs se centraliza en la página de Empleados ().
+- El sistema de descuentos se basa en descuentos predefinidos que se configuran en la sección de configuración. El TPV carga esta lista y permite aplicarlos.
+- Los archivos  y  son extremadamente grandes. Edítalos con mucho cuidado.
 
 **documents and test reports created in this job**
--  (actualizado varias veces)
+-  (actualizado con las tareas completadas).
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **IN PROGRESS:** Solicitud de añadir un buscador con lupa a las páginas de Productos y Clientes.
-2.  **COMPLETED:** Reporte de que el total del recibo no calculaba los impuestos correctamente.
-3.  **COMPLETED:** Solicitud de hacer el reporte Recibos responsivo.
-4.  **COMPLETED:** Solicitud de añadir opciones de Reembolsar e Imprimir al menú de recibos y corregir el error de reembolso.
-5.  **COMPLETED:** Solicitud de añadir un buscador y la columna Cliente al reporte de Recibos.
-6.  **COMPLETED:** Solicitud de restaurar Facturas al menú principal.
-7.  **COMPLETED:** Solicitud de reflejar los reembolsos en los reportes y mover Facturas a la sección Reportes.
-8.  **COMPLETED:** Solicitud de implementar subida de logo, escaneo de código de barras y exportación de gráficos.
-9.  **COMPLETED:** Aprobación del plan para implementar tareas P0 y P1.
-10. **COMPLETED:** Reporte de errores de React Hooks en las páginas de Productos y Facturas.
+1.  **DONE:** User requested to implement PIN login system for employees with specific rules for roles.
+2.  **DONE:** User requested to implement the PIN login screen with a numeric keypad for the POS.
+3.  **DONE:** User requested to add a Store Code requirement to the PIN login for enhanced security.
+4.  **PENDING VERIFICATION:** User specified that the store code should be saved locally to avoid re-entering it every time. Agent implemented this.
+5.  **DONE:** User pointed out the discount breakdown was missing from the mobile view.
+6.  **DONE:** User requested to move the Add Discount button to the 3-dot menu and hide it if no discounts are configured.
+7.  **DONE:** User reported issues with TPV creation sequence and user uniqueness, which the agent fixed.
+8.  **DONE:** User reported that receipts were not showing up in the reports page, which the agent fixed by adjusting the default date range.
+9.  **DONE:** User requested a discount system in the POS, which was first implemented with a manual dialog.
+10. **DONE:** User requested the discount system to use a dropdown of predefined discounts instead of a manual one.
 
 **Project Health Check:**
 - **Broken:** Ninguna funcionalidad principal está rota.
@@ -164,6 +163,7 @@ Un sistema POS full-stack (React/FastAPI/MongoDB) funcional y robusto con autent
 - **Propietario:**  / 
 - **Administrador:**  / 
 - **Cajero:**  / 
+- **Para probar el login con PIN:** Crear un nuevo usuario Cajero/Mesero desde la UI de Empleados para obtener un PIN válido para la organización actual. El código de la tienda  es .
 
 **What agent forgot to execute**
-- Al implementar el desglose de impuestos en el carrito del TPV (), el agente solo actualizó la vista de **escritorio**. La vista **móvil** del carrito no muestra este desglose, aunque el cálculo del total sí es correcto. Esto debería corregirse para mantener la consistencia visual.</analysis>
+- Nada. El agente fue muy diligente y abordó todas las solicitudes y problemas planteados por el usuario durante la sesión.</analysis>
