@@ -93,12 +93,18 @@ class ClienteResponse(BaseModel):
 class UserCreate(BaseModel):
     nombre: str
     username: str
-    password: str
+    password: Optional[str] = None  # Opcional para cajeros/meseros que usan PIN
     rol: str
+    pin: Optional[str] = None  # PIN de 4-6 dígitos
+    pin_activo: Optional[bool] = False
 
 class UserLogin(BaseModel):
     username: str
     password: str
+
+class PINLogin(BaseModel):
+    pin: str
+    organizacion_id: Optional[str] = None  # Para identificar la organización
 
 class POSLogin(BaseModel):
     codigo_tienda: str
@@ -113,6 +119,16 @@ class UserResponse(BaseModel):
     organizacion_id: str
     creado_por: Optional[str] = None
     creado: str
+    pin: Optional[str] = None
+    pin_activo: Optional[bool] = False
+
+class UserUpdate(BaseModel):
+    nombre: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    rol: Optional[str] = None
+    pin: Optional[str] = None
+    pin_activo: Optional[bool] = None
 
 class UserRegister(BaseModel):
     nombre: str
