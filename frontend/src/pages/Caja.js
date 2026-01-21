@@ -314,11 +314,26 @@ export default function Caja({ onLogout }) {
 
   return (
     <div data-testid="caja-page">
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
-          Gestión de Caja
-        </h1>
-        <p className="text-slate-600">Control de apertura y cierre de caja</p>
+      <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
+            Gestión de Caja
+          </h1>
+          <p className="text-slate-600">Control de apertura y cierre de caja</p>
+        </div>
+        
+        {/* Botón Cerrar Sesión - Solo para cajeros/meseros */}
+        {!isAdmin && (
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+            data-testid="logout-button-caja"
+          >
+            <LogOut size={18} />
+            Cerrar Sesión
+          </Button>
+        )}
       </div>
 
       {cajaActiva ? (
