@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends, status, Request, Response, 
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import StreamingResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
@@ -13,6 +14,9 @@ import uuid
 import httpx
 import shutil
 import random
+import base64
+import io
+from PIL import Image
 from dotenv import load_dotenv
 from pathlib import Path
 
