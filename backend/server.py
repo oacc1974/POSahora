@@ -1242,10 +1242,11 @@ async def login_con_pin(pin_login: PINLogin):
     })
     
     if not tienda:
-        # También buscar en organizaciones por si el código es el ID de la org
+        # También buscar en organizaciones por código, codigo_tienda o ID
         org = await db.organizaciones.find_one({
             "$or": [
                 {"codigo": pin_login.codigo_tienda.upper()},
+                {"codigo_tienda": pin_login.codigo_tienda.upper()},  # Código generado automáticamente
                 {"_id": pin_login.codigo_tienda}
             ]
         })
