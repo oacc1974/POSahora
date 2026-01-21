@@ -12,6 +12,7 @@ import os
 import uuid
 import httpx
 import shutil
+import random
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -28,6 +29,21 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Función para generar PIN único de 4 dígitos
+async def generar_pin_unico(organizacion_id: str) -> str:
+    """Genera un PIN único de 4 dígitos para la organización"""
+    max_intentos = 100
+    for _ in range(max_intentos):
+        pin = str(random.randint(1000, 9999))
+        # Verificar que no exista en la organización
+        existe = await db.usuarios.find_one({
+            "organizacion_id": organizacion_id,
+            "pin": pin
+        })
+        if not existe:
+            return pin
+    raise HTTPException(status_code=500, detail="No se pudo generar un PIN único")
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440
