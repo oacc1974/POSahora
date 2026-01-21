@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, ArrowLeft, Key, User, Delete, CornerDownLeft } from 'lucide-react';
+import { Store, ArrowLeft, Key, User, Delete, CornerDownLeft, Building2, RefreshCw, Check } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -9,24 +9,68 @@ import { toast } from 'sonner';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+const STORAGE_KEY = 'pos_tienda_codigo';
 
 export default function LoginPOS({ onLogin }) {
   const navigate = useNavigate();
   const [loginMode, setLoginMode] = useState('pin'); // 'pin' o 'password'
+  
+  // Estados para código de tienda
+  const [codigoTienda, setCodigoTienda] = useState('');
+  const [tiendaVerificada, setTiendaVerificada] = useState(null);
+  const [verificandoTienda, setVerificandoTienda] = useState(false);
+  const [mostrarInputCodigo, setMostrarInputCodigo] = useState(true);
   
   // Estados para login con PIN
   const [pin, setPin] = useState('');
   const [loadingPin, setLoadingPin] = useState(false);
   
   // Estados para login con contraseña
-  const [codigoTienda, setCodigoTienda] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Cargar código de tienda guardado al iniciar
+  useEffect(() => {
+    const codigoGuardado = localStorage.getItem(STORAGE_KEY);
+    if (codigoGuardado) {
+      setCodigoTienda(codigoGuardado);
+      verificarCodigoTienda(codigoGuardado);
+    }
+  }, []);
+
+  // Verificar código de tienda
+  const verificarCodigoTienda = async (codigo) => {
+    if (!codigo || codigo.length < 2) return;
+    
+    setVerificandoTienda(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/tienda/verificar/${codigo}`);
+      setTiendaVerificada(response.data);
+      setMostrarInputCodigo(false);
+      // Guardar en localStorage
+      localStorage.setItem(STORAGE_KEY, codigo.toUpperCase());
+      setCodigoTienda(codigo.toUpperCase());
+    } catch (error) {
+      setTiendaVerificada(null);
+      toast.error('Código de tienda no válido');
+    } finally {
+      setVerificandoTienda(false);
+    }
+  };
+
+  // Cambiar tienda (borrar guardado)
+  const cambiarTienda = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setTiendaVerificada(null);
+    setMostrarInputCodigo(true);
+    setCodigoTienda('');
+    setPin('');
+  };
+
   // Manejar entrada del teclado físico para PIN
   useEffect(() => {
-    if (loginMode !== 'pin') return;
+    if (loginMode !== 'pin' || !tiendaVerificada) return;
     
     const handleKeyDown = (e) => {
       if (e.key >= '0' && e.key <= '9' && pin.length < 6) {
@@ -40,7 +84,7 @@ export default function LoginPOS({ onLogin }) {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [loginMode, pin]);
+  }, [loginMode, pin, tiendaVerificada]);
 
   // Manejar clic en tecla del teclado numérico
   const handleKeyPress = (key) => {
@@ -62,17 +106,24 @@ export default function LoginPOS({ onLogin }) {
       return;
     }
     
+    if (!codigoTienda) {
+      toast.error('Ingresa el código de tienda primero');
+      return;
+    }
+    
     setLoadingPin(true);
     try {
       const response = await axios.post(
         `${API_URL}/api/auth/login-pin`,
-        { pin },
+        { pin, codigo_tienda: codigoTienda },
         { withCredentials: true }
       );
 
-      const { access_token, usuario } = response.data;
+      const { access_token, usuario, tienda } = response.data;
       onLogin(usuario, access_token);
-      toast.success(`¡Bienvenido, ${usuario.nombre}!`);
+      toast.success(`¡Bienvenido, ${usuario.nombre}!`, {
+        description: `Tienda: ${tienda.nombre}`
+      });
     } catch (error) {
       toast.error(error.response?.data?.detail || 'PIN inválido');
       setPin('');
@@ -84,13 +135,19 @@ export default function LoginPOS({ onLogin }) {
   // Login con contraseña (tradicional)
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!codigoTienda) {
+      toast.error('Ingresa el código de tienda primero');
+      return;
+    }
+    
     setLoading(true);
 
     try {
       const response = await axios.post(
         `${API_URL}/api/auth/login-pos`,
         {
-          codigo_tienda: codigoTienda.toUpperCase(),
+          codigo_tienda: codigoTienda,
           username,
           password,
         },
@@ -164,6 +221,66 @@ export default function LoginPOS({ onLogin }) {
     </div>
   );
 
+  // Componente de código de tienda
+  const CodigoTiendaInput = () => (
+    <div className="mb-6">
+      {mostrarInputCodigo ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-slate-600 mb-2">
+            <Building2 size={18} />
+            <span className="text-sm font-medium">Código de Tienda</span>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={codigoTienda}
+              onChange={(e) => setCodigoTienda(e.target.value.toUpperCase())}
+              placeholder="Ej: 001, GOLM, TIENDA1"
+              className="flex-1 h-12 text-center text-lg font-mono uppercase"
+              maxLength={20}
+            />
+            <Button
+              type="button"
+              onClick={() => verificarCodigoTienda(codigoTienda)}
+              disabled={!codigoTienda || verificandoTienda}
+              className="h-12 px-4"
+            >
+              {verificandoTienda ? (
+                <RefreshCw size={18} className="animate-spin" />
+              ) : (
+                <Check size={18} />
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-slate-400 text-center">
+            El código está en la configuración de tu tienda
+          </p>
+        </div>
+      ) : (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Building2 size={20} className="text-green-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-green-800">{tiendaVerificada?.tienda_nombre}</p>
+                <p className="text-xs text-green-600">{tiendaVerificada?.organizacion_nombre} • {codigoTienda}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={cambiarTienda}
+              className="text-xs text-green-600 hover:text-green-800 underline"
+            >
+              Cambiar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -181,137 +298,130 @@ export default function LoginPOS({ onLogin }) {
             </p>
           </div>
 
-          {/* Tabs de modo de login */}
-          <div className="flex bg-slate-200 rounded-lg p-1 mb-6">
-            <button
-              onClick={() => setLoginMode('pin')}
-              className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                loginMode === 'pin'
-                  ? 'bg-white shadow text-blue-600'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Key size={18} />
-              PIN
-            </button>
-            <button
-              onClick={() => setLoginMode('password')}
-              className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                loginMode === 'password'
-                  ? 'bg-white shadow text-blue-600'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <User size={18} />
-              Usuario
-            </button>
-          </div>
+          {/* Código de Tienda */}
+          <CodigoTiendaInput />
 
-          {/* Login con PIN */}
-          {loginMode === 'pin' && (
-            <div>
-              <p className="text-center text-slate-600 text-sm mb-2">
-                Ingresa tu PIN de acceso
-              </p>
-              
-              <PinDisplay />
-              
-              <NumericKeypad />
-              
-              <Button
-                onClick={handlePinSubmit}
-                disabled={pin.length < 4 || loadingPin}
-                className="w-full h-14 text-lg font-semibold mt-4 bg-blue-600 hover:bg-blue-700"
-              >
-                {loadingPin ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Verificando...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <CornerDownLeft size={20} />
-                    Ingresar
-                  </span>
-                )}
-              </Button>
-              
-              <p className="text-center text-xs text-slate-400 mt-4">
-                También puedes usar el teclado numérico físico
-              </p>
-            </div>
+          {/* Solo mostrar opciones de login si la tienda está verificada */}
+          {tiendaVerificada && (
+            <>
+              {/* Tabs de modo de login */}
+              <div className="flex bg-slate-200 rounded-lg p-1 mb-6">
+                <button
+                  onClick={() => setLoginMode('pin')}
+                  className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    loginMode === 'pin'
+                      ? 'bg-white shadow text-blue-600'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Key size={18} />
+                  PIN
+                </button>
+                <button
+                  onClick={() => setLoginMode('password')}
+                  className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    loginMode === 'password'
+                      ? 'bg-white shadow text-blue-600'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <User size={18} />
+                  Usuario
+                </button>
+              </div>
+
+              {/* Login con PIN */}
+              {loginMode === 'pin' && (
+                <div>
+                  <p className="text-center text-slate-600 text-sm mb-2">
+                    Ingresa tu PIN de acceso
+                  </p>
+                  
+                  <PinDisplay />
+                  
+                  <NumericKeypad />
+                  
+                  <Button
+                    onClick={handlePinSubmit}
+                    disabled={pin.length < 4 || loadingPin}
+                    className="w-full h-14 text-lg font-semibold mt-4 bg-blue-600 hover:bg-blue-700"
+                  >
+                    {loadingPin ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Verificando...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <CornerDownLeft size={20} />
+                        Ingresar
+                      </span>
+                    )}
+                  </Button>
+                  
+                  <p className="text-center text-xs text-slate-400 mt-4">
+                    También puedes usar el teclado numérico físico
+                  </p>
+                </div>
+              )}
+
+              {/* Login con contraseña */}
+              {loginMode === 'password' && (
+                <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="username" className="text-sm font-semibold">
+                      Usuario
+                    </Label>
+                    <Input
+                      id="username"
+                      data-testid="pos-username-input"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                      placeholder="usuario"
+                      className="mt-1 h-11 text-base"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="password" className="text-sm font-semibold">
+                      Contraseña
+                    </Label>
+                    <Input
+                      id="password"
+                      data-testid="pos-password-input"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      placeholder="••••••••"
+                      className="mt-1 h-11 text-base"
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    data-testid="pos-login-button"
+                    disabled={loading}
+                    className="w-full h-12 text-base font-semibold"
+                  >
+                    {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                  </Button>
+                </form>
+              )}
+            </>
           )}
 
-          {/* Login con contraseña */}
-          {loginMode === 'password' && (
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="codigo_tienda" className="text-sm font-semibold">
-                  Código de Tienda
-                </Label>
-                <Input
-                  id="codigo_tienda"
-                  data-testid="pos-codigo-input"
-                  type="text"
-                  value={codigoTienda}
-                  onChange={(e) => setCodigoTienda(e.target.value.toUpperCase())}
-                  required
-                  placeholder="XXXX-####"
-                  className="mt-1 h-11 text-base font-mono"
-                  maxLength={9}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="username" className="text-sm font-semibold">
-                  Usuario
-                </Label>
-                <Input
-                  id="username"
-                  data-testid="pos-username-input"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  placeholder="usuario"
-                  className="mt-1 h-11 text-base"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="password" className="text-sm font-semibold">
-                  Contraseña
-                </Label>
-                <Input
-                  id="password"
-                  data-testid="pos-password-input"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="mt-1 h-11 text-base"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                data-testid="pos-login-button"
-                disabled={loading}
-                className="w-full h-12 text-base font-semibold"
-              >
-                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-              </Button>
-              
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mt-4">
-                <p className="text-xs text-blue-700">
-                  <strong>Código de tienda:</strong> Lo proporciona el propietario o administrador
-                </p>
-              </div>
-            </form>
+          {/* Mensaje si no hay tienda verificada */}
+          {!tiendaVerificada && mostrarInputCodigo && (
+            <div className="text-center py-8 text-slate-400">
+              <Key size={32} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Ingresa el código de tienda para continuar</p>
+            </div>
           )}
 
           {/* Link para volver */}
