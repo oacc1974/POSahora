@@ -368,6 +368,9 @@ class TicketAbiertoResponse(BaseModel):
     ultimo_vendedor_id: Optional[str] = None
     ultimo_vendedor_nombre: Optional[str] = None
     ultima_modificacion: Optional[str] = None
+    # Campo para indicar si el usuario actual puede editar este ticket
+    puede_editar: Optional[bool] = True
+    es_propio: Optional[bool] = True
 
 class CajaApertura(BaseModel):
     monto_inicial: Optional[float] = 0.0
