@@ -48,6 +48,22 @@ export default function ConfigFunciones() {
       return;
     }
     
+    // Si intenta activar mesas_por_mesero sin tickets_abiertos activo
+    if (key === 'mesas_por_mesero' && !funciones.tickets_abiertos && !funciones.mesas_por_mesero) {
+      toast.error('Primero debes activar "Tickets abiertos" para usar esta función.');
+      return;
+    }
+    
+    // Si desactiva tickets_abiertos, también desactivar mesas_por_mesero
+    if (key === 'tickets_abiertos' && funciones.tickets_abiertos) {
+      setFunciones({
+        ...funciones,
+        tickets_abiertos: false,
+        mesas_por_mesero: false
+      });
+      return;
+    }
+    
     setFunciones({
       ...funciones,
       [key]: !funciones[key]
