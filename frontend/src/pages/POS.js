@@ -238,6 +238,7 @@ export default function POS() {
       setTicketsAbiertosFuncionActiva(response.data.tickets_abiertos);
       setTipoPedidoFuncionActiva(response.data.tipo_pedido);
       setVentaConStock(response.data.venta_con_stock);
+      setMesasPorMeseroActiva(response.data.mesas_por_mesero || false);
       
       // Si tickets abiertos está activo, cargar la lista
       if (response.data.tickets_abiertos) {
