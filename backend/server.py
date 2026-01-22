@@ -2210,11 +2210,14 @@ async def get_tickets_abiertos_pos(current_user: dict = Depends(get_current_user
             vendedor_id=t["vendedor_id"],
             vendedor_nombre=t["vendedor_nombre"],
             organizacion_id=t["organizacion_id"],
-            caja_id=t["caja_id"],
+            caja_id=t.get("caja_id"),
             cliente_id=t.get("cliente_id"),
             cliente_nombre=t.get("cliente_nombre"),
             comentarios=t.get("comentarios"),
-            fecha_creacion=t["fecha_creacion"]
+            fecha_creacion=t["fecha_creacion"],
+            ultimo_vendedor_id=t.get("ultimo_vendedor_id"),
+            ultimo_vendedor_nombre=t.get("ultimo_vendedor_nombre"),
+            ultima_modificacion=t.get("ultima_modificacion")
         )
         for t in tickets
     ]
