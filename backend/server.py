@@ -201,6 +201,9 @@ class FuncionesConfig(BaseModel):
     funcion_reloj: bool = False
     impresoras_cocina: bool = False
     pantalla_clientes: bool = False
+    # Control de mesas por mesero: Si está activo, cada mesero solo puede editar sus propias mesas
+    # Los cajeros siempre pueden recuperar cualquier mesa para cobrar
+    mesas_por_mesero: bool = False
 
 class TicketPredefinidoCreate(BaseModel):
     nombre: str
