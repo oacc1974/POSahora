@@ -2307,14 +2307,41 @@ async def create_ticket_abierto(ticket: TicketAbiertoCreate, current_user: dict 
 
 @app.put("/api/tickets-abiertos-pos/{ticket_id}")
 async def update_ticket_abierto(ticket_id: str, ticket: TicketAbiertoCreate, current_user: dict = Depends(get_current_user)):
+    # Verificar configuración de mesas_por_mesero
+    config = await db.funciones_config.find_one(
+        {"organizacion_id": current_user["organizacion_id"]}, 
+        {"_id": 0}
+    )
+    mesas_por_mesero = config.get("mesas_por_mesero", False) if config else False
+    
+    # Obtener el ticket para verificar permisos
+    ticket_existente = await db.tickets_abiertos.find_one({
+        "id": ticket_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if not ticket_existente:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    
+    # Verificar permisos si mesas_por_mesero está activo
+    if mesas_por_mesero:
+        es_propio = ticket_existente["vendedor_id"] == current_user["_id"]
+        user_rol = current_user["rol"]
+        
+        # Meseros solo pueden editar sus propias mesas
+        if user_rol == "mesero" and not es_propio:
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Esta mesa pertenece a {ticket_existente['vendedor_nombre']}. Solo puedes editar tus propias mesas."
+            )
+    
     # Verificar caja activa del usuario actual
     caja_activa = await db.cajas.find_one({
         "usuario_id": current_user["_id"],
         "estado": "abierta"
     })
     
-    # Cualquier empleado de la organización puede actualizar cualquier ticket
-    # Esto permite que un mesero tome la mesa/ticket de otro
+    # Actualizar el ticket
     result = await db.tickets_abiertos.update_one(
         {
             "id": ticket_id,
