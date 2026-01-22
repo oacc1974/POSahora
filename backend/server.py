@@ -1641,7 +1641,8 @@ async def update_funciones(funciones: FuncionesConfig, current_user: dict = Depe
             "venta_con_stock": funciones.venta_con_stock,
             "funcion_reloj": funciones.funcion_reloj,
             "impresoras_cocina": funciones.impresoras_cocina,
-            "pantalla_clientes": funciones.pantalla_clientes
+            "pantalla_clientes": funciones.pantalla_clientes,
+            "mesas_por_mesero": funciones.mesas_por_mesero
         }},
         upsert=True
     )
