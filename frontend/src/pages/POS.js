@@ -2576,54 +2576,84 @@ export default function POS() {
                 No hay tickets abiertos
               </div>
             ) : (
-              ticketsAbiertos.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="border rounded-lg p-4 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold text-lg">{ticket.nombre}</h3>
-                      <p className="text-sm text-slate-600">
-                        {new Date(ticket.fecha_creacion).toLocaleString('es-ES')}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-lg">${ticket.subtotal.toFixed(2)}</p>
-                      <p className="text-sm text-slate-600">{ticket.items.length} items</p>
-                    </div>
-                  </div>
-
-                  {/* Items del ticket */}
-                  <div className="space-y-1 mb-3 text-sm">
-                    {ticket.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between text-slate-600">
-                        <span>{item.cantidad}x {item.nombre}</span>
-                        <span>${item.subtotal.toFixed(2)}</span>
+              ticketsAbiertos.map((ticket) => {
+                const puedeEditar = ticket.puede_editar !== false;
+                const esPropio = ticket.es_propio !== false;
+                
+                return (
+                  <div
+                    key={ticket.id}
+                    className={`border rounded-lg p-4 transition-colors ${
+                      puedeEditar 
+                        ? 'hover:bg-slate-50 cursor-pointer' 
+                        : 'bg-slate-100 opacity-70 cursor-not-allowed'
+                    } ${esPropio ? 'border-blue-200' : 'border-slate-200'}`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-semibold text-lg flex items-center gap-2">
+                          {ticket.nombre}
+                          {esPropio && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                              Mi mesa
+                            </span>
+                          )}
+                        </h3>
+                        <p className="text-sm text-slate-600">
+                          {new Date(ticket.fecha_creacion).toLocaleString('es-ES')}
+                        </p>
+                        {/* Mostrar quién creó el ticket si no es propio */}
+                        {!esPropio && (
+                          <p className="text-xs text-slate-500 mt-1">
+                            👤 {ticket.vendedor_nombre}
+                          </p>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                      <div className="text-right">
+                        <p className="font-bold text-lg">${ticket.subtotal.toFixed(2)}</p>
+                        <p className="text-sm text-slate-600">{ticket.items.length} items</p>
+                      </div>
+                    </div>
 
-                  {/* Botones de acción */}
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleCargarTicket(ticket)}
-                      className="flex-1"
-                      size="sm"
-                    >
-                      Cargar
-                    </Button>
-                    <Button
-                      onClick={(e) => handleEliminarTicket(ticket.id, e)}
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      Eliminar
-                    </Button>
+                    {/* Items del ticket */}
+                    <div className="space-y-1 mb-3 text-sm">
+                      {ticket.items.map((item, idx) => (
+                        <div key={idx} className="flex justify-between text-slate-600">
+                          <span>{item.cantidad}x {item.nombre}</span>
+                          <span>${item.subtotal.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Botones de acción */}
+                    <div className="flex gap-2">
+                      {puedeEditar ? (
+                        <>
+                          <Button
+                            onClick={() => handleCargarTicket(ticket)}
+                            className="flex-1"
+                            size="sm"
+                          >
+                            {esPropio ? 'Continuar' : 'Recuperar'}
+                          </Button>
+                          <Button
+                            onClick={(e) => handleEliminarTicket(ticket.id, e)}
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            Eliminar
+                          </Button>
+                        </>
+                      ) : (
+                        <div className="w-full text-center text-sm text-slate-500 py-2">
+                          🔒 Solo {ticket.vendedor_nombre} puede editar
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </DialogContent>
