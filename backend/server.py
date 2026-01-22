@@ -2192,17 +2192,8 @@ async def delete_tpv(tpv_id: str, current_user: dict = Depends(get_current_user)
 # Tickets Abiertos
 @app.get("/api/tickets-abiertos-pos", response_model=List[TicketAbiertoResponse])
 async def get_tickets_abiertos_pos(current_user: dict = Depends(get_current_user)):
-    # Obtener caja activa del usuario
-    caja_activa = await db.cajas.find_one({
-        "usuario_id": current_user["_id"],
-        "estado": "abierta"
-    })
-    
-    if not caja_activa:
-        return []
-    
+    # Obtener TODOS los tickets abiertos de la organización (compartidos entre empleados)
     tickets = await db.tickets_abiertos.find({
-        "caja_id": caja_activa["_id"],
         "organizacion_id": current_user["organizacion_id"]
     }, {"_id": 0}).sort("fecha_creacion", -1).to_list(1000)
     
