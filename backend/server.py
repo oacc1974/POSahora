@@ -356,11 +356,15 @@ class TicketAbiertoResponse(BaseModel):
     vendedor_id: str
     vendedor_nombre: str
     organizacion_id: str
-    caja_id: str
+    caja_id: Optional[str] = None
     cliente_id: Optional[str] = None
     cliente_nombre: Optional[str] = None
     comentarios: Optional[str] = None
     fecha_creacion: str
+    # Campos para tracking de quién trabaja en el ticket
+    ultimo_vendedor_id: Optional[str] = None
+    ultimo_vendedor_nombre: Optional[str] = None
+    ultima_modificacion: Optional[str] = None
 
 class CajaApertura(BaseModel):
     monto_inicial: Optional[float] = 0.0
