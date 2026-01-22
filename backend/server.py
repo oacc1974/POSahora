@@ -2042,12 +2042,23 @@ async def crear_tpv_automatico(current_user: dict = Depends(get_current_user)):
     else:
         tienda_id = tienda["id"]
     
-    # Contar TPVs existentes para determinar el siguiente número
-    tpvs_count = await db.tpv.count_documents({
+    # Buscar el siguiente punto de emisión disponible (evitar duplicados)
+    tpvs_existentes = await db.tpv.find({
         "organizacion_id": org_id,
         "tienda_id": tienda_id
-    })
-    siguiente_numero = tpvs_count + 1
+    }, {"punto_emision": 1}).to_list(1000)
+    
+    puntos_usados = set()
+    for tpv in tpvs_existentes:
+        try:
+            puntos_usados.add(int(tpv.get("punto_emision", "0")))
+        except ValueError:
+            pass
+    
+    # Encontrar el siguiente número disponible
+    siguiente_numero = 1
+    while siguiente_numero in puntos_usados:
+        siguiente_numero += 1
     
     # Crear TPV con secuencia correcta
     tpv_id = str(uuid.uuid4())
