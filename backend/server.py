@@ -2203,15 +2203,42 @@ async def delete_tpv(tpv_id: str, current_user: dict = Depends(get_current_user)
     return {"message": "TPV eliminado correctamente"}
 
 # Tickets Abiertos
-@app.get("/api/tickets-abiertos-pos", response_model=List[TicketAbiertoResponse])
+@app.get("/api/tickets-abiertos-pos")
 async def get_tickets_abiertos_pos(current_user: dict = Depends(get_current_user)):
+    # Obtener configuración de mesas_por_mesero
+    config = await db.funciones_config.find_one(
+        {"organizacion_id": current_user["organizacion_id"]}, 
+        {"_id": 0}
+    )
+    mesas_por_mesero = config.get("mesas_por_mesero", False) if config else False
+    
     # Obtener TODOS los tickets abiertos de la organización (compartidos entre empleados)
     tickets = await db.tickets_abiertos.find({
         "organizacion_id": current_user["organizacion_id"]
     }, {"_id": 0}).sort("fecha_creacion", -1).to_list(1000)
     
-    return [
-        TicketAbiertoResponse(
+    user_id = current_user["_id"]
+    user_rol = current_user["rol"]
+    
+    result = []
+    for t in tickets:
+        # Determinar si el ticket es propio (creado por este usuario)
+        es_propio = t["vendedor_id"] == user_id
+        
+        # Determinar si puede editar:
+        # - Si mesas_por_mesero está DESACTIVADO: todos pueden editar todo
+        # - Si mesas_por_mesero está ACTIVADO:
+        #   - Propietarios/Administradores/Cajeros: pueden editar cualquier ticket
+        #   - Meseros: solo pueden editar sus propios tickets
+        if not mesas_por_mesero:
+            puede_editar = True
+        else:
+            if user_rol in ["propietario", "administrador", "cajero"]:
+                puede_editar = True
+            else:  # mesero
+                puede_editar = es_propio
+        
+        result.append(TicketAbiertoResponse(
             id=t["id"],
             nombre=t["nombre"],
             items=[InvoiceItem(**item) for item in t["items"]],
@@ -2226,10 +2253,12 @@ async def get_tickets_abiertos_pos(current_user: dict = Depends(get_current_user
             fecha_creacion=t["fecha_creacion"],
             ultimo_vendedor_id=t.get("ultimo_vendedor_id"),
             ultimo_vendedor_nombre=t.get("ultimo_vendedor_nombre"),
-            ultima_modificacion=t.get("ultima_modificacion")
-        )
-        for t in tickets
-    ]
+            ultima_modificacion=t.get("ultima_modificacion"),
+            puede_editar=puede_editar,
+            es_propio=es_propio
+        ))
+    
+    return result
 
 @app.post("/api/tickets-abiertos-pos")
 async def create_ticket_abierto(ticket: TicketAbiertoCreate, current_user: dict = Depends(get_current_user)):
