@@ -2890,8 +2890,9 @@ export default function POS() {
                       </p>
                     </div>
                     <span className="font-mono text-sm font-semibold text-blue-600">${ticket.subtotal?.toFixed(2) || '0.00'}</span>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
               {ticketsAbiertos.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-slate-400 mb-2">No hay tickets abiertos</p>
