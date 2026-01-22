@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Wallet, ClipboardList, ShoppingBag, ExternalLink, Clock, Printer, Monitor, AlertTriangle } from 'lucide-react';
+import { Wallet, ClipboardList, ShoppingBag, ExternalLink, Clock, Printer, Monitor, AlertTriangle, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
