@@ -2262,10 +2262,17 @@ async def create_ticket_abierto(ticket: TicketAbiertoCreate, current_user: dict 
 
 @app.put("/api/tickets-abiertos-pos/{ticket_id}")
 async def update_ticket_abierto(ticket_id: str, ticket: TicketAbiertoCreate, current_user: dict = Depends(get_current_user)):
+    # Verificar caja activa del usuario actual
+    caja_activa = await db.cajas.find_one({
+        "usuario_id": current_user["_id"],
+        "estado": "abierta"
+    })
+    
+    # Cualquier empleado de la organización puede actualizar cualquier ticket
+    # Esto permite que un mesero tome la mesa/ticket de otro
     result = await db.tickets_abiertos.update_one(
         {
             "id": ticket_id,
-            "vendedor_id": current_user["_id"],
             "organizacion_id": current_user["organizacion_id"]
         },
         {
@@ -2275,7 +2282,13 @@ async def update_ticket_abierto(ticket_id: str, ticket: TicketAbiertoCreate, cur
                 "subtotal": ticket.subtotal,
                 "cliente_id": ticket.cliente_id,
                 "cliente_nombre": ticket.cliente_nombre,
-                "comentarios": ticket.comentarios
+                "comentarios": ticket.comentarios,
+                # Actualizar quién está trabajando en este ticket ahora
+                "ultimo_vendedor_id": current_user["_id"],
+                "ultimo_vendedor_nombre": current_user["nombre"],
+                "ultima_modificacion": datetime.now(timezone.utc).isoformat(),
+                # Actualizar caja_id si el usuario tiene caja abierta
+                "caja_id": caja_activa["_id"] if caja_activa else None
             }
         }
     )
