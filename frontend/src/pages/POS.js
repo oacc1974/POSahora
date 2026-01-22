@@ -2854,35 +2854,42 @@ export default function POS() {
               Selecciona los tickets que deseas combinar con el ticket actual:
             </p>
             <div className="max-h-[300px] overflow-y-auto space-y-2">
-              {ticketsAbiertos.map((ticket) => (
-                <div 
-                  key={ticket.id}
-                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                    ticketsParaCombinar.includes(ticket.id) 
-                      ? 'bg-blue-50 border-blue-300' 
-                      : 'hover:bg-slate-50'
-                  }`}
-                  onClick={() => {
-                    setTicketsParaCombinar(prev => 
-                      prev.includes(ticket.id)
-                        ? prev.filter(id => id !== ticket.id)
-                        : [...prev, ticket.id]
-                    );
-                  }}
-                >
-                  <input 
-                    type="checkbox" 
-                    className="w-4 h-4 accent-blue-600" 
-                    checked={ticketsParaCombinar.includes(ticket.id)}
-                    onChange={() => {}}
-                  />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{ticket.nombre}</p>
-                    <p className="text-xs text-slate-500">
-                      {ticket.items?.length || 0} producto(s)
-                    </p>
-                  </div>
-                  <span className="font-mono text-sm font-semibold text-blue-600">${ticket.subtotal?.toFixed(2) || '0.00'}</span>
+              {ticketsAbiertos.map((ticket) => {
+                const puedeEditar = ticket.puede_editar !== false;
+                return (
+                  <div 
+                    key={ticket.id}
+                    className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
+                      !puedeEditar 
+                        ? 'bg-slate-100 opacity-60 cursor-not-allowed'
+                        : ticketsParaCombinar.includes(ticket.id) 
+                          ? 'bg-blue-50 border-blue-300 cursor-pointer' 
+                          : 'hover:bg-slate-50 cursor-pointer'
+                    }`}
+                    onClick={() => {
+                      if (!puedeEditar) return;
+                      setTicketsParaCombinar(prev => 
+                        prev.includes(ticket.id)
+                          ? prev.filter(id => id !== ticket.id)
+                          : [...prev, ticket.id]
+                      );
+                    }}
+                  >
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 accent-blue-600" 
+                      checked={ticketsParaCombinar.includes(ticket.id)}
+                      disabled={!puedeEditar}
+                      onChange={() => {}}
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{ticket.nombre}</p>
+                      <p className="text-xs text-slate-500">
+                        {ticket.items?.length || 0} producto(s)
+                        {!puedeEditar && ` • 👤 ${ticket.vendedor_nombre}`}
+                      </p>
+                    </div>
+                    <span className="font-mono text-sm font-semibold text-blue-600">${ticket.subtotal?.toFixed(2) || '0.00'}</span>
                 </div>
               ))}
               {ticketsAbiertos.length === 0 && (
