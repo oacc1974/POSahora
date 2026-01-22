@@ -1601,6 +1601,7 @@ async def get_funciones(current_user: dict = Depends(get_current_user)):
             "funcion_reloj": False,
             "impresoras_cocina": False,
             "pantalla_clientes": False,
+            "mesas_por_mesero": False,
             "tickets_abiertos_count": tickets_count
         }
     return {
@@ -1611,6 +1612,7 @@ async def get_funciones(current_user: dict = Depends(get_current_user)):
         "funcion_reloj": config.get("funcion_reloj", False),
         "impresoras_cocina": config.get("impresoras_cocina", False),
         "pantalla_clientes": config.get("pantalla_clientes", False),
+        "mesas_por_mesero": config.get("mesas_por_mesero", False),
         "tickets_abiertos_count": tickets_count
     }
 
