@@ -94,6 +94,16 @@ export default function ConfigFunciones() {
       warningMessage: `Tienes ${funciones.tickets_abiertos_count} ticket(s) guardado(s)`,
     },
     {
+      id: 'mesas_por_mesero',
+      key: 'mesas_por_mesero',
+      icon: Users,
+      title: 'Mesas por mesero',
+      description: 'Cada mesero solo puede editar sus propias mesas. Los cajeros pueden recuperar cualquier mesa para cobrar.',
+      enabled: funciones.mesas_por_mesero,
+      active: funciones.tickets_abiertos,
+      disabledMessage: 'Requiere "Tickets abiertos" activo',
+    },
+    {
       id: 'tipo_pedido',
       key: 'tipo_pedido',
       icon: ShoppingBag,
