@@ -43,6 +43,7 @@ export default function POS() {
   const [tipoPedidoSeleccionado, setTipoPedidoSeleccionado] = useState(null);
   const [requiereCierres, setRequiereCierres] = useState(true);
   const [ticketsAbiertosFuncionActiva, setTicketsAbiertosFuncionActiva] = useState(false);
+  const [mesasPorMeseroActiva, setMesasPorMeseroActiva] = useState(false);
   const [tipoPedidoFuncionActiva, setTipoPedidoFuncionActiva] = useState(false);
   const [ventaConStock, setVentaConStock] = useState(true);
   const [ticketsAbiertos, setTicketsAbiertos] = useState([]);
