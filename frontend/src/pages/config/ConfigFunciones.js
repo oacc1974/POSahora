@@ -16,6 +16,7 @@ export default function ConfigFunciones() {
     funcion_reloj: false,
     impresoras_cocina: false,
     pantalla_clientes: false,
+    mesas_por_mesero: false,
     tickets_abiertos_count: 0,
   });
 
