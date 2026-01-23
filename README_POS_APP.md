@@ -341,22 +341,53 @@ Usuario ingresa código → Valida en /api/tienda/verificar/{codigo}
 ```
 
 #### 3. Sidebar de Navegación (☰)
+
+El menú lateral tiene las mismas opciones para todos los roles, con "Backoffice" visible solo para administradores.
+
+**Estructura del menú:**
+
+| Opción | Icono | Todos | Solo Admin/Propietario |
+|--------|-------|-------|------------------------|
+| Punto de Venta | ShoppingCart | ✓ | ✓ |
+| Recibos | FileText | ✓ | ✓ |
+| Caja | Wallet | ✓ | ✓ |
+| Backoffice | Briefcase | ✗ | ✓ |
+
+**Nota sobre iconos:** Se utilizan iconos simples de la librería `lucide-react`, no gráficos ni emojis.
+
+**Vista para Cajero/Mesero:**
 ```
 ┌─────────────────────────────────┐
-│ ← Cerrar                        │
+│ Menú                      [X]   │
+├─────────────────────────────────┤
 │                                 │
-│ 🏠 Back Office                  │  ← Ir al dashboard (solo admin)
-│ 🛒 Punto de Venta               │  ← Pantalla actual
-│ 💰 Caja                         │  ← Gestión de caja
+│ [ShoppingCart] Punto de Venta   │  ← Resaltado (actual)
+│ [FileText] Recibos              │
+│ [Wallet] Caja                   │
 │                                 │
-│ ─────────────────────────────── │
-│                                 │
-│ 🚪 Cerrar Sesión                │
-│                                 │
-│ Usuario: cajero1                │
-│ Caja: Caja 1                    │
 └─────────────────────────────────┘
 ```
+
+**Vista para Administrador/Propietario:**
+```
+┌─────────────────────────────────┐
+│ Menú                      [X]   │
+├─────────────────────────────────┤
+│                                 │
+│ [ShoppingCart] Punto de Venta   │  ← Resaltado (actual)
+│ [FileText] Recibos              │
+│ [Wallet] Caja                   │
+│ ─────────────────────────────── │
+│ [Briefcase] Backoffice          │  ← Acceso al sistema completo
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Destino de cada opción:**
+- **Punto de Venta** → `/pos` (pantalla actual del POS)
+- **Recibos** → `/reportes` (historial de ventas/recibos)
+- **Caja** → `/caja` (gestión de apertura/cierre de caja)
+- **Backoffice** → `/dashboard` (acceso al sistema administrativo completo)
 
 ---
 
