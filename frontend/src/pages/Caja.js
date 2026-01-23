@@ -216,16 +216,19 @@ export default function Caja({ onLogout }) {
     
     try {
       const token = localStorage.getItem('token');
-      await axios.post(
+      const response = await axios.post(
         `${API_URL}/api/caja/cerrar-admin/${cajaParaCerrar.id}`,
         { efectivo_contado: parseFloat(efectivoContadoAdmin) },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
+      // Guardar datos del cierre para mostrar resumen
+      setResumenCierre(response.data);
       setShowCierreAdmin(false);
+      setShowResumenCierre(true);
+      
       setCajaParaCerrar(null);
       setEfectivoContadoAdmin('');
-      toast.success(`Caja "${cajaParaCerrar.numero}" cerrada correctamente`);
       fetchHistorial();
       fetchCajasAbiertas();
       fetchCajaActiva();
