@@ -9,6 +9,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 export default function Register() {
   const navigate = useNavigate();
@@ -65,8 +66,17 @@ export default function Register() {
   };
 
   const handleGoogleLogin = () => {
-    const redirectUrl = window.location.origin + '/auth/callback';
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+    if (GOOGLE_CLIENT_ID) {
+      // Usar Google OAuth directo
+      const redirectUri = window.location.origin + '/auth/google/callback';
+      const scope = 'email profile';
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline&prompt=consent`;
+      window.location.href = googleAuthUrl;
+    } else {
+      // Fallback a Emergent Auth (para desarrollo)
+      const redirectUrl = window.location.origin + '/auth/callback';
+      window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+    }
   };
 
   return (
