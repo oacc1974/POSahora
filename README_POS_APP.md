@@ -1858,13 +1858,6 @@ Backend:   http://localhost:8001
 MongoDB:   mongodb://localhost:27017
 ```
 
-**Desarrollo (Emergent Preview):**
-```
-Frontend:  https://smartpos-XX.preview.emergentagent.com
-Backend:   https://smartpos-XX.preview.emergentagent.com/api (proxy)
-MongoDB:   mongodb://localhost:27017 (dentro del pod)
-```
-
 **Producción:**
 ```
 Frontend:  https://www.posahora.com (Netlify/Vercel)
