@@ -3438,40 +3438,45 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
     
     invoice_id = str(uuid.uuid4())
     
-    # Determinar el formato de numeración de factura
+    # Determinar el formato de numeración de factura (Formato SRI obligatorio)
     codigo_establecimiento = caja_activa.get("codigo_establecimiento")
     punto_emision = caja_activa.get("punto_emision")
     
-    if codigo_establecimiento and punto_emision:
-        # Nueva numeración SRI: XXX-YYY-ZZZZZZZZZ
-        # Contador por punto de emisión específico
-        contador_id = f"factura_{current_user['organizacion_id']}_{codigo_establecimiento}_{punto_emision}"
-        counter = await db.contadores.find_one({"_id": contador_id})
-        if not counter:
-            numero = 1
-            await db.contadores.insert_one({"_id": contador_id, "seq": 1})
-        else:
-            numero = counter["seq"] + 1
-            await db.contadores.update_one(
-                {"_id": contador_id},
-                {"$set": {"seq": numero}}
+    # Si la caja no tiene datos de TPV, obtenerlos del TPV asociado
+    if not codigo_establecimiento or not punto_emision:
+        tpv = await db.tpv.find_one({"id": caja_activa.get("tpv_id")})
+        if tpv:
+            tienda = await db.tiendas.find_one({"id": tpv.get("tienda_id")})
+            codigo_establecimiento = tienda.get("codigo_establecimiento", "001") if tienda else "001"
+            punto_emision = tpv.get("punto_emision", "001")
+            
+            # Actualizar la caja con los datos faltantes
+            await db.cajas.update_one(
+                {"_id": caja_activa["_id"]},
+                {"$set": {
+                    "codigo_establecimiento": codigo_establecimiento,
+                    "punto_emision": punto_emision
+                }}
             )
-        
-        numero_factura = f"{codigo_establecimiento}-{punto_emision}-{numero:09d}"
+        else:
+            # No debería pasar, pero usar valores por defecto
+            codigo_establecimiento = "001"
+            punto_emision = "001"
+    
+    # Numeración SRI: XXX-YYY-ZZZZZZZZZ
+    contador_id = f"factura_{current_user['organizacion_id']}_{codigo_establecimiento}_{punto_emision}"
+    counter = await db.contadores.find_one({"_id": contador_id})
+    if not counter:
+        numero = 1
+        await db.contadores.insert_one({"_id": contador_id, "seq": 1})
     else:
-        # Numeración antigua para compatibilidad
-        counter = await db.contadores.find_one({"_id": f"factura_{current_user['organizacion_id']}"})
-        if not counter:
-            numero = 1
-            await db.contadores.insert_one({"_id": f"factura_{current_user['organizacion_id']}", "seq": 1})
-        else:
-            numero = counter["seq"] + 1
-            await db.contadores.update_one(
-                {"_id": f"factura_{current_user['organizacion_id']}"},
-                {"$set": {"seq": numero}}
-            )
-        
-        numero_factura = f"FAC-{numero:06d}"
+        numero = counter["seq"] + 1
+        await db.contadores.update_one(
+            {"_id": contador_id},
+            {"$set": {"seq": numero}}
+        )
+    
+    numero_factura = f"{codigo_establecimiento}-{punto_emision}-{numero:09d}"
     
     cliente_nombre = None
     if invoice.cliente_id:
