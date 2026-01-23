@@ -1999,29 +1999,42 @@ async def get_tpvs_disponibles(current_user: dict = Depends(get_current_user)):
 
 @app.post("/api/tpv/crear-automatico")
 async def crear_tpv_automatico(current_user: dict = Depends(get_current_user)):
-    """Crea automáticamente una tienda y TPV por defecto si no existen disponibles"""
+    """Crea automáticamente una tienda y TPV por defecto SOLO si no existe ninguno (primera vez)"""
     org_id = current_user["organizacion_id"]
     
-    # Verificar si ya hay TPVs disponibles (activos y no ocupados)
-    tpv_disponible = await db.tpv.find_one({
+    # Verificar si ya existen TPVs en la organización
+    total_tpvs = await db.tpv.count_documents({
         "organizacion_id": org_id,
-        "$and": [
-            {"$or": [{"activo": True}, {"activo": {"$exists": False}}]},
-            {"$or": [{"ocupado": False}, {"ocupado": {"$exists": False}}, {"ocupado": None}]}
-        ]
+        "$or": [{"activo": True}, {"activo": {"$exists": False}}]
     })
     
-    if tpv_disponible:
-        # Ya hay un TPV disponible
-        tienda = await db.tiendas.find_one({"id": tpv_disponible["tienda_id"]}, {"_id": 0})
-        return {
-            "mensaje": "Ya existe un TPV disponible",
-            "tpv_id": tpv_disponible["id"],
-            "tpv_nombre": tpv_disponible["nombre"],
-            "tienda_nombre": tienda["nombre"] if tienda else "Sin tienda",
-            "creado": False
-        }
+    if total_tpvs > 0:
+        # Ya existen TPVs - verificar si hay alguno disponible
+        tpv_disponible = await db.tpv.find_one({
+            "organizacion_id": org_id,
+            "$and": [
+                {"$or": [{"activo": True}, {"activo": {"$exists": False}}]},
+                {"$or": [{"ocupado": False}, {"ocupado": {"$exists": False}}, {"ocupado": None}]}
+            ]
+        })
+        
+        if tpv_disponible:
+            tienda = await db.tiendas.find_one({"id": tpv_disponible["tienda_id"]}, {"_id": 0})
+            return {
+                "mensaje": "Ya existe un TPV disponible",
+                "tpv_id": tpv_disponible["id"],
+                "tpv_nombre": tpv_disponible["nombre"],
+                "tienda_nombre": tienda["nombre"] if tienda else "Sin tienda",
+                "creado": False
+            }
+        else:
+            # Todos ocupados - indicar que debe crear uno manualmente
+            raise HTTPException(
+                status_code=400,
+                detail="No hay TPVs disponibles. Todos están ocupados. Ve a Configuración → Dispositivos TPV para crear uno nuevo."
+            )
     
+    # PRIMERA VEZ - No hay ningún TPV, crear uno automáticamente
     # Buscar o crear tienda por defecto
     tienda = await db.tiendas.find_one({"organizacion_id": org_id}, {"_id": 0})
     
@@ -2042,30 +2055,12 @@ async def crear_tpv_automatico(current_user: dict = Depends(get_current_user)):
     else:
         tienda_id = tienda["id"]
     
-    # Buscar el siguiente punto de emisión disponible (evitar duplicados)
-    tpvs_existentes = await db.tpv.find({
-        "organizacion_id": org_id,
-        "tienda_id": tienda_id
-    }, {"punto_emision": 1}).to_list(1000)
-    
-    puntos_usados = set()
-    for tpv in tpvs_existentes:
-        try:
-            puntos_usados.add(int(tpv.get("punto_emision", "0")))
-        except ValueError:
-            pass
-    
-    # Encontrar el siguiente número disponible
-    siguiente_numero = 1
-    while siguiente_numero in puntos_usados:
-        siguiente_numero += 1
-    
-    # Crear TPV con secuencia correcta
+    # Crear primer TPV
     tpv_id = str(uuid.uuid4())
     nuevo_tpv = {
         "id": tpv_id,
-        "nombre": f"Caja {siguiente_numero}",
-        "punto_emision": f"{siguiente_numero:03d}",
+        "nombre": "Caja 1",
+        "punto_emision": "001",
         "tienda_id": tienda_id,
         "activo": True,
         "ocupado": False,
@@ -2077,7 +2072,7 @@ async def crear_tpv_automatico(current_user: dict = Depends(get_current_user)):
     await db.tpv.insert_one(nuevo_tpv)
     
     return {
-        "mensaje": "TPV creado automáticamente",
+        "mensaje": "TPV creado automáticamente (primera vez)",
         "tpv_id": tpv_id,
         "tpv_nombre": "Caja 1",
         "tienda_nombre": tienda["nombre"],
