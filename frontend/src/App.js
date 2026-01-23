@@ -143,6 +143,10 @@ function AppRouter() {
           element={<AuthCallback />}
         />
         <Route
+          path="/auth/google/callback"
+          element={<GoogleCallback />}
+        />
+        <Route
           path="/"
           element={
             user ? (
