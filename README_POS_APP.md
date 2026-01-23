@@ -232,6 +232,7 @@ Usuario ingresa código → Valida en /api/tienda/verificar/{codigo}
 │                    CERRAR CAJA                                   │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
+│  PASO 1: Ingresar efectivo contado                              │
 │  ┌─────────────────────────────────────────────┐                 │
 │  │                                             │                 │
 │  │      CERRAR CAJA                            │                 │
@@ -245,18 +246,53 @@ Usuario ingresa código → Valida en /api/tienda/verificar/{codigo}
 │  │  Monto esperado:       $550.00              │                 │
 │  │                                             │                 │
 │  │  Efectivo contado: [$________]              │                 │
-│  │                                             │
-│  │  Diferencia: $0.00 ← verde si cuadra        │                 │
-│  │              $-20.00 ← rojo si falta        │                 │
 │  │                                             │                 │
 │  │  [Cancelar]         [Cerrar Caja]           │                 │
 │  │                                             │                 │
 │  └─────────────────────────────────────────────┘                 │
+│                         │                                        │
+│                         ▼                                        │
+│  PASO 2: Ver resumen y decidir acción                           │
+│  ┌─────────────────────────────────────────────┐                 │
+│  │                                             │                 │
+│  │  [CheckCircle] Caja Cerrada Correctamente   │                 │
+│  │                                             │                 │
+│  │  Caja: Caja 1                               │                 │
+│  │  Cajero: Juan Pérez                         │                 │
+│  │  TPV: Caja 1                                │                 │
+│  │  Apertura: 22/01/2026, 10:00                │                 │
+│  │  Cierre: 22/01/2026, 18:00                  │                 │
+│  │  ─────────────────────────────────────────  │                 │
+│  │  Ventas por Método de Pago:                 │                 │
+│  │    Efectivo (10):        $320.00            │                 │
+│  │    Tarjeta (5):          $130.00            │                 │
+│  │  ─────────────────────────────────────────  │                 │
+│  │  Base de Caja:           $100.00            │                 │
+│  │  Ventas (15):            $450.00            │                 │
+│  │  TOTAL ESPERADO:         $550.00            │                 │
+│  │  ─────────────────────────────────────────  │                 │
+│  │  Efectivo Contado:       $550.00            │                 │
+│  │  Diferencia:             +$0.00  (verde)    │                 │
+│  │  ─────────────────────────────────────────  │                 │
+│  │                                             │                 │
+│  │  [ArrowLeft Volver]    [Printer Imprimir]   │                 │
+│  │                                             │                 │
+│  │              [Cerrar]                       │                 │
+│  │                                             │                 │
+│  └─────────────────────────────────────────────┘                 │
 │                                                                  │
-│  Al cerrar:                                                      │
-│  1. Actualizar estado caja → "cerrada"                          │
-│  2. Guardar fecha_cierre, efectivo_contado, diferencia          │
-│  3. Liberar TPV (ocupado: false)                                │
+│  Opciones:                                                       │
+│  - [Volver]: Regresa a la pantalla anterior (navigate(-1))      │
+│  - [Imprimir]: Abre ventana de impresión con el ticket          │
+│  - [Cerrar]: Cierra el diálogo y permanece en la pantalla       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Acciones del sistema al cerrar:**
+1. Actualizar estado de caja → "cerrada"
+2. Guardar fecha_cierre, efectivo_contado, diferencia
+3. Liberar TPV (ocupado: false)
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
