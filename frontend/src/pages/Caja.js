@@ -777,6 +777,134 @@ export default function Caja({ onLogout }) {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* ============ DIÁLOGO RESUMEN DE CIERRE ============ */}
+      <Dialog open={showResumenCierre} onOpenChange={setShowResumenCierre}>
+        <DialogContent className="max-w-md mx-4" data-testid="resumen-cierre-dialog">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle size={24} />
+              Caja Cerrada Correctamente
+            </DialogTitle>
+          </DialogHeader>
+
+          {resumenCierre && (
+            <div className="space-y-4">
+              {/* Info general */}
+              <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Caja:</span>
+                  <span className="font-medium">{resumenCierre.numero}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Cajero:</span>
+                  <span className="font-medium">{resumenCierre.usuario_nombre}</span>
+                </div>
+                {resumenCierre.tpv_nombre && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">TPV:</span>
+                    <span className="font-medium">{resumenCierre.tpv_nombre}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Apertura:</span>
+                  <span className="font-medium">{new Date(resumenCierre.fecha_apertura).toLocaleString('es-ES')}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Cierre:</span>
+                  <span className="font-medium">{new Date(resumenCierre.fecha_cierre).toLocaleString('es-ES')}</span>
+                </div>
+              </div>
+
+              {/* Ventas por método de pago */}
+              {resumenCierre.ventas_por_metodo && resumenCierre.ventas_por_metodo.length > 0 && (
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-semibold text-sm mb-2">Ventas por Método de Pago</h4>
+                  <div className="space-y-1">
+                    {resumenCierre.ventas_por_metodo.map((metodo, idx) => (
+                      <div key={idx} className="flex justify-between text-sm">
+                        <span className="text-slate-600">{metodo.metodo_nombre} ({metodo.cantidad}):</span>
+                        <span className="font-medium">${metodo.total.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Resumen de montos */}
+              <div className="border-t pt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Base de Caja:</span>
+                  <span className="font-medium">${resumenCierre.monto_inicial.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Ventas ({resumenCierre.total_ventas}):</span>
+                  <span className="font-medium">${resumenCierre.monto_ventas.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-base border-t pt-2">
+                  <span>Total Esperado:</span>
+                  <span>${resumenCierre.monto_final.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Conteo y diferencia */}
+              <div className="bg-slate-100 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Efectivo Contado:</span>
+                  <span className="font-medium">${resumenCierre.efectivo_contado.toFixed(2)}</span>
+                </div>
+                <div className={`flex justify-between font-semibold ${resumenCierre.diferencia >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span>Diferencia:</span>
+                  <span>
+                    {resumenCierre.diferencia >= 0 ? '+' : '-'}${Math.abs(resumenCierre.diferencia).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowResumenCierre(false);
+                    setResumenCierre(null);
+                    navigate(-1);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2"
+                  data-testid="volver-btn"
+                >
+                  <ArrowLeft size={16} />
+                  Volver
+                </Button>
+                <Button
+                  onClick={() => {
+                    printCierreCaja(resumenCierre);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2"
+                  data-testid="imprimir-cierre-btn"
+                >
+                  <Printer size={16} />
+                  Imprimir
+                </Button>
+              </div>
+              
+              {/* Botón para cerrar sin hacer nada */}
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowResumenCierre(false);
+                  setResumenCierre(null);
+                  toast.success('Caja cerrada correctamente');
+                }}
+                className="w-full text-slate-500"
+                data-testid="cerrar-resumen-btn"
+              >
+                Cerrar
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
