@@ -1800,6 +1800,250 @@ REACT_APP_GOOGLE_CLIENT_ID="530102316862-xxxxx.apps.googleusercontent.com"
 
 ---
 
+## Conexiones Frontend ↔ Backend
+
+### Diagrama de Conexiones
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        ARQUITECTURA DE CONEXIONES                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌──────────────────────────────────────┐                                   │
+│  │         FRONTEND (React)              │                                   │
+│  │     https://www.posahora.com          │                                   │
+│  │                                        │                                   │
+│  │  .env:                                 │                                   │
+│  │  REACT_APP_BACKEND_URL=               │                                   │
+│  │    https://posahora.onrender.com      │                                   │
+│  │  REACT_APP_GOOGLE_CLIENT_ID=          │                                   │
+│  │    530102316862-xxx...                │                                   │
+│  └──────────────────┬───────────────────┘                                   │
+│                     │                                                        │
+│                     │ HTTPS (API calls)                                      │
+│                     │ Authorization: Bearer {JWT}                            │
+│                     ▼                                                        │
+│  ┌──────────────────────────────────────┐                                   │
+│  │         BACKEND (FastAPI)             │                                   │
+│  │   https://posahora.onrender.com       │                                   │
+│  │                                        │                                   │
+│  │  .env:                                 │                                   │
+│  │  MONGO_URL=mongodb+srv://...          │                                   │
+│  │  CORS_ORIGINS=https://www.posahora.com│                                   │
+│  │  GOOGLE_CLIENT_ID=530102316862-xxx... │                                   │
+│  │  GOOGLE_CLIENT_SECRET=GOCSPX-xxx...   │                                   │
+│  │  GOOGLE_REDIRECT_URI=                 │                                   │
+│  │    https://www.posahora.com/          │                                   │
+│  │    auth/google/callback               │                                   │
+│  └──────────────────┬───────────────────┘                                   │
+│                     │                                                        │
+│                     │ MongoDB Driver                                         │
+│                     ▼                                                        │
+│  ┌──────────────────────────────────────┐                                   │
+│  │         MONGODB (Atlas)               │                                   │
+│  │   mongodb+srv://cluster.mongodb.net   │                                   │
+│  └──────────────────────────────────────┘                                   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Configuración de URLs por Entorno
+
+**Desarrollo (Local):**
+```
+Frontend:  http://localhost:3000
+Backend:   http://localhost:8001
+MongoDB:   mongodb://localhost:27017
+```
+
+**Desarrollo (Emergent Preview):**
+```
+Frontend:  https://smartpos-XX.preview.emergentagent.com
+Backend:   https://smartpos-XX.preview.emergentagent.com/api (proxy)
+MongoDB:   mongodb://localhost:27017 (dentro del pod)
+```
+
+**Producción:**
+```
+Frontend:  https://www.posahora.com (Netlify/Vercel)
+Backend:   https://posahora.onrender.com (Render)
+MongoDB:   mongodb+srv://usuario:pass@cluster.mongodb.net (Atlas)
+```
+
+### Configuración CORS
+
+El backend debe permitir requests del frontend. En `server.py`:
+
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+**Variable de entorno CORS_ORIGINS:**
+```
+# Desarrollo
+CORS_ORIGINS=*
+
+# Producción (separar por comas, sin espacios)
+CORS_ORIGINS=https://www.posahora.com,https://posahora.com
+```
+
+### Endpoints API - Tabla de Referencia
+
+| Método | Endpoint | Descripción | Auth |
+|--------|----------|-------------|------|
+| **Autenticación** |
+| POST | `/api/login` | Login usuario/contraseña | No |
+| POST | `/api/auth/login-pin` | Login por PIN | No |
+| POST | `/api/auth/google` | Login/Registro con Google | No |
+| POST | `/api/auth/register` | Registro manual | No |
+| POST | `/api/auth/logout` | Cerrar sesión | Sí |
+| GET | `/api/me` | Usuario actual | Sí |
+| GET | `/api/tienda/verificar/{codigo}` | Verificar código tienda | No |
+| **Productos** |
+| GET | `/api/productos` | Listar productos | Sí |
+| POST | `/api/productos` | Crear producto | Sí |
+| PUT | `/api/productos/{id}` | Actualizar producto | Sí |
+| DELETE | `/api/productos/{id}` | Eliminar producto | Sí |
+| POST | `/api/productos/{id}/upload-image` | Subir imagen | Sí |
+| **Categorías** |
+| GET | `/api/categorias` | Listar categorías | Sí |
+| POST | `/api/categorias` | Crear categoría | Sí |
+| **Clientes** |
+| GET | `/api/clientes` | Listar clientes | Sí |
+| POST | `/api/clientes` | Crear cliente | Sí |
+| GET | `/api/clientes/buscar/{cedula}` | Buscar por cédula | Sí |
+| **Facturas** |
+| GET | `/api/facturas` | Listar facturas | Sí |
+| POST | `/api/facturas` | Crear factura | Sí |
+| GET | `/api/facturas/{id}` | Detalle factura | Sí |
+| **Caja/TPV** |
+| GET | `/api/caja/activa` | Caja activa del usuario | Sí |
+| POST | `/api/tpv/abrir-caja` | Abrir caja | Sí |
+| POST | `/api/caja/cerrar` | Cerrar caja | Sí |
+| GET | `/api/tpv/disponibles` | TPVs disponibles | Sí |
+| GET | `/api/tpv` | Listar TPVs | Sí |
+| POST | `/api/tpv` | Crear TPV | Sí |
+| **Tickets Abiertos** |
+| GET | `/api/tickets-abiertos-pos` | Listar tickets | Sí |
+| POST | `/api/tickets-abiertos-pos` | Guardar ticket | Sí |
+| PUT | `/api/tickets-abiertos-pos/{id}` | Actualizar ticket | Sí |
+| DELETE | `/api/tickets-abiertos-pos/{id}` | Eliminar ticket | Sí |
+| **Configuración** |
+| GET | `/api/funciones` | Configuración funciones | Sí |
+| PUT | `/api/funciones` | Actualizar funciones | Sí |
+| GET | `/api/metodos-pago` | Métodos de pago | Sí |
+| GET | `/api/impuestos` | Impuestos | Sí |
+| GET | `/api/descuentos` | Descuentos | Sí |
+| GET | `/api/ticket-config` | Config. recibo | Sí |
+| POST | `/api/config/upload-logo` | Subir logo | Sí |
+| **Reportes** |
+| GET | `/api/reporte/ventas` | Reporte de ventas | Sí |
+| GET | `/api/reporte/productos` | Productos más vendidos | Sí |
+
+### Headers de Autenticación
+
+Todas las peticiones autenticadas deben incluir:
+
+```javascript
+headers: {
+  'Authorization': `Bearer ${token}`,
+  'Content-Type': 'application/json'
+}
+```
+
+Ejemplo en React:
+```javascript
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+const fetchProductos = async () => {
+  const token = localStorage.getItem('token');
+  const response = await axios.get(`${API_URL}/api/productos`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};
+```
+
+### Flujo de Autenticación Completo
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                  FLUJO DE AUTENTICACIÓN                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. LOGIN (cualquier método)                                    │
+│     POST /api/login                                             │
+│     POST /api/auth/login-pin                                    │
+│     POST /api/auth/google                                       │
+│                      │                                           │
+│                      ▼                                           │
+│  2. RESPUESTA con JWT                                           │
+│     {                                                            │
+│       "access_token": "eyJhbGciOiJIUzI1NiIs...",               │
+│       "token_type": "bearer",                                   │
+│       "user": { id, nombre, email, rol, organizacion_id }       │
+│     }                                                            │
+│                      │                                           │
+│                      ▼                                           │
+│  3. FRONTEND guarda en localStorage                             │
+│     localStorage.setItem('token', access_token)                 │
+│     localStorage.setItem('user', JSON.stringify(user))          │
+│                      │                                           │
+│                      ▼                                           │
+│  4. PETICIONES AUTENTICADAS                                     │
+│     GET /api/productos                                          │
+│     Headers: { Authorization: "Bearer eyJhbGciOi..." }          │
+│                      │                                           │
+│                      ▼                                           │
+│  5. BACKEND valida JWT                                          │
+│     - Verifica firma con SECRET_KEY                             │
+│     - Verifica expiración (24 horas)                            │
+│     - Extrae: user_id, rol, organizacion_id                     │
+│                      │                                           │
+│                      ▼                                           │
+│  6. RESPUESTA filtrada por organizacion_id                      │
+│     (Multi-tenancy: cada org ve solo sus datos)                 │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Manejo de Errores HTTP
+
+| Código | Significado | Acción en Frontend |
+|--------|-------------|-------------------|
+| 200 | Éxito | Procesar respuesta |
+| 201 | Creado | Procesar respuesta |
+| 400 | Bad Request | Mostrar error.detail |
+| 401 | No autenticado | Redirigir a /login |
+| 403 | Sin permisos | Mostrar mensaje |
+| 404 | No encontrado | Mostrar mensaje |
+| 500 | Error servidor | Mostrar mensaje genérico |
+
+Ejemplo de manejo en React:
+```javascript
+try {
+  const response = await axios.post(`${API_URL}/api/facturas`, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  toast.success('Factura creada');
+} catch (error) {
+  if (error.response?.status === 401) {
+    localStorage.removeItem('token');
+    navigate('/login');
+  } else {
+    toast.error(error.response?.data?.detail || 'Error al crear factura');
+  }
+}
+```
+
+---
+
 ## Despliegue
 
 ### Opción 1: Render (Backend) + Netlify (Frontend)
