@@ -53,9 +53,9 @@
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌──────────────────┐         ┌──────────────────┐              │
-│  │ www.tu-dominio.com │ ──────► │ posahora.onrender│              │
-│  │   (Frontend)     │         │     .com         │              │
-│  │   Netlify/Vercel │         │   (Backend)      │              │
+│  │ www.tu-dominio   │ ──────► │  tu-backend.com  │              │
+│  │   (Frontend)     │         │    (Backend)     │              │
+│  │   Netlify/Vercel │         │   Render/Railway │              │
 │  └──────────────────┘         └────────┬─────────┘              │
 │                                        │                         │
 │                                        ▼                         │
