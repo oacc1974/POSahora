@@ -3442,15 +3442,87 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
     codigo_establecimiento = caja_activa.get("codigo_establecimiento")
     punto_emision = caja_activa.get("punto_emision")
     
-    # Si la caja no tiene datos de TPV, obtenerlos del TPV asociado
+    # Si la caja no tiene datos de TPV, obtenerlos o crear TPV automáticamente
     if not codigo_establecimiento or not punto_emision:
         tpv = await db.tpv.find_one({"id": caja_activa.get("tpv_id")})
+        
         if tpv:
+            # TPV existe, obtener datos
             tienda = await db.tiendas.find_one({"id": tpv.get("tienda_id")})
             codigo_establecimiento = tienda.get("codigo_establecimiento", "001") if tienda else "001"
             punto_emision = tpv.get("punto_emision", "001")
+        else:
+            # NO hay TPV - Crear uno automáticamente siguiendo las reglas
+            org_id = current_user["organizacion_id"]
             
-            # Actualizar la caja con los datos faltantes
+            # Buscar o crear tienda
+            tienda = await db.tiendas.find_one({"organizacion_id": org_id}, {"_id": 0})
+            if not tienda:
+                tienda_id = str(uuid.uuid4())
+                tienda = {
+                    "id": tienda_id,
+                    "nombre": "Tienda Principal",
+                    "codigo_establecimiento": "001",
+                    "direccion": "",
+                    "telefono": "",
+                    "organizacion_id": org_id,
+                    "activo": True,
+                    "fecha_creacion": datetime.now(timezone.utc).isoformat()
+                }
+                await db.tiendas.insert_one(tienda)
+            else:
+                tienda_id = tienda["id"]
+            
+            codigo_establecimiento = tienda.get("codigo_establecimiento", "001")
+            
+            # Buscar siguiente punto de emisión disponible
+            tpvs_existentes = await db.tpv.find({
+                "organizacion_id": org_id,
+                "tienda_id": tienda_id
+            }, {"punto_emision": 1}).to_list(1000)
+            
+            puntos_usados = set()
+            for tpv_exist in tpvs_existentes:
+                try:
+                    puntos_usados.add(int(tpv_exist.get("punto_emision", "0")))
+                except ValueError:
+                    pass
+            
+            siguiente_numero = 1
+            while siguiente_numero in puntos_usados:
+                siguiente_numero += 1
+            
+            punto_emision = f"{siguiente_numero:03d}"
+            
+            # Crear TPV
+            nuevo_tpv_id = str(uuid.uuid4())
+            nuevo_tpv = {
+                "id": nuevo_tpv_id,
+                "nombre": f"Caja {siguiente_numero}",
+                "punto_emision": punto_emision,
+                "tienda_id": tienda_id,
+                "activo": True,
+                "ocupado": True,
+                "ocupado_por": current_user["_id"],
+                "ocupado_por_nombre": current_user.get("nombre", current_user.get("username")),
+                "organizacion_id": org_id,
+                "fecha_creacion": datetime.now(timezone.utc).isoformat()
+            }
+            await db.tpv.insert_one(nuevo_tpv)
+            
+            # Actualizar la caja con el nuevo TPV
+            await db.cajas.update_one(
+                {"_id": caja_activa["_id"]},
+                {"$set": {
+                    "tpv_id": nuevo_tpv_id,
+                    "tpv_nombre": f"Caja {siguiente_numero}",
+                    "codigo_establecimiento": codigo_establecimiento,
+                    "punto_emision": punto_emision
+                }}
+            )
+        
+        # Actualizar caja con los datos del TPV si faltaban
+        if not caja_activa.get("codigo_establecimiento") or not caja_activa.get("punto_emision"):
             await db.cajas.update_one(
                 {"_id": caja_activa["_id"]},
                 {"$set": {
@@ -3458,10 +3530,6 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
                     "punto_emision": punto_emision
                 }}
             )
-        else:
-            # No debería pasar, pero usar valores por defecto
-            codigo_establecimiento = "001"
-            punto_emision = "001"
     
     # Numeración SRI: XXX-YYY-ZZZZZZZZZ
     contador_id = f"factura_{current_user['organizacion_id']}_{codigo_establecimiento}_{punto_emision}"
