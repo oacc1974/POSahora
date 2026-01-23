@@ -3085,21 +3085,18 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         # El nombre de la caja será el nombre del TPV
         numero_caja = tpv_nombre
     else:
-        # No se proporcionó TPV - verificar si hay alguno disponible o crear uno automáticamente
+        # No se proporcionó TPV - verificar disponibilidad
         org_id = current_user["organizacion_id"]
         
-        # Buscar TPV disponible (activo y NO ocupado)
-        tpv_disponible = await db.tpv.find_one({
+        # Primero verificar si existen TPVs en la organización
+        total_tpvs = await db.tpv.count_documents({
             "organizacion_id": org_id,
-            "$and": [
-                {"$or": [{"activo": True}, {"activo": {"$exists": False}}]},
-                {"$or": [{"ocupado": False}, {"ocupado": {"$exists": False}}, {"ocupado": None}]}
-            ]
+            "$or": [{"activo": True}, {"activo": {"$exists": False}}]
         })
         
-        if not tpv_disponible:
-            # No hay TPVs disponibles - crear uno nuevo con secuencia correcta
-            # Primero buscar o crear tienda
+        if total_tpvs == 0:
+            # PRIMERA VEZ - No hay ningún TPV, crear uno automáticamente
+            # Buscar o crear tienda
             tienda = await db.tiendas.find_one({"organizacion_id": org_id}, {"_id": 0})
             
             if not tienda:
@@ -3117,30 +3114,12 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
                 }
                 await db.tiendas.insert_one(tienda)
             
-            # Buscar el siguiente punto de emisión disponible (evitar duplicados)
-            tpvs_existentes = await db.tpv.find({
-                "organizacion_id": org_id,
-                "tienda_id": tienda["id"]
-            }, {"punto_emision": 1}).to_list(1000)
-            
-            puntos_usados = set()
-            for tpv_exist in tpvs_existentes:
-                try:
-                    puntos_usados.add(int(tpv_exist.get("punto_emision", "0")))
-                except ValueError:
-                    pass
-            
-            # Encontrar el siguiente número disponible
-            siguiente_numero = 1
-            while siguiente_numero in puntos_usados:
-                siguiente_numero += 1
-            
-            # Crear TPV con el siguiente número en la secuencia
+            # Crear primer TPV
             nuevo_tpv_id = str(uuid.uuid4())
             tpv_disponible = {
                 "id": nuevo_tpv_id,
-                "nombre": f"Caja {siguiente_numero}",
-                "punto_emision": f"{siguiente_numero:03d}",
+                "nombre": "Caja 1",
+                "punto_emision": "001",
                 "tienda_id": tienda["id"],
                 "activo": True,
                 "ocupado": False,
@@ -3150,6 +3129,22 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
                 "fecha_creacion": datetime.now(timezone.utc).isoformat()
             }
             await db.tpv.insert_one(tpv_disponible)
+        else:
+            # Ya existen TPVs - buscar uno disponible
+            tpv_disponible = await db.tpv.find_one({
+                "organizacion_id": org_id,
+                "$and": [
+                    {"$or": [{"activo": True}, {"activo": {"$exists": False}}]},
+                    {"$or": [{"ocupado": False}, {"ocupado": {"$exists": False}}, {"ocupado": None}]}
+                ]
+            })
+            
+            if not tpv_disponible:
+                # Todos los TPVs están ocupados - NO crear automático
+                raise HTTPException(
+                    status_code=400, 
+                    detail="No hay TPVs disponibles. Todos están ocupados. Ve a Configuración → Dispositivos TPV para crear uno nuevo."
+                )
         
         # Ahora tenemos un TPV disponible, usarlo
         tpv_id = tpv_disponible["id"]
