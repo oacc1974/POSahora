@@ -43,6 +43,10 @@ export default function Caja({ onLogout }) {
   const [cajaParaCerrar, setCajaParaCerrar] = useState(null);
   const [efectivoContadoAdmin, setEfectivoContadoAdmin] = useState('');
   
+  // Estado para mostrar el resumen después del cierre
+  const [showResumenCierre, setShowResumenCierre] = useState(false);
+  const [resumenCierre, setResumenCierre] = useState(null);
+  
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = ['propietario', 'administrador'].includes(user.rol);
 
