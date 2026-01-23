@@ -208,6 +208,19 @@ export default function Login({ onLogin }) {
               Crear Cuenta Nueva
             </Button>
           </div>
+          
+          {/* Créditos */}
+          <p className="text-center text-xs text-slate-400 mt-6">
+            Desarrollado por{' '}
+            <a 
+              href="https://golmarc.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-600 hover:underline"
+            >
+              Golmarc.com
+            </a>
+          </p>
         </Card>
       </div>
     </div>
