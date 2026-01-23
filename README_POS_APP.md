@@ -1714,49 +1714,148 @@ Response: [{ id, nombre, opciones: [{ nombre, precio }] }]
 ## Checklist de Implementación
 
 ### Pantallas Requeridas
-- [ ] Login por PIN (código tienda + teclado numérico)
-- [ ] POS principal (productos + carrito)
-- [ ] Carrito móvil (overlay)
-- [ ] Diálogo apertura de caja
-- [ ] Diálogo cierre de caja
-- [ ] Diálogo de cobro
-- [ ] Diálogo selección cliente
-- [ ] Diálogo crear cliente
-- [ ] Diálogo modificadores de producto
-- [ ] Diálogo guardar en mesa
-- [ ] Diálogo tickets abiertos
-- [ ] Diálogo dividir ticket
-- [ ] Diálogo combinar tickets
-- [ ] Diálogo añadir descuento
+- [x] Login por PIN (código tienda + teclado numérico)
+- [x] Login con Google OAuth
+- [x] POS principal (productos + carrito)
+- [x] Carrito móvil (overlay)
+- [x] Diálogo apertura de caja
+- [x] Diálogo cierre de caja con resumen
+- [x] Diálogo de cobro
+- [x] Diálogo selección cliente
+- [x] Diálogo crear cliente
+- [x] Diálogo modificadores de producto
+- [x] Diálogo guardar en mesa
+- [x] Diálogo tickets abiertos
+- [x] Diálogo dividir ticket
+- [x] Diálogo combinar tickets
+- [x] Diálogo añadir descuento
 
 ### Funcionalidades Core
-- [ ] Añadir productos al carrito
-- [ ] Modificar cantidades (+/-)
-- [ ] Eliminar items
-- [ ] Buscar productos
-- [ ] Filtrar por categoría
-- [ ] Escanear código de barras
-- [ ] Aplicar descuentos
-- [ ] Calcular impuestos
-- [ ] Procesar cobro
-- [ ] Generar número de factura
-- [ ] Imprimir recibo
+- [x] Añadir productos al carrito
+- [x] Modificar cantidades (+/-)
+- [x] Eliminar items
+- [x] Buscar productos
+- [x] Filtrar por categoría
+- [x] Escanear código de barras
+- [x] Aplicar descuentos
+- [x] Calcular impuestos
+- [x] Procesar cobro
+- [x] Generar número de factura (formato SRI)
+- [x] Imprimir recibo
 
 ### Gestión de Mesas
-- [ ] Guardar ticket en mesa
-- [ ] Cargar ticket de mesa
-- [ ] Dividir ticket
-- [ ] Combinar tickets
-- [ ] Permisos por rol
+- [x] Guardar ticket en mesa
+- [x] Cargar ticket de mesa
+- [x] Dividir ticket
+- [x] Combinar tickets
+- [x] Permisos por rol (mesas por mesero)
 
 ### UX/Animaciones
-- [ ] Fly-to-cart animation
-- [ ] Hover effects en productos
-- [ ] Badge bounce al añadir
-- [ ] Slide-in de items en carrito
-- [ ] Feedback táctil (active states)
+- [x] Fly-to-cart animation
+- [x] Hover effects en productos
+- [x] Badge bounce al añadir
+- [x] Slide-in de items en carrito
+- [x] Feedback táctil (active states)
 
 ---
 
-**Última actualización:** 22 de Enero de 2026
-**Versión:** 1.0
+## Variables de Entorno
+
+### Backend (.env)
+
+```env
+# Base de datos
+MONGO_URL="mongodb+srv://usuario:password@cluster.mongodb.net"
+DB_NAME="facturacion_db"
+
+# Seguridad
+SECRET_KEY="tu-clave-secreta-muy-segura-cambiar-en-produccion"
+CORS_ORIGINS="https://www.posahora.com,https://posahora.com"
+
+# Google OAuth
+GOOGLE_CLIENT_ID="530102316862-xxxxx.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="GOCSPX-xxxxx"
+GOOGLE_REDIRECT_URI="https://www.posahora.com/auth/google/callback"
+```
+
+### Frontend (.env)
+
+```env
+# URL del backend
+REACT_APP_BACKEND_URL="https://posahora.onrender.com"
+
+# Google OAuth (solo client_id, es público)
+REACT_APP_GOOGLE_CLIENT_ID="530102316862-xxxxx.apps.googleusercontent.com"
+```
+
+### Notas sobre Variables
+
+| Variable | Sensible | Dónde se usa |
+|----------|----------|--------------|
+| `MONGO_URL` | Sí | Solo backend |
+| `SECRET_KEY` | Sí | Solo backend (JWT) |
+| `GOOGLE_CLIENT_SECRET` | Sí | Solo backend |
+| `GOOGLE_CLIENT_ID` | No | Backend y Frontend |
+| `REACT_APP_BACKEND_URL` | No | Solo frontend |
+
+---
+
+## Despliegue
+
+### Opción 1: Render (Backend) + Netlify (Frontend)
+
+**Backend en Render:**
+1. Crear nuevo Web Service
+2. Conectar repositorio de GitHub
+3. Build command: `pip install -r requirements.txt`
+4. Start command: `uvicorn server:app --host 0.0.0.0 --port $PORT`
+5. Añadir variables de entorno
+
+**Frontend en Netlify:**
+1. Crear nuevo sitio
+2. Conectar repositorio de GitHub
+3. Build command: `npm run build`
+4. Publish directory: `build`
+5. Añadir variables de entorno (REACT_APP_*)
+
+### Opción 2: Railway (Full Stack)
+
+Railway permite desplegar backend y frontend juntos con base de datos incluida.
+
+### Opción 3: VPS (DigitalOcean, Linode, etc.)
+
+Para control total, usar Docker Compose:
+
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8001:8001"
+    environment:
+      - MONGO_URL=mongodb://mongo:27017
+      - DB_NAME=facturacion_db
+    depends_on:
+      - mongo
+  
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_BACKEND_URL=https://api.posahora.com
+  
+  mongo:
+    image: mongo:6
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
+```
+
+---
+
+**Última actualización:** 23 de Enero de 2026
+**Versión:** 1.1
