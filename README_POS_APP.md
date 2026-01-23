@@ -169,6 +169,168 @@ Usuario ingresa código → Valida en /api/tienda/verificar/{codigo}
 
 ---
 
+## Configuración Google OAuth (Despliegue)
+
+### Flujo de Autenticación con Google
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                  GOOGLE OAUTH 2.0 FLOW                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. Usuario click "Continuar con Google"                        │
+│                      │                                           │
+│                      ▼                                           │
+│  2. Frontend redirige a Google:                                 │
+│     accounts.google.com/o/oauth2/v2/auth                        │
+│     ?client_id=XXXXXX                                           │
+│     &redirect_uri=https://www.posahora.com/auth/google/callback │
+│     &response_type=code                                         │
+│     &scope=email profile                                        │
+│                      │                                           │
+│                      ▼                                           │
+│  3. Usuario autentica en Google                                 │
+│                      │                                           │
+│                      ▼                                           │
+│  4. Google redirige con código:                                 │
+│     www.posahora.com/auth/google/callback?code=XXXX             │
+│                      │                                           │
+│                      ▼                                           │
+│  5. Frontend envia código al Backend:                           │
+│     POST posahora.onrender.com/api/auth/google                  │
+│     {code: "XXXX"}                                              │
+│                      │                                           │
+│                      ▼                                           │
+│  6. Backend intercambia código con Google                       │
+│     (usa client_secret en el servidor)                          │
+│                      │                                           │
+│                      ▼                                           │
+│  7. ¿Usuario existe?                                            │
+│         │                                                        │
+│     ┌───┴───┐                                                   │
+│     │       │                                                    │
+│     SÍ      NO                                                   │
+│     │       │                                                    │
+│     ▼       ▼                                                    │
+│   Login   Mostrar formulario                                    │
+│   auto    de registro                                           │
+│     │       │                                                    │
+│     └───┬───┘                                                   │
+│         │                                                        │
+│         ▼                                                        │
+│  8. Usuario en /dashboard                                       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Paso 1: Crear Proyecto en Google Cloud Console
+
+1. Ir a: https://console.cloud.google.com/
+2. Crear nuevo proyecto o usar uno existente
+3. Ir a "APIs & Services" → "Credentials"
+4. Click "Create Credentials" → "OAuth 2.0 Client ID"
+5. Tipo de aplicación: "Web application"
+
+### Paso 2: Configurar URLs Autorizadas
+
+En Google Cloud Console → Credentials → Tu OAuth Client:
+
+**Authorized JavaScript origins:**
+```
+https://posahora.com
+https://www.posahora.com
+```
+
+**Authorized redirect URIs:**
+```
+https://www.posahora.com/auth/google/callback
+```
+
+### Paso 3: Obtener Credenciales
+
+Guardar estos valores (se mostrarán solo una vez):
+- `GOOGLE_CLIENT_ID` = `XXXXX.apps.googleusercontent.com`
+- `GOOGLE_CLIENT_SECRET` = `GOCSPX-XXXXX`
+
+### Paso 4: Variables de Entorno
+
+**Backend (Render - posahora.onrender.com):**
+
+| Variable | Valor | Descripción |
+|----------|-------|-------------|
+| `MONGO_URL` | `mongodb+srv://...` | Conexión a MongoDB Atlas |
+| `DB_NAME` | `facturacion_db` | Nombre de la base de datos |
+| `SECRET_KEY` | `tu-clave-secreta-segura` | Clave para JWT (cambiar en producción) |
+| `CORS_ORIGINS` | `https://www.posahora.com,https://posahora.com` | Dominios permitidos |
+| `GOOGLE_CLIENT_ID` | `530102316862-...` | Client ID de Google |
+| `GOOGLE_CLIENT_SECRET` | `GOCSPX-...` | Client Secret de Google |
+| `GOOGLE_REDIRECT_URI` | `https://www.posahora.com/auth/google/callback` | URI de redirección |
+
+**Frontend (Netlify/Vercel - www.posahora.com):**
+
+| Variable | Valor | Descripción |
+|----------|-------|-------------|
+| `REACT_APP_BACKEND_URL` | `https://posahora.onrender.com` | URL del backend |
+| `REACT_APP_GOOGLE_CLIENT_ID` | `530102316862-...` | Client ID de Google (público) |
+
+### Archivos Involucrados
+
+| Archivo | Función |
+|---------|---------|
+| `backend/server.py` | Endpoint `POST /api/auth/google` |
+| `frontend/src/pages/Login.js` | Botón "Continuar con Google" |
+| `frontend/src/pages/Register.js` | Botón "Registrarse con Google" |
+| `frontend/src/pages/GoogleCallback.js` | Maneja callback de Google |
+| `frontend/src/App.js` | Ruta `/auth/google/callback` |
+
+### Formulario de Registro (Usuarios Nuevos)
+
+Cuando un usuario nuevo se autentica con Google, se muestra:
+
+```
+┌─────────────────────────────────────────────┐
+│                                             │
+│        [Foto de perfil de Google]           │
+│                                             │
+│           ¡Bienvenido!                      │
+│           Juan Pérez                        │
+│           juan@gmail.com                    │
+│                                             │
+│  Para completar tu registro, ingresa       │
+│  el nombre de tu negocio y una contraseña  │
+│                                             │
+│  Nombre del Negocio: [________________]     │
+│                                             │
+│  Contraseña: [________________]             │
+│  (Mínimo 6 caracteres)                      │
+│                                             │
+│  Confirmar Contraseña: [________________]   │
+│                                             │
+│  [        Crear Cuenta        ]             │
+│                                             │
+│  Cancelar y volver al inicio                │
+│                                             │
+└─────────────────────────────────────────────┘
+```
+
+### Notas Importantes
+
+1. **El `GOOGLE_CLIENT_SECRET` NUNCA debe exponerse en el frontend**
+   - Solo se usa en el backend para intercambiar el código por tokens
+
+2. **La URI de redirección debe coincidir exactamente**
+   - Si en Google Cloud está `https://www.posahora.com/auth/google/callback`
+   - El frontend debe redirigir a exactamente esa URL
+
+3. **El código de autorización es de un solo uso**
+   - Google invalida el código después de usarlo una vez
+   - Si falla, el usuario debe volver a autenticarse
+
+4. **Verificar dominio en Google Search Console (opcional pero recomendado)**
+   - Ayuda a mostrar el nombre de la app en lugar de solo el dominio
+
+---
+
 ## Flujo de TPV y Cajas
 
 ### Conceptos Clave
