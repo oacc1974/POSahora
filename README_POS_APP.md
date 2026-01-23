@@ -40,6 +40,25 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Iconografía
+
+Se utilizan **iconos simples** de la librería `lucide-react`. **NO se usan emojis ni gráficos complejos** en la interfaz.
+
+| Acción/Elemento | Icono Lucide | Uso |
+|-----------------|--------------|-----|
+| Menú hamburguesa | `Menu` | Abrir sidebar de navegación |
+| Punto de Venta | `ShoppingCart` | Navegación al POS |
+| Recibos | `FileText` | Historial de ventas |
+| Caja | `Wallet` | Gestión de caja |
+| Backoffice | `Briefcase` | Acceso administrativo |
+| Cliente | `UserPlus` | Seleccionar/añadir cliente |
+| Opciones | `MoreVertical` | Menú de opciones (3 puntos) |
+| Cerrar | `X` | Cerrar diálogos/paneles |
+| Eliminar | `Trash2` | Eliminar items |
+| Buscar | `Search` | Buscar productos |
+| Escanear | `ScanLine` | Escáner de código de barras |
+| Cerrar sesión | `LogOut` | Salir del sistema |
+
 ---
 
 ## Autenticación y Acceso
