@@ -1,21 +1,23 @@
-# 📱 DOCUMENTACIÓN COMPLETA - SISTEMA POS
+# DOCUMENTACIÓN COMPLETA - SISTEMA POS
 
 ## Índice
 1. [Arquitectura General](#arquitectura-general)
 2. [Autenticación y Acceso](#autenticación-y-acceso)
-3. [Flujo de TPV y Cajas](#flujo-de-tpv-y-cajas)
-4. [Pantalla Principal del POS](#pantalla-principal-del-pos)
-5. [Gestión del Carrito/Ticket](#gestión-del-carritoticket)
-6. [Sistema de Mesas](#sistema-de-mesas)
-7. [Proceso de Cobro](#proceso-de-cobro)
-8. [Clientes](#clientes)
-9. [Descuentos](#descuentos)
-10. [Impuestos](#impuestos)
-11. [Animaciones y UX](#animaciones-y-ux)
-12. [Diseño Responsive](#diseño-responsive)
-13. [Roles y Permisos](#roles-y-permisos)
-14. [API Endpoints](#api-endpoints)
-15. [Modelos de Datos](#modelos-de-datos)
+3. [Configuración Google OAuth (Despliegue)](#configuración-google-oauth-despliegue)
+4. [Flujo de TPV y Cajas](#flujo-de-tpv-y-cajas)
+5. [Pantalla Principal del POS](#pantalla-principal-del-pos)
+6. [Gestión del Carrito/Ticket](#gestión-del-carritoticket)
+7. [Sistema de Mesas](#sistema-de-mesas)
+8. [Proceso de Cobro](#proceso-de-cobro)
+9. [Clientes](#clientes)
+10. [Descuentos](#descuentos)
+11. [Impuestos](#impuestos)
+12. [Animaciones y UX](#animaciones-y-ux)
+13. [Diseño Responsive](#diseño-responsive)
+14. [Roles y Permisos](#roles-y-permisos)
+15. [API Endpoints](#api-endpoints)
+16. [Modelos de Datos](#modelos-de-datos)
+17. [Variables de Entorno](#variables-de-entorno)
 
 ---
 
@@ -36,6 +38,29 @@
 │  - FastAPI (Python)                                              │
 │  - MongoDB (Motor async)                                         │
 │  - JWT para autenticación                                        │
+│  - Google OAuth 2.0                                              │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Arquitectura de Despliegue (Producción)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     PRODUCCIÓN                                   │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────────┐         ┌──────────────────┐              │
+│  │ www.posahora.com │ ──────► │ posahora.onrender│              │
+│  │   (Frontend)     │         │     .com         │              │
+│  │   Netlify/Vercel │         │   (Backend)      │              │
+│  └──────────────────┘         └────────┬─────────┘              │
+│                                        │                         │
+│                                        ▼                         │
+│                               ┌──────────────────┐              │
+│                               │    MongoDB       │              │
+│                               │    Atlas         │              │
+│                               └──────────────────┘              │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
