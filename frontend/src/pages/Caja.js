@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import { Wallet, DollarSign, TrendingUp, Clock, CheckCircle, ShoppingCart, Monitor, LogOut } from 'lucide-react';
+import { Wallet, DollarSign, TrendingUp, Clock, CheckCircle, ShoppingCart, Monitor, LogOut, Printer, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
