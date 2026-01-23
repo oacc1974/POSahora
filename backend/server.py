@@ -857,6 +857,254 @@ async def create_session(request: Request, response: Response, body: GoogleSessi
         }
     }
 
+# ============ GOOGLE OAUTH PROPIO ============
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "https://www.posahora.com/auth/google/callback")
+
+class GoogleAuthRequest(BaseModel):
+    code: str
+    nombre_tienda: Optional[str] = None
+    password: Optional[str] = None
+
+@app.post("/api/auth/google")
+async def google_auth(body: GoogleAuthRequest, response: Response):
+    """
+    Intercambia el código de autorización de Google por tokens y autentica al usuario.
+    Si el usuario es nuevo, requiere nombre_tienda y password para crear la cuenta.
+    """
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        raise HTTPException(status_code=500, detail="Google OAuth no configurado en el servidor")
+    
+    # Intercambiar código por tokens con Google
+    async with httpx.AsyncClient() as client:
+        try:
+            token_response = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": body.code,
+                    "client_id": GOOGLE_CLIENT_ID,
+                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "redirect_uri": GOOGLE_REDIRECT_URI,
+                    "grant_type": "authorization_code"
+                },
+                timeout=10.0
+            )
+            
+            if token_response.status_code != 200:
+                error_detail = token_response.json().get("error_description", "Error al obtener token")
+                raise HTTPException(status_code=400, detail=f"Error de Google: {error_detail}")
+            
+            tokens = token_response.json()
+            access_token = tokens.get("access_token")
+            
+            if not access_token:
+                raise HTTPException(status_code=400, detail="No se recibió token de acceso")
+            
+            # Obtener información del usuario de Google
+            user_info_response = await client.get(
+                "https://www.googleapis.com/oauth2/v2/userinfo",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=10.0
+            )
+            
+            if user_info_response.status_code != 200:
+                raise HTTPException(status_code=400, detail="Error al obtener información del usuario")
+            
+            google_user = user_info_response.json()
+            
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=500, detail=f"Error de conexión con Google: {str(e)}")
+    
+    email = google_user.get("email")
+    nombre = google_user.get("name", email.split("@")[0])
+    picture = google_user.get("picture")
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="No se pudo obtener el email de Google")
+    
+    # Buscar si el usuario ya existe
+    user = await db.usuarios.find_one({"email": email}, {"_id": 0})
+    
+    if user:
+        # Usuario existente - iniciar sesión
+        user_id = user.get("_id") or user.get("user_id")
+        
+        # Obtener código de tienda
+        org = await db.organizaciones.find_one({"_id": user["organizacion_id"]}, {"_id": 0})
+        codigo_tienda = org.get("codigo_tienda") if org else None
+        
+        # Crear token JWT
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        jwt_token = create_access_token(
+            data={"sub": user_id, "rol": user["rol"], "organizacion_id": user["organizacion_id"]},
+            expires_delta=access_token_expires
+        )
+        
+        response.set_cookie(
+            key="access_token",
+            value=jwt_token,
+            httponly=True,
+            secure=True,
+            samesite="none",
+            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        )
+        
+        return {
+            "access_token": jwt_token,
+            "token_type": "bearer",
+            "is_new_user": False,
+            "user": {
+                "id": user_id,
+                "nombre": user["nombre"],
+                "email": user["email"],
+                "username": user.get("username"),
+                "rol": user["rol"],
+                "organizacion_id": user["organizacion_id"],
+                "codigo_tienda": codigo_tienda
+            }
+        }
+    else:
+        # Usuario nuevo - necesita nombre_tienda y password
+        if not body.nombre_tienda:
+            return {
+                "is_new_user": True,
+                "needs_registration": True,
+                "email": email,
+                "nombre": nombre,
+                "picture": picture,
+                "message": "Usuario nuevo. Se requiere nombre de tienda y contraseña."
+            }
+        
+        if not body.password:
+            raise HTTPException(status_code=400, detail="Se requiere una contraseña para nuevos usuarios")
+        
+        if len(body.password) < 6:
+            raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 6 caracteres")
+        
+        # Crear nuevo usuario y organización
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        org_id = str(uuid.uuid4())
+        
+        new_user = {
+            "_id": user_id,
+            "user_id": user_id,
+            "nombre": nombre,
+            "email": email,
+            "username": email,
+            "password": get_password_hash(body.password),
+            "picture": picture,
+            "rol": "propietario",
+            "organizacion_id": org_id,
+            "google_auth": True,
+            "creado_por": None,
+            "creado": datetime.now(timezone.utc).isoformat()
+        }
+        await db.usuarios.insert_one(new_user)
+        
+        nueva_org = {
+            "_id": org_id,
+            "nombre": body.nombre_tienda,
+            "codigo_tienda": generar_codigo_tienda(body.nombre_tienda),
+            "propietario_id": user_id,
+            "fecha_creacion": datetime.now(timezone.utc).isoformat(),
+            "ultima_actividad": datetime.now(timezone.utc).isoformat()
+        }
+        await db.organizaciones.insert_one(nueva_org)
+        
+        # Crear tienda por defecto
+        tienda_id = str(uuid.uuid4())
+        nueva_tienda = {
+            "_id": tienda_id,
+            "id": tienda_id,
+            "nombre": "Tienda Principal",
+            "codigo": "001",
+            "codigo_establecimiento": "001",
+            "direccion": "",
+            "telefono": "",
+            "organizacion_id": org_id,
+            "activo": True
+        }
+        await db.tiendas.insert_one(nueva_tienda)
+        
+        # Crear funciones por defecto
+        await db.funciones.insert_one({
+            "_id": str(uuid.uuid4()),
+            "organizacion_id": org_id,
+            "cierres_caja": True,
+            "tickets_abiertos": True,
+            "mesas_por_mesero": False,
+            "tipo_pedido": False,
+            "venta_con_stock": False,
+            "reloj_checador": False,
+            "impresoras_cocina": False,
+            "pantalla_cliente": False
+        })
+        
+        # Crear configuración de ticket
+        await db.ticket_config.insert_one({
+            "_id": str(uuid.uuid4()),
+            "organizacion_id": org_id,
+            "nombre_negocio": body.nombre_tienda,
+            "direccion": "",
+            "telefono": "",
+            "mensaje_pie": "¡Gracias por su compra!",
+            "imprimir_ticket": False,
+            "mostrar_info_cliente": False,
+            "mostrar_comentarios": False
+        })
+        
+        # Crear método de pago por defecto
+        await db.metodos_pago.insert_one({
+            "_id": str(uuid.uuid4()),
+            "id": str(uuid.uuid4()),
+            "nombre": "Efectivo",
+            "organizacion_id": org_id,
+            "activo": True
+        })
+        
+        # Crear impuesto por defecto
+        await db.impuestos.insert_one({
+            "_id": str(uuid.uuid4()),
+            "id": str(uuid.uuid4()),
+            "nombre": "IVA",
+            "porcentaje": 12,
+            "tipo": "agregado",
+            "organizacion_id": org_id,
+            "activo": True
+        })
+        
+        # Crear token JWT
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        jwt_token = create_access_token(
+            data={"sub": user_id, "rol": "propietario", "organizacion_id": org_id},
+            expires_delta=access_token_expires
+        )
+        
+        response.set_cookie(
+            key="access_token",
+            value=jwt_token,
+            httponly=True,
+            secure=True,
+            samesite="none",
+            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        )
+        
+        return {
+            "access_token": jwt_token,
+            "token_type": "bearer",
+            "is_new_user": True,
+            "user": {
+                "id": user_id,
+                "nombre": nombre,
+                "email": email,
+                "username": email,
+                "rol": "propietario",
+                "organizacion_id": org_id,
+                "codigo_tienda": nueva_org["codigo_tienda"]
+            }
+        }
+
 @app.post("/api/auth/register")
 async def register_user(user_data: UserRegister, response: Response):
     existing = await db.usuarios.find_one({"email": user_data.email}, {"_id": 0})
