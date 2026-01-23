@@ -53,7 +53,7 @@
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌──────────────────┐         ┌──────────────────┐              │
-│  │ www.posahora.com │ ──────► │ posahora.onrender│              │
+│  │ www.tu-dominio.com │ ──────► │ posahora.onrender│              │
 │  │   (Frontend)     │         │     .com         │              │
 │  │   Netlify/Vercel │         │   (Backend)      │              │
 │  └──────────────────┘         └────────┬─────────┘              │
@@ -186,7 +186,7 @@ Usuario ingresa código → Valida en /api/tienda/verificar/{codigo}
 │  2. Frontend redirige a Google:                                 │
 │     accounts.google.com/o/oauth2/v2/auth                        │
 │     ?client_id=XXXXXX                                           │
-│     &redirect_uri=https://www.posahora.com/auth/google/callback │
+│     &redirect_uri=https://www.tu-dominio.com/auth/google/callback │
 │     &response_type=code                                         │
 │     &scope=email profile                                        │
 │                      │                                           │
@@ -195,11 +195,11 @@ Usuario ingresa código → Valida en /api/tienda/verificar/{codigo}
 │                      │                                           │
 │                      ▼                                           │
 │  4. Google redirige con código:                                 │
-│     www.posahora.com/auth/google/callback?code=XXXX             │
+│     www.tu-dominio.com/auth/google/callback?code=XXXX             │
 │                      │                                           │
 │                      ▼                                           │
 │  5. Frontend envia código al Backend:                           │
-│     POST posahora.onrender.com/api/auth/google                  │
+│     POST tu-backend.com/api/auth/google                  │
 │     {code: "XXXX"}                                              │
 │                      │                                           │
 │                      ▼                                           │
@@ -239,13 +239,13 @@ En Google Cloud Console → Credentials → Tu OAuth Client:
 
 **Authorized JavaScript origins:**
 ```
-https://posahora.com
-https://www.posahora.com
+https://tu-dominio.com
+https://www.tu-dominio.com
 ```
 
 **Authorized redirect URIs:**
 ```
-https://www.posahora.com/auth/google/callback
+https://www.tu-dominio.com/auth/google/callback
 ```
 
 ### Paso 3: Obtener Credenciales
@@ -256,23 +256,23 @@ Guardar estos valores (se mostrarán solo una vez):
 
 ### Paso 4: Variables de Entorno
 
-**Backend (Render - posahora.onrender.com):**
+**Backend (Render - tu-backend.com):**
 
 | Variable | Valor | Descripción |
 |----------|-------|-------------|
 | `MONGO_URL` | `mongodb+srv://...` | Conexión a MongoDB Atlas |
 | `DB_NAME` | `facturacion_db` | Nombre de la base de datos |
 | `SECRET_KEY` | `tu-clave-secreta-segura` | Clave para JWT (cambiar en producción) |
-| `CORS_ORIGINS` | `https://www.posahora.com,https://posahora.com` | Dominios permitidos |
+| `CORS_ORIGINS` | `https://www.tu-dominio.com,https://tu-dominio.com` | Dominios permitidos |
 | `GOOGLE_CLIENT_ID` | `530102316862-...` | Client ID de Google |
 | `GOOGLE_CLIENT_SECRET` | `GOCSPX-...` | Client Secret de Google |
-| `GOOGLE_REDIRECT_URI` | `https://www.posahora.com/auth/google/callback` | URI de redirección |
+| `GOOGLE_REDIRECT_URI` | `https://www.tu-dominio.com/auth/google/callback` | URI de redirección |
 
-**Frontend (Netlify/Vercel - www.posahora.com):**
+**Frontend (Netlify/Vercel - www.tu-dominio.com):**
 
 | Variable | Valor | Descripción |
 |----------|-------|-------------|
-| `REACT_APP_BACKEND_URL` | `https://posahora.onrender.com` | URL del backend |
+| `REACT_APP_BACKEND_URL` | `https://tu-backend.com` | URL del backend |
 | `REACT_APP_GOOGLE_CLIENT_ID` | `530102316862-...` | Client ID de Google (público) |
 
 ### Archivos Involucrados
@@ -321,7 +321,7 @@ Cuando un usuario nuevo se autentica con Google, se muestra:
    - Solo se usa en el backend para intercambiar el código por tokens
 
 2. **La URI de redirección debe coincidir exactamente**
-   - Si en Google Cloud está `https://www.posahora.com/auth/google/callback`
+   - Si en Google Cloud está `https://www.tu-dominio.com/auth/google/callback`
    - El frontend debe redirigir a exactamente esa URL
 
 3. **El código de autorización es de un solo uso**
@@ -1772,19 +1772,19 @@ DB_NAME="facturacion_db"
 
 # Seguridad
 SECRET_KEY="tu-clave-secreta-muy-segura-cambiar-en-produccion"
-CORS_ORIGINS="https://www.posahora.com,https://posahora.com"
+CORS_ORIGINS="https://www.tu-dominio.com,https://tu-dominio.com"
 
 # Google OAuth
 GOOGLE_CLIENT_ID="530102316862-xxxxx.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="GOCSPX-xxxxx"
-GOOGLE_REDIRECT_URI="https://www.posahora.com/auth/google/callback"
+GOOGLE_REDIRECT_URI="https://www.tu-dominio.com/auth/google/callback"
 ```
 
 ### Frontend (.env)
 
 ```env
 # URL del backend
-REACT_APP_BACKEND_URL="https://posahora.onrender.com"
+REACT_APP_BACKEND_URL="https://tu-backend.com"
 
 # Google OAuth (solo client_id, es público)
 REACT_APP_GOOGLE_CLIENT_ID="530102316862-xxxxx.apps.googleusercontent.com"
@@ -1813,11 +1813,11 @@ REACT_APP_GOOGLE_CLIENT_ID="530102316862-xxxxx.apps.googleusercontent.com"
 │                                                                              │
 │  ┌──────────────────────────────────────┐                                   │
 │  │         FRONTEND (React)              │                                   │
-│  │     https://www.posahora.com          │                                   │
+│  │     https://www.tu-dominio.com          │                                   │
 │  │                                        │                                   │
 │  │  .env:                                 │                                   │
 │  │  REACT_APP_BACKEND_URL=               │                                   │
-│  │    https://posahora.onrender.com      │                                   │
+│  │    https://tu-backend.com      │                                   │
 │  │  REACT_APP_GOOGLE_CLIENT_ID=          │                                   │
 │  │    530102316862-xxx...                │                                   │
 │  └──────────────────┬───────────────────┘                                   │
@@ -1827,15 +1827,15 @@ REACT_APP_GOOGLE_CLIENT_ID="530102316862-xxxxx.apps.googleusercontent.com"
 │                     ▼                                                        │
 │  ┌──────────────────────────────────────┐                                   │
 │  │         BACKEND (FastAPI)             │                                   │
-│  │   https://posahora.onrender.com       │                                   │
+│  │   https://tu-backend.com       │                                   │
 │  │                                        │                                   │
 │  │  .env:                                 │                                   │
 │  │  MONGO_URL=mongodb+srv://...          │                                   │
-│  │  CORS_ORIGINS=https://www.posahora.com│                                   │
+│  │  CORS_ORIGINS=https://www.tu-dominio.com│                                   │
 │  │  GOOGLE_CLIENT_ID=530102316862-xxx... │                                   │
 │  │  GOOGLE_CLIENT_SECRET=GOCSPX-xxx...   │                                   │
 │  │  GOOGLE_REDIRECT_URI=                 │                                   │
-│  │    https://www.posahora.com/          │                                   │
+│  │    https://www.tu-dominio.com/          │                                   │
 │  │    auth/google/callback               │                                   │
 │  └──────────────────┬───────────────────┘                                   │
 │                     │                                                        │
@@ -1869,7 +1869,7 @@ app.add_middleware(
 CORS_ORIGINS=*
 
 # Producción (separar por comas, sin espacios)
-CORS_ORIGINS=https://www.posahora.com,https://posahora.com
+CORS_ORIGINS=https://www.tu-dominio.com,https://tu-dominio.com
 ```
 
 ### Endpoints API - Tabla de Referencia
@@ -2067,7 +2067,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      - REACT_APP_BACKEND_URL=https://api.posahora.com
+      - REACT_APP_BACKEND_URL=https://api.tu-dominio.com
   
   mongo:
     image: mongo:6
