@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import LoginPOS from './pages/LoginPOS';
 import Register from './pages/Register';
 import AuthCallback from './pages/AuthCallback';
+import GoogleCallback from './pages/GoogleCallback';
 import Dashboard from './pages/Dashboard';
 import Productos from './pages/Productos';
 import POS from './pages/POS';
