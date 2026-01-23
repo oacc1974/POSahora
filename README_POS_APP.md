@@ -18,6 +18,8 @@
 15. [API Endpoints](#api-endpoints)
 16. [Modelos de Datos](#modelos-de-datos)
 17. [Variables de Entorno](#variables-de-entorno)
+18. [Conexiones Frontend - Backend](#conexiones-frontend--backend)
+19. [Despliegue](#despliegue)
 
 ---
 
