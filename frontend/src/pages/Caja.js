@@ -196,12 +196,13 @@ export default function Caja({ onLogout }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      printCierreCaja(response.data);
+      // Guardar datos del cierre para mostrar resumen
+      setResumenCierre(response.data);
+      setShowCierre(false);
+      setShowResumenCierre(true);
       
       setCajaActiva(null);
-      setShowCierre(false);
       setEfectivoContado('');
-      toast.success('Caja cerrada correctamente');
       fetchHistorial();
       if (isAdmin) fetchCajasAbiertas();
     } catch (error) {
