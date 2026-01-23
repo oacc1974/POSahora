@@ -1849,22 +1849,6 @@ REACT_APP_GOOGLE_CLIENT_ID="530102316862-xxxxx.apps.googleusercontent.com"
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Configuración de URLs por Entorno
-
-**Desarrollo (Local):**
-```
-Frontend:  http://localhost:3000
-Backend:   http://localhost:8001
-MongoDB:   mongodb://localhost:27017
-```
-
-**Producción:**
-```
-Frontend:  https://www.posahora.com (Netlify/Vercel)
-Backend:   https://posahora.onrender.com (Render)
-MongoDB:   mongodb+srv://usuario:pass@cluster.mongodb.net (Atlas)
-```
-
 ### Configuración CORS
 
 El backend debe permitir requests del frontend. En `server.py`:
