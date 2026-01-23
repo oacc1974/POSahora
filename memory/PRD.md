@@ -14,11 +14,32 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 - **Frontend:** React 19, TailwindCSS, Shadcn/UI, Recharts
 - **Backend:** FastAPI, Motor (async MongoDB)
 - **Base de Datos:** MongoDB
-- **Autenticación:** JWT + Google OAuth (emergentintegrations)
+- **Autenticación:** JWT + Google OAuth propio (para despliegue externo)
 
 ## Funcionalidades Implementadas
 
-### Completadas (21 Enero 2026)
+### Completadas (23 Enero 2026)
+
+- [x] **Google OAuth Propio para Despliegue Externo**
+  - Endpoint `POST /api/auth/google` para intercambiar código por token
+  - Nuevo componente `GoogleCallback.js` para manejar callback
+  - Variables de entorno configurables: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
+  - Formulario de registro para usuarios nuevos (nombre del negocio + contraseña)
+  - Documentación completa en README_POS_APP.md
+
+- [x] **Mejoras en Cierre de Caja**
+  - Diálogo de resumen después del cierre con todos los detalles
+  - Botón "Imprimir" para imprimir el resumen
+  - Botón "Volver" para regresar a pantalla anterior
+  - Botón "Cerrar" para cerrar el diálogo
+
+- [x] **Menú del POS Simplificado**
+  - Menú hamburguesa igual para todos los roles
+  - Opciones: Punto de Venta, Recibos, Caja
+  - "Backoffice" solo visible para Admin/Propietario
+  - Iconos simples de lucide-react (sin emojis)
+
+### Completadas (21-22 Enero 2026)
 
 - [x] **Sistema de Login por PIN con Código de Tienda (VERIFICADO)**
   - **Flujo de 2 pasos:** Primero ingresa Código de Tienda, luego PIN
