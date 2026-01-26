@@ -46,7 +46,7 @@ export const feApi = {
    * Guarda la configuración del emisor
    */
   saveEmitterConfig: async (data) => {
-    const response = await fetch(`${FE_API_URL}/fe/config/emitter`, {
+    const response = await fetch(`${FE_API_URL}/api/fe/config/emitter`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
@@ -62,7 +62,7 @@ export const feApi = {
     formData.append('file', file);
     formData.append('password', password);
     
-    const response = await fetch(`${FE_API_URL}/fe/config/certificate`, {
+    const response = await fetch(`${FE_API_URL}/api/fe/config/certificate`, {
       method: 'POST',
       headers: { 'X-Tenant-ID': getTenantId() },
       body: formData
@@ -74,7 +74,7 @@ export const feApi = {
    * Obtiene la configuración actual
    */
   getConfig: async () => {
-    const response = await fetch(`${FE_API_URL}/fe/config`, {
+    const response = await fetch(`${FE_API_URL}/api/fe/config`, {
       headers: getHeaders()
     });
     return handleResponse(response);
@@ -84,7 +84,7 @@ export const feApi = {
    * Elimina el certificado
    */
   deleteCertificate: async () => {
-    const response = await fetch(`${FE_API_URL}/fe/config/certificate`, {
+    const response = await fetch(`${FE_API_URL}/api/fe/config/certificate`, {
       method: 'DELETE',
       headers: getHeaders()
     });
@@ -97,7 +97,7 @@ export const feApi = {
    * Crea una factura electrónica
    */
   createInvoice: async (data) => {
-    const response = await fetch(`${FE_API_URL}/fe/documents/invoice`, {
+    const response = await fetch(`${FE_API_URL}/api/fe/documents/invoice`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
@@ -109,7 +109,7 @@ export const feApi = {
    * Crea una nota de crédito
    */
   createCreditNote: async (data) => {
-    const response = await fetch(`${FE_API_URL}/fe/documents/credit-note`, {
+    const response = await fetch(`${FE_API_URL}/api/fe/documents/credit-note`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
@@ -130,7 +130,7 @@ export const feApi = {
     if (filters.date_to) params.append('date_to', filters.date_to);
     if (filters.customer_id) params.append('customer_id', filters.customer_id);
     
-    const response = await fetch(`${FE_API_URL}/fe/documents?${params}`, {
+    const response = await fetch(`${FE_API_URL}/api/fe/documents?${params}`, {
       headers: getHeaders()
     });
     return handleResponse(response);
@@ -140,7 +140,7 @@ export const feApi = {
    * Obtiene un documento por ID
    */
   getDocument: async (documentId) => {
-    const response = await fetch(`${FE_API_URL}/fe/documents/${documentId}`, {
+    const response = await fetch(`${FE_API_URL}/api/fe/documents/${documentId}`, {
       headers: getHeaders()
     });
     return handleResponse(response);
@@ -150,7 +150,7 @@ export const feApi = {
    * Descarga el XML de un documento
    */
   downloadXML: async (documentId) => {
-    const response = await fetch(`${FE_API_URL}/fe/documents/${documentId}/xml`, {
+    const response = await fetch(`${FE_API_URL}/api/fe/documents/${documentId}/xml`, {
       headers: { 'X-Tenant-ID': getTenantId() }
     });
     
@@ -166,7 +166,7 @@ export const feApi = {
    * Descarga el PDF de un documento
    */
   downloadPDF: async (documentId) => {
-    const response = await fetch(`${FE_API_URL}/fe/documents/${documentId}/pdf`, {
+    const response = await fetch(`${FE_API_URL}/api/fe/documents/${documentId}/pdf`, {
       headers: { 'X-Tenant-ID': getTenantId() }
     });
     
@@ -182,7 +182,7 @@ export const feApi = {
    * Reenvía un documento al SRI
    */
   resendDocument: async (documentId) => {
-    const response = await fetch(`${FE_API_URL}/fe/documents/${documentId}/resend`, {
+    const response = await fetch(`${FE_API_URL}/api/fe/documents/${documentId}/resend`, {
       method: 'POST',
       headers: getHeaders()
     });
@@ -195,7 +195,7 @@ export const feApi = {
    * Verifica el estado del servicio FE
    */
   healthCheck: async () => {
-    const response = await fetch(`${FE_API_URL}/fe/health`);
+    const response = await fetch(`${FE_API_URL}/api/fe/health`);
     return handleResponse(response);
   },
 
