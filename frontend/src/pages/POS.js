@@ -242,6 +242,7 @@ export default function POS() {
       setTipoPedidoFuncionActiva(response.data.tipo_pedido);
       setVentaConStock(response.data.venta_con_stock);
       setMesasPorMeseroActiva(response.data.mesas_por_mesero || false);
+      setFacturacionElectronicaActiva(response.data.facturacion_electronica || false);
       
       // Si tickets abiertos está activo, cargar la lista
       if (response.data.tickets_abiertos) {
