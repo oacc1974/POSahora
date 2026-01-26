@@ -111,15 +111,15 @@ async def save_emitter_config(
     # Crear/actualizar store (establecimiento)
     store_key = {
         "tenant_id": tenant_id,
-        "store_code": config.establecimiento,
-        "emission_point": config.punto_emision
+        "store_code": establecimiento,
+        "emission_point": punto_emision
     }
     
     await db.stores.update_one(
         store_key,
         {
             "$set": {
-                "name": f"Establecimiento {config.establecimiento}",
+                "name": f"Establecimiento {establecimiento}",
                 "address": config.direccion,
                 "phone": config.telefono,
                 "is_active": True,
