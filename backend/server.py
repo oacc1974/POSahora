@@ -4153,3 +4153,56 @@ async def get_empleados_filtro(current_user: dict = Depends(get_current_user)):
 @app.get("/api/")
 async def root():
     return {"message": "Sistema de Facturación API"}
+
+# ============ PROXY PARA BACKEND DE FACTURACIÓN ELECTRÓNICA ============
+# Redirige todas las peticiones /api/fe/* al backend-fe (puerto 8002)
+
+BACKEND_FE_URL = os.environ.get("BACKEND_FE_URL", "http://localhost:8002")
+
+@app.api_route("/api/fe/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+async def proxy_fe(request: Request, path: str):
+    """
+    Proxy para el backend de Facturación Electrónica
+    Redirige todas las peticiones /api/fe/* al backend-fe
+    """
+    # Construir URL destino
+    target_url = f"{BACKEND_FE_URL}/fe/{path}"
+    
+    # Copiar query params
+    if request.query_params:
+        target_url += f"?{request.query_params}"
+    
+    # Copiar headers relevantes
+    headers = {}
+    for key, value in request.headers.items():
+        if key.lower() not in ['host', 'content-length']:
+            headers[key] = value
+    
+    # Obtener body si existe
+    body = await request.body()
+    
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            response = await client.request(
+                method=request.method,
+                url=target_url,
+                headers=headers,
+                content=body
+            )
+            
+            # Filtrar headers de respuesta
+            response_headers = {}
+            for key, value in response.headers.items():
+                if key.lower() not in ['content-encoding', 'content-length', 'transfer-encoding']:
+                    response_headers[key] = value
+            
+            return Response(
+                content=response.content,
+                status_code=response.status_code,
+                headers=response_headers,
+                media_type=response.headers.get('content-type')
+            )
+        except httpx.TimeoutException:
+            raise HTTPException(status_code=504, detail="Timeout conectando con servicio de facturación electrónica")
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Error conectando con servicio de facturación electrónica: {str(e)}")
