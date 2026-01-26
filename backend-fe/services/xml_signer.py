@@ -59,8 +59,8 @@ def get_certificate_info(certificate: x509.Certificate) -> dict:
         "subject": ", ".join(subject_parts),
         "issuer": ", ".join(issuer_parts),
         "serial_number": str(certificate.serial_number),
-        "valid_from": certificate.not_valid_before_utc.replace(tzinfo=None),
-        "valid_to": certificate.not_valid_after_utc.replace(tzinfo=None)
+        "valid_from": certificate.not_valid_before,
+        "valid_to": certificate.not_valid_after
     }
 
 def canonicalize(element: etree._Element) -> bytes:
