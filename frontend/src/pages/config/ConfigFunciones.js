@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Wallet, ClipboardList, ShoppingBag, ExternalLink, Clock, Printer, Monitor, AlertTriangle, Users } from 'lucide-react';
+import { Wallet, ClipboardList, ShoppingBag, ExternalLink, Clock, Printer, Monitor, AlertTriangle, Users, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function ConfigFunciones() {
+  const navigate = useNavigate();
   const [funciones, setFunciones] = useState({
     cierres_caja: true,
     tickets_abiertos: false,
@@ -17,6 +19,7 @@ export default function ConfigFunciones() {
     impresoras_cocina: false,
     pantalla_clientes: false,
     mesas_por_mesero: false,
+    facturacion_electronica: false,
     tickets_abiertos_count: 0,
   });
 
