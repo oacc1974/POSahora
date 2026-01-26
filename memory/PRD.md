@@ -264,8 +264,31 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 - **Contraseña:** admin*88
 
 ## Test Reports
+- `/app/test_reports/iteration_6.json` - Tests del módulo de Facturación Electrónica - 100% passed (10/10 backend, frontend OK)
 - `/app/test_reports/iteration_5.json` - Tests del nuevo header unificado y cajero indicator - 100% passed
 - `/app/test_reports/iteration_4.json` - Tests de UI del TPV (diálogo de cobro, botones billetes, tema azul) - 100% passed
 - `/app/test_reports/iteration_3.json` - Tests de funciones del menú del TPV (Dividir, Combinar, Despejar, Guardar) - 100% passed
 - `/app/test_reports/iteration_2.json` - Tests de DateRangePicker y ConfigFunciones
 - `/app/tests/test_funciones_api.py` - Pytest para API de funciones
+
+## Arquitectura de Servicios
+
+```
+/app/
+├── backend/              # Backend POS principal (puerto 8001)
+│   └── server.py         # FastAPI con proxy a backend-fe
+├── backend-fe/           # Backend Facturación Electrónica (puerto 8002)
+│   ├── server.py         # FastAPI multi-tenant
+│   ├── models/           # Modelos Pydantic
+│   ├── routes/           # config, documents, health
+│   ├── services/         # XML, firma, SOAP, PDF
+│   └── utils/            # crypto, validators
+└── frontend/             # React 19 (puerto 3000)
+    └── src/
+        ├── pages/fe/     # ConfiguracionFE, DocumentosElectronicos
+        └── services/     # feApi.js
+```
+
+## Bases de Datos
+- **pos_db:** Base de datos principal del POS
+- **fe_db:** Base de datos de facturación electrónica (tenants, stores, configs_fiscal, certificates, documents, document_xml, counters, document_events)
