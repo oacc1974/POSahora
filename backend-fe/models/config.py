@@ -21,8 +21,9 @@ class EmitterConfig(BaseModel):
     direccion: str = Field(..., min_length=1, max_length=300)
     telefono: Optional[str] = None
     email: EmailStr
-    establecimiento: str = Field(default="001", min_length=3, max_length=3)
-    punto_emision: str = Field(default="001", min_length=3, max_length=3)
+    # Permitir más caracteres pero validar en el endpoint
+    establecimiento: str = Field(default="001", max_length=50)
+    punto_emision: str = Field(default="001", max_length=50)
     ambiente: Ambiente = Ambiente.PRUEBAS
     obligado_contabilidad: ObligadoContabilidad = ObligadoContabilidad.NO
     tipo_contribuyente: Optional[str] = None
