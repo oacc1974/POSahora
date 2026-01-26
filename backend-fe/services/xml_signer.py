@@ -1,6 +1,6 @@
 """
 Firmador de XML con XAdES-BES para SRI Ecuador
-Utiliza signxml y cryptography para firmar documentos electrónicos
+Utiliza cryptography para firmar documentos electrónicos
 """
 import base64
 import hashlib
@@ -8,10 +8,10 @@ from datetime import datetime, timezone
 from typing import Tuple, Optional
 from lxml import etree
 from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.backends import default_backend
-from cryptography.x509 import load_der_x509_certificate
-from OpenSSL import crypto
+from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography import x509
 import uuid
 
 # Namespaces para firma XML
@@ -20,31 +20,47 @@ NSMAP = {
     'etsi': 'http://uri.etsi.org/01903/v1.3.2#'
 }
 
-def load_p12_certificate(p12_data: bytes, password: str) -> Tuple[crypto.PKey, crypto.X509]:
+def load_p12_certificate(p12_data: bytes, password: str) -> Tuple:
     """
     Carga certificado .p12 y extrae clave privada y certificado
+    Usa cryptography en lugar de pyOpenSSL
     """
     try:
-        p12 = crypto.load_pkcs12(p12_data, password.encode())
-        private_key = p12.get_privatekey()
-        certificate = p12.get_certificate()
+        private_key, certificate, additional_certs = pkcs12.load_key_and_certificates(
+            p12_data, 
+            password.encode(), 
+            default_backend()
+        )
         return private_key, certificate
     except Exception as e:
         raise ValueError(f"Error al cargar certificado .p12: {str(e)}")
 
-def get_certificate_info(certificate: crypto.X509) -> dict:
+def get_certificate_info(certificate: x509.Certificate) -> dict:
     """
-    Extrae información del certificado
+    Extrae información del certificado usando cryptography
     """
-    subject = certificate.get_subject()
-    issuer = certificate.get_issuer()
+    # Extraer subject como string
+    subject_parts = []
+    for attr in certificate.subject:
+        try:
+            subject_parts.append(f"{attr.oid._name}={attr.value}")
+        except:
+            subject_parts.append(f"{attr.oid.dotted_string}={attr.value}")
+    
+    # Extraer issuer como string
+    issuer_parts = []
+    for attr in certificate.issuer:
+        try:
+            issuer_parts.append(f"{attr.oid._name}={attr.value}")
+        except:
+            issuer_parts.append(f"{attr.oid.dotted_string}={attr.value}")
     
     return {
-        "subject": ", ".join([f"{name.decode()}={value.decode()}" for name, value in subject.get_components()]),
-        "issuer": ", ".join([f"{name.decode()}={value.decode()}" for name, value in issuer.get_components()]),
-        "serial_number": str(certificate.get_serial_number()),
-        "valid_from": datetime.strptime(certificate.get_notBefore().decode(), "%Y%m%d%H%M%SZ"),
-        "valid_to": datetime.strptime(certificate.get_notAfter().decode(), "%Y%m%d%H%M%SZ")
+        "subject": ", ".join(subject_parts),
+        "issuer": ", ".join(issuer_parts),
+        "serial_number": str(certificate.serial_number),
+        "valid_from": certificate.not_valid_before_utc.replace(tzinfo=None),
+        "valid_to": certificate.not_valid_after_utc.replace(tzinfo=None)
     }
 
 def canonicalize(element: etree._Element) -> bytes:
@@ -72,7 +88,7 @@ def sign_xml_xades_bes(xml_content: str, p12_data: bytes, password: str) -> str:
     Returns:
         XML firmado como string
     """
-    # Cargar certificado
+    # Cargar certificado usando cryptography
     private_key, certificate = load_p12_certificate(p12_data, password)
     cert_info = get_certificate_info(certificate)
     
@@ -141,20 +157,16 @@ def sign_xml_xades_bes(xml_content: str, p12_data: bytes, password: str) -> str:
     x509_data = etree.SubElement(key_info, "{http://www.w3.org/2000/09/xmldsig#}X509Data")
     x509_cert = etree.SubElement(x509_data, "{http://www.w3.org/2000/09/xmldsig#}X509Certificate")
     
-    # Certificado en Base64
-    cert_der = crypto.dump_certificate(crypto.FILETYPE_ASN1, certificate)
+    # Certificado en Base64 usando cryptography
+    cert_der = certificate.public_bytes(serialization.Encoding.DER)
     x509_cert.text = base64.b64encode(cert_der).decode()
     
     key_value = etree.SubElement(key_info, "{http://www.w3.org/2000/09/xmldsig#}KeyValue")
     rsa_key_value = etree.SubElement(key_value, "{http://www.w3.org/2000/09/xmldsig#}RSAKeyValue")
     
-    # Extraer modulus y exponent
-    pub_key = certificate.get_pubkey()
-    pub_key_pem = crypto.dump_publickey(crypto.FILETYPE_PEM, pub_key)
-    
-    from cryptography.hazmat.primitives.serialization import load_pem_public_key
-    pub_key_crypto = load_pem_public_key(pub_key_pem, backend=default_backend())
-    pub_numbers = pub_key_crypto.public_numbers()
+    # Extraer modulus y exponent de la clave pública
+    pub_key = certificate.public_key()
+    pub_numbers = pub_key.public_numbers()
     
     modulus_bytes = pub_numbers.n.to_bytes((pub_numbers.n.bit_length() + 7) // 8, byteorder='big')
     exponent_bytes = pub_numbers.e.to_bytes((pub_numbers.e.bit_length() + 7) // 8, byteorder='big')
@@ -198,11 +210,15 @@ def sign_xml_xades_bes(xml_content: str, p12_data: bytes, password: str) -> str:
     props_digest = base64.b64encode(hashlib.sha1(canonicalize(signed_props)).digest()).decode()
     etree.SubElement(ref_props, "{http://www.w3.org/2000/09/xmldsig#}DigestValue").text = props_digest
     
-    # Calcular SignatureValue
+    # Calcular SignatureValue usando cryptography
     signed_info_c14n = canonicalize(signed_info)
     
-    # Firmar con clave privada
-    signature_bytes = crypto.sign(private_key, signed_info_c14n, "sha1")
+    # Firmar con clave privada usando cryptography
+    signature_bytes = private_key.sign(
+        signed_info_c14n,
+        padding.PKCS1v15(),
+        hashes.SHA1()
+    )
     sig_value.text = base64.b64encode(signature_bytes).decode()
     
     # Retornar XML firmado
