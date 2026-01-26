@@ -37,7 +37,15 @@ async def save_emitter_config(
     tenant_id = await get_tenant_id(request)
     db = request.app.state.db
     
-    print(f"DEBUG: Received emitter config: {config}")  # DEBUG
+    # Sanitizar establecimiento y punto_emision (deben ser códigos de 3 dígitos)
+    establecimiento = config.establecimiento.strip()
+    punto_emision = config.punto_emision.strip()
+    
+    # Si vienen con valores incorrectos (URLs, textos largos), usar valores por defecto
+    if len(establecimiento) > 3 or not establecimiento.isdigit():
+        establecimiento = "001"
+    if len(punto_emision) > 3 or not punto_emision.isdigit():
+        punto_emision = "001"
     
     # Validar RUC
     valid, msg = validate_ruc(config.ruc)
