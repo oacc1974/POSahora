@@ -1,152 +1,158 @@
 <analysis>**original_problem_statement:**
-El usuario solicitó la creación de un sistema de Punto de Venta (POS) con roles, multi-tenancy, autenticación y gestión de tiendas, productos y facturación. En la sesión actual, el usuario solicitó correcciones de errores críticos relacionados con el inicio de sesión por PIN, el manejo de imágenes en despliegues externos, y la adición y refinamiento de funcionalidades para un entorno multiempleado, como la gestión de cajas (TPV) y mesas compartidas. Finalmente, solicitó la creación de un documento  exhaustivo que detallara todas las funcionalidades del POS para guiar el desarrollo de una aplicación nativa.
-
-**PRODUCT REQUIREMENTS (Recientes):**
-1.  **Corrección de Bugs de Login por PIN:** Solucionar errores de código de tienda no válido, errores de portapapeles y un error crítico que causaba  en todas las peticiones API después de un login por PIN exitoso.
-2.  **Portabilidad de Imágenes:** Refactorizar el sistema para que las imágenes de productos y logos no se rompan al desplegar el frontend y backend en servidores diferentes (ej. Netlify).
-3.  **Botón de Cerrar Sesión:** Añadir un botón de Cerrar Sesión en la pantalla de Gestión de Caja para roles que no son administradores (cajero, mesero).
-4.  **Lógica de Mesas Compartidas (Multiempleado):** Implementar un sistema de permisos configurable donde:
-    *   Por defecto, todos los empleados ven y pueden editar todas las mesas (tickets abiertos).
-    *   Con una nueva opción (Mesas por mesero), los meseros solo pueden editar sus propias mesas, pero los cajeros pueden acceder a cualquiera para cobrar.
-5.  **Lógica de Creación de TPV (Cajas):** Ajustar el flujo para que el primer TPV de una organización se cree automáticamente, pero los siguientes deban ser creados manualmente por el usuario si todos los existentes están ocupados.
-6.  **Validación de Duplicados de TPV:** Limpiar TPVs duplicados existentes y añadir validación para prevenir que se creen múltiples TPVs con el mismo punto de emisión en la misma organización.
-7.  **Consistencia en Numeración de Facturas:** Eliminar la numeración de respaldo () y asegurar que todas las facturas sigan el formato , creando un TPV sobre la marcha si es necesario.
-8.  **Documentación Completa:** Generar un archivo  detallado con todos los flujos, diseños y funcionalidades del sistema POS.
+El usuario solicitó inicialmente un sistema de Punto de Venta (POS). Durante esta sesión, los requerimientos evolucionaron significativamente:
+1.  **Ajustes de UX/UI en el POS:**
+    *   Modificar el menú de navegación del POS para que ciertas opciones (Punto de Venta, Recibos, Caja) sean visibles para todos los roles, y una opción Backoffice sea exclusiva para administradores.
+    *   Cambiar el flujo de Cerrar Caja para que, en lugar de imprimir automáticamente, muestre un modal de resumen con opciones para Imprimir, Volver o Cerrar.
+    *   Añadir la atribución Desarrollado por Golmarc.com en la pantalla de login.
+2.  **Preparación para Producción:**
+    *   Implementar un flujo de autenticación de Google OAuth 2.0 completo, utilizando las credenciales y dominios proporcionados por el usuario (, ), para que funcione fuera del entorno de desarrollo.
+    *   Documentar exhaustivamente esta nueva configuración y la arquitectura de conexión en .
+3.  **Nueva Funcionalidad Crítica (Facturación Electrónica SRI):**
+    *   El usuario proporcionó un plan de implementación extremadamente detallado para construir un sistema completo de facturación electrónica para el SRI de Ecuador.
+    *   Este sistema debe ser un **backend separado ()**, multi-tenant desde el inicio, con su propia base de datos (), que se comunicará con el POS existente.
+    *   El POS actuará como un cliente de este nuevo servicio para configurar el emisor, enviar ventas para facturación, y consultar documentos electrónicos (XML/PDF).
+    *   Se especificó que no se debe usar almacenamiento externo como S3 para los XML, sino guardarlos comprimidos en MongoDB.
 
 **User's preferred language**: Spanish. The next agent MUST respond in Spanish.
 
 **what currently exists?**
-Un sistema POS full-stack funcional y robusto (React/FastAPI/MongoDB). Esta sesión se centró en corregir bugs críticos, robustecer la lógica multiempleado y mejorar la portabilidad de la aplicación.
-*   **Se corrigieron todos los bugs relacionados con el login por PIN**, incluyendo la validación del código de tienda, errores de  post-login debido a un token JWT malformado, y una condición de carrera en el frontend.
-*   **Se refactorizó el almacenamiento de imágenes**: ahora se comprimen con  y se guardan como strings **Base64** en MongoDB, lo que garantiza que funcionen en cualquier entorno de despliegue. Se ejecutó un script para migrar las imágenes existentes.
-*   **Se implementó la lógica de permisos para mesas compartidas**, con una nueva opción en la configuración para alternar entre el modo colaborativo total y el modo mesas por mesero.
-*   **Se ajustó y validó la lógica de creación y asignación de TPVs** para prevenir duplicados y seguir las nuevas reglas de negocio especificadas por el usuario.
-*   **Se eliminó la numeración de facturas de respaldo**, asegurando que todas las facturas sigan el formato estándar y creando los recursos necesarios (TPV/Tienda) si no existen al momento de facturar.
-*   **Se añadió un botón de Cerrar Sesión** para roles no administrativos en la pantalla de gestión de caja.
-*   Se creó un documento exhaustivo  que detalla el funcionamiento completo del POS.
+El sistema es ahora una arquitectura de dos backends:
+1.  **POS Existente ():** Sigue siendo el núcleo del punto de venta. En esta sesión se modificó la lógica de cierre de caja y la autenticación de Google.
+2.  **Backend de Facturación Electrónica ():** Un servicio completamente nuevo y separado, creado como un esqueleto funcional. El agente creó toda la estructura de directorios (, , , ), instaló las dependencias (, , ), configuró el servidor FastAPI y lo puso en marcha con . Actualmente, solo el endpoint  funciona.
+
+En el frontend, se implementaron los cambios de UX/UI solicitados (menú del POS, modal de cierre de caja, enlace en el login) y se creó el esqueleto de los nuevos componentes para la facturación electrónica (, , ). La documentación () fue actualizada masivamente para reflejar todos estos cambios.
 
 **Last working item**:
-- **Last item agent was working**: Creación de un documento  muy detallado que documenta todos los flujos, diseño de pantallas y funcionalidades del sistema POS, según la solicitud explícita del usuario.
-- **Status**: FINISHED
-- **Agent Testing Done**: N/A
-- **Which testing method agent to use?**: N/A
+- **Last item agent was working**: Implementación de la nueva funcionalidad de Facturación Electrónica SRI. El agente acaba de terminar de crear toda la estructura de archivos y directorios para el nuevo  y los componentes de frontend correspondientes. Se instalaron dependencias, se configuró  y se verificó que el nuevo servicio se inicie correctamente. Estaba a punto de añadir las nuevas rutas al  del frontend.
+- **Status**: IN PROGRESS
+- **Agent Testing Done**: N (Solo se verificó que el nuevo servicio  se inicia y el endpoint  responde).
+- **Which testing method agent to use?**: both. Esta es una característica masiva. El backend debe ser probado con el  a medida que se completan los flujos (configuración, emisión). El frontend requerirá el  para validar la interacción del usuario.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- No hay issues pendientes. Todos los bugs reportados en la sesión fueron resueltos.
+- No hay bugs pendientes. El único issue es la tarea principal en curso.
 
 **In progress Task List**:
-- No hay tareas en progreso.
+- **Task 1: Implementar la lógica del Backend de Facturación Electrónica (SRI) (P0)**
+    - **Where to resume**:
+        1.  Completar la adición de las nuevas rutas de FE (, ) en .
+        2.  Comenzar a implementar la lógica en los archivos del . El orden sugerido por el plan es:
+            *   Implementar el middleware de tenant () e integrarlo en .
+            *   Implementar los endpoints de configuración () para  y .
+            *   Implementar la lógica en el frontend () para consumir estos endpoints y probar el flujo de configuración inicial.
+    - **What will be achieved with this?**: Se construirá un sistema multi-tenant completo para la facturación electrónica del SRI, integrándolo con el POS existente.
+    - **Status**: IN PROGRESS
+    - **Should Test frontend/backend/both after fix?**: Both
+    - **Blocked on something**: No. El plan del usuario es muy detallado.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P0: Revisión de Documentación:** Esperar el feedback del usuario sobre el archivo  creado.
-    - **P1: Mostrar logo en el recibo impreso:** Verificar que el logo (ahora en Base64) se renderice correctamente en la plantilla de impresión del recibo en  y .
-    - **P2: Implementar Funciones de configuración:** Añadir la lógica de backend y frontend para Reloj checador, Impresoras de cocina y Pantalla para clientes.
+    - **P0: Completar Fase 1 de la implementación de Facturación Electrónica SRI**, siguiendo el plan del usuario.
 - **Future Tasks:**
-    - **P3: Configurar la aplicación como PWA (Progressive Web App):** El agente sugirió esta opción y el usuario mostró interés. Implica añadir un manifest y un service worker para que la app sea instalable.
-    - **P4: Añadir búsqueda por rango de montos:** En el reporte de Recibos.
-    - **P5: Añadir opción de enviar recibo por email.**
-    - **P6: Añadir pie de página personalizado al recibo.**
+    - **P1:** Implementar las funciones pendientes en el POS: Reloj checador, Impresoras de cocina, Pantalla para clientes.
+    - **P2:** Convertir la aplicación a PWA (Progressive Web App).
+    - **P3:** Añadir búsqueda por rango de montos en el reporte de Recibos.
+    - **P4:** Añadir la opción de enviar recibo por email.
 
 **Completed work in this session**
-- **Bug Fix - Login por PIN:** Se corrigió la generación de tokens JWT ( ahora usa ), la serialización de  en la respuesta y una condición de carrera en el frontend () que causaba errores .
-- **Bug Fix - Código de Tienda:** Se unificó la lógica de verificación en  para que revise tanto el campo  como .
-- **Bug Fix - Portapapeles:** Se añadió un fallback en  para que la función de copiar funcione en contextos no seguros.
-- **Feature - Almacenamiento de Imágenes en Base64:** Se refactorizaron los endpoints de subida de imágenes en  para usar  para compresión y guardar las imágenes como strings Base64 en MongoDB, solucionando problemas de portabilidad. Se migraron las imágenes existentes.
-- **Feature - Lógica Avanzada de Mesas Compartidas:** Se implementó una nueva funcionalidad configurable (Mesas por mesero) que restringe la edición de mesas a su creador (si es mesero), mientras que los cajeros pueden acceder a todas. Se modificaron los endpoints y el frontend (, ).
-- **Feature - Gestión Mejorada de TPVs:** Se limpiaron TPVs duplicados, se añadió validación en  para prevenir duplicados de  y se ajustó la lógica de creación automática para que solo actúe la primera vez.
-- **Feature - Numeración de Facturas Robusta:** Se eliminó el formato de fallback  en , asegurando que todas las facturas sigan el formato .
-- **Feature - Botón de Cerrar Sesión:** Se añadió un botón de logout en  para roles no-admin.
-- **Documentation - README Detallado:** Se creó el archivo  documentando todo el sistema.
+- **Feature - Google OAuth para Producción:** Se refactorizó completamente el login de Google para usar las credenciales propias del usuario, eliminando la dependencia del entorno de Emergent. Se crearon los componentes y rutas necesarias (, ).
+- **Feature - Mejora en Cierre de Caja:** Se reemplazó la impresión automática al cerrar caja por un modal de resumen con opciones para imprimir, volver o cerrar.
+- **UI/UX - Menú del POS:** Se ajustó la visibilidad del menú lateral del POS según el rol del usuario (Admin vs. Cajero/Mesero).
+- **UI/UX - Branding:** Se añadió el texto Desarrollado por Golmarc.com en la página de Login.
+- **Scaffolding - Backend Facturación Electrónica:** Se creó y configuró toda la estructura del nuevo servicio , incluyendo directorios, archivos base, dependencias y configuración de .
+- **Documentation:** Se actualizó masivamente el  con la nueva arquitectura, el flujo de Google OAuth, la lista completa de endpoints y las variables de entorno para producción. Se eliminaron referencias a dominios específicos.
 
 **Earlier issues found/mentioned but not fixed**
 - Ninguno.
 
 **Known issue recurrence from previous fork**
-- Ninguno. El problema de desincronización de fechas no se manifestó en esta sesión.
+- Ninguno.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **JWT Debugging:** Se identificó y corrigió una inconsistencia en el campo  del token JWT entre diferentes flujos de autenticación.
-- **Base64 Image Storage:** Se migró de un sistema de archivos a un almacenamiento en base de datos para portabilidad, utilizando la librería  para compresión de imágenes en el backend.
-- **Role-Based Access Control (RBAC):** Se implementó una lógica de permisos compleja y configurable para el acceso a recursos compartidos (mesas/tickets) basada en el rol del usuario (Mesero vs. Cajero).
-- **Database Integrity:** Se ejecutaron scripts de limpieza y se añadieron validaciones en el backend para prevenir la corrupción de datos (TPVs duplicados).
-- **Asynchronous State Management in React:** Se solucionó una condición de carrera (race condition) relacionada con la disponibilidad del token de autenticación en  tras una redirección.
+- **Arquitectura de Microservicios:** La aplicación está evolucionando a un sistema de dos backends (POS y FE) que se comunican por API REST, promoviendo la separación de responsabilidades.
+- **Multi-tenancy:** El nuevo  se está construyendo desde cero con un enfoque multi-tenant, forzando un  en cada petición a través de un middleware.
+- **Integración SOAP:** Se utilizará la librería  en  para comunicarse con los web services SOAP del SRI.
+- **Procesamiento XML:** El núcleo de la nueva funcionalidad es la generación y firma (XAdES-BES) de documentos XML, para lo cual se usará  y .
+- **OAuth 2.0 (Authorization Code Flow):** Se implementó un flujo de autenticación completo y listo para producción con Google.
 
 **key DB schema**
-- **productos, organizaciones:** El campo / ahora es un  Base64.
-- **funciones:** Se añadió el campo .
-- **tickets_abiertos:** La lógica de consulta ahora se basa en . Se añadieron campos para rastrear al creador y al último editor (, , etc.).
-- **tpv:** Se reforzó la unicidad del  por .
+- **:** Base de datos del POS, sin cambios de esquema importantes en esta sesión.
+- ** (NUEVA):** Base de datos para el . Las colecciones planeadas son: , , , , , , , . Todas las colecciones deben contener un campo . La colección  es crítica y usará operaciones atómicas  para evitar secuenciales duplicados.
 
 **changes in tech stack**
-- Se añadió la dependencia  al backend ().
+- **Nuevo servicio:**  (FastAPI).
+- **Nuevas dependencias en :** To use the fastapi command, please install "fastapi[standard]":
+
+	pip install "fastapi[standard]", , , , , , , , , , .
 
 **All files of reference**
+-  (directorio completo)
+-  (directorio completo)
 - 
 - 
 - 
 - 
-- 
+- El plan detallado proporcionado por el usuario en el historial de chat.
 
 **Areas that need refactoring**:
--  y  han acumulado una cantidad considerable de lógica y su tamaño sigue creciendo. Una refactorización para dividir  en un esquema de ,  y  es altamente recomendada para mantener la escalabilidad.
+- Para mayor claridad y alineación con el plan del usuario, el directorio  debería ser renombrado a .
 
 **key api endpoints**
-- **ACTUALIZADOS:**
-    - : Se corrigió la generación del token JWT para que use el  del usuario en el .
-    -  y : Rees-critos para comprimir y guardar imágenes en Base64.
-    - : Lógica completamente reescrita para soportar permisos configurables (modo mesas por mesero).
-    - : Añadido el campo .
-    - : La lógica de creación automática de TPV ahora solo se ejecuta si no existe ningún TPV en la organización.
-    - : Se eliminó la numeración de fallback, forzando siempre el formato SRI y creando TPVs/tiendas si es necesario.
-    - , : Se mejoró la validación para asegurar que el  sea único por organización.
+- **Modificados (backend):**
+    - : Cambiado para manejar el flujo de código de autorización de Google directamente.
+- **Nuevos (backend-fe):**
+    - : Implementado y funcional.
+    - , , , : Planeados, estructura creada pero sin lógica interna.
 
 **Critical Info for New Agent**
-- La lógica para multiempleado (TPV, cajas, mesas) ha sido significativamente modificada y robustecida. Las reglas de negocio son ahora muy específicas. El agente debe revisar la lógica en , especialmente en ,  y los endpoints de .
-- El manejo de imágenes es ahora 100% en Base64. No hay más interacción con el sistema de archivos para imágenes de productos o logos.
-- La creación automática de TPVs ha cambiado: solo ocurre una vez para la primera caja de una organización. Después, si todos están ocupados, el sistema informa al usuario que debe crear uno nuevo manualmente.
-- Se ha creado un documento muy completo en  que sirve como fuente de verdad para el funcionamiento del POS.
+- **La tarea prioritaria (P0) es la implementación del nuevo servicio de Facturación Electrónica ().** El usuario proporcionó un plan muy detallado que debe ser seguido estrictamente.
+- El agente anterior ya ha creado toda la estructura de archivos (scaffolding) para  y los componentes de frontend. Tu trabajo es rellenar la lógica.
+- La nueva arquitectura consta de dos backends.  corre en el puerto 8002.
+- **La multi-tenencia es un requisito no negociable para **. Todas las queries a la base de datos  deben estar filtradas por .
+- El flujo de Google Login ahora es para producción. Dará un error de  en el entorno de pruebas, lo cual es **esperado y correcto**. No intentes arreglarlo.
 
 **documents and test reports created in this job**
-- 
+-  (actualizado extensivamente)
+-  (actualizado)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **DONE:** Solicitud de crear un  detallado para el POS.
-2.  **DONE:** Pregunta sobre la estructura de numeración de facturas y el fallback .
-3.  **DONE:** Confirmación para eliminar el fallback de numeración y forzar el formato SRI.
-4.  **DONE:** Reporte de que al probar con varios usuarios, a todos se les asigna Caja 1.
-5.  **DONE:** Especificación de nueva regla: el TPV automático solo se crea la primera vez.
-6.  **DONE:** Solicitud de un prompt para diseñar la app del POS en otra plataforma.
-7.  **DONE:** Solicitud de que el sistema sea multiempleado y validación de ese flujo.
-8.  **DONE:** Solicitud de añadir un botón de Cerrar Sesión para cajeros/meseros.
-9.  **DONE:** Pregunta sobre por qué las imágenes no se muestran en un nuevo despliegue.
-10. **DONE:** Especificación de lógica de permisos compleja para mesas compartidas (meseros vs cajeros).
+10. **DONE:** si (confirmando la implementación de Google Auth).
+9. **DONE:** continua y verifica el registro por google.
+8. **DONE:** si (confirmando la adición de documentación de Google Auth al README).
+7. **DONE:** en el manual pos tambien indica todas las conexions para fron y back.
+6. **DONE:** puedes sacar la mar de agua emergent?.
+5. **DONE:** pon desarrollado por Golmarc.com solo en el login como referencia.
+4. **DONE:** Pide no presentar  y usar placeholders en el README.
+3. **DONE:** Dame un resumen to corto de en qu esta hecha esta solución y que usa.
+2. **PENDING:** Proporciona un plan extremadamente detallado para la nueva funcionalidad de Facturación Electrónica SRI.
+1. **PENDING:** Confirma el plan para la FE y pregunta sobre los cambios en el frontend del POS.
 
 **Project Health Check:**
-- **Broken:** Ninguna funcionalidad está rota.
+- **Broken:** La nueva funcionalidad de facturación electrónica está en estado de esqueleto; los endpoints y componentes existen pero no tienen lógica funcional.
 - **Mocked:** Las funcionalidades en Configuración -> Funciones (Reloj checador, Impresoras de cocina, Pantalla para clientes) siguen siendo solo UI.
 
 **3rd Party Integrations**
-- Google Auth (via )
-- Recharts
-- 
-- 
-- 
-- 
--  (Nueva dependencia backend)
+- Google Auth (configurado con las credenciales del usuario para producción)
+- Recharts, lucide-react, html5-qrcode, html2canvas, sonner
+- Pillow (en )
+- **Nuevas para :**
+    -  (para cliente SOAP hacia el SRI)
+    -  (para manipulación de XML)
+    -  (para firma digital y encriptación)
+    -  (para generación de PDF/RIDE)
 
 **Testing status**
-- **Testing agent used after significant changes:** NO
-- **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** []
-- **Known regressions:** Ninguno.
+- Testing agent used after significant changes: NO
+- Troubleshoot agent used after agent stuck in loop: NO
+- Test files created: []
+- Known regressions: Ninguno
 
 **Credentials to test flow:**
-El agente anterior adoptó una estrategia de crear usuarios y organizaciones de prueba sobre la marcha con los roles y PINs necesarios para cada caso de uso. Se recomienda al siguiente agente continuar con esta práctica para asegurar un entorno de prueba limpio y específico para cada tarea.
+Para la facturación electrónica, el usuario indicó que proporcionará un certificado  de pruebas. El agente debe solicitarlo cuando llegue a la parte de la implementación de la firma digital.
 
 **What agent forgot to execute**
-- Nada. El agente fue muy exhaustivo y abordó todas las solicitudes del usuario, incluyendo la corrección de bugs reportados durante la sesión.</analysis>
+- Renombrar el directorio  a  para alinearse con la arquitectura definida en el plan del usuario. Se recomienda hacerlo como primer paso para evitar confusiones.
+- Completar la modificación de  para añadir las nuevas rutas del módulo de facturación electrónica.</analysis>
