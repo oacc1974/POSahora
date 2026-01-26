@@ -3021,15 +3021,27 @@ export default function POS() {
                 </div>
               </div>
               
-              {/* Botón Cobrar */}
-              <div className="p-4 border-t">
+              {/* Botones Cobrar y Facturar */}
+              <div className="p-4 border-t space-y-2">
                 <Button 
                   onClick={procesarCobro}
                   disabled={loading || !metodoPagoSeleccionado}
                   className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700"
+                  data-testid="btn-cobrar"
                 >
                   {loading ? 'Procesando...' : 'COBRAR'}
                 </Button>
+                
+                {facturacionElectronicaActiva && (
+                  <Button 
+                    onClick={() => procesarCobro(true)}
+                    disabled={loading || !metodoPagoSeleccionado}
+                    className="w-full h-14 text-lg font-bold bg-green-600 hover:bg-green-700"
+                    data-testid="btn-facturar"
+                  >
+                    {loading ? 'Procesando...' : '📄 FACTURAR'}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
