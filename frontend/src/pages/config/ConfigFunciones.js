@@ -176,7 +176,7 @@ export default function ConfigFunciones() {
       enabled: funciones.facturacion_electronica,
       active: true,
       hasConfigButton: true,
-      configRoute: '/configuracion/facturacion-electronica',
+      configRoute: '/configuracion/facturacion',
     },
   ];
 
