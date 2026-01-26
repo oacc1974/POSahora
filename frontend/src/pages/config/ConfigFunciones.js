@@ -167,6 +167,17 @@ export default function ConfigFunciones() {
       enabled: funciones.pantalla_clientes,
       active: true,
     },
+    {
+      id: 'facturacion_electronica',
+      key: 'facturacion_electronica',
+      icon: FileText,
+      title: 'Facturación electrónica',
+      description: 'Emite facturas y notas de crédito electrónicas según normativa SRI Ecuador.',
+      enabled: funciones.facturacion_electronica,
+      active: true,
+      hasConfigButton: true,
+      configRoute: '/configuracion/facturacion-electronica',
+    },
   ];
 
   return (
