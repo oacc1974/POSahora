@@ -12,7 +12,9 @@ const FE_API_URL = process.env.REACT_APP_BACKEND_URL || '';
  */
 const getTenantId = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  return user.organizacion_id || '';
+  const tenantId = user.organizacion_id || '';
+  console.log('[FE API] getTenantId - user:', user, 'tenantId:', tenantId);
+  return tenantId;
 };
 
 /**
