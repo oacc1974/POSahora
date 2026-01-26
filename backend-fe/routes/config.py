@@ -18,6 +18,13 @@ from utils.validators import validate_ruc, validate_email, validate_phone
 
 router = APIRouter(prefix="/fe/config", tags=["Configuración"])
 
+@router.post("/emitter-debug")
+async def debug_emitter_config(request: Request):
+    """DEBUG: Ver qué envía el frontend"""
+    body = await request.json()
+    print(f"DEBUG RAW BODY: {body}")
+    return {"received": body}
+
 @router.post("/emitter")
 async def save_emitter_config(
     request: Request,
