@@ -763,9 +763,15 @@ export default function POS() {
     setShowCobroDialog(true);
   };
 
-  const procesarCobro = async () => {
+  const procesarCobro = async (emitirFacturaElectronica = false) => {
     if (!metodoPagoSeleccionado) {
       toast.error('Selecciona un método de pago');
+      return;
+    }
+
+    // Si se va a facturar electrónicamente, validar que haya cliente con identificación
+    if (emitirFacturaElectronica && !clienteSeleccionado?.cedula) {
+      toast.error('Para facturar electrónicamente debe seleccionar un cliente con identificación');
       return;
     }
 
@@ -798,7 +804,59 @@ export default function POS() {
         }
       );
 
-      toast.success(`Factura ${response.data.numero} creada correctamente`);
+      // Si se debe emitir factura electrónica
+      if (emitirFacturaElectronica) {
+        try {
+          toast.info('Emitiendo factura electrónica al SRI...');
+          const feResponse = await axios.post(
+            `${API_URL}/api/fe/documents/invoice`,
+            {
+              invoice_id: response.data.id,
+              customer: {
+                identification_type: clienteSeleccionado.tipo_identificacion || '05', // Cédula por defecto
+                identification: clienteSeleccionado.cedula,
+                name: clienteSeleccionado.nombre,
+                email: clienteSeleccionado.email || null,
+                address: clienteSeleccionado.direccion || 'N/A',
+                phone: clienteSeleccionado.telefono || null
+              },
+              items: cart.map(item => ({
+                code: item.codigo || item.id,
+                description: item.nombre,
+                quantity: item.cantidad,
+                unit_price: item.precio,
+                discount: 0,
+                tax_code: '2', // IVA
+                tax_percentage: 15
+              })),
+              subtotal: subtotal,
+              total_discount: totalDescuentos,
+              total_tax: totalImpuestosAgregados,
+              total: total,
+              payment_method: metodoPagoSeleccionado
+            },
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'X-Tenant-ID': currentUser.organizacion_id
+              },
+            }
+          );
+          
+          if (feResponse.data.status === 'AUTORIZADO') {
+            toast.success(`Factura electrónica ${feResponse.data.access_key} autorizada por el SRI`);
+          } else if (feResponse.data.status === 'RECIBIDA') {
+            toast.info('Factura enviada al SRI, pendiente de autorización');
+          } else {
+            toast.warning(`Factura electrónica: ${feResponse.data.status}`);
+          }
+        } catch (feError) {
+          console.error('Error en facturación electrónica:', feError);
+          toast.error(feError.response?.data?.detail || 'Error al emitir factura electrónica');
+        }
+      }
+
+      toast.success(`Venta ${response.data.numero} registrada correctamente`);
       
       // Si venía de un ticket guardado, eliminarlo
       if (ticketActualId) {
