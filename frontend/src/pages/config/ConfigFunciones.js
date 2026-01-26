@@ -225,14 +225,28 @@ export default function ConfigFunciones() {
                     </span>
                   </div>
                 )}
-                <button
-                  type="button"
-                  className="text-sm text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
-                  onClick={() => toast.info('Documentación próximamente disponible')}
-                >
-                  Más información
-                  <ExternalLink size={14} />
-                </button>
+                {/* Botón de configuración para FE */}
+                {funcion.hasConfigButton && funcion.enabled && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(funcion.configRoute)}
+                    className="mb-2"
+                  >
+                    <FileText size={14} className="mr-1" />
+                    Configurar
+                  </Button>
+                )}
+                {!funcion.hasConfigButton && (
+                  <button
+                    type="button"
+                    className="text-sm text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
+                    onClick={() => toast.info('Documentación próximamente disponible')}
+                  >
+                    Más información
+                    <ExternalLink size={14} />
+                  </button>
+                )}
               </div>
 
               <div className="flex-shrink-0">
