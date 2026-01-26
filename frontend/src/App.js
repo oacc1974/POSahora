@@ -20,6 +20,10 @@ import { Toaster } from './components/ui/sonner';
 import axios from 'axios';
 import './App.css';
 
+// Importar páginas de Facturación Electrónica
+import ConfiguracionFE from './pages/fe/ConfiguracionFE';
+import DocumentosElectronicos from './pages/fe/DocumentosElectronicos';
+
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 function AuthChecker() {
