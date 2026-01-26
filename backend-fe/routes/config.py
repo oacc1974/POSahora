@@ -30,6 +30,8 @@ async def save_emitter_config(
     tenant_id = await get_tenant_id(request)
     db = request.app.state.db
     
+    print(f"DEBUG: Received emitter config: {config}")  # DEBUG
+    
     # Validar RUC
     valid, msg = validate_ruc(config.ruc)
     if not valid:
