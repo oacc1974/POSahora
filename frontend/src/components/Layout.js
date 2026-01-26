@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -15,6 +15,7 @@ import {
   UserCircle,
   Building2,
   BarChart3,
+  FileCheck,
 } from 'lucide-react';
 import { Button } from './ui/button';
 
