@@ -308,6 +308,31 @@ function AppRouter() {
             )
           }
         />
+        {/* Rutas de Facturación Electrónica */}
+        <Route
+          path="/configuracion/facturacion"
+          element={
+            user && user.rol === 'propietario' ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <ConfiguracionFE />
+              </Layout>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/documentos-electronicos"
+          element={
+            user && ['propietario', 'administrador'].includes(user.rol) ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <DocumentosElectronicos />
+              </Layout>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
       </Routes>
     </>
   );
