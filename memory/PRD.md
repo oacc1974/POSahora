@@ -20,20 +20,24 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### Completadas (26 Enero 2026)
 
-- [x] **Sistema de Facturación Electrónica SRI Ecuador**
+- [x] **Sistema de Facturación Electrónica SRI Ecuador - FUNCIONANDO**
   - **Nuevo Backend (backend-fe):** Servicio FastAPI separado en puerto 8002 para facturación electrónica
   - **Multi-tenancy:** Todas las peticiones requieren header `X-Tenant-ID` (usa organizacion_id del POS)
   - **Proxy desde Backend Principal:** Rutas `/api/fe/*` se redirigen automáticamente al backend-fe
   - **Configuración del Emisor:** RUC, razón social, nombre comercial, dirección, establecimiento, punto de emisión, ambiente (pruebas/producción)
-  - **Certificado Digital:** Subida y validación de certificado .p12, encriptación de contraseña en BD
+  - **Certificado Digital:** Subida y validación de certificado .p12, encriptación de contraseña en BD - **FUNCIONANDO CON CERTIFICADO REAL**
   - **Generación de XML:** Formato SRI v2.1.0 para Facturas (01) y Notas de Crédito (04)
-  - **Firma XAdES-BES:** Firma digital del XML según especificación SRI
+  - **Firma XAdES-BES:** Firma digital del XML según especificación SRI (usando cryptography library)
   - **Cliente SOAP:** Comunicación con webservices del SRI (RecepcionComprobantesOffline, AutorizacionComprobantesOffline)
   - **Clave de Acceso:** Generación de 49 dígitos con módulo 11
   - **Secuenciales Atómicos:** Uso de MongoDB `findOneAndUpdate` para garantizar unicidad
   - **Generación PDF RIDE:** Representación impresa del documento electrónico
   - **Frontend:** Nuevas páginas `/configuracion/facturacion` y `/documentos-electronicos`
   - **Toggle en Funciones:** Opción para activar/desactivar facturación electrónica con botón de configuración
+
+- [x] **Fix Bug - Carga de Certificado .p12**
+  - Corregido error de compatibilidad con cryptography library (atributos `not_valid_before` vs `not_valid_before_utc`)
+  - Migrado de pyOpenSSL a cryptography directamente para mejor compatibilidad
 
 ### Completadas (23 Enero 2026)
 
