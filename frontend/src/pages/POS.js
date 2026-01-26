@@ -89,6 +89,9 @@ export default function POS() {
   const [flyingProduct, setFlyingProduct] = useState(null);
   const ticketButtonRef = React.useRef(null);
   
+  // Estado para facturación electrónica
+  const [facturacionElectronicaActiva, setFacturacionElectronicaActiva] = useState(false);
+  
   // Obtener usuario actual
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const esMesero = currentUser?.rol === 'mesero';
