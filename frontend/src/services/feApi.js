@@ -1,9 +1,10 @@
 /**
  * Servicio API para Facturación Electrónica
- * Conecta el POS con el Backend FE
+ * Conecta el POS con el Backend FE a través del proxy del backend principal
  */
 
-const FE_API_URL = process.env.REACT_APP_BACKEND_FE_URL || 'http://localhost:8002';
+// Usar la misma URL del backend pero con prefijo /api/fe
+const FE_API_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 /**
  * Obtiene el tenant_id del localStorage
