@@ -655,7 +655,6 @@ async def login_pos(pos_login: POSLogin, response: Response):
 @app.post("/api/login")
 async def login(user_login: UserLogin, response: Response):
     user = await db.usuarios.find_one({"username": user_login.username})
-    print(f"DEBUG LOGIN - user from DB: {user}")  # DEBUG
     if not user or not verify_password(user_login.password, user["password"]):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     
