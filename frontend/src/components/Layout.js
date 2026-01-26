@@ -31,6 +31,27 @@ const getRolBadge = (rol) => {
 export default function Layout({ children, user, onLogout, hideSidebar = false }) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [funciones, setFunciones] = useState({});
+
+  // Cargar configuración de funciones para saber si FE está activa
+  useEffect(() => {
+    const loadFunciones = async () => {
+      try {
+        const API_URL = process.env.REACT_APP_BACKEND_URL;
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/api/funciones`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setFunciones(data);
+        }
+      } catch (error) {
+        console.error('Error loading funciones:', error);
+      }
+    };
+    loadFunciones();
+  }, []);
 
   const navigation = [
     {
@@ -67,6 +88,13 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
       icon: FileText,
       testId: 'nav-invoices',
       show: true,
+    },
+    {
+      name: 'Docs Electrónicos',
+      href: '/documentos-electronicos',
+      icon: FileCheck,
+      testId: 'nav-docs-electronicos',
+      show: funciones.facturacion_electronica && ['propietario', 'administrador'].includes(user.rol),
     },
     {
       name: 'Reportes',
