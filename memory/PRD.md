@@ -20,6 +20,17 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### Completadas (27 Enero 2026)
 
+- [x] **NOTAS DE CRÉDITO - FUNCIONANDO CORRECTAMENTE**
+  - **Bug Fix P0 Solucionado:** Error "FIRMA INVALIDA" corregido
+  - **Causa raíz:** El XML se generaba con `pretty_print=True` (saltos de línea) lo que invalidaba la firma digital
+  - **Solución:** Cambiado a `pretty_print=False` en `/app/backend-fe/services/xml_generator.py`
+  - **Fix adicional:** Se cambió el método de firma para usar el servicio Java (`sign_xml_with_java`) igual que las facturas
+  - **Fix de índice:** Se eliminó el índice duplicado `tenant_id_1_doc_number_1` que causaba conflictos
+  - **Prueba exitosa:** NC 001-001-000000005 para Oscar Castro - **AUTORIZADA por SRI** ✅
+  - **Nota importante:** El SRI NO permite NC para "Consumidor Final" (9999999999999) - Esto es una restricción del SRI, no del sistema
+  - **Página de NC:** `/notas-credito` funcionando con listado, estados y acciones
+  - **Menú:** Sección "Facturación Electrónica" con submenús "Facturas Electrónicas" y "Notas de Crédito"
+
 - [x] **PDF RIDE con Formato Oficial SRI - COMPLETADO Y PROBADO**
   - **Generador PDF Reimplementado:** Usando reportlab con estructura idéntica al formato oficial del SRI
   - **Secciones del RIDE:**
