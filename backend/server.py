@@ -3920,6 +3920,181 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         fecha=new_invoice["fecha"]
     )
 
+
+# ============================================
+# FACTURACION ELECTRONICA ASINCRONA
+# ============================================
+
+class EmitirFERequest(BaseModel):
+    """Datos para emitir factura electrónica"""
+    factura_id: str
+    cliente: dict
+    items: list
+    total: float
+    metodo_pago: str = "01"
+
+
+async def _emitir_fe_background(factura_id: str, organizacion_id: str, cliente: dict, items: list, total: float, metodo_pago: str, token: str):
+    """
+    Función que se ejecuta en background para emitir la factura electrónica.
+    No bloquea el flujo principal de facturación.
+    """
+    try:
+        # Obtener configuración del tenant
+        config_fe = await db.configuraciones.find_one({"_id": organizacion_id})
+        if not config_fe or not config_fe.get("facturacion_electronica"):
+            return  # FE no está activa
+        
+        # Preparar datos para la FE
+        fe_data = {
+            "store_code": "001",
+            "emission_point": "001",
+            "customer": cliente,
+            "items": items,
+            "payments": [{
+                "method": metodo_pago,
+                "total": total,
+                "term": 0,
+                "time_unit": "dias"
+            }]
+        }
+        
+        # Llamar al servicio de FE
+        fe_url = os.environ.get("FE_BACKEND_URL", "http://localhost:8002")
+        async with httpx.AsyncClient(timeout=60.0) as client_http:
+            response = await client_http.post(
+                f"{fe_url}/fe/documents/invoice",
+                json=fe_data,
+                headers={
+                    "X-Tenant-ID": organizacion_id,
+                    "Authorization": f"Bearer {token}"
+                }
+            )
+            
+            if response.status_code == 200:
+                fe_result = response.json()
+                # Actualizar la factura del POS con los datos de FE
+                await db.facturas.update_one(
+                    {"id": factura_id},
+                    {"$set": {
+                        "factura_electronica": {
+                            "clave_acceso": fe_result.get("access_key"),
+                            "estado": fe_result.get("sri_status"),
+                            "numero_autorizacion": fe_result.get("sri_authorization_number"),
+                            "documento_id": fe_result.get("document_id"),
+                            "numero_documento": fe_result.get("doc_number"),
+                            "emitida_at": datetime.now(timezone.utc).isoformat()
+                        }
+                    }}
+                )
+                print(f"[FE] Factura {factura_id} emitida: {fe_result.get('sri_status')}")
+            else:
+                print(f"[FE] Error emitiendo factura {factura_id}: {response.status_code} - {response.text}")
+                # Guardar el error para que el usuario pueda ver qué pasó
+                await db.facturas.update_one(
+                    {"id": factura_id},
+                    {"$set": {
+                        "factura_electronica": {
+                            "estado": "ERROR",
+                            "error": response.text[:500],
+                            "emitida_at": datetime.now(timezone.utc).isoformat()
+                        }
+                    }}
+                )
+    except Exception as e:
+        print(f"[FE] Excepción emitiendo factura {factura_id}: {str(e)}")
+        await db.facturas.update_one(
+            {"id": factura_id},
+            {"$set": {
+                "factura_electronica": {
+                    "estado": "ERROR",
+                    "error": str(e)[:500],
+                    "emitida_at": datetime.now(timezone.utc).isoformat()
+                }
+            }}
+        )
+
+
+@app.post("/api/facturas/{factura_id}/emitir-fe")
+async def emitir_factura_electronica(
+    factura_id: str,
+    request: EmitirFERequest,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Endpoint para emitir factura electrónica de forma ASINCRONA.
+    Retorna inmediatamente y procesa la FE en background.
+    """
+    # Verificar que la factura existe
+    factura = await db.facturas.find_one({
+        "id": factura_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if not factura:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    # Si ya tiene FE emitida, no volver a emitir
+    if factura.get("factura_electronica", {}).get("clave_acceso"):
+        return {
+            "status": "already_emitted",
+            "message": "Esta factura ya tiene factura electrónica emitida",
+            "factura_electronica": factura.get("factura_electronica")
+        }
+    
+    # Obtener token del header
+    token = ""
+    
+    # Marcar como "en proceso" inmediatamente
+    await db.facturas.update_one(
+        {"id": factura_id},
+        {"$set": {
+            "factura_electronica": {
+                "estado": "EN_PROCESO",
+                "emitida_at": datetime.now(timezone.utc).isoformat()
+            }
+        }}
+    )
+    
+    # Agregar tarea en background
+    background_tasks.add_task(
+        _emitir_fe_background,
+        factura_id,
+        current_user["organizacion_id"],
+        request.cliente,
+        request.items,
+        request.total,
+        request.metodo_pago,
+        token
+    )
+    
+    return {
+        "status": "processing",
+        "message": "Factura electrónica en proceso de emisión",
+        "factura_id": factura_id
+    }
+
+
+@app.get("/api/facturas/{factura_id}/fe-status")
+async def get_fe_status(factura_id: str, current_user: dict = Depends(get_current_user)):
+    """
+    Consulta el estado de la factura electrónica de una factura del POS.
+    """
+    factura = await db.facturas.find_one({
+        "id": factura_id,
+        "organizacion_id": current_user["organizacion_id"]
+    }, {"factura_electronica": 1})
+    
+    if not factura:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    
+    return {
+        "factura_id": factura_id,
+        "factura_electronica": factura.get("factura_electronica")
+    }
+
+
 @app.get("/api/facturas", response_model=List[InvoiceResponse])
 async def get_facturas(
     current_user: dict = Depends(get_current_user),
