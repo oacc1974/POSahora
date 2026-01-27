@@ -79,11 +79,24 @@ class SRIClient:
         Parsea la respuesta del servicio de recepción
         """
         try:
+            print(f"[SRI Client] Parseando respuesta recepción...")
             root = etree.fromstring(xml_response.encode('utf-8'))
             
-            # Buscar estado
+            # Buscar estado - intentar diferentes namespaces
             estado = root.find('.//{http://ec.gob.sri.ws.recepcion}estado')
-            estado_text = estado.text if estado is not None else "ERROR"
+            if estado is None:
+                # Probar sin namespace
+                import re
+                estado_match = re.search(r'<estado>([^<]+)</estado>', xml_response)
+                if estado_match:
+                    estado_text = estado_match.group(1)
+                    print(f"[SRI Client] Estado encontrado con regex: {estado_text}")
+                else:
+                    estado_text = "ERROR"
+                    print(f"[SRI Client] Estado no encontrado, raw: {xml_response[:500]}")
+            else:
+                estado_text = estado.text if estado is not None else "ERROR"
+                print(f"[SRI Client] Estado encontrado con namespace: {estado_text}")
             
             # Buscar mensajes
             mensajes = []
