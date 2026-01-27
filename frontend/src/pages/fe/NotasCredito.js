@@ -258,7 +258,8 @@ export default function NotasCredito() {
                           >
                             <Eye size={16} />
                           </Button>
-                          {doc.sri_status === 'ERROR' && (
+                          {/* Botón de reintento para estados fallidos */}
+                          {(doc.sri_status === 'ERROR' || doc.sri_status === 'EN_PROCESO') && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -270,6 +271,7 @@ export default function NotasCredito() {
                               <RotateCcw size={16} className="text-orange-500" />
                             </Button>
                           )}
+                          {/* Botones de descarga para NC autorizadas */}
                           {doc.sri_status === 'AUTORIZADO' && (
                             <>
                               <Button
