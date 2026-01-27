@@ -95,7 +95,7 @@ export default function DocumentosElectronicos() {
     try {
       const data = await feApi.getDocuments({
         page: pagination.page,
-        limit: 20,
+        limit: 50,
         ...filters
       });
       setDocuments(data.documents || []);
