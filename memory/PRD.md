@@ -39,6 +39,18 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
   - **Sincronización automática:** Agregada sincronización cada 30 segundos para reintentar documentos pendientes
   - **Motivo correcto:** El motivo ahora se obtiene de `invoice_reference.reason`
 
+- [x] **Tickets diferenciados COBRAR vs FACTURAR**
+  - **COBRAR (azul):** Genera "TICKET DE VENTA / COMPROBANTE INTERNO" sin datos del SRI
+    - Sin clave de acceso
+    - Sin numeración SRI
+    - Sin decir "Factura"
+    - Incluye leyenda obligatoria: "Este documento NO constituye comprobante tributario"
+  - **FACTURAR (verde):** Proceso asíncrono - NO bloquea la venta
+    - La venta se registra inmediatamente
+    - La FE se procesa en segundo plano
+    - El ticket incluye clave de acceso, número de autorización y estado SRI
+  - **Fecha en POS:** Se agregó fecha y hora actual en el header (actualiza cada minuto)
+
 - [x] **PDF RIDE con Formato Oficial SRI - COMPLETADO Y PROBADO**
   - **Generador PDF Reimplementado:** Usando reportlab con estructura idéntica al formato oficial del SRI
   - **Secciones del RIDE:**
