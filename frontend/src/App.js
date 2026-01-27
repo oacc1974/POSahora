@@ -334,6 +334,18 @@ function AppRouter() {
             )
           }
         />
+        <Route
+          path="/notas-credito"
+          element={
+            user && ['propietario', 'administrador'].includes(user.rol) ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <NotasCredito />
+              </Layout>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
       </Routes>
     </>
   );
