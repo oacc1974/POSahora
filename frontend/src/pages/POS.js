@@ -3174,15 +3174,17 @@ export default function POS() {
               
               {/* Botones Cobrar y Facturar */}
               <div className="p-4 border-t space-y-2">
+                {/* COBRAR - Ticket interno, no requiere cliente */}
                 <Button 
-                  onClick={procesarCobro}
+                  onClick={() => procesarCobro(false)}
                   disabled={loading || !metodoPagoSeleccionado}
                   className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700"
                   data-testid="btn-cobrar"
                 >
-                  {loading ? 'Procesando...' : 'COBRAR'}
+                  {loading ? 'Procesando...' : '🧾 COBRAR'}
                 </Button>
                 
+                {/* FACTURAR - Factura electrónica, requiere cliente */}
                 {facturacionElectronicaActiva && (
                   <Button 
                     onClick={() => procesarCobro(true)}
@@ -3190,7 +3192,7 @@ export default function POS() {
                     className="w-full h-14 text-lg font-bold bg-green-600 hover:bg-green-700"
                     data-testid="btn-facturar"
                   >
-                    {loading ? 'Procesando...' : '📄 FACTURAR'}
+                    {loading ? 'Procesando...' : '📄 FACTURAR (requiere cliente)'}
                   </Button>
                 )}
               </div>
