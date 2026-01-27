@@ -191,6 +191,17 @@ export const feApi = {
     return handleResponse(response);
   },
 
+  /**
+   * Sincroniza documentos pendientes con el SRI
+   */
+  syncPendingDocuments: async () => {
+    const response = await fetch(`${FE_API_URL}/api/fe/documents/sync-pending`, {
+      method: 'POST',
+      headers: getHeaders()
+    });
+    return handleResponse(response);
+  },
+
   // ============ UTILIDADES ============
 
   /**
