@@ -139,14 +139,14 @@ def sign_xml_xades_bes(xml_content: str, p12_data: bytes, password: str) -> str:
     ref_keyinfo = etree.SubElement(signed_info, "{http://www.w3.org/2000/09/xmldsig#}Reference",
                                     URI=f"#{key_info_id}")
     etree.SubElement(ref_keyinfo, "{http://www.w3.org/2000/09/xmldsig#}DigestMethod",
-                      Algorithm="http://www.w3.org/2000/09/xmldsig#sha1")
+                      Algorithm="http://www.w3.org/2001/04/xmlenc#sha256")
     
     # Reference a SignedProperties (XAdES)
     ref_props = etree.SubElement(signed_info, "{http://www.w3.org/2000/09/xmldsig#}Reference",
                                   Type="http://uri.etsi.org/01903#SignedProperties",
                                   URI=f"#{signed_props_id}")
     etree.SubElement(ref_props, "{http://www.w3.org/2000/09/xmldsig#}DigestMethod",
-                      Algorithm="http://www.w3.org/2000/09/xmldsig#sha1")
+                      Algorithm="http://www.w3.org/2001/04/xmlenc#sha256")
     
     # === SignatureValue (placeholder, se calculará después) ===
     sig_value = etree.SubElement(signature, "{http://www.w3.org/2000/09/xmldsig#}SignatureValue")
