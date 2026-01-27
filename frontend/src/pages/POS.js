@@ -812,29 +812,30 @@ export default function POS() {
           const feResponse = await axios.post(
             `${API_URL}/api/fe/documents/invoice`,
             {
-              invoice_id: response.data.id,
+              store_code: '001',
+              emission_point: '001',
               customer: {
                 identification_type: clienteIdentificacion.length === 13 ? '04' : '05', // RUC o Cédula
                 identification: clienteIdentificacion,
                 name: clienteSeleccionado.nombre,
                 email: clienteSeleccionado.email || null,
-                address: clienteSeleccionado.direccion || 'N/A',
-                phone: clienteSeleccionado.telefono || null
+                phone: clienteSeleccionado.telefono || null,
+                address: clienteSeleccionado.direccion || 'N/A'
               },
               items: cart.map(item => ({
-                code: item.codigo || item.id,
+                code: item.codigo || item.id?.substring(0, 25) || 'PROD001',
                 description: item.nombre,
                 quantity: item.cantidad,
                 unit_price: item.precio,
                 discount: 0,
-                tax_code: '2', // IVA
-                tax_percentage: 15
+                iva_rate: 15
               })),
-              subtotal: subtotal,
-              total_discount: totalDescuentos,
-              total_tax: totalImpuestosAgregados,
-              total: total,
-              payment_method: metodoPagoSeleccionado
+              payments: [{
+                method: '01', // Sin utilización del sistema financiero
+                total: total,
+                term: 0,
+                time_unit: 'dias'
+              }]
             },
             {
               headers: { 
@@ -845,7 +846,7 @@ export default function POS() {
           );
           
           if (feResponse.data.status === 'AUTORIZADO') {
-            toast.success(`Factura electrónica ${feResponse.data.access_key} autorizada por el SRI`);
+            toast.success(`Factura electrónica autorizada por el SRI. Clave: ${feResponse.data.access_key?.substring(0, 20)}...`);
           } else if (feResponse.data.status === 'RECIBIDA') {
             toast.info('Factura enviada al SRI, pendiente de autorización');
           } else {
@@ -853,7 +854,14 @@ export default function POS() {
           }
         } catch (feError) {
           console.error('Error en facturación electrónica:', feError);
-          toast.error(feError.response?.data?.detail || 'Error al emitir factura electrónica');
+          const errorMsg = feError.response?.data?.detail;
+          if (typeof errorMsg === 'string') {
+            toast.error(errorMsg);
+          } else if (Array.isArray(errorMsg)) {
+            toast.error(errorMsg.map(e => e.msg || e).join(', '));
+          } else {
+            toast.error('Error al emitir factura electrónica');
+          }
         }
       }
 
