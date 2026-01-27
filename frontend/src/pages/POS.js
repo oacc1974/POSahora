@@ -89,6 +89,17 @@ export default function POS() {
   const [flyingProduct, setFlyingProduct] = useState(null);
   const ticketButtonRef = React.useRef(null);
   
+  // Estado para fecha y hora actual
+  const [fechaHoraActual, setFechaHoraActual] = useState(new Date());
+  
+  // Actualizar fecha/hora cada minuto
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFechaHoraActual(new Date());
+    }, 60000); // Actualizar cada minuto
+    return () => clearInterval(timer);
+  }, []);
+  
   // Estado para facturación electrónica
   const [facturacionElectronicaActiva, setFacturacionElectronicaActiva] = useState(false);
   
