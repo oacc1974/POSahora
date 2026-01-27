@@ -414,6 +414,11 @@ export default function DocumentosElectronicos() {
                     </td>
                     <td className="p-4 text-center">
                       {getStatusBadge(doc.sri_status)}
+                      {doc.has_credit_note && (
+                        <span className="ml-2 px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-700" title="Tiene Nota de Crédito">
+                          NC
+                        </span>
+                      )}
                     </td>
                     <td className="p-4">
                       <div className="flex justify-center gap-1">
