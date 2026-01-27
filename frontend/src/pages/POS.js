@@ -805,71 +805,55 @@ export default function POS() {
         }
       );
 
-      // Si se debe emitir factura electrónica
+      // Si se debe emitir factura electrónica - AHORA ES ASINCRONO
       if (emitirFacturaElectronica) {
-        try {
-          toast.info('Emitiendo factura electrónica al SRI...');
-          const feResponse = await axios.post(
-            `${API_URL}/api/fe/documents/invoice`,
-            {
-              store_code: '001',
-              emission_point: '001',
-              customer: {
-                identification_type: clienteIdentificacion.length === 13 ? '04' : '05', // RUC o Cédula
-                identification: clienteIdentificacion,
-                name: clienteSeleccionado.nombre,
-                email: clienteSeleccionado.email || null,
-                phone: clienteSeleccionado.telefono || null,
-                address: clienteSeleccionado.direccion || 'N/A'
-              },
-              items: cart.map(item => ({
-                code: item.codigo || item.id?.substring(0, 25) || 'PROD001',
-                description: item.nombre,
-                quantity: item.cantidad,
-                unit_price: item.precio,
-                discount: 0,
-                iva_rate: 15
-              })),
-              payments: [{
-                method: '01', // Sin utilización del sistema financiero
-                total: total,
-                term: 0,
-                time_unit: 'dias'
-              }]
+        // No esperamos la respuesta - se procesa en background
+        // Esto NO bloquea el flujo de facturación
+        axios.post(
+          `${API_URL}/api/facturas/${response.data.id}/emitir-fe`,
+          {
+            factura_id: response.data.id,
+            cliente: {
+              identification_type: clienteIdentificacion.length === 13 ? '04' : clienteIdentificacion.length === 10 ? '05' : '07',
+              identification: clienteIdentificacion,
+              name: clienteSeleccionado.nombre,
+              email: clienteSeleccionado.email || null,
+              phone: clienteSeleccionado.telefono || null,
+              address: clienteSeleccionado.direccion || 'N/A'
             },
-            {
-              headers: { 
-                Authorization: `Bearer ${token}`,
-                'X-Tenant-ID': currentUser.organizacion_id
-              },
-            }
-          );
-          
-          if (feResponse.data.status === 'AUTORIZADO') {
-            toast.success(`Factura electrónica autorizada por el SRI. Clave: ${feResponse.data.access_key?.substring(0, 20)}...`);
-          } else if (feResponse.data.status === 'RECIBIDA') {
-            toast.info('Factura enviada al SRI, pendiente de autorización');
-          } else {
-            toast.warning(`Factura electrónica: ${feResponse.data.status}`);
+            items: cart.map(item => ({
+              code: item.codigo || item.id?.substring(0, 25) || 'PROD001',
+              description: item.nombre,
+              quantity: item.cantidad,
+              unit_price: item.precio,
+              discount: 0,
+              iva_rate: 15
+            })),
+            total: total,
+            metodo_pago: '01'
+          },
+          {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'X-Tenant-ID': currentUser.organizacion_id
+            },
           }
-          
-          // Guardar datos de FE para el ticket
-          response.data.factura_electronica = {
-            clave_acceso: feResponse.data.access_key,
-            estado: feResponse.data.status,
-            numero_autorizacion: feResponse.data.authorization_number
-          };
-        } catch (feError) {
-          console.error('Error en facturación electrónica:', feError);
-          const errorMsg = feError.response?.data?.detail;
-          if (typeof errorMsg === 'string') {
-            toast.error(errorMsg);
-          } else if (Array.isArray(errorMsg)) {
-            toast.error(errorMsg.map(e => e.msg || e).join(', '));
-          } else {
-            toast.error('Error al emitir factura electrónica');
+        ).then(feResponse => {
+          // Notificar que está en proceso (no bloqueamos)
+          if (feResponse.data.status === 'processing') {
+            toast.info('Factura electrónica en proceso de emisión al SRI', { autoClose: 3000 });
           }
-        }
+        }).catch(feError => {
+          console.error('Error iniciando facturación electrónica:', feError);
+          // No mostramos error aquí para no interrumpir el flujo
+          // El estado se puede consultar después
+        });
+        
+        // Marcamos que se está procesando para el ticket
+        response.data.factura_electronica = {
+          estado: 'EN_PROCESO',
+          mensaje: 'Procesando...'
+        };
       }
 
       toast.success(`Venta ${response.data.numero} registrada correctamente`);
