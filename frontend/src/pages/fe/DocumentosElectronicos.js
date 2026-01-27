@@ -579,9 +579,19 @@ export default function DocumentosElectronicos() {
                 {selectedDoc.document.doc_type === '01' && 
                  selectedDoc.document.sri_status === 'AUTORIZADO' && 
                  !selectedDoc.document.has_credit_note && (
-                  <Button variant="destructive" onClick={() => setShowNCModal(true)}>
-                    Crear Nota de Crédito
-                  </Button>
+                  <>
+                    {/* Verificar si es Consumidor Final */}
+                    {selectedDoc.document.customer?.identification === '9999999999999' ? (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-700 rounded-md text-sm max-w-md">
+                        <XCircle size={16} className="flex-shrink-0" />
+                        <span>El SRI no permite crear Notas de Crédito para facturas emitidas a "Consumidor Final"</span>
+                      </div>
+                    ) : (
+                      <Button variant="destructive" onClick={() => setShowNCModal(true)}>
+                        Crear Nota de Crédito
+                      </Button>
+                    )}
+                  </>
                 )}
                 {selectedDoc.document.doc_type === '01' && 
                  selectedDoc.document.has_credit_note && (
