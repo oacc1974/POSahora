@@ -917,7 +917,7 @@ export default function POS() {
     }
   };
 
-  const printInvoice = async (invoice, facturaElectronica = null) => {
+  const printInvoice = async (invoice, esFacturaElectronica = false) => {
     try {
       const token = localStorage.getItem('token');
       const configResponse = await axios.get(`${API_URL}/api/config`, {
@@ -944,7 +944,7 @@ export default function POS() {
       }
 
       const printWindow = window.open('', '', 'height=600,width=400');
-      printWindow.document.write('<html><head><title>Factura</title>');
+      printWindow.document.write('<html><head><title>Ticket</title>');
       printWindow.document.write('<style>');
       printWindow.document.write(`
         body { font-family: monospace; padding: 20px; font-size: 12px; }
@@ -957,6 +957,7 @@ export default function POS() {
         .footer { margin-top: 15px; text-align: center; font-size: 11px; }
         .logo { text-align: center; margin-bottom: 10px; }
         .logo img { max-width: 150px; max-height: 80px; }
+        .warning { text-align: center; font-size: 9px; color: #666; margin-top: 10px; padding: 5px; border: 1px dashed #999; }
       `);
       printWindow.document.write('</style></head><body>');
       
@@ -982,7 +983,7 @@ export default function POS() {
         printWindow.document.write(`<p>Tel: ${config.telefono}</p>`);
       }
       if (config.rfc) {
-        printWindow.document.write(`<p>RFC: ${config.rfc}</p>`);
+        printWindow.document.write(`<p>RUC: ${config.rfc}</p>`);
       }
       if (config.email) {
         printWindow.document.write(`<p>${config.email}</p>`);
@@ -992,29 +993,43 @@ export default function POS() {
       }
       printWindow.document.write('</div>');
       printWindow.document.write('<div class="divider"></div>');
-      printWindow.document.write(`<p style="text-align:center; margin: 5px 0;">Factura: ${invoice.numero}</p>`);
+      
+      // === DIFERENCIACIÓN DE TIPO DE DOCUMENTO ===
+      if (esFacturaElectronica && invoice.factura_electronica) {
+        // FACTURA ELECTRÓNICA
+        printWindow.document.write('<div style="text-align:center; margin: 5px 0; padding: 5px; background: #f0f9f0; border: 1px solid #4ade80;">');
+        printWindow.document.write('<p style="font-weight: bold; font-size: 12px; margin: 2px 0;">📄 FACTURA ELECTRÓNICA</p>');
+        printWindow.document.write(`<p style="font-size: 11px; margin: 2px 0;">No. ${invoice.factura_electronica.numero_documento || 'Pendiente'}</p>`);
+        printWindow.document.write('</div>');
+        
+        if (invoice.factura_electronica.clave_acceso) {
+          printWindow.document.write('<div style="text-align:center; margin: 5px 0;">');
+          printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0;">Clave de Acceso:</p>`);
+          printWindow.document.write(`<p style="font-size: 8px; margin: 2px 0; word-break: break-all;">${invoice.factura_electronica.clave_acceso}</p>`);
+          if (invoice.factura_electronica.estado) {
+            printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0; font-weight: bold;">Estado: ${invoice.factura_electronica.estado}</p>`);
+          }
+          if (invoice.factura_electronica.numero_autorizacion) {
+            printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0;">Autorización: ${invoice.factura_electronica.numero_autorizacion}</p>`);
+          }
+          printWindow.document.write('</div>');
+        }
+      } else {
+        // TICKET DE VENTA / COMPROBANTE INTERNO
+        printWindow.document.write('<div style="text-align:center; margin: 5px 0; padding: 5px; background: #f0f0f0;">');
+        printWindow.document.write('<p style="font-weight: bold; font-size: 12px; margin: 2px 0;">🧾 TICKET DE VENTA</p>');
+        printWindow.document.write('<p style="font-size: 10px; margin: 2px 0;">COMPROBANTE INTERNO</p>');
+        printWindow.document.write('</div>');
+      }
+      
+      // Número de orden interno
+      printWindow.document.write(`<p style="text-align:center; margin: 5px 0;">Orden: ${invoice.numero}</p>`);
       printWindow.document.write(
         `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Fecha: ${new Date(invoice.fecha).toLocaleString('es-ES')}</p>`
       );
       printWindow.document.write(
         `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Atendió: ${invoice.vendedor_nombre}</p>`
       );
-      
-      // Mostrar información de factura electrónica si existe
-      if (invoice.factura_electronica && invoice.factura_electronica.clave_acceso) {
-        printWindow.document.write('<div class="divider"></div>');
-        printWindow.document.write('<div style="text-align:center; margin: 5px 0;">');
-        printWindow.document.write('<p style="font-weight: bold; font-size: 10px; margin: 2px 0;">FACTURA ELECTRÓNICA</p>');
-        printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0;">Clave de Acceso:</p>`);
-        printWindow.document.write(`<p style="font-size: 8px; margin: 2px 0; word-break: break-all;">${invoice.factura_electronica.clave_acceso}</p>`);
-        if (invoice.factura_electronica.estado) {
-          printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0;">Estado: ${invoice.factura_electronica.estado}</p>`);
-        }
-        if (invoice.factura_electronica.numero_autorizacion) {
-          printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0;">Autorización: ${invoice.factura_electronica.numero_autorizacion}</p>`);
-        }
-        printWindow.document.write('</div>');
-      }
       
       printWindow.document.write('<div class="divider"></div>');
       
@@ -1082,6 +1097,14 @@ export default function POS() {
         );
       }
       
+      // === LEYENDA OBLIGATORIA PARA TICKETS INTERNOS ===
+      if (!esFacturaElectronica || !invoice.factura_electronica) {
+        printWindow.document.write('<div class="warning">');
+        printWindow.document.write('<p>⚠️ Este documento NO constituye comprobante tributario.</p>');
+        printWindow.document.write('<p>Solicite su factura electrónica si la requiere.</p>');
+        printWindow.document.write('</div>');
+      }
+      
       printWindow.document.write('<div class="divider"></div>');
       printWindow.document.write(
         `<div class="footer"><p>${config.mensaje_pie}</p></div>`
@@ -1093,7 +1116,7 @@ export default function POS() {
       }, 250);
     } catch (error) {
       console.error('Error loading config:', error);
-      toast.error('Error al imprimir factura');
+      toast.error('Error al imprimir ticket');
     }
   };
 
