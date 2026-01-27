@@ -85,15 +85,8 @@ def generate_invoice_xml(
     # === INFO FACTURA ===
     info_factura = etree.SubElement(factura, "infoFactura")
     
-    # Determinar la fecha de emisión correcta según el ambiente
-    if ambiente == "pruebas":
-        # El servidor de pruebas del SRI (celcer) está configurado para nov-dic 2025
-        from datetime import datetime as dt
-        fecha_emision = dt(2025, 11, 28)
-        etree.SubElement(info_factura, "fechaEmision").text = fecha_emision.strftime("%d/%m/%Y")
-    else:
-        # En producción: usar la fecha actual real (desde enero 2026 el SRI exige transmisión inmediata)
-        etree.SubElement(info_factura, "fechaEmision").text = issue_date.strftime("%d/%m/%Y")
+    # La fecha de emisión viene ya ajustada según el ambiente desde la ruta
+    etree.SubElement(info_factura, "fechaEmision").text = issue_date.strftime("%d/%m/%Y")
     
     if emitter.get("direccion"):
         etree.SubElement(info_factura, "dirEstablecimiento").text = clean_xml_string(emitter["direccion"])
