@@ -117,7 +117,7 @@ def sign_xml_xades_bes(xml_content: str, p12_data: bytes, password: str) -> str:
                                      Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315")
     
     sig_method = etree.SubElement(signed_info, "{http://www.w3.org/2000/09/xmldsig#}SignatureMethod",
-                                   Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1")
+                                   Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256")
     
     # Reference al documento
     ref_doc = etree.SubElement(signed_info, "{http://www.w3.org/2000/09/xmldsig#}Reference",
