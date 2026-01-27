@@ -224,8 +224,8 @@ export default function DocumentosElectronicos() {
       if (result.still_pending > 0) {
         toast.info(`${result.still_pending} documento(s) aún en proceso`);
       }
-      if (result.synced === 0) {
-        toast.info('No hay documentos pendientes de sincronizar');
+      if (result.synced === 0 || (result.results && result.results.length === 0)) {
+        toast.info('Todos los documentos están actualizados');
       }
       loadDocuments();
     } catch (error) {
