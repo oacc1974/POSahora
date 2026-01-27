@@ -162,11 +162,16 @@ def generate_ride_pdf(document: dict, emitter: dict, logo_base64: Optional[str] 
     # Clave de acceso
     right_content.append(Paragraph("<b>CLAVE DE ACCESO</b>", style_small))
     
-    # Código de barras
+    # Código de barras - ajustado para caber en el recuadro de 9cm
     if access_key:
-        barcode = code128.Code128(access_key, barWidth=0.4*mm, barHeight=8*mm)
+        # barWidth reducido de 0.4mm a 0.28mm para que quepa la clave de 49 dígitos
+        barcode = code128.Code128(access_key, barWidth=0.28*mm, barHeight=10*mm)
         right_content.append(barcode)
-        right_content.append(Paragraph(access_key, ParagraphStyle('Barcode', fontSize=6, alignment=TA_CENTER)))
+        # Texto de la clave dividido en 2 líneas para mejor lectura
+        clave_parte1 = access_key[:25]
+        clave_parte2 = access_key[25:]
+        right_content.append(Paragraph(f"{clave_parte1}<br/>{clave_parte2}", 
+                                       ParagraphStyle('Barcode', fontSize=6, alignment=TA_CENTER, leading=8)))
     
     right_table = Table([[c] for c in right_content], colWidths=[9*cm])
     right_table.setStyle(TableStyle([
