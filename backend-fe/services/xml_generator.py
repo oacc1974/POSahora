@@ -190,8 +190,8 @@ def generate_invoice_xml(
         iva_amount = subtotal * item.get("iva_rate", 15) / 100
         etree.SubElement(impuesto, "valor").text = format_decimal(iva_amount)
     
-    # Generar XML string
-    return etree.tostring(factura, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("UTF-8")
+    # Generar XML string (sin pretty_print para mantener firma válida)
+    return etree.tostring(factura, pretty_print=False, xml_declaration=True, encoding="UTF-8").decode("UTF-8")
 
 
 def generate_credit_note_xml(
@@ -314,4 +314,5 @@ def generate_credit_note_xml(
         iva_amount = subtotal * item.get("iva_rate", 15) / 100
         etree.SubElement(impuesto, "valor").text = format_decimal(iva_amount)
     
-    return etree.tostring(nota_credito, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("UTF-8")
+    # Generar XML string (sin pretty_print para mantener firma válida)
+    return etree.tostring(nota_credito, pretty_print=False, xml_declaration=True, encoding="UTF-8").decode("UTF-8")
