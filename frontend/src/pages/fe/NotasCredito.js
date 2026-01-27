@@ -38,6 +38,36 @@ export default function NotasCredito() {
     loadDocuments();
   }, [loadDocuments]);
 
+  // Sincronización automática cada 30 segundos para reintentar documentos rechazados/pendientes
+  useEffect(() => {
+    // Sincronizar al cargar la página
+    const syncOnLoad = async () => {
+      try {
+        const result = await feApi.syncPendingDocuments();
+        if (result.authorized > 0 || result.not_authorized > 0) {
+          loadDocuments(); // Recargar lista si hubo cambios
+        }
+      } catch (error) {
+        console.log('Error en sincronización automática:', error);
+      }
+    };
+    syncOnLoad();
+
+    // Sincronizar cada 30 segundos
+    const interval = setInterval(async () => {
+      try {
+        const result = await feApi.syncPendingDocuments();
+        if (result.authorized > 0 || result.not_authorized > 0) {
+          loadDocuments();
+        }
+      } catch (error) {
+        console.log('Error en sincronización automática:', error);
+      }
+    }, 30000); // 30 segundos
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleViewDocument = async (doc) => {
     try {
       const response = await feApi.getDocument(doc.document_id);
