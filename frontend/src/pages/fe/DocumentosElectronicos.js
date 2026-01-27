@@ -45,9 +45,50 @@ export default function DocumentosElectronicos() {
   // Estado de sincronización
   const [syncing, setSyncing] = useState(false);
 
+  // Función para sincronizar documentos pendientes (silenciosa)
+  const syncPendingDocuments = async (silent = true) => {
+    if (syncing) return; // Evitar sincronizaciones simultáneas
+    
+    if (!silent) setSyncing(true);
+    try {
+      const result = await feApi.syncPendingDocuments();
+      // Solo mostrar notificación si hubo cambios y no es silenciosa
+      if (!silent && result.results && result.results.length > 0) {
+        if (result.authorized > 0) {
+          toast.success(`${result.authorized} documento(s) autorizado(s)`);
+        }
+        loadDocuments(); // Recargar la lista
+      } else if (result.results && result.results.length > 0) {
+        // Sincronización silenciosa pero con cambios - recargar lista
+        loadDocuments();
+      }
+    } catch (error) {
+      if (!silent) {
+        toast.error('Error al sincronizar: ' + error.message);
+      }
+    } finally {
+      if (!silent) setSyncing(false);
+    }
+  };
+
+  // Cargar documentos y sincronizar al inicio
   useEffect(() => {
-    loadDocuments();
+    const initialize = async () => {
+      await loadDocuments();
+      // Sincronizar pendientes al cargar (silenciosamente)
+      syncPendingDocuments(true);
+    };
+    initialize();
   }, [pagination.page, filters]);
+
+  // Sincronización automática cada 30 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      syncPendingDocuments(true);
+    }, 30000); // 30 segundos
+
+    return () => clearInterval(interval);
+  }, []);
 
   const loadDocuments = async () => {
     setLoading(true);
