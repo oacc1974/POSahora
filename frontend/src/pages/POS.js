@@ -770,8 +770,9 @@ export default function POS() {
     }
 
     // Si se va a facturar electrónicamente, validar que haya cliente con identificación
-    if (emitirFacturaElectronica && !clienteSeleccionado?.cedula) {
-      toast.error('Para facturar electrónicamente debe seleccionar un cliente con identificación');
+    const clienteIdentificacion = clienteSeleccionado?.cedula_ruc || clienteSeleccionado?.cedula || clienteSeleccionado?.ruc;
+    if (emitirFacturaElectronica && !clienteIdentificacion) {
+      toast.error('Para facturar electrónicamente debe seleccionar un cliente con identificación (cédula/RUC)');
       return;
     }
 
@@ -813,8 +814,8 @@ export default function POS() {
             {
               invoice_id: response.data.id,
               customer: {
-                identification_type: clienteSeleccionado.tipo_identificacion || '05', // Cédula por defecto
-                identification: clienteSeleccionado.cedula,
+                identification_type: clienteIdentificacion.length === 13 ? '04' : '05', // RUC o Cédula
+                identification: clienteIdentificacion,
                 name: clienteSeleccionado.nombre,
                 email: clienteSeleccionado.email || null,
                 address: clienteSeleccionado.direccion || 'N/A',
