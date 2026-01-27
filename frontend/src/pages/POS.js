@@ -1483,21 +1483,26 @@ export default function POS() {
           <Menu size={22} />
         </button>
         
-        {/* Centro: Ticket con contador */}
-        <button 
-          ref={ticketButtonRef}
-          onClick={() => setShowMobileCart(true)}
-          className="flex items-center gap-2 relative"
-        >
-          <span className="font-semibold text-lg">Ticket</span>
-          <span 
-            className={`bg-white text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full transition-transform ${
-              flyingProduct ? 'scale-125' : ''
-            }`}
+        {/* Centro: Ticket con contador y fecha */}
+        <div className="flex flex-col items-center">
+          <button 
+            ref={ticketButtonRef}
+            onClick={() => setShowMobileCart(true)}
+            className="flex items-center gap-2 relative"
           >
-            {cartItemCount || 0}
+            <span className="font-semibold text-lg">Ticket</span>
+            <span 
+              className={`bg-white text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full transition-transform ${
+                flyingProduct ? 'scale-125' : ''
+              }`}
+            >
+              {cartItemCount || 0}
+            </span>
+          </button>
+          <span className="text-xs text-blue-100">
+            {fechaHoraActual.toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' })} {fechaHoraActual.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
           </span>
-        </button>
+        </div>
         
         {/* Derecha: Cliente + Menú opciones (3 puntos) */}
         <div className="flex items-center gap-1">
