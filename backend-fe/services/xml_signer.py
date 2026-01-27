@@ -195,8 +195,8 @@ def sign_xml_xades_bes(xml_content: str, p12_data: bytes, password: str) -> str:
     
     cert_digest_elem = etree.SubElement(cert_elem, "{http://uri.etsi.org/01903/v1.3.2#}CertDigest")
     etree.SubElement(cert_digest_elem, "{http://www.w3.org/2000/09/xmldsig#}DigestMethod",
-                      Algorithm="http://www.w3.org/2000/09/xmldsig#sha1")
-    cert_hash = base64.b64encode(hashlib.sha1(cert_der).digest()).decode()
+                      Algorithm="http://www.w3.org/2001/04/xmlenc#sha256")
+    cert_hash = base64.b64encode(hashlib.sha256(cert_der).digest()).decode()
     etree.SubElement(cert_digest_elem, "{http://www.w3.org/2000/09/xmldsig#}DigestValue").text = cert_hash
     
     issuer_serial = etree.SubElement(cert_elem, "{http://uri.etsi.org/01903/v1.3.2#}IssuerSerial")
