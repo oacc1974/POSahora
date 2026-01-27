@@ -204,20 +204,20 @@ def sign_xml_xades_bes(xml_content: str, p12_data: bytes, password: str) -> str:
     etree.SubElement(issuer_serial, "{http://www.w3.org/2000/09/xmldsig#}X509SerialNumber").text = cert_info["serial_number"]
     
     # Calcular digests pendientes
-    keyinfo_digest = base64.b64encode(hashlib.sha1(canonicalize(key_info)).digest()).decode()
+    keyinfo_digest = base64.b64encode(hashlib.sha256(canonicalize(key_info)).digest()).decode()
     etree.SubElement(ref_keyinfo, "{http://www.w3.org/2000/09/xmldsig#}DigestValue").text = keyinfo_digest
     
-    props_digest = base64.b64encode(hashlib.sha1(canonicalize(signed_props)).digest()).decode()
+    props_digest = base64.b64encode(hashlib.sha256(canonicalize(signed_props)).digest()).decode()
     etree.SubElement(ref_props, "{http://www.w3.org/2000/09/xmldsig#}DigestValue").text = props_digest
     
     # Calcular SignatureValue usando cryptography
     signed_info_c14n = canonicalize(signed_info)
     
-    # Firmar con clave privada usando cryptography
+    # Firmar con clave privada usando RSA-SHA256
     signature_bytes = private_key.sign(
         signed_info_c14n,
         padding.PKCS1v15(),
-        hashes.SHA1()
+        hashes.SHA256()
     )
     sig_value.text = base64.b64encode(signature_bytes).decode()
     
