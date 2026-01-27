@@ -41,6 +41,9 @@ export default function DocumentosElectronicos() {
   const [showNCModal, setShowNCModal] = useState(false);
   const [ncReason, setNcReason] = useState('');
   const [creatingNC, setCreatingNC] = useState(false);
+  
+  // Estado de sincronización
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     loadDocuments();
