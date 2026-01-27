@@ -35,6 +35,7 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [funciones, setFunciones] = useState({});
+  const [feMenuOpen, setFeMenuOpen] = useState(false);
 
   // Cargar configuración de funciones para saber si FE está activa
   useEffect(() => {
@@ -55,6 +56,13 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
     };
     loadFunciones();
   }, []);
+
+  // Auto-abrir el menú de FE si estamos en una de sus páginas
+  useEffect(() => {
+    if (location.pathname.includes('/documentos-electronicos') || location.pathname.includes('/notas-credito')) {
+      setFeMenuOpen(true);
+    }
+  }, [location.pathname]);
 
   const navigation = [
     {
