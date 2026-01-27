@@ -578,6 +578,13 @@ export default function DocumentosElectronicos() {
                     Crear Nota de Crédito
                   </Button>
                 )}
+                {selectedDoc.document.doc_type === '01' && 
+                 selectedDoc.document.has_credit_note && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-700 rounded-md text-sm">
+                    <AlertCircle size={16} />
+                    <span>Esta factura ya tiene una Nota de Crédito asociada</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
