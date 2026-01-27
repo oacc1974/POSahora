@@ -393,7 +393,11 @@ export default function DocumentosElectronicos() {
                 documents.map((doc) => (
                   <tr key={doc.document_id} className="border-t hover:bg-slate-50">
                     <td className="p-4">
-                      {new Date(doc.issue_date).toLocaleDateString('es-ES')}
+                      {/* Extraer fecha de la clave de acceso (DDMMAAAA) para mostrar correctamente */}
+                      {doc.access_key ? 
+                        `${doc.access_key.substring(0,2)}/${doc.access_key.substring(2,4)}/${doc.access_key.substring(4,8)}` :
+                        new Date(doc.issue_date).toLocaleDateString('es-ES')
+                      }
                     </td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded text-xs ${doc.doc_type === '01' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>
