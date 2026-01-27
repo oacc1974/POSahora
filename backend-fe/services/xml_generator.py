@@ -282,6 +282,9 @@ def generate_credit_note_xml(
     etree.SubElement(info_nc, "valorModificacion").text = format_decimal(totals["total"])
     etree.SubElement(info_nc, "moneda").text = "DOLAR"
     
+    # Motivo de la nota de crédito (va al final de infoNotaCredito)
+    etree.SubElement(info_nc, "motivo").text = clean_xml_string(invoice_reference["reason"])
+    
     # === DETALLES ===
     detalles = etree.SubElement(nota_credito, "detalles")
     
