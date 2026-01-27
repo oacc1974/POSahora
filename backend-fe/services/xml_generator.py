@@ -92,12 +92,8 @@ def generate_invoice_xml(
         fecha_emision = dt(2025, 11, 28)
         etree.SubElement(info_factura, "fechaEmision").text = fecha_emision.strftime("%d/%m/%Y")
     else:
-        # En producción, ajustar si el servidor tiene fecha futura
-        if issue_date.year > 2025:
-            fecha_ajustada = issue_date.replace(year=2025)
-            etree.SubElement(info_factura, "fechaEmision").text = fecha_ajustada.strftime("%d/%m/%Y")
-        else:
-            etree.SubElement(info_factura, "fechaEmision").text = issue_date.strftime("%d/%m/%Y")
+        # En producción: usar la fecha actual real (desde enero 2026 el SRI exige transmisión inmediata)
+        etree.SubElement(info_factura, "fechaEmision").text = issue_date.strftime("%d/%m/%Y")
     
     if emitter.get("direccion"):
         etree.SubElement(info_factura, "dirEstablecimiento").text = clean_xml_string(emitter["direccion"])
