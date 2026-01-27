@@ -758,3 +758,125 @@ async def resend_document(request: Request, document_id: str):
         "sri_authorization_number": auth_number,
         "sri_messages": sri_messages
     }
+
+
+@router.post("/sync-pending")
+async def sync_pending_documents(request: Request):
+    """
+    Sincroniza el estado de todos los documentos pendientes con el SRI.
+    Actualiza los documentos que están en EN_PROCESO o ERROR.
+    """
+    import httpx
+    import re
+    
+    tenant_id = await get_tenant_id(request)
+    db = request.app.state.db
+    
+    # Buscar documentos en estados pendientes
+    pending_statuses = ["EN_PROCESO", "ERROR", "PENDIENTE"]
+    docs = await db.documents.find({
+        "tenant_id": tenant_id,
+        "sri_status": {"$in": pending_statuses}
+    }).to_list(100)
+    
+    if not docs:
+        return {
+            "synced": 0,
+            "authorized": 0,
+            "not_authorized": 0,
+            "still_pending": 0,
+            "message": "No hay documentos pendientes de sincronizar"
+        }
+    
+    # Obtener config para determinar ambiente
+    config = await db.configs_fiscal.find_one({"tenant_id": tenant_id})
+    ambiente = config.get("ambiente", "pruebas") if config else "pruebas"
+    
+    # URL del servicio de autorización
+    if ambiente == "produccion":
+        auth_url = "https://cel.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline"
+    else:
+        auth_url = "https://celcer.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline"
+    
+    authorized = 0
+    not_authorized = 0
+    still_pending = 0
+    results = []
+    
+    async with httpx.AsyncClient(timeout=30.0, verify=False) as http:
+        for doc in docs:
+            clave = doc.get('access_key')
+            if not clave:
+                continue
+            
+            soap = f'''<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ec="http://ec.gob.sri.ws.autorizacion">
+    <soapenv:Body>
+        <ec:autorizacionComprobante><claveAccesoComprobante>{clave}</claveAccesoComprobante></ec:autorizacionComprobante>
+    </soapenv:Body>
+</soapenv:Envelope>'''
+            
+            try:
+                resp = await http.post(
+                    auth_url,
+                    content=soap,
+                    headers={"Content-Type": "text/xml; charset=utf-8", "SOAPAction": ""}
+                )
+                
+                sri_estado = re.search(r'<estado>([^<]+)</estado>', resp.text)
+                sri_auth = re.search(r'<numeroAutorizacion>([^<]+)</numeroAutorizacion>', resp.text)
+                sri_fecha = re.search(r'<fechaAutorizacion>([^<]+)</fechaAutorizacion>', resp.text)
+                
+                if sri_estado:
+                    estado = sri_estado.group(1)
+                    old_status = doc.get('sri_status')
+                    
+                    # Solo actualizar si cambió el estado
+                    if estado != old_status:
+                        update = {
+                            "sri_status": estado,
+                            "updated_at": datetime.now(timezone.utc)
+                        }
+                        
+                        if sri_auth:
+                            update["sri_authorization_number"] = sri_auth.group(1)
+                        if sri_fecha:
+                            try:
+                                update["sri_authorization_date"] = datetime.fromisoformat(
+                                    sri_fecha.group(1).replace('Z', '+00:00')
+                                )
+                            except:
+                                pass
+                        
+                        await db.documents.update_one(
+                            {"_id": doc["_id"]},
+                            {"$set": update}
+                        )
+                        
+                        results.append({
+                            "doc_number": doc.get('doc_number'),
+                            "old_status": old_status,
+                            "new_status": estado,
+                            "authorization": sri_auth.group(1) if sri_auth else None
+                        })
+                    
+                    # Contar resultados
+                    if estado == "AUTORIZADO":
+                        authorized += 1
+                    elif estado in ["NO AUTORIZADO", "NO_AUTORIZADO", "RECHAZADO"]:
+                        not_authorized += 1
+                    else:
+                        still_pending += 1
+                        
+            except Exception as e:
+                print(f"Error sincronizando {doc.get('doc_number')}: {e}")
+                still_pending += 1
+    
+    return {
+        "synced": len(docs),
+        "authorized": authorized,
+        "not_authorized": not_authorized,
+        "still_pending": still_pending,
+        "results": results,
+        "message": f"Sincronización completada: {authorized} autorizados, {not_authorized} no autorizados, {still_pending} pendientes"
+    }
