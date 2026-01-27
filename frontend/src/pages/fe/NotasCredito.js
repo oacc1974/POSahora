@@ -65,7 +65,16 @@ export default function NotasCredito() {
 
   const handleDownloadXML = async (doc) => {
     try {
-      await feApi.downloadXML(doc.document_id, doc.doc_number);
+      const blob = await feApi.downloadXML(doc.document_id);
+      // Crear link de descarga
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${doc.doc_number.replace(/-/g, '')}.xml`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       toast.success('XML descargado');
     } catch (error) {
       toast.error('Error al descargar XML');
@@ -74,7 +83,16 @@ export default function NotasCredito() {
 
   const handleDownloadPDF = async (doc) => {
     try {
-      await feApi.downloadPDF(doc.document_id, doc.doc_number);
+      const blob = await feApi.downloadPDF(doc.document_id);
+      // Crear link de descarga
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${doc.doc_number.replace(/-/g, '')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       toast.success('PDF descargado');
     } catch (error) {
       toast.error('Error al descargar PDF');
