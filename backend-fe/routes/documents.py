@@ -146,9 +146,12 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
         # El servidor de pruebas del SRI (celcer) está configurado para nov-dic 2025
         issue_date_for_sri = datetime(2025, 11, 28, tzinfo=timezone.utc)
     else:
-        # En producción: usar la fecha actual del sistema (que desde enero 2026 es la fecha real)
-        # El SRI exige transmisión inmediata desde enero 2026
-        issue_date_for_sri = now
+        # En producción: usar la fecha de Ecuador (UTC-5)
+        # El SRI valida contra la fecha de Ecuador, no UTC
+        # Convertir UTC a hora de Ecuador restando 5 horas
+        from datetime import timedelta
+        ecuador_offset = timedelta(hours=-5)
+        issue_date_for_sri = now + ecuador_offset
     
     # Obtener secuencial atómico
     sequential = await get_next_sequential(
