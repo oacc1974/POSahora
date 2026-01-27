@@ -170,6 +170,30 @@ export default function DocumentosElectronicos() {
     }
   };
 
+  const handleSyncPending = async () => {
+    setSyncing(true);
+    try {
+      const result = await feApi.syncPendingDocuments();
+      if (result.authorized > 0) {
+        toast.success(`${result.authorized} documento(s) autorizado(s)`);
+      }
+      if (result.not_authorized > 0) {
+        toast.warning(`${result.not_authorized} documento(s) no autorizado(s)`);
+      }
+      if (result.still_pending > 0) {
+        toast.info(`${result.still_pending} documento(s) aún en proceso`);
+      }
+      if (result.synced === 0) {
+        toast.info('No hay documentos pendientes de sincronizar');
+      }
+      loadDocuments();
+    } catch (error) {
+      toast.error('Error al sincronizar: ' + error.message);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const getStatusBadge = (status) => {
     const styles = {
       'AUTORIZADO': 'bg-green-100 text-green-800',
