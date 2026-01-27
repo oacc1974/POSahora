@@ -128,11 +128,11 @@ def sign_xml_xades_bes(xml_content: str, p12_data: bytes, password: str) -> str:
                       Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature")
     
     etree.SubElement(ref_doc, "{http://www.w3.org/2000/09/xmldsig#}DigestMethod",
-                      Algorithm="http://www.w3.org/2000/09/xmldsig#sha1")
+                      Algorithm="http://www.w3.org/2001/04/xmlenc#sha256")
     
     # Calcular digest del documento
     doc_without_sig = etree.fromstring(xml_content.encode('utf-8'))
-    doc_digest = base64.b64encode(hashlib.sha1(canonicalize(doc_without_sig)).digest()).decode()
+    doc_digest = base64.b64encode(hashlib.sha256(canonicalize(doc_without_sig)).digest()).decode()
     etree.SubElement(ref_doc, "{http://www.w3.org/2000/09/xmldsig#}DigestValue").text = doc_digest
     
     # Reference a KeyInfo
