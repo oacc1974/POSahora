@@ -66,6 +66,7 @@ def generate_invoice_xml(
     # === INFO TRIBUTARIA ===
     info_tributaria = etree.SubElement(factura, "infoTributaria")
     
+    # Ambiente: 1=Pruebas, 2=Producción (según documentación SRI)
     etree.SubElement(info_tributaria, "ambiente").text = "1" if ambiente == "pruebas" else "2"
     etree.SubElement(info_tributaria, "tipoEmision").text = "1"  # Normal
     etree.SubElement(info_tributaria, "razonSocial").text = clean_xml_string(emitter["razon_social"])
