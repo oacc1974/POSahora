@@ -40,8 +40,9 @@ export default function NotasCredito() {
 
   const handleViewDocument = async (doc) => {
     try {
-      const fullDoc = await feApi.getDocument(doc.document_id);
-      setSelectedDoc({ document: fullDoc, showDetail: true });
+      const response = await feApi.getDocument(doc.document_id);
+      // La API devuelve { document: {...}, events: [...] }
+      setSelectedDoc({ document: response.document, showDetail: true });
     } catch (error) {
       toast.error('Error al cargar detalle');
     }
