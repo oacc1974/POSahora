@@ -205,9 +205,22 @@ export default function NotasCredito() {
                             variant="ghost"
                             onClick={() => handleViewDocument(doc)}
                             data-testid="view-nc-btn"
+                            title="Ver detalle"
                           >
                             <Eye size={16} />
                           </Button>
+                          {doc.sri_status === 'ERROR' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleResend(doc)}
+                              data-testid="resend-nc-btn"
+                              title="Reintentar envío al SRI"
+                              disabled={loading}
+                            >
+                              <RotateCcw size={16} className="text-orange-500" />
+                            </Button>
+                          )}
                           {doc.sri_status === 'AUTORIZADO' && (
                             <>
                               <Button
@@ -215,6 +228,7 @@ export default function NotasCredito() {
                                 variant="ghost"
                                 onClick={() => handleDownloadPDF(doc)}
                                 data-testid="download-pdf-btn"
+                                title="Descargar PDF"
                               >
                                 <FileText size={16} className="text-red-500" />
                               </Button>
@@ -223,6 +237,7 @@ export default function NotasCredito() {
                                 variant="ghost"
                                 onClick={() => handleDownloadXML(doc)}
                                 data-testid="download-xml-btn"
+                                title="Descargar XML"
                               >
                                 <Download size={16} className="text-blue-500" />
                               </Button>
