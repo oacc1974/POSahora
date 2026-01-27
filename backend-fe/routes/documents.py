@@ -474,8 +474,18 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
         ambiente=ambiente
     )
     
-    cert_password = decrypt_password(certificate["password_encrypted"])
-    xml_signed = sign_xml_xades_bes(xml_unsigned, certificate["file_data"], cert_password)
+    # Firmar XML usando servicio Java XAdES (mismo método que facturas)
+    try:
+        cert_password = decrypt_password(certificate["password_encrypted"])
+        p12_data = bytes(certificate["file_data"]) if not isinstance(certificate["file_data"], bytes) else certificate["file_data"]
+        xml_signed = await sign_xml_with_java(xml_unsigned, p12_data, cert_password)
+    except Exception as e:
+        # Actualizar estado a ERROR
+        await db.documents.update_one(
+            {"_id": document_id},
+            {"$set": {"sri_status": "ERROR", "sri_messages": [{"mensaje": f"Error al firmar: {str(e)}"}]}}
+        )
+        raise HTTPException(status_code=500, detail=f"Error al firmar documento: {str(e)}")
     
     # Guardar XML
     xml_gzip = gzip.compress(xml_signed.encode('utf-8'))
