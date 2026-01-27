@@ -101,13 +101,6 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
       show: true,
     },
     {
-      name: 'Docs Electrónicos',
-      href: '/documentos-electronicos',
-      icon: FileCheck,
-      testId: 'nav-docs-electronicos',
-      show: funciones.facturacion_electronica && ['propietario', 'administrador'].includes(user.rol),
-    },
-    {
       name: 'Reportes',
       href: '/reportes',
       icon: BarChart3,
