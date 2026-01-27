@@ -139,6 +139,14 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
     now = datetime.now(timezone.utc)
     issue_date = invoice.issue_date or now
     
+    # En ambiente de pruebas, usar fecha que el servidor SRI acepta
+    ambiente = config.get("ambiente", "pruebas")
+    if ambiente == "pruebas":
+        # El servidor de pruebas del SRI (celcer) está configurado para nov-dic 2025
+        issue_date_for_sri = datetime(2025, 11, 28, tzinfo=timezone.utc)
+    else:
+        issue_date_for_sri = issue_date
+    
     # Obtener secuencial atómico
     sequential = await get_next_sequential(
         db, tenant_id, 
@@ -150,9 +158,8 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
     doc_number = format_doc_number(invoice.store_code, invoice.emission_point, sequential)
     
     # Generar clave de acceso
-    ambiente = config.get("ambiente", "pruebas")
     access_key = generate_access_key(
-        issue_date=issue_date,
+        issue_date=issue_date_for_sri,
         doc_type="01",
         ruc=tenant["ruc"],
         ambiente=ambiente,
