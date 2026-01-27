@@ -1045,7 +1045,9 @@ export default function POS() {
       
       printWindow.document.write('<div class="divider"></div>');
       
-      if (config.mostrar_info_cliente && clienteData) {
+      // Mostrar información del cliente o CONSUMIDOR FINAL
+      if (clienteData) {
+        // Cliente específico seleccionado
         printWindow.document.write('<div style="margin-bottom: 10px;">');
         printWindow.document.write('<p style="font-weight: bold; font-size: 11px; margin: 2px 0;">CLIENTE:</p>');
         printWindow.document.write(`<p style="font-size: 11px; margin: 2px 0;">${clienteData.nombre}</p>`);
@@ -1058,6 +1060,14 @@ export default function POS() {
         if (clienteData.telefono) {
           printWindow.document.write(`<p style="font-size: 10px; margin: 2px 0;">Tel: ${clienteData.telefono}</p>`);
         }
+        printWindow.document.write('</div>');
+        printWindow.document.write('<div class="divider"></div>');
+      } else if (!esFacturaElectronica) {
+        // Ticket interno sin cliente = CONSUMIDOR FINAL
+        printWindow.document.write('<div style="margin-bottom: 10px;">');
+        printWindow.document.write('<p style="font-weight: bold; font-size: 11px; margin: 2px 0;">CLIENTE:</p>');
+        printWindow.document.write('<p style="font-size: 11px; margin: 2px 0;">CONSUMIDOR FINAL</p>');
+        printWindow.document.write('<p style="font-size: 10px; margin: 2px 0;">ID: 9999999999999</p>');
         printWindow.document.write('</div>');
         printWindow.document.write('<div class="divider"></div>');
       }
