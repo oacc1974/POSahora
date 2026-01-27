@@ -252,7 +252,6 @@ def generate_credit_note_xml(
     etree.SubElement(info_nc, "codDocModificado").text = "01"  # Factura
     etree.SubElement(info_nc, "numDocModificado").text = invoice_reference["doc_number"]
     etree.SubElement(info_nc, "fechaEmisionDocSustento").text = invoice_reference["issue_date"].strftime("%d/%m/%Y")
-    etree.SubElement(info_nc, "motivo").text = clean_xml_string(invoice_reference["reason"])
     
     etree.SubElement(info_nc, "totalSinImpuestos").text = format_decimal(totals["total"] - totals["total_iva"])
     
