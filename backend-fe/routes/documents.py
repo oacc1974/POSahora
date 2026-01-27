@@ -271,10 +271,11 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
         ambiente=ambiente
     )
     
-    # Firmar XML
+    # Firmar XML usando servicio Java XAdES
     try:
         cert_password = decrypt_password(certificate["password_encrypted"])
-        xml_signed = sign_xml_xades_bes(xml_unsigned, certificate["file_data"], cert_password)
+        p12_data = bytes(certificate["file_data"]) if not isinstance(certificate["file_data"], bytes) else certificate["file_data"]
+        xml_signed = await sign_xml_with_java(xml_unsigned, p12_data, cert_password)
     except Exception as e:
         # Actualizar estado a ERROR
         await db.documents.update_one(
