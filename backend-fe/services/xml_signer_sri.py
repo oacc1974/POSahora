@@ -210,19 +210,27 @@ def sign_xml_xades_sri(xml_content: str, p12_data: bytes, password: str) -> str:
 <ds:Object Id="Signature{signature_number}-Object{object_number}"><etsi:QualifyingProperties Target="#Signature{signature_number}">{signed_properties}</etsi:QualifyingProperties></ds:Object>
 </ds:Signature>'''
     
-    # 7. Insertar firma en el XML
-    # Buscar la etiqueta de cierre del comprobante
-    root_tag_match = xml_clean.split('>')[0].split('<')[1].split()[0]
-    close_tag = f'</{root_tag_match}>'
+    # 7. Insertar firma en el XML usando lxml para evitar errores
+    from lxml import etree
     
-    if close_tag in xml_clean:
-        signed_xml = xml_clean.replace(close_tag, xades_signature + close_tag)
-    else:
-        # Si no encuentra, insertar antes del cierre
-        signed_xml = xml_clean[:-len(close_tag)-1] + xades_signature + close_tag
+    # Remover declaración XML si existe para parsear
+    xml_for_parse = xml_clean
+    if xml_for_parse.startswith('<?xml'):
+        xml_for_parse = xml_for_parse.split('?>', 1)[1].strip()
+    
+    # Parsear XML original
+    root = etree.fromstring(xml_for_parse.encode('utf-8'))
+    
+    # Parsear la firma
+    sig_element = etree.fromstring(xades_signature.encode('utf-8'))
+    
+    # Agregar firma al final del documento (antes del cierre)
+    root.append(sig_element)
+    
+    # Serializar
+    signed_xml = etree.tostring(root, encoding='unicode', pretty_print=False)
     
     # Agregar declaración XML
-    if not signed_xml.startswith('<?xml'):
-        signed_xml = '<?xml version="1.0" encoding="UTF-8"?>' + signed_xml
+    signed_xml = '<?xml version="1.0" encoding="UTF-8"?>' + signed_xml
     
     return signed_xml
