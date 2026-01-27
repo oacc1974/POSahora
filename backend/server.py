@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status, Request, Response, File, UploadFile
+from fastapi import FastAPI, HTTPException, Depends, status, Request, Response, File, UploadFile, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -16,6 +16,7 @@ import shutil
 import random
 import base64
 import io
+import asyncio
 from PIL import Image
 from dotenv import load_dotenv
 from pathlib import Path
