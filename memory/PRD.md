@@ -18,26 +18,53 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ## Funcionalidades Implementadas
 
+### Completadas (27 Enero 2026)
+
+- [x] **PDF RIDE con Formato Oficial SRI - COMPLETADO Y PROBADO**
+  - **Generador PDF Reimplementado:** Usando reportlab con estructura idéntica al formato oficial del SRI
+  - **Secciones del RIDE:**
+    - Encabezado con logo (opcional, del POS), razón social, RUC, direcciones, obligado a contabilidad
+    - Datos del documento: tipo, número, autorización, fecha/hora autorización, ambiente, emisión
+    - Código de barras Code128 con clave de acceso de 49 dígitos
+    - Datos del cliente: razón social, identificación, dirección, fecha de emisión
+    - Tabla de productos: código principal, cantidad, descripción, precio unitario, descuento, total
+    - Totales con desglose completo: SUBTOTAL 15%, 0%, No Objeto IVA, Exento IVA, ICE, IVA 15%, IRBPNR, PROPINA, VALOR TOTAL
+    - Forma de pago con códigos SRI
+  - **Soporte para Logo:** El logo se obtiene de la configuración del POS si está configurado
+  - **Tests:** 13/13 tests pasados para el endpoint de PDF
+
+- [x] **Corrección de Fechas en Lista de Documentos**
+  - Las fechas ahora muestran correctamente la fecha de Ecuador (26/01/2026) en lugar de UTC (27/01/2026)
+  - Se extrae la fecha de la clave de acceso (formato DDMMAAAA) que ya tiene la fecha correcta de Ecuador
+
+- [x] **Sincronización Automática de Estados SRI**
+  - Función que sincroniza automáticamente al cargar la página y cada 30 segundos
+  - Botón "Sincronizar SRI" para forzar actualización manual
+  - Documentos pendientes ("EN PROCESO") se actualizan a "AUTORIZADO" cuando el SRI los procesa
+
 ### Completadas (26 Enero 2026)
 
-- [x] **Sistema de Facturación Electrónica SRI Ecuador - FUNCIONANDO**
-  - **Nuevo Backend (backend-fe):** Servicio FastAPI separado en puerto 8002 para facturación electrónica
-  - **Multi-tenancy:** Todas las peticiones requieren header `X-Tenant-ID` (usa organizacion_id del POS)
-  - **Proxy desde Backend Principal:** Rutas `/api/fe/*` se redirigen automáticamente al backend-fe
-  - **Configuración del Emisor:** RUC, razón social, nombre comercial, dirección, establecimiento, punto de emisión, ambiente (pruebas/producción)
-  - **Certificado Digital:** Subida y validación de certificado .p12, encriptación de contraseña en BD - **FUNCIONANDO CON CERTIFICADO REAL**
+- [x] **Sistema de Facturación Electrónica SRI Ecuador - FUNCIONANDO EN PRODUCCIÓN**
+  - **Arquitectura de 3 Servicios:**
+    1. `backend` (POS): Puerto 8001, proxy para rutas `/api/fe/*`
+    2. `backend-fe` (Facturación): Puerto 8002, lógica de FE
+    3. `signer-service` (Java): Puerto 8003, firma XAdES-BES con xades4j
+  - **Multi-tenancy:** Header `X-Tenant-ID` requerido
+  - **Configuración del Emisor:** RUC, razón social, dirección, ambiente (pruebas/producción)
+  - **Certificado Digital:** Subida y validación .p12 - **FUNCIONANDO CON CERTIFICADO REAL**
   - **Generación de XML:** Formato SRI v2.1.0 para Facturas (01) y Notas de Crédito (04)
-  - **Firma XAdES-BES:** Firma digital del XML según especificación SRI (usando cryptography library)
-  - **Cliente SOAP:** Comunicación con webservices del SRI (RecepcionComprobantesOffline, AutorizacionComprobantesOffline)
-  - **Clave de Acceso:** Generación de 49 dígitos con módulo 11
-  - **Secuenciales Atómicos:** Uso de MongoDB `findOneAndUpdate` para garantizar unicidad
-  - **Generación PDF RIDE:** Representación impresa del documento electrónico
-  - **Frontend:** Nuevas páginas `/configuracion/facturacion` y `/documentos-electronicos`
-  - **Toggle en Funciones:** Opción para activar/desactivar facturación electrónica con botón de configuración
+  - **Firma XAdES-BES:** Microservicio Java con xades4j (solución robusta para SRI)
+  - **Cliente SOAP:** Comunicación con webservices del SRI
+  - **Clave de Acceso:** 49 dígitos con módulo 11
+  - **Frontend:** Páginas `/configuracion/facturacion` y `/documentos-electronicos`
 
-- [x] **Fix Bug - Carga de Certificado .p12**
-  - Corregido error de compatibilidad con cryptography library (atributos `not_valid_before` vs `not_valid_before_utc`)
-  - Migrado de pyOpenSSL a cryptography directamente para mejor compatibilidad
+- [x] **Fix Bug - "FIRMA INVALIDA"**
+  - Solución: Microservicio Java con xades4j para firma XAdES-BES compatible con SRI
+  - La firma con Python no era compatible, se creó servicio Java dedicado
+
+- [x] **Fix Bug - "FECHA EMISION EXTEMPORANEA"**
+  - Ajuste de zona horaria para usar Ecuador (UTC-5)
+  - El SRI valida contra la fecha de Ecuador, no UTC
 
 ### Completadas (23 Enero 2026)
 
