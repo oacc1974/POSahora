@@ -113,9 +113,16 @@ def generate_invoice_xml(
     if customer.get("address"):
         etree.SubElement(info_factura, "direccionComprador").text = clean_xml_string(customer["address"])
     
+    # Calcular total de IVA
+    total_iva = totals.get("total_iva", 0) or (
+        totals.get("total_iva_0", 0) + 
+        totals.get("total_iva_12", 0) + 
+        totals.get("total_iva_15", 0)
+    )
+    
     # Totales
-    etree.SubElement(info_factura, "totalSinImpuestos").text = format_decimal(totals["total"] - totals["total_iva"])
-    etree.SubElement(info_factura, "totalDescuento").text = format_decimal(totals["total_discount"])
+    etree.SubElement(info_factura, "totalSinImpuestos").text = format_decimal(totals["total"] - total_iva)
+    etree.SubElement(info_factura, "totalDescuento").text = format_decimal(totals.get("total_discount", 0))
     
     # Total con impuestos
     total_con_impuestos = etree.SubElement(info_factura, "totalConImpuestos")
