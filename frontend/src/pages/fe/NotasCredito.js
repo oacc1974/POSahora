@@ -40,7 +40,7 @@ export default function NotasCredito() {
 
   const handleViewDocument = async (doc) => {
     try {
-      const fullDoc = await getDocument(doc.document_id);
+      const fullDoc = await feApi.getDocument(doc.document_id);
       setSelectedDoc({ document: fullDoc, showDetail: true });
     } catch (error) {
       toast.error('Error al cargar detalle');
@@ -50,7 +50,7 @@ export default function NotasCredito() {
   const handleSync = async () => {
     try {
       setLoading(true);
-      const result = await syncPendingDocuments();
+      const result = await feApi.syncPendingDocuments();
       if (result.authorized > 0) {
         toast.success(`${result.authorized} documento(s) autorizado(s)`);
       }
@@ -64,7 +64,7 @@ export default function NotasCredito() {
 
   const handleDownloadXML = async (doc) => {
     try {
-      await downloadXML(doc.document_id, doc.doc_number);
+      await feApi.downloadXML(doc.document_id, doc.doc_number);
       toast.success('XML descargado');
     } catch (error) {
       toast.error('Error al descargar XML');
@@ -73,7 +73,7 @@ export default function NotasCredito() {
 
   const handleDownloadPDF = async (doc) => {
     try {
-      await downloadPDF(doc.document_id, doc.doc_number);
+      await feApi.downloadPDF(doc.document_id, doc.doc_number);
       toast.success('PDF descargado');
     } catch (error) {
       toast.error('Error al descargar PDF');
