@@ -70,6 +70,9 @@ public class SignerService {
         });
         
         System.out.println("Servicio de firma iniciado en http://localhost:" + port);
+        
+        // Mantener el proceso vivo
+        awaitInitialization();
     }
     
     private static String signXml(String xmlContent, byte[] p12Data, String password) throws Exception {
