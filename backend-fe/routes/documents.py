@@ -317,10 +317,12 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
     })
     
     # Enviar a SRI
+    print(f"[SRI] Enviando documento {doc_number} a SRI...")
     sri_client = SRIClient(ambiente=ambiente)
     sri_status, auth_number, auth_date, sri_messages = await sri_client.emitir_y_autorizar(
         xml_signed, access_key
     )
+    print(f"[SRI] Resultado: status={sri_status}, auth={auth_number}")
     
     # Actualizar documento con resultado SRI
     update_data = {
