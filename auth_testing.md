@@ -30,11 +30,11 @@ print('User ID: ' + userId);
 ## Step 2: Test Backend API
 ```bash
 # Test auth endpoint
-curl -X GET "https://factura-sri.preview.emergentagent.com/api/auth/me" \
+curl -X GET "https://facturecuador.preview.emergentagent.com/api/auth/me" \
   -H "Authorization: Bearer YOUR_SESSION_TOKEN"
 
 # Test protected endpoints
-curl -X GET "https://factura-sri.preview.emergentagent.com/api/productos" \
+curl -X GET "https://facturecuador.preview.emergentagent.com/api/productos" \
   -H "Authorization: Bearer YOUR_SESSION_TOKEN"
 ```
 
@@ -50,7 +50,7 @@ await page.context.add_cookies([{
     "secure": true,
     "sameSite": "None"
 }]);
-await page.goto("https://factura-sri.preview.emergentagent.com");
+await page.goto("https://facturecuador.preview.emergentagent.com");
 ```
 
 ## Quick Debug
