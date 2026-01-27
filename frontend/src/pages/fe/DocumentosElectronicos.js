@@ -237,10 +237,21 @@ export default function DocumentosElectronicos() {
             {pagination.total} documentos encontrados
           </p>
         </div>
-        <Button onClick={loadDocuments} variant="outline" disabled={loading}>
-          <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Actualizar
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleSyncPending} 
+            variant="outline" 
+            disabled={syncing}
+            className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+          >
+            <RefreshCw size={16} className={`mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Sincronizando...' : 'Sincronizar SRI'}
+          </Button>
+          <Button onClick={loadDocuments} variant="outline" disabled={loading}>
+            <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Actualizar
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}
