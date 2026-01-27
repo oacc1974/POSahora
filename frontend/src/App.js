@@ -23,6 +23,7 @@ import './App.css';
 // Importar páginas de Facturación Electrónica
 import ConfiguracionFE from './pages/fe/ConfiguracionFE';
 import DocumentosElectronicos from './pages/fe/DocumentosElectronicos';
+import NotasCredito from './pages/fe/NotasCredito';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
