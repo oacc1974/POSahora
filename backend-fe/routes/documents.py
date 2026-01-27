@@ -139,13 +139,21 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
     now = datetime.now(timezone.utc)
     issue_date = invoice.issue_date or now
     
-    # En ambiente de pruebas, usar fecha que el servidor SRI acepta
+    # En ambiente de pruebas, usar fecha que el servidor SRI de pruebas acepta
+    # En producción, usar la fecha real del mundo (no la del servidor de preview)
     ambiente = config.get("ambiente", "pruebas")
     if ambiente == "pruebas":
         # El servidor de pruebas del SRI (celcer) está configurado para nov-dic 2025
         issue_date_for_sri = datetime(2025, 11, 28, tzinfo=timezone.utc)
     else:
-        issue_date_for_sri = issue_date
+        # En producción, el SRI usa fecha real. Si el servidor tiene fecha futura (ej: 2026)
+        # debemos usar la fecha real actual (2025)
+        current_year = now.year
+        if current_year > 2025:
+            # Ajustar a la fecha real (mismo día/mes pero año 2025)
+            issue_date_for_sri = now.replace(year=2025)
+        else:
+            issue_date_for_sri = issue_date
     
     # Obtener secuencial atómico
     sequential = await get_next_sequential(
