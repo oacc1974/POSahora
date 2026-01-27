@@ -506,12 +506,11 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
         }}
     )
     
-    # Marcar factura original
-    if sri_status == "AUTORIZADO":
-        await db.documents.update_one(
-            {"_id": credit_note.invoice_id},
-            {"$set": {"has_credit_note": True}}
-        )
+    # Marcar factura original como que tiene NC (independientemente del estado)
+    await db.documents.update_one(
+        {"_id": credit_note.invoice_id},
+        {"$set": {"has_credit_note": True}}
+    )
     
     return DocumentCreateResponse(
         document_id=document_id,
