@@ -30,6 +30,14 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
   - **Nota importante:** El SRI NO permite NC para "Consumidor Final" (9999999999999) - Esto es una restricción del SRI, no del sistema
   - **Página de NC:** `/notas-credito` funcionando con listado, estados y acciones
   - **Menú:** Sección "Facturación Electrónica" con submenús "Facturas Electrónicas" y "Notas de Crédito"
+  - **Validación frontend:** Mensaje de advertencia cuando se intenta crear NC para Consumidor Final
+  - **Validación backend:** HTTP 400 con mensaje claro si se intenta crear NC para Consumidor Final
+
+- [x] **Mejoras en página de Notas de Crédito**
+  - **Fix detalle:** Corregido el modal de detalle que mostraba todo en "N/A"
+  - **Fix descargas:** Corregidas las funciones de descarga XML y PDF que no funcionaban
+  - **Sincronización automática:** Agregada sincronización cada 30 segundos para reintentar documentos pendientes
+  - **Motivo correcto:** El motivo ahora se obtiene de `invoice_reference.reason`
 
 - [x] **PDF RIDE con Formato Oficial SRI - COMPLETADO Y PROBADO**
   - **Generador PDF Reimplementado:** Usando reportlab con estructura idéntica al formato oficial del SRI
