@@ -210,7 +210,7 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
             "emission_point": invoice.emission_point,
             "name": f"Establecimiento {invoice.store_code}"
         },
-        "issue_date": issue_date,
+        "issue_date": issue_date_for_sri,  # Fecha de Ecuador (para mostrar en la UI)
         "customer": {
             "identification_type": invoice.customer.identification_type,
             "identification": invoice.customer.identification,
