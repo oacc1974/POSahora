@@ -80,6 +80,24 @@ export default function NotasCredito() {
     }
   };
 
+  const handleResend = async (doc) => {
+    try {
+      setLoading(true);
+      toast.info('Reenviando al SRI...');
+      const result = await feApi.resendDocument(doc.document_id);
+      if (result.success) {
+        toast.success(`Documento ${result.sri_status}`);
+      } else {
+        toast.error(result.sri_messages?.[0]?.mensaje || 'Error al reenviar');
+      }
+      await loadDocuments();
+    } catch (error) {
+      toast.error('Error al reenviar documento');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'AUTORIZADO':
