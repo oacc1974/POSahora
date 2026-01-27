@@ -1,47 +1,63 @@
 <analysis>**original_problem_statement:**
 El usuario solicitó un sistema de Punto de Venta (POS) que evolucionó para incluir una nueva funcionalidad masiva: un sistema completo y separado de Facturación Electrónica (FE) para el SRI de Ecuador.
 
-El objetivo de esta sesión era solucionar el error FECHA EMISION EXTEMPORANEA que impedía emitir facturas en el ambiente de producción del SRI. Durante la sesión, este problema escaló a un error de FIRMA INVALIDA, que resultó ser un desafío técnico mucho mayor. Finalmente, el usuario solicitó corregir la fecha mostrada en la lista de documentos y rediseñar el PDF de la factura (RIDE) para que coincida con el formato oficial del SRI.
+Durante esta sesión, el usuario informó de dos problemas principales:
+1.  Las notas de crédito no se podían crear correctamente.
+2.  Las ventas con facturación electrónica no aparecían en los reportes de recibos.
+
+A lo largo de la sesión, las solicitudes se expandieron para incluir:
+- Rediseñar el PDF de la factura (RIDE) para que coincida con un formato específico, incluyendo el logo.
+- Solucionar la lentitud del sistema al facturar, implementando un proceso asíncrono.
+- Corregir el listado de documentos electrónicos para que se muestren todos y en el orden correcto.
+- Crear una nueva sección en el menú para la Facturación Electrónica, separando facturas y notas de crédito.
+- Depurar múltiples errores que impedían la creación y autorización de notas de crédito, culminando en un error de FIRMA INVALIDA.
 
 **User's preferred language**: Spanish. The next agent MUST respond in Spanish.
 
 **what currently exists?**
-- **Arquitectura de tres servicios:**
-    1.   (POS): Puerto 8001. Actúa como proxy para las rutas .
-    2.   (Facturación Electrónica): Puerto 8002. Gestiona toda la lógica de FE (creación, estado, etc.) pero ahora delega la firma.
-    3.   (Firmador Java): Puerto 8003. Un nuevo microservicio en Java/SparkJava que utiliza  para realizar la firma digital XAdES-BES, que fue la solución al problema de FIRMA INVALIDA.
-- **Flujo de Facturación Funcional:** El sistema puede crear, firmar (usando el servicio Java), enviar, recibir y obtener el estado **AUTORIZADO** del SRI en el ambiente de producción.
-- **Frontend:** La interfaz para configurar FE, ver documentos y facturar desde el POS está integrada. Se ha añadido una función de sincronización automática y manual para los estados de los documentos. Se corrigió la fecha que se mostraba en la lista de documentos.
+- Una arquitectura de tres servicios:  (POS, puerto 8001),  (Facturación Electrónica, puerto 8002) y  (Firmador Java XAdES-BES, puerto 8003).
+- El flujo para emitir **facturas** es completamente funcional y asíncrono. La venta en el POS se registra de inmediato y la factura electrónica se procesa en segundo plano sin bloquear la interfaz de usuario.
+- El PDF de la factura (RIDE) fue rediseñado exitosamente para coincidir con el formato solicitado por el usuario, incluyendo el logo de la empresa obtenido desde la base de datos.
+- La interfaz de usuario ha sido mejorada significativamente:
+    - Se creó un menú desplegable Facturación Electrónica con submenús para Facturas Electrónicas y Notas de Crédito.
+    - Se creó una nueva página para listar, ver y gestionar las Notas de Crédito.
+    - El listado de documentos ahora se ordena por número descendente y muestra hasta 50 documentos, solucionando el problema de visualización.
+    - Se agregaron indicadores visuales en la lista de facturas para señalar cuáles ya tienen una nota de crédito asociada.
+- El problema de las ventas que no aparecían en los reportes fue investigado y se concluyó que era un malentendido; las ventas **sí aparecen correctamente**.
+- La lógica base para las notas de crédito (índice de la base de datos, flujo de creación) se ha corregido, pero sigue fallando en el paso final de autorización.
 
 **Last working item**:
-- **Last item agent was working**: El agente estaba trabajando en dos solicitudes simultáneas del usuario:
-    1.  **Corregir la fecha en la lista de facturas:** La lista mostraba la fecha UTC (27 de enero) en lugar de la fecha de emisión en Ecuador (26 de enero). El agente corrigió el backend para guardar la fecha correcta y el frontend para mostrar la fecha extraída de la clave de acceso. **Esto parece estar completo.**
-    2.  **Rediseñar el PDF (RIDE):** El usuario proporcionó una imagen de un RIDE oficial y solicitó que el PDF generado por el sistema tuviera una estructura idéntica. El agente analizó la estructura del PDF adjunto y sobrescribió el archivo  con una nueva implementación para generar el RIDE con el formato solicitado.
+- **Last item agent was working**: Depurando el error FIRMA INVALIDA que ocurre exclusivamente al procesar Notas de Crédito.
 - **Status**: IN PROGRESS
-- **Agent Testing Done**: N (El agente sobrescribió el generador de PDF pero no llegó a probar si la nueva implementación funciona y genera el PDF correctamente).
-- **Which testing method agent to use?**: backend testing agent. El agente debe probar la generación del PDF. Para ello, puede llamar al endpoint  y verificar que el PDF generado se parezca al diseño solicitado por el usuario. También podría usar una herramienta para convertir el PDF a imagen y compararla visualmente si es necesario.
+- **Agent Testing Done**: N
+- **Which testing method agent to use?**: backend testing agent. El agente debe modificar el generador de XML, limpiar la base de datos de los intentos fallidos y volver a probar la creación de una nota de crédito.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: El PDF generado (RIDE) no coincide con el formato oficial del SRI (P0)**
-    - **Attempted fixes**: El agente analizó un PDF de muestra proporcionado por el usuario y sobrescribió el archivo  con una nueva implementación usando la librería .
+- **Issue 1: Las Notas de Crédito fallan con el error FIRMA INVALIDA (P0)**
+    - **Attempted fixes**:
+        - Se corrigió el índice único en la colección  para permitir que facturas y notas de crédito compartan el mismo secuencial numérico.
+        - Se corrigió el orden de los elementos dentro del XML de la nota de crédito para cumplir con el esquema XSD del SRI.
+        - Se identificó la causa raíz más probable: el XML de las notas de crédito se genera con , lo que añade saltos de línea, a diferencia del XML de las facturas (que funciona) que se genera en una sola línea. Esta diferencia de formato invalida la firma digital cuando el  la procesa.
     - **Next debug checklist**:
-        1.  Revisar el código en  para asegurarse de que todos los elementos del RIDE (logo, datos del emisor, datos del receptor, detalles, totales, información adicional, código de barras) estén presentes y en la posición correcta.
-        2.  Generar un PDF para una factura autorizada (ej: ) llamando al endpoint .
-        3.  Verificar que el PDF se genere sin errores y que su contenido visual sea idéntico al solicitado por el usuario. Prestar especial atención al logo, que debe obtenerse de la configuración del POS.
-        4.  Corregir cualquier desviación en el diseño o contenido.
-    - **Why fix this issue and what will be achieved with the fix?**: Para cumplir con los requisitos del usuario y proporcionar un comprobante de factura legal y con el formato estándar en Ecuador.
+        1.  Abrir el archivo .
+        2.  Localizar la llamada a  para las notas de crédito (alrededor de la línea 317 en el historial).
+        3.  Cambiar el parámetro  a .
+        4.  Ejecutar un script para limpiar la base de datos: eliminar todas las notas de crédito existentes (fallidas) y resetear el flag  en las facturas asociadas.
+        5.  Probar a crear una nueva nota de crédito desde la interfaz de usuario para una factura autorizada.
+        6.  Verificar en los logs y en la UI si la nueva nota de crédito obtiene el estado AUTORIZADO.
+    - **Why fix this issue and what will be achieved with the fix?**: Completar el ciclo de vida de la facturación electrónica, permitiendo a los usuarios anular facturas de forma legal, lo cual es un requisito fundamental del negocio.
     - **Status**: IN PROGRESS
-    - **Is recurring issue?**: N
+    - **Is recurring issue?**: Y
     - **Should Test frontend/backend/both after fix?**: backend
     - **Blocked on other issue**: No
 
 **In progress Task List**:
-- No hay otras tareas en progreso. El foco está en el Issue 1.
+- Ninguna. Toda la atención está en el Issue 1.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P1: Añadir el número de autorización del SRI al ticket impreso del POS.** Actualmente, solo se ha añadido la clave de acceso.
+    - **P1: Añadir el número de autorización del SRI al ticket impreso del POS.** Aunque se modificó el frontend para esperar la clave de acceso, es necesario verificar si el número de autorización (que llega después de la sincronización) también se imprime en el ticket final.
 - **Future Tasks:**
     - **P1:** Implementar funcionalidades pendientes del POS: Reloj checador, Impresoras de cocina, Pantalla para clientes.
     - **P2:** Convertir la aplicación a PWA (Progressive Web App).
@@ -49,16 +65,17 @@ El objetivo de esta sesión era solucionar el error FECHA EMISION EXTEMPORANEA q
     - **P4:** Añadir la opción de enviar recibo por email.
 
 **Completed work in this session**
-- **SOLVED - FIRMA INVALIDA**: Se resolvió el error crítico de firma inválida. La solución fue crear un **microservicio en Java ()** que utiliza la librería  para generar firmas XAdES-BES compatibles con el SRI. El backend de Python ahora llama a este servicio para firmar los XML.
-- **SOLVED - FECHA EMISION EXTEMPORANEA**: Se corrigió el error de fecha ajustando la lógica para usar la zona horaria de Ecuador (UTC-5), resolviendo el desfase de 1 día entre el servidor de desarrollo y el del SRI.
-- **Feature - Sincronización de Estado Automática**: Se implementó una función que se ejecuta al cargar la página de Docs Electrónicos y cada 30 segundos, para sincronizar el estado de los comprobantes pendientes (EN PROCESO) con el SRI.
-- **Feature - Sincronización Manual**: Se añadió un botón Sincronizar SRI en la UI para forzar la actualización de estados.
-- **Bugfix - Actualización de Estado**: Se corrigió un bug que causaba que las facturas autorizadas por el SRI se quedaran con estado ERROR o EN PROCESO en la base de datos local.
-- **Bugfix - Fecha en la Lista de Documentos**: Se corrigió la visualización de la fecha en la tabla de documentos para que muestre la fecha de emisión local (ej: 26/01/2026) en lugar de la fecha UTC (27/01/2026).
-- **Infra - Servicio Java con Supervisor**: Se configuró  para gestionar el nuevo microservicio de firma , asegurando que se inicie automáticamente.
+- **SOLVED - PDF RIDE Rediseñado:** Se reescribió el generador de PDF () para que coincida con el formato visual solicitado por el usuario, incluyendo el logo de la empresa y un código de barras correctamente dimensionado.
+- **SOLVED - Facturación Asíncrona:** Se modificó el flujo de facturación en el POS para que sea asíncrono usando  de FastAPI, eliminando la lentitud en la interfaz de usuario.
+- **SOLVED - Visualización de Documentos Electrónicos:** Se corrigió la lista de documentos para que ordene por número de factura descendente y muestre 50 documentos por página, solucionando la queja del usuario de no ver todas sus facturas.
+- **SOLVED - Problema de Reportes:** Se investigó y confirmó que las ventas con facturación electrónica SÍ aparecen correctamente en los reportes de Recibos.
+- **FEATURE - Nueva Estructura de Menú para FE:** Se creó un menú desplegable Facturación Electrónica en el sidebar con enlaces a Facturas Electrónicas y una nueva página de Notas de Crédito.
+- **FEATURE - Página y Flujo de Notas de Crédito:** Se creó la página , se implementaron indicadores visuales para facturas con NC y un botón de reintento para NC fallidas.
+- **BUGFIX - Índice de Base de Datos para NC:** Se corrigió un error de  al crear notas de crédito modificando el índice único de la colección para incluir el .
+- **BUGFIX - Instalación de Java:** Se solucionó el error  que detenía el  instalando .
 
 **Earlier issues found/mentioned but not fixed**
-- **Issue 1:** El directorio  debería ser renombrado a  para mayor claridad y alineación con la nueva arquitectura. Esta tarea de refactorización sigue pendiente.
+- **Issue 1:** El directorio  debería ser renombrado a  para mejorar la claridad de la arquitectura. Esta tarea de refactorización sigue pendiente.
 
 **Known issue recurrence from previous fork**
 - Ninguno.
@@ -67,69 +84,263 @@ El objetivo de esta sesión era solucionar el error FECHA EMISION EXTEMPORANEA q
 
 
 **Key Technical Concepts**
-- **Arquitectura de Microservicios:** La aplicación ahora utiliza tres backends: POS (Python), FE (Python) y un nuevo servicio de firma (Java).
-- **Firma Digital XAdES-BES con Java:** Se abandonó la firma con Python/cryptography. Ahora se usa un servicio externo en Java con  y SparkJava, que es la solución robusta que funciona con el SRI.
-- **Sincronización Asíncrona:** El frontend ahora maneja la sincronización periódica de estados para documentos que el SRI procesa de forma asíncrona.
-- **Manejo de Zonas Horarias:** Se corrigió la lógica para manejar correctamente la diferencia entre UTC y la zona horaria de Ecuador (UTC-5).
+- **Asynchronous Tasks ():** Utilizado para desacoplar el proceso de facturación electrónica de la respuesta inmediata al usuario en el POS.
+- **Firma Digital XAdES-BES:** El problema central restante (FIRMA INVALIDA) está relacionado con la canonicalización del XML antes de la firma, específicamente por la diferencia de formato (saltos de línea) entre el XML de facturas y el de notas de crédito.
+- **MongoDB Indexing:** Se solucionó un  modificando un índice compuesto único () para incluir el tipo de documento ().
+- **PDF Generation ():** Se utilizó para una reescritura completa del diseño del PDF RIDE.
 
 **key DB schema**
-- ** ( collection):** Se corrigió la lógica para que el campo  ahora almacene la fecha y hora correctas de Ecuador (local), no UTC. Los campos  y  se actualizan de forma más fiable.
-
-**changes in tech stack**
-- **Java 17:** Añadido al stack para el servicio de firma.
-- **Apache Maven:** Añadido para la gestión de dependencias y construcción del servicio Java.
-- **SparkJava:** Framework web ligero usado en el servicio de firma.
-- **xades4j:** Librería Java clave para la firma digital XAdES-BES.
+- ****: El índice único se cambió a . Se añadió el campo booleano  a los documentos de factura.
 
 **All files of reference**
--  (Archivo clave para la tarea pendiente)
--  (Contiene la lógica de sincronización)
--  (Integra el nuevo firmador y el endpoint de sync)
--  (Cliente HTTP para el servicio Java)
--  (Lógica del firmador Java)
--  (Configuración de Supervisor)
+-  (Archivo clave para solucionar el P0 issue).
+-  (Lógica de negocio para FE).
+-  (Nueva página de Notas de Crédito).
+-  (UI de la lista de facturas).
+-  (Navegación del sidebar).
+-  (Backend del POS con la tarea asíncrona).
 
 **Areas that need refactoring**:
-- El directorio  debería ser renombrado a .
+- Renombrar el directorio  a  para una mayor claridad arquitectónica.
 
 **key api endpoints**
-- : Endpoint principal para crear facturas. **Ahora completamente funcional.**
-- : **NUEVO** endpoint para sincronizar estados de documentos pendientes.
-- : Endpoint para descargar el PDF de la factura (RIDE). **Necesita ser probado.**
-- : Endpoint interno (no expuesto) del servicio de firma Java.
+- : Endpoint para crear notas de crédito. **Actualmente falla por firma inválida.**
+- : **NUEVO** endpoint asíncrono en el backend del POS que procesa la factura electrónica en segundo plano. **Funciona correctamente.**
+- : Endpoint para listar documentos. **Modificado para ordenar por número y aumentar el límite.**
+- : Endpoint para generar el PDF. **Funciona correctamente con el nuevo diseño.**
 
 **Critical Info for New Agent**
-- **La arquitectura ahora tiene 3 servicios.** El  depende del  (Java, puerto 8003) para funcionar. Si hay problemas de firma, se debe depurar el servicio Java.
-- El problema de la firma digital con el SRI es extremadamente sensible. La solución actual con el microservicio Java es la única que ha funcionado y no debe ser alterada a menos que sea estrictamente necesario.
-- La tarea inmediata es **validar y finalizar** la implementación del generador de PDF en . No se llegó a probar si el código recién escrito genera un PDF válido.
+- La prioridad absoluta (P0) es solucionar el error FIRMA INVALIDA de las Notas de Crédito. La causa raíz es el parámetro  en . Debes cambiarlo a .
+- Después de aplicar el cambio en el código, es **crucial** eliminar todas las notas de crédito fallidas de la base de datos ( y ) y resetear el flag  en las facturas referenciadas antes de volver a probar.
+- El  (Java) es esencial. Puede entrar en estado . Si ocurre, el comando Hit:1 http://deb.debian.org/debian bookworm InRelease
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+Get:4 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease [3005 B]
+Get:5 https://deb.nodesource.com/node_20.x nodistro InRelease [12.1 kB]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [292 kB]
+Get:7 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse amd64 Packages [100 kB]
+Get:8 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse arm64 Packages [98.9 kB]
+Fetched 610 kB in 4s (154 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  ca-certificates-java java-common liblcms2-2 libpcsclite1
+Suggested packages:
+  default-jre liblcms2-utils pcscd libnss-mdns fonts-dejavu-extra
+  fonts-ipafont-mincho fonts-indic
+The following NEW packages will be installed:
+  ca-certificates-java java-common liblcms2-2 libpcsclite1
+  openjdk-17-jre-headless
+0 upgraded, 5 newly installed, 0 to remove and 0 not upgraded.
+Need to get 44.1 MB of archives.
+After this operation, 193 MB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian bookworm/main amd64 ca-certificates-java all 20230710~deb12u1 [11.9 kB]
+Get:2 http://deb.debian.org/debian bookworm/main amd64 java-common all 0.74 [6388 B]
+Get:3 http://deb.debian.org/debian bookworm/main amd64 liblcms2-2 amd64 2.14-2 [154 kB]
+Get:4 http://deb.debian.org/debian bookworm/main amd64 libpcsclite1 amd64 1.9.9-2 [49.7 kB]
+Get:5 http://deb.debian.org/debian-security bookworm-security/main amd64 openjdk-17-jre-headless amd64 17.0.18+8-1~deb12u1 [43.9 MB]
+Fetched 44.1 MB in 1s (82.9 MB/s)
+Selecting previously unselected package ca-certificates-java.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 38153 files and directories currently installed.)
+Preparing to unpack .../ca-certificates-java_20230710~deb12u1_all.deb ...
+Unpacking ca-certificates-java (20230710~deb12u1) ...
+Selecting previously unselected package java-common.
+Preparing to unpack .../java-common_0.74_all.deb ...
+Unpacking java-common (0.74) ...
+Selecting previously unselected package liblcms2-2:amd64.
+Preparing to unpack .../liblcms2-2_2.14-2_amd64.deb ...
+Unpacking liblcms2-2:amd64 (2.14-2) ...
+Selecting previously unselected package libpcsclite1:amd64.
+Preparing to unpack .../libpcsclite1_1.9.9-2_amd64.deb ...
+Unpacking libpcsclite1:amd64 (1.9.9-2) ...
+Selecting previously unselected package openjdk-17-jre-headless:amd64.
+Preparing to unpack .../openjdk-17-jre-headless_17.0.18+8-1~deb12u1_amd64.deb ...
+Unpacking openjdk-17-jre-headless:amd64 (17.0.18+8-1~deb12u1) ...
+Setting up liblcms2-2:amd64 (2.14-2) ...
+Setting up java-common (0.74) ...
+Setting up libpcsclite1:amd64 (1.9.9-2) ...
+Setting up ca-certificates-java (20230710~deb12u1) ...
+No JRE found. Skipping Java certificates setup.
+Setting up openjdk-17-jre-headless:amd64 (17.0.18+8-1~deb12u1) ...
+update-alternatives: using /usr/lib/jvm/java-17-openjdk-amd64/bin/java to provide /usr/bin/java (java) in auto mode
+update-alternatives: using /usr/lib/jvm/java-17-openjdk-amd64/bin/jpackage to provide /usr/bin/jpackage (jpackage) in auto mode
+update-alternatives: using /usr/lib/jvm/java-17-openjdk-amd64/bin/keytool to provide /usr/bin/keytool (keytool) in auto mode
+update-alternatives: using /usr/lib/jvm/java-17-openjdk-amd64/bin/rmiregistry to provide /usr/bin/rmiregistry (rmiregistry) in auto mode
+update-alternatives: using /usr/lib/jvm/java-17-openjdk-amd64/lib/jexec to provide /usr/bin/jexec (jexec) in auto mode
+Processing triggers for libc-bin (2.36-9+deb12u13) ...
+Processing triggers for ca-certificates-java (20230710~deb12u1) ...
+Adding debian:ACCVRAIZ1.pem
+Adding debian:AC_RAIZ_FNMT-RCM.pem
+Adding debian:AC_RAIZ_FNMT-RCM_SERVIDORES_SEGUROS.pem
+Adding debian:ANF_Secure_Server_Root_CA.pem
+Adding debian:Actalis_Authentication_Root_CA.pem
+Adding debian:AffirmTrust_Commercial.pem
+Adding debian:AffirmTrust_Networking.pem
+Adding debian:AffirmTrust_Premium.pem
+Adding debian:AffirmTrust_Premium_ECC.pem
+Adding debian:Amazon_Root_CA_1.pem
+Adding debian:Amazon_Root_CA_2.pem
+Adding debian:Amazon_Root_CA_3.pem
+Adding debian:Amazon_Root_CA_4.pem
+Adding debian:Atos_TrustedRoot_2011.pem
+Adding debian:Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.pem
+Adding debian:Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068_2.pem
+Adding debian:Baltimore_CyberTrust_Root.pem
+Adding debian:Buypass_Class_2_Root_CA.pem
+Adding debian:Buypass_Class_3_Root_CA.pem
+Adding debian:CA_Disig_Root_R2.pem
+Adding debian:CFCA_EV_ROOT.pem
+Adding debian:COMODO_Certification_Authority.pem
+Adding debian:COMODO_ECC_Certification_Authority.pem
+Adding debian:COMODO_RSA_Certification_Authority.pem
+Adding debian:Certainly_Root_E1.pem
+Adding debian:Certainly_Root_R1.pem
+Adding debian:Certigna.pem
+Adding debian:Certigna_Root_CA.pem
+Adding debian:Certum_EC-384_CA.pem
+Adding debian:Certum_Trusted_Network_CA.pem
+Adding debian:Certum_Trusted_Network_CA_2.pem
+Adding debian:Certum_Trusted_Root_CA.pem
+Adding debian:Comodo_AAA_Services_root.pem
+Adding debian:D-TRUST_BR_Root_CA_1_2020.pem
+Adding debian:D-TRUST_EV_Root_CA_1_2020.pem
+Adding debian:D-TRUST_Root_Class_3_CA_2_2009.pem
+Adding debian:D-TRUST_Root_Class_3_CA_2_EV_2009.pem
+Adding debian:DigiCert_Assured_ID_Root_CA.pem
+Adding debian:DigiCert_Assured_ID_Root_G2.pem
+Adding debian:DigiCert_Assured_ID_Root_G3.pem
+Adding debian:DigiCert_Global_Root_CA.pem
+Adding debian:DigiCert_Global_Root_G2.pem
+Adding debian:DigiCert_Global_Root_G3.pem
+Adding debian:DigiCert_High_Assurance_EV_Root_CA.pem
+Adding debian:DigiCert_TLS_ECC_P384_Root_G5.pem
+Adding debian:DigiCert_TLS_RSA4096_Root_G5.pem
+Adding debian:DigiCert_Trusted_Root_G4.pem
+Adding debian:E-Tugra_Certification_Authority.pem
+Adding debian:E-Tugra_Global_Root_CA_ECC_v3.pem
+Adding debian:E-Tugra_Global_Root_CA_RSA_v3.pem
+Adding debian:Entrust.net_Premium_2048_Secure_Server_CA.pem
+Adding debian:Entrust_Root_Certification_Authority.pem
+Adding debian:Entrust_Root_Certification_Authority_-_EC1.pem
+Adding debian:Entrust_Root_Certification_Authority_-_G2.pem
+Adding debian:Entrust_Root_Certification_Authority_-_G4.pem
+Adding debian:GDCA_TrustAUTH_R5_ROOT.pem
+Adding debian:GLOBALTRUST_2020.pem
+Adding debian:GTS_Root_R1.pem
+Adding debian:GTS_Root_R2.pem
+Adding debian:GTS_Root_R3.pem
+Adding debian:GTS_Root_R4.pem
+Adding debian:GlobalSign_ECC_Root_CA_-_R4.pem
+Adding debian:GlobalSign_ECC_Root_CA_-_R5.pem
+Adding debian:GlobalSign_Root_CA.pem
+Adding debian:GlobalSign_Root_CA_-_R3.pem
+Adding debian:GlobalSign_Root_CA_-_R6.pem
+Adding debian:GlobalSign_Root_E46.pem
+Adding debian:GlobalSign_Root_R46.pem
+Adding debian:Go_Daddy_Class_2_CA.pem
+Adding debian:Go_Daddy_Root_Certificate_Authority_-_G2.pem
+Adding debian:HARICA_TLS_ECC_Root_CA_2021.pem
+Adding debian:HARICA_TLS_RSA_Root_CA_2021.pem
+Adding debian:Hellenic_Academic_and_Research_Institutions_ECC_RootCA_2015.pem
+Adding debian:Hellenic_Academic_and_Research_Institutions_RootCA_2015.pem
+Adding debian:HiPKI_Root_CA_-_G1.pem
+Adding debian:Hongkong_Post_Root_CA_1.pem
+Adding debian:Hongkong_Post_Root_CA_3.pem
+Adding debian:ISRG_Root_X1.pem
+Adding debian:ISRG_Root_X2.pem
+Adding debian:IdenTrust_Commercial_Root_CA_1.pem
+Adding debian:IdenTrust_Public_Sector_Root_CA_1.pem
+Adding debian:Izenpe.com.pem
+Adding debian:Microsec_e-Szigno_Root_CA_2009.pem
+Adding debian:Microsoft_ECC_Root_Certificate_Authority_2017.pem
+Adding debian:Microsoft_RSA_Root_Certificate_Authority_2017.pem
+Adding debian:NAVER_Global_Root_Certification_Authority.pem
+Adding debian:NetLock_Arany_=Class_Gold=_Főtanúsítvány.pem
+Adding debian:OISTE_WISeKey_Global_Root_GB_CA.pem
+Adding debian:OISTE_WISeKey_Global_Root_GC_CA.pem
+Adding debian:QuoVadis_Root_CA_1_G3.pem
+Adding debian:QuoVadis_Root_CA_2.pem
+Adding debian:QuoVadis_Root_CA_2_G3.pem
+Adding debian:QuoVadis_Root_CA_3.pem
+Adding debian:QuoVadis_Root_CA_3_G3.pem
+Adding debian:SSL.com_EV_Root_Certification_Authority_ECC.pem
+Adding debian:SSL.com_EV_Root_Certification_Authority_RSA_R2.pem
+Adding debian:SSL.com_Root_Certification_Authority_ECC.pem
+Adding debian:SSL.com_Root_Certification_Authority_RSA.pem
+Adding debian:SZAFIR_ROOT_CA2.pem
+Adding debian:Sectigo_Public_Server_Authentication_Root_E46.pem
+Adding debian:Sectigo_Public_Server_Authentication_Root_R46.pem
+Adding debian:SecureSign_RootCA11.pem
+Adding debian:SecureTrust_CA.pem
+Adding debian:Secure_Global_CA.pem
+Adding debian:Security_Communication_ECC_RootCA1.pem
+Adding debian:Security_Communication_RootCA2.pem
+Adding debian:Security_Communication_RootCA3.pem
+Adding debian:Security_Communication_Root_CA.pem
+Adding debian:Starfield_Class_2_CA.pem
+Adding debian:Starfield_Root_Certificate_Authority_-_G2.pem
+Adding debian:Starfield_Services_Root_Certificate_Authority_-_G2.pem
+Adding debian:SwissSign_Gold_CA_-_G2.pem
+Adding debian:SwissSign_Silver_CA_-_G2.pem
+Adding debian:T-TeleSec_GlobalRoot_Class_2.pem
+Adding debian:T-TeleSec_GlobalRoot_Class_3.pem
+Adding debian:TUBITAK_Kamu_SM_SSL_Kok_Sertifikasi_-_Surum_1.pem
+Adding debian:TWCA_Global_Root_CA.pem
+Adding debian:TWCA_Root_Certification_Authority.pem
+Adding debian:TeliaSonera_Root_CA_v1.pem
+Adding debian:Telia_Root_CA_v2.pem
+Adding debian:TrustCor_ECA-1.pem
+Adding debian:TrustCor_RootCert_CA-1.pem
+Adding debian:TrustCor_RootCert_CA-2.pem
+Adding debian:Trustwave_Global_Certification_Authority.pem
+Adding debian:Trustwave_Global_ECC_P256_Certification_Authority.pem
+Adding debian:Trustwave_Global_ECC_P384_Certification_Authority.pem
+Adding debian:TunTrust_Root_CA.pem
+Adding debian:UCA_Extended_Validation_Root.pem
+Adding debian:UCA_Global_G2_Root.pem
+Adding debian:USERTrust_ECC_Certification_Authority.pem
+Adding debian:USERTrust_RSA_Certification_Authority.pem
+Adding debian:XRamp_Global_CA_Root.pem
+Adding debian:certSIGN_ROOT_CA.pem
+Adding debian:certSIGN_Root_CA_G2.pem
+Adding debian:e-Szigno_Root_CA_2017.pem
+Adding debian:ePKI_Root_Certification_Authority.pem
+Adding debian:emSign_ECC_Root_CA_-_C3.pem
+Adding debian:emSign_ECC_Root_CA_-_G3.pem
+Adding debian:emSign_Root_CA_-_C1.pem
+Adding debian:emSign_Root_CA_-_G1.pem
+Adding debian:vTrus_ECC_Root_CA.pem
+Adding debian:vTrus_Root_CA.pem
+done.
+signer-service: ERROR (not running)
+signer-service: started lo soluciona.
+- El error FIRMA INVALIDA es un bug de código, pero otros errores como Connection aborted o RECHAZADO sin más detalles pueden ser problemas de red temporales con el SRI y no necesariamente errores en la aplicación.
 
 **documents and test reports created in this job**
-- No se crearon reportes de prueba formales, pero se realizaron numerosos scripts de prueba y depuración.
+- /app/test_reports/iteration_7.json (Prueba del generador de PDF, ahora parcialmente desactualizado por el rediseño posterior).
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **DONE:** cual es la clave de oscarcastrocantos@gmail.com
-2.  **DONE:** revisar pq esa factura esta en proceso (Se revisó y se sincronizó el estado a AUTORIZADO).
-3.  **DONE:** otra en proceso, claro que sincronize automaticamente (Se revisó la otra factura y se implementó la sincronización automática).
-4.  **IN PROGRESS:** la fecha de los facturas dicen 27 de enero porque si bares la factura si esta bien la fecha 26 de enero corrije eso pf (Se corrigió la fecha en la lista).
-5.  **IN PROGRESS:** y cuando generes el visualmente para consultar la factura debe tener esta estructura igualita a la adjunta pdf exceto el logo que debe venor de la configuraion del pos (Se inició la reimplementación del generador de PDF).
+1.  **DONE:** El usuario informa sobre problemas con las notas de crédito y los reportes. (El problema de reportes se desmintió, el de NC es el P0).
+2.  **DONE:** El usuario reporta un error con una imagen, pide un reporte para NC y que se añada la fecha al detalle de la factura. (Se creó el menú, la página de NC y se añadió la fecha).
+3.  **DONE:** El usuario pide un mejor flujo para las NC procesadas y un manejo de errores. (Se implementaron indicadores y un botón de reintento).
+4.  **DONE:** El usuario pregunta por qué hay NC duplicadas y por qué siguen RECHAZADAS. (Se eliminaron duplicados y se investigó el estado RECHAZADO, encontrando el error de estructura XML).
+5.  **IN PROGRESS:** El usuario pide continuar con la P0. (El agente está trabajando en la solución de FIRMA INVALIDA).
+6.  *... (Los mensajes restantes son interacciones durante la depuración del agente)*
 
 **Project Health Check:**
-- **Broken:** Ninguna funcionalidad principal está rota. El flujo de facturación electrónica funciona.
-- **Mocked:** El nuevo generador de PDF () fue sobrescrito pero no ha sido probado. Podría considerarse incompleto o no verificado. Las funcionalidades del POS (Reloj checador, etc.) siguen siendo solo UI.
+- **Broken:** La creación de Notas de Crédito está rota debido al error de FIRMA INVALIDA.
+- **Mocked:** Nada está maquetado. Las funcionalidades implementadas están conectadas.
 
 **3rd Party Integrations**
-- Google Auth
 -  (para cliente SOAP hacia el SRI)
 -  (para manipulación de XML)
-- 
-- **Java 17** (NUEVO)
-- **Apache Maven** (NUEVO)
-- **SparkJava** (NUEVO - para microservicio de firma)
-- **xades4j** (NUEVO - para firma XAdES-BES)
+- **Java 17 / SparkJava / xades4j** (para el microservicio de firma digital)
 
 **Testing status**
-- Testing agent used after significant changes: NO
-- Troubleshoot agent used after agent stuck in loop: NO
+- Testing agent used after significant changes: YES (para el generador de PDF inicial).
+- Troubleshoot agent used after agent stuck in loop: NO.
 - Test files created: []
 - Known regressions: Ninguno.
 
@@ -138,4 +349,4 @@ El objetivo de esta sesión era solucionar el error FECHA EMISION EXTEMPORANEA q
 - **Contraseña:** 
 
 **What agent forgot to execute**
-- El agente no llegó a probar la nueva implementación del generador de PDF () después de sobrescribirlo. Es la siguiente acción lógica.</analysis>
+- El agente identificó la solución para el error FIRMA INVALIDA () pero no llegó a implementarla. Es el siguiente paso inmediato y lógico.</analysis>
