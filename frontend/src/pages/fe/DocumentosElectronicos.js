@@ -483,9 +483,20 @@ export default function DocumentosElectronicos() {
             </div>
           ) : selectedDoc && (
             <div className="space-y-6">
-              {/* Estado */}
+              {/* Estado y Fecha */}
               <div className="flex items-center justify-between">
-                {getStatusBadge(selectedDoc.document.sri_status)}
+                <div className="flex items-center gap-4">
+                  {getStatusBadge(selectedDoc.document.sri_status)}
+                  <div className="text-sm">
+                    <span className="text-slate-500">Fecha de Emisión: </span>
+                    <span className="font-semibold">
+                      {selectedDoc.document.access_key && selectedDoc.document.access_key.length >= 8
+                        ? `${selectedDoc.document.access_key.substring(0, 2)}/${selectedDoc.document.access_key.substring(2, 4)}/${selectedDoc.document.access_key.substring(4, 8)}`
+                        : new Date(selectedDoc.document.issue_date).toLocaleDateString('es-ES')
+                      }
+                    </span>
+                  </div>
+                </div>
                 {selectedDoc.document.sri_authorization_number && (
                   <span className="text-xs text-slate-500">
                     Auth: {selectedDoc.document.sri_authorization_number}
