@@ -294,22 +294,30 @@ class SRIClient:
             Tuple (estado, numero_autorizacion, fecha_autorizacion, mensajes)
         """
         # 1. Enviar comprobante
+        print(f"[SRI Client] Enviando comprobante...")
         recepcion = await self.enviar_comprobante(xml_signed)
+        print(f"[SRI Client] Recepción estado: {recepcion['estado']}")
         
         if recepcion["estado"] == "DEVUELTA":
+            print(f"[SRI Client] Comprobante devuelto: {recepcion['mensajes']}")
             return ("RECHAZADO", None, None, recepcion["mensajes"])
         
         if recepcion["estado"] == "ERROR":
+            print(f"[SRI Client] Error en recepción: {recepcion['mensajes']}")
             return ("ERROR", None, None, recepcion["mensajes"])
         
         # 2. Esperar un momento antes de consultar
+        print(f"[SRI Client] Comprobante recibido, consultando autorización...")
         await asyncio.sleep(1.0)
         
         # 3. Consultar autorización con reintentos
         for attempt in range(max_retries):
+            print(f"[SRI Client] Intento {attempt + 1} de consulta autorización...")
             autorizacion = await self.consultar_autorizacion(access_key)
+            print(f"[SRI Client] Autorización estado: {autorizacion['estado']}")
             
             if autorizacion["estado"] == "AUTORIZADO":
+                print(f"[SRI Client] ¡AUTORIZADO! Núm: {autorizacion['numero_autorizacion']}")
                 return (
                     "AUTORIZADO",
                     autorizacion["numero_autorizacion"],
