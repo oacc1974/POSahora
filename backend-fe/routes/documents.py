@@ -674,16 +674,43 @@ async def download_pdf(request: Request, document_id: str):
     tenant = await db.tenants.find_one({"tenant_id": tenant_id})
     config = await db.configs_fiscal.find_one({"tenant_id": tenant_id})
     
+    # Obtener logo del POS (configuraciones del negocio)
+    # El logo se guarda en pos_db.configuraciones con el organizacion_id
+    logo_base64 = None
+    try:
+        # Buscar el organizacion_id del usuario asociado al tenant
+        from motor.motor_asyncio import AsyncIOMotorClient
+        import os
+        mongo_url = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+        pos_client = AsyncIOMotorClient(mongo_url)
+        pos_db = pos_client["pos_db"]
+        
+        # Buscar usuario con el email asociado al tenant
+        user = await pos_db.usuarios.find_one({"email": {"$exists": True}})
+        if user and user.get("organizacion_id"):
+            pos_config = await pos_db.configuraciones.find_one({"_id": user["organizacion_id"]})
+            if pos_config and pos_config.get("logo_url"):
+                logo_url = pos_config["logo_url"]
+                # El logo_url viene como data:image/xxx;base64,xxxxx
+                if logo_url and "base64," in logo_url:
+                    logo_base64 = logo_url.split("base64,")[1]
+        
+        pos_client.close()
+    except Exception as e:
+        print(f"Error obteniendo logo del POS: {e}")
+    
     emitter = {
         "ruc": tenant["ruc"],
         "razon_social": tenant["razon_social"],
         "nombre_comercial": tenant.get("nombre_comercial"),
         "direccion": tenant.get("address", {}).get("direccion", ""),
         "telefono": tenant.get("phone"),
-        "ambiente": config.get("ambiente", "pruebas") if config else "pruebas"
+        "ambiente": config.get("ambiente", "pruebas") if config else "pruebas",
+        "obligado_contabilidad": config.get("obligado_contabilidad", "NO") if config else "NO",
+        "contribuyente_especial": config.get("tipo_contribuyente") if config else None
     }
     
-    pdf_bytes = generate_ride_pdf(document, emitter)
+    pdf_bytes = generate_ride_pdf(document, emitter, logo_base64)
     
     filename = f"{document['doc_number'].replace('-', '')}.pdf"
     
