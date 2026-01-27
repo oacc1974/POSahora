@@ -254,6 +254,8 @@ def generate_credit_note_xml(
     etree.SubElement(info_nc, "fechaEmisionDocSustento").text = invoice_reference["issue_date"].strftime("%d/%m/%Y")
     
     etree.SubElement(info_nc, "totalSinImpuestos").text = format_decimal(totals["total"] - totals["total_iva"])
+    etree.SubElement(info_nc, "valorModificacion").text = format_decimal(totals["total"])
+    etree.SubElement(info_nc, "moneda").text = "DOLAR"
     
     # Impuestos
     total_con_impuestos = etree.SubElement(info_nc, "totalConImpuestos")
@@ -278,9 +280,6 @@ def generate_credit_note_xml(
         etree.SubElement(total_impuesto, "codigoPorcentaje").text = "4"
         etree.SubElement(total_impuesto, "baseImponible").text = format_decimal(totals["subtotal_15"])
         etree.SubElement(total_impuesto, "valor").text = format_decimal(totals["total_iva_15"])
-    
-    etree.SubElement(info_nc, "valorModificacion").text = format_decimal(totals["total"])
-    etree.SubElement(info_nc, "moneda").text = "DOLAR"
     
     # Motivo de la nota de crédito (va al final de infoNotaCredito)
     etree.SubElement(info_nc, "motivo").text = clean_xml_string(invoice_reference["reason"])
