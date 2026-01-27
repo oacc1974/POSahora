@@ -384,6 +384,13 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
     if invoice.get("has_credit_note"):
         raise HTTPException(status_code=400, detail="Esta factura ya tiene una nota de crédito")
     
+    # Validar que NO sea Consumidor Final - El SRI no permite NC para Consumidor Final
+    if invoice.get("customer", {}).get("identification") == "9999999999999":
+        raise HTTPException(
+            status_code=400, 
+            detail="El SRI no permite crear Notas de Crédito para facturas emitidas a 'Consumidor Final'. Solo puede crear NC para clientes identificados."
+        )
+    
     # Obtener configuraciones
     tenant = await db.tenants.find_one({"tenant_id": tenant_id})
     config = await db.configs_fiscal.find_one({"tenant_id": tenant_id})
