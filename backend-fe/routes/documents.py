@@ -527,7 +527,7 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
 async def list_documents(
     request: Request,
     page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(50, ge=1, le=100),
     status: Optional[str] = None,
     doc_type: Optional[str] = None,
     date_from: Optional[str] = None,
@@ -572,13 +572,13 @@ async def list_documents(
     # Contar total
     total = await db.documents.count_documents(query)
     
-    # Obtener documentos
+    # Obtener documentos - ordenar por número de documento descendente
     skip = (page - 1) * limit
     cursor = db.documents.find(query, {"_id": 1, "tenant_id": 1, "doc_type": 1, "doc_number": 1, 
                                         "access_key": 1, "store": 1, "issue_date": 1, "customer": 1,
                                         "totals": 1, "sri_status": 1, "sri_authorization_number": 1,
                                         "created_at": 1, "is_voided": 1, "has_credit_note": 1, "invoice_reference": 1})
-    cursor = cursor.sort("issue_date", -1).skip(skip).limit(limit)
+    cursor = cursor.sort("doc_number", -1).skip(skip).limit(limit)
     
     documents = []
     async for doc in cursor:
