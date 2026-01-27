@@ -791,6 +791,7 @@ export default function POS() {
     try {
       const token = localStorage.getItem('token');
 
+      // 1. Registrar la venta primero (siempre rápido)
       const response = await axios.post(
         `${API_URL}/api/facturas`,
         {
@@ -816,76 +817,6 @@ export default function POS() {
         }
       );
 
-      // Si se debe emitir factura electrónica
-      if (emitirFacturaElectronica) {
-        try {
-          // Llamamos al endpoint directo de FE para obtener la clave de acceso
-          // Esto es más rápido porque el backend responde inmediatamente con la clave
-          // aunque el SRI aún esté procesando
-          toast.info('Emitiendo factura electrónica...', { autoClose: 2000 });
-          
-          const feResponse = await axios.post(
-            `${API_URL}/api/fe/documents/invoice`,
-            {
-              store_code: '001',
-              emission_point: '001',
-              customer: {
-                identification_type: clienteIdentificacion.length === 13 ? '04' : clienteIdentificacion.length === 10 ? '05' : '07',
-                identification: clienteIdentificacion,
-                name: clienteSeleccionado.nombre,
-                email: clienteSeleccionado.email || null,
-                phone: clienteSeleccionado.telefono || null,
-                address: clienteSeleccionado.direccion || 'N/A'
-              },
-              items: cart.map(item => ({
-                code: item.codigo || item.id?.substring(0, 25) || 'PROD001',
-                description: item.nombre,
-                quantity: item.cantidad,
-                unit_price: item.precio,
-                discount: 0,
-                iva_rate: 15
-              })),
-              payments: [{
-                method: '01',
-                total: total,
-                term: 0,
-                time_unit: 'dias'
-              }]
-            },
-            {
-              headers: { 
-                Authorization: `Bearer ${token}`,
-                'X-Tenant-ID': currentUser.organizacion_id
-              },
-            }
-          );
-          
-          // Guardamos los datos de FE para el ticket
-          response.data.factura_electronica = {
-            clave_acceso: feResponse.data.access_key,
-            estado: feResponse.data.sri_status,
-            numero_autorizacion: feResponse.data.sri_authorization_number,
-            numero_documento: feResponse.data.doc_number
-          };
-          
-          if (feResponse.data.sri_status === 'AUTORIZADO') {
-            toast.success('Factura electrónica AUTORIZADA por el SRI', { autoClose: 3000 });
-          } else {
-            toast.info(`Factura electrónica: ${feResponse.data.sri_status}`, { autoClose: 3000 });
-          }
-        } catch (feError) {
-          console.error('Error en facturación electrónica:', feError);
-          const errorMsg = feError.response?.data?.detail;
-          if (typeof errorMsg === 'string') {
-            toast.error(`FE: ${errorMsg}`, { autoClose: 5000 });
-          } else {
-            toast.error('Error al emitir factura electrónica', { autoClose: 5000 });
-          }
-          // Aún así continuamos con el ticket normal
-          response.data.factura_electronica = null;
-        }
-      }
-
       toast.success(`Venta ${response.data.numero} registrada correctamente`);
       
       // Si venía de un ticket guardado, eliminarlo
@@ -900,6 +831,7 @@ export default function POS() {
         }
       }
       
+      // Limpiar carrito inmediatamente para permitir nueva venta
       setCart([]);
       setDescuentos([]);
       setClienteSeleccionado(null);
@@ -907,12 +839,92 @@ export default function POS() {
       setTicketActualId(null);
       setShowCobroDialog(false);
       setEfectivoRecibido('');
+      setLoading(false);
+
+      // 2. Si es factura electrónica, procesar en segundo plano (NO bloquea)
+      if (emitirFacturaElectronica) {
+        // Mostrar toast de que se está procesando
+        toast.info('📄 Procesando factura electrónica en segundo plano...', { autoClose: 3000 });
+        
+        // Procesar FE de forma asíncrona sin esperar
+        (async () => {
+          try {
+            const feResponse = await axios.post(
+              `${API_URL}/api/fe/documents/invoice`,
+              {
+                store_code: '001',
+                emission_point: '001',
+                customer: {
+                  identification_type: clienteIdentificacion.length === 13 ? '04' : clienteIdentificacion.length === 10 ? '05' : '07',
+                  identification: clienteIdentificacion,
+                  name: clienteSeleccionado.nombre,
+                  email: clienteSeleccionado.email || null,
+                  phone: clienteSeleccionado.telefono || null,
+                  address: clienteSeleccionado.direccion || 'N/A'
+                },
+                items: cart.map(item => ({
+                  code: item.codigo || item.id?.substring(0, 25) || 'PROD001',
+                  description: item.nombre,
+                  quantity: item.cantidad,
+                  unit_price: item.precio,
+                  discount: 0,
+                  iva_rate: 15
+                })),
+                payments: [{
+                  method: '01',
+                  total: total,
+                  term: 0,
+                  time_unit: 'dias'
+                }]
+              },
+              {
+                headers: { 
+                  Authorization: `Bearer ${token}`,
+                  'X-Tenant-ID': currentUser.organizacion_id
+                },
+              }
+            );
+            
+            // Actualizar datos de FE en la respuesta para imprimir
+            response.data.factura_electronica = {
+              clave_acceso: feResponse.data.access_key,
+              estado: feResponse.data.sri_status,
+              numero_autorizacion: feResponse.data.sri_authorization_number,
+              numero_documento: feResponse.data.doc_number
+            };
+            
+            if (feResponse.data.sri_status === 'AUTORIZADO') {
+              toast.success('✅ Factura electrónica AUTORIZADA por el SRI', { autoClose: 4000 });
+            } else if (feResponse.data.sri_status === 'EN_PROCESO') {
+              toast.info('⏳ Factura enviada al SRI, pendiente de autorización', { autoClose: 4000 });
+            } else {
+              toast.warning(`📄 Factura electrónica: ${feResponse.data.sri_status}`, { autoClose: 4000 });
+            }
+            
+            // Imprimir ticket con datos de FE
+            printInvoice(response.data, true);
+            
+          } catch (feError) {
+            console.error('Error en facturación electrónica:', feError);
+            const errorMsg = feError.response?.data?.detail;
+            if (typeof errorMsg === 'string') {
+              toast.error(`❌ FE: ${errorMsg}`, { autoClose: 6000 });
+            } else {
+              toast.error('❌ Error al emitir factura electrónica', { autoClose: 5000 });
+            }
+            // Imprimir ticket interno ya que falló la FE
+            printInvoice(response.data, false);
+          }
+        })();
+      } else {
+        // 3. Si es solo COBRAR, imprimir ticket interno inmediatamente
+        printInvoice(response.data, false);
+      }
+      
       fetchProductos();
       verificarCaja();
-      printInvoice(response.data);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error al procesar la venta');
-    } finally {
       setLoading(false);
     }
   };
