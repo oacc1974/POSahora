@@ -15,7 +15,7 @@ export default function NotasCredito() {
   const loadDocuments = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getDocuments({
+      const data = await feApi.getDocuments({
         page: pagination.page,
         limit: 50,
         doc_type: '04' // Solo notas de crédito
