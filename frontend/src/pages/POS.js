@@ -852,6 +852,13 @@ export default function POS() {
           } else {
             toast.warning(`Factura electrónica: ${feResponse.data.status}`);
           }
+          
+          // Guardar datos de FE para el ticket
+          response.data.factura_electronica = {
+            clave_acceso: feResponse.data.access_key,
+            estado: feResponse.data.status,
+            numero_autorizacion: feResponse.data.authorization_number
+          };
         } catch (feError) {
           console.error('Error en facturación electrónica:', feError);
           const errorMsg = feError.response?.data?.detail;
@@ -896,7 +903,7 @@ export default function POS() {
     }
   };
 
-  const printInvoice = async (invoice) => {
+  const printInvoice = async (invoice, facturaElectronica = null) => {
     try {
       const token = localStorage.getItem('token');
       const configResponse = await axios.get(`${API_URL}/api/config`, {
