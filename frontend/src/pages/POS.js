@@ -1646,12 +1646,18 @@ export default function POS() {
       {/* ============ HEADER AZUL - DESKTOP ============ */}
       <div className="hidden md:flex bg-blue-600 text-white px-4 py-2 items-center justify-between">
         {/* Izquierda: Menú hamburguesa (navegación) */}
-        <button 
-          onClick={() => setShowNavSidebar(true)}
-          className="p-2 hover:bg-blue-700 rounded-lg"
-        >
-          <Menu size={22} />
-        </button>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setShowNavSidebar(true)}
+            className="p-2 hover:bg-blue-700 rounded-lg"
+          >
+            <Menu size={22} />
+          </button>
+          {/* Fecha y hora actual */}
+          <span className="text-sm text-blue-100">
+            {fechaHoraActual.toLocaleDateString('es-EC', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })} - {fechaHoraActual.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
         
         {/* Centro: Ticket con contador */}
         <div className="flex items-center gap-2">
