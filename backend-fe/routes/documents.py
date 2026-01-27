@@ -263,7 +263,7 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
         items=processed_items,
         totals=totals,
         payments=payments,
-        issue_date=issue_date,
+        issue_date=issue_date_for_sri,  # Usar la fecha ajustada para Ecuador
         store_code=invoice.store_code,
         emission_point=invoice.emission_point,
         sequential=sequential,
