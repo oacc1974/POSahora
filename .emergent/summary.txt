@@ -1,58 +1,47 @@
 <analysis>**original_problem_statement:**
 El usuario solicitó un sistema de Punto de Venta (POS) que evolucionó para incluir una nueva funcionalidad masiva: un sistema completo y separado de Facturación Electrónica (FE) para el SRI de Ecuador.
 
-Durante esta sesión, el agente se centró en implementar este nuevo backend de FE () y conectarlo al frontend existente. El trabajo implicó:
-1.  **Conexión Frontend-Backend:** Implementar un proxy en el backend del POS para enrutar las llamadas a  al nuevo servicio .
-2.  **Solución de Bugs Críticos:** Se corrigieron numerosos errores reportados por el usuario, incluyendo:
-    *   Fallo en la carga de certificados  debido a problemas de versión de librerías de criptografía.
-    *   Configuración de FE no se cargaba correctamente debido a una compleja lógica de multi-tenancy y múltiples usuarios (, , ) con diferentes .
-    *   Errores al guardar la configuración del emisor (validación ).
-    *   El interruptor para activar/desactivar la FE no guardaba su estado.
-3.  **Integración con el POS:**
-    *   Se añadió un botón FACTURAR en el diálogo de cobro del POS.
-    *   Se agregó el menú Docs Electrónicos en la navegación principal.
-4.  **Depuración del Flujo de Facturación:** El agente depuró todo el ciclo de vida de una factura, resolviendo problemas como:
-    *   Validación de datos incorrecta () entre el frontend y el .
-    *   Errores en la generación de XML (ambiente de SRI invertido, datos del cliente incorrectos).
-    *   Errores de comunicación con el SRI de pruebas debido a que el servidor de pruebas esperaba fechas en Nov/Dic 2025, mientras que el entorno de desarrollo tiene una fecha en 2026.
-    *   Se reprocesaron facturas fallidas y se logró que fueran aceptadas por el servidor de pruebas del SRI (estado ).
-5.  **Problema de Producción:** El usuario cambió al ambiente de producción del SRI y las facturas fallaron con el error FECHA EMISION EXTEMPORANEA. El agente identificó que esto se debe a que el entorno de desarrollo tiene una fecha futura (2026) que el servidor real del SRI (en 2025) rechaza.
+El objetivo de esta sesión era solucionar el error FECHA EMISION EXTEMPORANEA que impedía emitir facturas en el ambiente de producción del SRI. Durante la sesión, este problema escaló a un error de FIRMA INVALIDA, que resultó ser un desafío técnico mucho mayor. Finalmente, el usuario solicitó corregir la fecha mostrada en la lista de documentos y rediseñar el PDF de la factura (RIDE) para que coincida con el formato oficial del SRI.
 
 **User's preferred language**: Spanish. The next agent MUST respond in Spanish.
 
 **what currently exists?**
-- **Arquitectura de dos backends:** Un  para el POS (puerto 8001) y un  para la facturación electrónica (puerto 8002). El backend del POS actúa como un proxy para las rutas .
-- **Backend de Facturación ():** Es un servicio FastAPI funcional y multi-tenant. Puede generar y firmar digitalmente (XAdES-BES) facturas en formato XML, y comunicarse vía SOAP con los servidores de prueba y producción del SRI. La configuración (emisor, certificado) es funcional.
-- **Frontend:** La interfaz de usuario para configurar la FE (), ver documentos () y facturar desde el POS () está implementada e integrada. Se solucionaron múltiples bugs de UI y de lógica de negocio.
+- **Arquitectura de tres servicios:**
+    1.   (POS): Puerto 8001. Actúa como proxy para las rutas .
+    2.   (Facturación Electrónica): Puerto 8002. Gestiona toda la lógica de FE (creación, estado, etc.) pero ahora delega la firma.
+    3.   (Firmador Java): Puerto 8003. Un nuevo microservicio en Java/SparkJava que utiliza  para realizar la firma digital XAdES-BES, que fue la solución al problema de FIRMA INVALIDA.
+- **Flujo de Facturación Funcional:** El sistema puede crear, firmar (usando el servicio Java), enviar, recibir y obtener el estado **AUTORIZADO** del SRI en el ambiente de producción.
+- **Frontend:** La interfaz para configurar FE, ver documentos y facturar desde el POS está integrada. Se ha añadido una función de sincronización automática y manual para los estados de los documentos. Se corrigió la fecha que se mostraba en la lista de documentos.
 
 **Last working item**:
-- **Last item agent was working**: Resolviendo el error  al enviar facturas al ambiente de **producción** del SRI.
-- **Reasoning**: El entorno de desarrollo de Emergent tiene una fecha de sistema en el futuro (27 de enero de 2026), mientras que el servidor real del SRI está en el presente (2025). El agente intentó corregir esto modificando el código para forzar una fecha del año 2025 en el XML cuando el ambiente es produccion, pero el SRI siguió rechazando la factura. El usuario está confundido por la discrepancia de fechas e insiste en que la fecha actual es 2026.
+- **Last item agent was working**: El agente estaba trabajando en dos solicitudes simultáneas del usuario:
+    1.  **Corregir la fecha en la lista de facturas:** La lista mostraba la fecha UTC (27 de enero) en lugar de la fecha de emisión en Ecuador (26 de enero). El agente corrigió el backend para guardar la fecha correcta y el frontend para mostrar la fecha extraída de la clave de acceso. **Esto parece estar completo.**
+    2.  **Rediseñar el PDF (RIDE):** El usuario proporcionó una imagen de un RIDE oficial y solicitó que el PDF generado por el sistema tuviera una estructura idéntica. El agente analizó la estructura del PDF adjunto y sobrescribió el archivo  con una nueva implementación para generar el RIDE con el formato solicitado.
 - **Status**: IN PROGRESS
-- **Agent Testing Done**: Y (a través de scripts de Python que confirmaron que el SRI de producción sigue rechazando las facturas).
-- **Which testing method agent to use?**: backend testing agent. Se debe probar el endpoint  con el  configurado en  y verificar que el XML y la clave de acceso se generen con una fecha válida y actual del mundo real (ej: 26 de Enero de 2025), no la fecha futura del servidor.
-- **User Testing Done**: Y (el usuario probó emitir una factura en producción y reportó el error).
+- **Agent Testing Done**: N (El agente sobrescribió el generador de PDF pero no llegó a probar si la nueva implementación funciona y genera el PDF correctamente).
+- **Which testing method agent to use?**: backend testing agent. El agente debe probar la generación del PDF. Para ello, puede llamar al endpoint  y verificar que el PDF generado se parezca al diseño solicitado por el usuario. También podría usar una herramienta para convertir el PDF a imagen y compararla visualmente si es necesario.
+- **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Las facturas en el ambiente de Producción fallan con FECHA EMISION EXTEMPORANEA (P0)**
-  - **Attempted fixes**: El agente modificó  y  para usar una fecha del año anterior (). Esto no funcionó.
-  - **Next debug checklist**:
-    1.  Revisar la lógica de ajuste de fecha en  y . La lógica actual es frágil.
-    2.  Verificar el mensaje de error exacto del SRI. FECHA EMISION EXTEMPORANEA a veces es un mensaje genérico para otros problemas, como que el RUC no esté habilitado en producción.
-    3.  Aclarar al usuario la discrepancia de fechas: el servidor de preview está en 2026, pero el SRI real está en 2025. Probar en producción desde este entorno siempre será problemático. Sugerir una solución robusta o gestionar las expectativas.
-  - **Why fix this issue and what will be achieved with the fix?**: La aplicación no puede emitir facturas válidas en producción hasta que se resuelva.
-  - **Status**: IN PROGRESS
-  - **Is recurring issue?**: Y
-  - **Should Test frontend/backend/both after fix?**: backend
-  - **Blocked on other issue**: No
+- **Issue 1: El PDF generado (RIDE) no coincide con el formato oficial del SRI (P0)**
+    - **Attempted fixes**: El agente analizó un PDF de muestra proporcionado por el usuario y sobrescribió el archivo  con una nueva implementación usando la librería .
+    - **Next debug checklist**:
+        1.  Revisar el código en  para asegurarse de que todos los elementos del RIDE (logo, datos del emisor, datos del receptor, detalles, totales, información adicional, código de barras) estén presentes y en la posición correcta.
+        2.  Generar un PDF para una factura autorizada (ej: ) llamando al endpoint .
+        3.  Verificar que el PDF se genere sin errores y que su contenido visual sea idéntico al solicitado por el usuario. Prestar especial atención al logo, que debe obtenerse de la configuración del POS.
+        4.  Corregir cualquier desviación en el diseño o contenido.
+    - **Why fix this issue and what will be achieved with the fix?**: Para cumplir con los requisitos del usuario y proporcionar un comprobante de factura legal y con el formato estándar en Ecuador.
+    - **Status**: IN PROGRESS
+    - **Is recurring issue?**: N
+    - **Should Test frontend/backend/both after fix?**: backend
+    - **Blocked on other issue**: No
 
 **In progress Task List**:
 - No hay otras tareas en progreso. El foco está en el Issue 1.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P0: Realizar una prueba de facturación de extremo a extremo en producción.** Una vez que se resuelva el problema de la fecha, se debe validar que una factura se cree, envíe y reciba el estado AUTORIZADO del SRI real.
-    - **P1: Añadir el número de autorización del SRI al ticket impreso y al PDF (RIDE).** Actualmente, solo se ha añadido la clave de acceso.
+    - **P1: Añadir el número de autorización del SRI al ticket impreso del POS.** Actualmente, solo se ha añadido la clave de acceso.
 - **Future Tasks:**
     - **P1:** Implementar funcionalidades pendientes del POS: Reloj checador, Impresoras de cocina, Pantalla para clientes.
     - **P2:** Convertir la aplicación a PWA (Progressive Web App).
@@ -60,14 +49,13 @@ Durante esta sesión, el agente se centró en implementar este nuevo backend de 
     - **P4:** Añadir la opción de enviar recibo por email.
 
 **Completed work in this session**
-- **Bugfix - Carga de Certificado:** Se corrigió el proceso de carga y validación de certificados  que fallaba por conflictos entre  y .
-- **Bugfix - Configuración de Tenant:** Se resolvió un problema complejo donde la configuración de FE no se cargaba para ciertos usuarios. Esto requirió depurar y migrar datos entre diferentes s en la base de datos .
-- **Bugfix - Guardado de Emisor:** Se solucionó un error  al guardar la configuración del emisor, haciendo el backend más robusto para sanitizar entradas incorrectas.
-- **Bugfix - Toggle de Activación de FE:** Se arregló el interruptor para activar la facturación electrónica, que no guardaba su estado.
-- **Feature - Integración de FE en POS:** Se añadió el botón FACTURAR al flujo de venta y el enlace Docs Electrónicos al menú principal.
-- **Bugfix - Selección de Cliente:** Se corrigió un error que impedía facturar a un cliente seleccionado porque el código buscaba el campo  en lugar de .
-- **Bugfix - Envío al SRI:** Se depuró y corrigió todo el flujo de envío de facturas, solucionando errores de validación de datos, estructura de XML y discrepancia de fechas con el servidor de pruebas del SRI. Se logró que los documentos fueran aceptados y puestos en cola ().
-- **Feature - Clave de Acceso en Ticket:** Se añadió la clave de acceso de la factura electrónica en el ticket que se imprime.
+- **SOLVED - FIRMA INVALIDA**: Se resolvió el error crítico de firma inválida. La solución fue crear un **microservicio en Java ()** que utiliza la librería  para generar firmas XAdES-BES compatibles con el SRI. El backend de Python ahora llama a este servicio para firmar los XML.
+- **SOLVED - FECHA EMISION EXTEMPORANEA**: Se corrigió el error de fecha ajustando la lógica para usar la zona horaria de Ecuador (UTC-5), resolviendo el desfase de 1 día entre el servidor de desarrollo y el del SRI.
+- **Feature - Sincronización de Estado Automática**: Se implementó una función que se ejecuta al cargar la página de Docs Electrónicos y cada 30 segundos, para sincronizar el estado de los comprobantes pendientes (EN PROCESO) con el SRI.
+- **Feature - Sincronización Manual**: Se añadió un botón Sincronizar SRI en la UI para forzar la actualización de estados.
+- **Bugfix - Actualización de Estado**: Se corrigió un bug que causaba que las facturas autorizadas por el SRI se quedaran con estado ERROR o EN PROCESO en la base de datos local.
+- **Bugfix - Fecha en la Lista de Documentos**: Se corrigió la visualización de la fecha en la tabla de documentos para que muestre la fecha de emisión local (ej: 26/01/2026) en lugar de la fecha UTC (27/01/2026).
+- **Infra - Servicio Java con Supervisor**: Se configuró  para gestionar el nuevo microservicio de firma , asegurando que se inicie automáticamente.
 
 **Earlier issues found/mentioned but not fixed**
 - **Issue 1:** El directorio  debería ser renombrado a  para mayor claridad y alineación con la nueva arquitectura. Esta tarea de refactorización sigue pendiente.
@@ -79,70 +67,68 @@ Durante esta sesión, el agente se centró en implementar este nuevo backend de 
 
 
 **Key Technical Concepts**
-- **Arquitectura de Microservicios:** La aplicación utiliza dos backends separados (POS y FE) que se comunican por API REST.
-- **Multi-tenancy:** El  es multi-tenant y requiere un header  en cada petición.
-- **Integración SOAP con SRI:** Se usa la librería  para la comunicación con los web services del SRI.
-- **Firma Digital XAdES-BES:** Se usa  para firmar los documentos XML.
-- **Discrepancia de Fecha en Entornos:** El principal problema actual radica en la diferencia de fecha entre el servidor de desarrollo (2026) y el servidor del SRI (2025).
+- **Arquitectura de Microservicios:** La aplicación ahora utiliza tres backends: POS (Python), FE (Python) y un nuevo servicio de firma (Java).
+- **Firma Digital XAdES-BES con Java:** Se abandonó la firma con Python/cryptography. Ahora se usa un servicio externo en Java con  y SparkJava, que es la solución robusta que funciona con el SRI.
+- **Sincronización Asíncrona:** El frontend ahora maneja la sincronización periódica de estados para documentos que el SRI procesa de forma asíncrona.
+- **Manejo de Zonas Horarias:** Se corrigió la lógica para manejar correctamente la diferencia entre UTC y la zona horaria de Ecuador (UTC-5).
 
 **key DB schema**
-- ** (en ):** La colección  contiene , que se usa como  en el . La colección  ahora tiene el booleano .
-- **:** , , , , y  son las colecciones principales, todas filtradas por .
+- ** ( collection):** Se corrigió la lógica para que el campo  ahora almacene la fecha y hora correctas de Ecuador (local), no UTC. Los campos  y  se actualizan de forma más fiable.
 
 **changes in tech stack**
-- Ninguno nuevo en esta sesión, pero se implementó lógica extensa usando ,  y .
+- **Java 17:** Añadido al stack para el servicio de firma.
+- **Apache Maven:** Añadido para la gestión de dependencias y construcción del servicio Java.
+- **SparkJava:** Framework web ligero usado en el servicio de firma.
+- **xades4j:** Librería Java clave para la firma digital XAdES-BES.
 
 **All files of reference**
--  (Archivo clave para el bug actual)
--  (Archivo clave para el bug actual)
-- 
-- 
-- 
-- 
+-  (Archivo clave para la tarea pendiente)
+-  (Contiene la lógica de sincronización)
+-  (Integra el nuevo firmador y el endpoint de sync)
+-  (Cliente HTTP para el servicio Java)
+-  (Lógica del firmador Java)
+-  (Configuración de Supervisor)
 
 **Areas that need refactoring**:
 - El directorio  debería ser renombrado a .
-- La lógica para manejar la diferencia de fechas entre el entorno de desarrollo y producción es un parche () y es muy frágil. Necesita una solución más robusta o, como mínimo, documentación clara.
 
 **key api endpoints**
-- : Endpoint principal para crear y enviar facturas. **Actualmente presenta fallos en producción.**
-- : Endpoint para obtener la configuración de FE del tenant actual.
-- : Endpoint para guardar la configuración del emisor.
-- : Endpoint del POS para guardar la configuración de funciones (ej: activar FE).
+- : Endpoint principal para crear facturas. **Ahora completamente funcional.**
+- : **NUEVO** endpoint para sincronizar estados de documentos pendientes.
+- : Endpoint para descargar el PDF de la factura (RIDE). **Necesita ser probado.**
+- : Endpoint interno (no expuesto) del servicio de firma Java.
 
 **Critical Info for New Agent**
-- **¡EL BLOQUEADOR MÁS IMPORTANTE!** El entorno de desarrollo tiene como fecha del sistema **enero de 2026**. El servidor de producción real del SRI está en **enero de 2025**. Cualquier factura enviada a producción desde este entorno será rechazada por  a menos que la fecha se modifique mediante programación. El usuario cree que la fecha actual es 2026, por lo que debes explicar esta discrepancia con claridad.
-- La configuración de FE depende del  del usuario logueado (). Si el usuario reporta que la configuración está incompleta, es casi seguro que está usando una cuenta de usuario cuyo  no tiene la configuración asociada en la base de datos . El usuario activo es .
-- El servidor de pruebas del SRI () a menudo deja los documentos en estado  y puede que nunca los autorice. Esto es un comportamiento normal y esperado del entorno de pruebas.
+- **La arquitectura ahora tiene 3 servicios.** El  depende del  (Java, puerto 8003) para funcionar. Si hay problemas de firma, se debe depurar el servicio Java.
+- El problema de la firma digital con el SRI es extremadamente sensible. La solución actual con el microservicio Java es la única que ha funcionado y no debe ser alterada a menos que sea estrictamente necesario.
+- La tarea inmediata es **validar y finalizar** la implementación del generador de PDF en . No se llegó a probar si el código recién escrito genera un PDF válido.
 
 **documents and test reports created in this job**
-- 
--  (fue actualizado)
+- No se crearon reportes de prueba formales, pero se realizaron numerosos scripts de prueba y depuración.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **DONE:**  (Confirmando que el toggle de FE funciona).
-2.  **DONE:**  (Pidiendo el botón Facturar y el menú Docs Electrónicos).
-3.  **DONE:**  (Reportando bug de selección de cliente).
-4.  **DONE:**  (Reportando error 422 al facturar).
-5.  **DONE:**  (Reportando que las facturas se crean con estado ERROR).
-6.  **DONE:**  (Pidiendo volver a ambiente de pruebas y arreglar el envío).
-7.  **DONE:**  (Pidiendo reprocesar facturas fallidas).
-8.  **DONE:**  (Preguntando por qué los documentos siguen EN PROCESO).
-9.  **IN PROGRESS:**  (Reportando que el envío a producción falla).
-10. **PENDING:**  (Insistiendo en que la fecha es 2026 y que el agente debe partir de esa premisa para arreglar el bug).
+1.  **DONE:** cual es la clave de oscarcastrocantos@gmail.com
+2.  **DONE:** revisar pq esa factura esta en proceso (Se revisó y se sincronizó el estado a AUTORIZADO).
+3.  **DONE:** otra en proceso, claro que sincronize automaticamente (Se revisó la otra factura y se implementó la sincronización automática).
+4.  **IN PROGRESS:** la fecha de los facturas dicen 27 de enero porque si bares la factura si esta bien la fecha 26 de enero corrije eso pf (Se corrigió la fecha en la lista).
+5.  **IN PROGRESS:** y cuando generes el visualmente para consultar la factura debe tener esta estructura igualita a la adjunta pdf exceto el logo que debe venor de la configuraion del pos (Se inició la reimplementación del generador de PDF).
 
 **Project Health Check:**
-- **Broken:** El envío de facturas al ambiente de **producción** del SRI está roto debido a la discrepancia de fechas entre el servidor de desarrollo (2026) y el servidor real (2025).
-- **Mocked:** Las funcionalidades Reloj checador, Impresoras de cocina, y Pantalla para clientes siguen siendo solo interruptores en la UI sin lógica asociada.
+- **Broken:** Ninguna funcionalidad principal está rota. El flujo de facturación electrónica funciona.
+- **Mocked:** El nuevo generador de PDF () fue sobrescrito pero no ha sido probado. Podría considerarse incompleto o no verificado. Las funcionalidades del POS (Reloj checador, etc.) siguen siendo solo UI.
 
 **3rd Party Integrations**
-- Google Auth (configurado para producción)
+- Google Auth
 -  (para cliente SOAP hacia el SRI)
 -  (para manipulación de XML)
--  (para firma digital)
+- 
+- **Java 17** (NUEVO)
+- **Apache Maven** (NUEVO)
+- **SparkJava** (NUEVO - para microservicio de firma)
+- **xades4j** (NUEVO - para firma XAdES-BES)
 
 **Testing status**
-- Testing agent used after significant changes: NO (usado al principio pero no para los bugs recientes).
+- Testing agent used after significant changes: NO
 - Troubleshoot agent used after agent stuck in loop: NO
 - Test files created: []
 - Known regressions: Ninguno.
@@ -150,7 +136,6 @@ Durante esta sesión, el agente se centró en implementar este nuevo backend de 
 **Credentials to test flow:**
 - **Usuario:** 
 - **Contraseña:** 
-- **Certificado:** El archivo  ya fue subido y configurado con la contraseña .
 
 **What agent forgot to execute**
-- Renombrar el directorio  a  como se recomendó en el handover inicial.</analysis>
+- El agente no llegó a probar la nueva implementación del generador de PDF () después de sobrescribirlo. Es la siguiente acción lógica.</analysis>
