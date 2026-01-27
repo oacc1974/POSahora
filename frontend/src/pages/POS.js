@@ -985,6 +985,23 @@ export default function POS() {
       printWindow.document.write(
         `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Atendió: ${invoice.vendedor_nombre}</p>`
       );
+      
+      // Mostrar información de factura electrónica si existe
+      if (invoice.factura_electronica && invoice.factura_electronica.clave_acceso) {
+        printWindow.document.write('<div class="divider"></div>');
+        printWindow.document.write('<div style="text-align:center; margin: 5px 0;">');
+        printWindow.document.write('<p style="font-weight: bold; font-size: 10px; margin: 2px 0;">FACTURA ELECTRÓNICA</p>');
+        printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0;">Clave de Acceso:</p>`);
+        printWindow.document.write(`<p style="font-size: 8px; margin: 2px 0; word-break: break-all;">${invoice.factura_electronica.clave_acceso}</p>`);
+        if (invoice.factura_electronica.estado) {
+          printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0;">Estado: ${invoice.factura_electronica.estado}</p>`);
+        }
+        if (invoice.factura_electronica.numero_autorizacion) {
+          printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0;">Autorización: ${invoice.factura_electronica.numero_autorizacion}</p>`);
+        }
+        printWindow.document.write('</div>');
+      }
+      
       printWindow.document.write('<div class="divider"></div>');
       
       if (config.mostrar_info_cliente && clienteData) {
