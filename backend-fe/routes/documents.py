@@ -22,6 +22,7 @@ from services.sequential import get_next_sequential, format_doc_number
 from services.access_key import generate_access_key
 from services.xml_generator import generate_invoice_xml, generate_credit_note_xml
 from services.xml_signer import sign_xml_xades_bes
+from services.java_signer_client import sign_xml_with_java
 from services.sri_client import SRIClient
 from services.pdf_generator import generate_ride_pdf
 from utils.crypto import decrypt_password
