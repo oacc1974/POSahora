@@ -16,6 +16,9 @@ import {
   Building2,
   BarChart3,
   FileCheck,
+  ChevronDown,
+  ChevronRight,
+  FileX,
 } from 'lucide-react';
 import { Button } from './ui/button';
 
