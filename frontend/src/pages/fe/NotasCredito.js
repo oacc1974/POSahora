@@ -360,7 +360,7 @@ export default function NotasCredito() {
 
               <div className="border-t pt-4">
                 <p className="text-sm text-slate-500 mb-2">Motivo</p>
-                <p>{selectedDoc.document.reason || 'No especificado'}</p>
+                <p>{selectedDoc.document.invoice_reference?.reason || 'No especificado'}</p>
               </div>
 
               <div className="border-t pt-4">
