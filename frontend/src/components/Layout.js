@@ -198,6 +198,58 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
               </Link>
             );
           })}
+          
+          {/* Submenú de Facturación Electrónica */}
+          {funciones.facturacion_electronica && ['propietario', 'administrador'].includes(user.rol) && (
+            <div className="mt-2">
+              <button
+                onClick={() => setFeMenuOpen(!feMenuOpen)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
+                  (location.pathname.includes('/documentos-electronicos') || location.pathname.includes('/notas-credito'))
+                    ? 'bg-emerald-50 text-emerald-600 font-semibold'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+                data-testid="nav-fe-menu"
+              >
+                <div className="flex items-center gap-3">
+                  <FileCheck size={20} />
+                  <span>Facturación Electrónica</span>
+                </div>
+                {feMenuOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </button>
+              
+              {feMenuOpen && (
+                <div className="ml-4 mt-1 space-y-1 border-l-2 border-slate-200 pl-4">
+                  <Link
+                    to="/documentos-electronicos"
+                    data-testid="nav-docs-electronicos"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${
+                      location.pathname === '/documentos-electronicos'
+                        ? 'bg-emerald-50 text-emerald-600 font-semibold'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                  >
+                    <FileText size={16} />
+                    <span>Facturas Electrónicas</span>
+                  </Link>
+                  <Link
+                    to="/notas-credito"
+                    data-testid="nav-notas-credito"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${
+                      location.pathname === '/notas-credito'
+                        ? 'bg-emerald-50 text-emerald-600 font-semibold'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                  >
+                    <FileX size={16} />
+                    <span>Notas de Crédito</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         <div className="p-4 border-t border-slate-200">
