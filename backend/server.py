@@ -3964,8 +3964,7 @@ async def _emitir_fe_background(factura_id: str, organizacion_id: str, cliente: 
                 f"{fe_url}/fe/documents/invoice",
                 json=fe_data,
                 headers={
-                    "X-Tenant-ID": organizacion_id,
-                    "Authorization": f"Bearer {token}"
+                    "X-Tenant-ID": organizacion_id
                 }
             )
             
