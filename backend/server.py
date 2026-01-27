@@ -3940,10 +3940,8 @@ async def _emitir_fe_background(factura_id: str, organizacion_id: str, cliente: 
     No bloquea el flujo principal de facturación.
     """
     try:
-        # Obtener configuración del tenant
-        config_fe = await db.configuraciones.find_one({"_id": organizacion_id})
-        if not config_fe or not config_fe.get("facturacion_electronica"):
-            return  # FE no está activa
+        # No validamos configuración aquí - si llegó a este endpoint es porque 
+        # el usuario quiere emitir FE. La validación se hace en el frontend.
         
         # Preparar datos para la FE
         fe_data = {
