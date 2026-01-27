@@ -13,7 +13,9 @@ import javax.xml.transform.dom.*;
 import javax.xml.transform.stream.*;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
+import xades4j.algorithms.EnvelopedSignatureTransform;
 import xades4j.production.*;
+import xades4j.properties.DataObjectDesc;
 import xades4j.providers.*;
 import xades4j.providers.impl.*;
 
