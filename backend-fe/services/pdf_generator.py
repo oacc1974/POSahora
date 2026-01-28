@@ -165,19 +165,14 @@ def generate_ride_pdf(document: dict, emitter: dict, logo_base64: Optional[str] 
     right_box_content.append([Spacer(1, 2*mm)])
     
     # Fecha y hora de autorización
-    # La fecha del SRI viene en hora de Ecuador, no necesita conversión
+    # La fecha de autorización se guarda en UTC en MongoDB, hay que convertir a Ecuador (UTC-5)
     auth_date = document.get("sri_authorization_date")
     if auth_date:
         if isinstance(auth_date, datetime):
-            # La fecha ya viene en hora de Ecuador desde el SRI
-            # Si parece estar en UTC (hora > issue_date), ajustar a Ecuador
-            issue_date_check = document.get("issue_date")
-            if issue_date_check and isinstance(issue_date_check, datetime):
-                # Si la hora de auth es ~5 horas mayor, es UTC y hay que restar 5h
-                from datetime import timedelta
-                if auth_date.hour > 18:  # Probablemente es UTC
-                    auth_date = auth_date - timedelta(hours=5)
-            fecha_auth_str = auth_date.strftime("%d/%m/%Y %H:%M:%S")
+            from datetime import timedelta
+            # Convertir de UTC a Ecuador (restar 5 horas)
+            auth_date_ecuador = auth_date - timedelta(hours=5)
+            fecha_auth_str = auth_date_ecuador.strftime("%d/%m/%Y %H:%M:%S")
         else:
             fecha_auth_str = str(auth_date)
     else:
