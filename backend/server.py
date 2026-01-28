@@ -1411,7 +1411,8 @@ async def get_config(current_user: dict = Depends(get_current_user)):
             "mostrar_comentarios": False,
             "logo_email": None,
             "logo_impreso": None,
-            "logo_url": None
+            "logo_url": None,
+            "ancho_ticket": 80
         }
     return {
         "cabecera": config.get("cabecera", ""),
@@ -1427,7 +1428,8 @@ async def get_config(current_user: dict = Depends(get_current_user)):
         "mostrar_comentarios": config.get("mostrar_comentarios", False),
         "logo_email": config.get("logo_email"),
         "logo_impreso": config.get("logo_impreso"),
-        "logo_url": config.get("logo_url")
+        "logo_url": config.get("logo_url"),
+        "ancho_ticket": config.get("ancho_ticket", 80)
     }
 
 @app.put("/api/config")
