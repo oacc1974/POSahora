@@ -105,9 +105,14 @@ export default function LoginPOS({ onLogin }) {
     } else if (key === 'clear') {
       setPin('');
     } else if (key === 'enter') {
-      handlePinSubmit(false);
-    } else if (pin.length < 6) {
-      setPin(prev => prev + key);
+      if (pin.length === 4) handlePinSubmit(false);
+    } else if (pin.length < 4) {
+      const newPin = pin + key;
+      setPin(newPin);
+      // Auto-login cuando se completan 4 dígitos
+      if (newPin.length === 4) {
+        setTimeout(() => handlePinSubmitWithPin(newPin, false), 100);
+      }
     }
   };
 
@@ -119,10 +124,10 @@ export default function LoginPOS({ onLogin }) {
     return 'Computadora';
   };
 
-  // Login con PIN
+  // Login con PIN (usa el PIN del estado)
   const handlePinSubmit = async (forzarCierre = false) => {
-    if (pin.length < 4) {
-      toast.error('El PIN debe tener al menos 4 dígitos');
+    if (pin.length !== 4) {
+      toast.error('El PIN debe tener 4 dígitos');
       return;
     }
     
