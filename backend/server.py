@@ -4222,6 +4222,8 @@ async def get_dashboard(
     current_user: dict = Depends(get_current_user),
     fecha_desde: Optional[str] = None,
     fecha_hasta: Optional[str] = None,
+    hora_desde: Optional[str] = None,
+    hora_hasta: Optional[str] = None,
     cajero_id: Optional[str] = None,
     tienda_id: Optional[str] = None,
     tpv_id: Optional[str] = None
@@ -4236,13 +4238,19 @@ async def get_dashboard(
     elif cajero_id:
         facturas_query["vendedor"] = cajero_id
     
-    # Filtro por fechas
+    # Filtro por fechas y horas
     if fecha_desde or fecha_hasta:
         facturas_query["fecha"] = {}
         if fecha_desde:
-            facturas_query["fecha"]["$gte"] = fecha_desde
+            if hora_desde:
+                facturas_query["fecha"]["$gte"] = f"{fecha_desde}T{hora_desde}:00"
+            else:
+                facturas_query["fecha"]["$gte"] = fecha_desde
         if fecha_hasta:
-            facturas_query["fecha"]["$lte"] = fecha_hasta + "T23:59:59"
+            if hora_hasta:
+                facturas_query["fecha"]["$lte"] = f"{fecha_hasta}T{hora_hasta}:59"
+            else:
+                facturas_query["fecha"]["$lte"] = fecha_hasta + "T23:59:59"
     
     # Filtro por tienda
     if tienda_id:
