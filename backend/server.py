@@ -2003,32 +2003,42 @@ async def generar_nuevo_pin(user_id: str, current_user: dict = Depends(get_propi
 async def login_con_pin(pin_login: PINLogin):
     """Login usando PIN + Código de Tienda (para cajeros, meseros y empleados con PIN activo)"""
     
-    # Primero buscar la tienda por su código
+    tienda = None
+    organizacion_id = None
+    
+    # Primero buscar la tienda por su codigo_tienda único
     tienda = await db.tiendas.find_one({
-        "codigo_establecimiento": pin_login.codigo_tienda.upper()
+        "codigo_tienda": pin_login.codigo_tienda.upper()
     })
     
-    if not tienda:
-        # También buscar en organizaciones por código, codigo_tienda o ID
-        org = await db.organizaciones.find_one({
-            "$or": [
-                {"codigo": pin_login.codigo_tienda.upper()},
-                {"codigo_tienda": pin_login.codigo_tienda.upper()},  # Código generado automáticamente
-                {"_id": pin_login.codigo_tienda}
-            ]
-        })
-        if org:
-            organizacion_id = org["_id"]
-        else:
-            raise HTTPException(
-                status_code=401, 
-                detail="Código de tienda no válido"
-            )
-    else:
+    if tienda:
         organizacion_id = tienda["organizacion_id"]
+    else:
+        # Buscar por codigo_establecimiento (compatibilidad)
+        tienda = await db.tiendas.find_one({
+            "codigo_establecimiento": pin_login.codigo_tienda.upper()
+        })
+        
+        if tienda:
+            organizacion_id = tienda["organizacion_id"]
+        else:
+            # También buscar en organizaciones por código, codigo_tienda o ID
+            org = await db.organizaciones.find_one({
+                "$or": [
+                    {"codigo": pin_login.codigo_tienda.upper()},
+                    {"codigo_tienda": pin_login.codigo_tienda.upper()},
+                    {"_id": pin_login.codigo_tienda}
+                ]
+            })
+            if org:
+                organizacion_id = org["_id"]
+            else:
+                raise HTTPException(
+                    status_code=401, 
+                    detail="Código de tienda no válido"
+                )
     
     # Buscar usuario con ese PIN en esa organización
-    # Convertir organizacion_id a string para la búsqueda (compatibilidad con datos existentes)
     org_id_str = str(organizacion_id)
     user = await db.usuarios.find_one({
         "pin": pin_login.pin,
