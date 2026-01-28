@@ -31,7 +31,7 @@ export default function Facturas() {
 
   const fetchFacturas = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/facturas`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -51,7 +51,7 @@ export default function Facturas() {
     if (!selectedFactura) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.post(
         `${API_URL}/api/facturas/${selectedFactura.id}/reembolso`,
         { motivo: reembolsoMotivo },
@@ -69,7 +69,7 @@ export default function Facturas() {
 
   const printInvoice = async (invoice) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const configResponse = await axios.get(`${API_URL}/api/config`, {
         headers: { Authorization: `Bearer ${token}` },
       });

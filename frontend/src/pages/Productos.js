@@ -113,7 +113,7 @@ export default function Productos() {
   // ============ FETCH FUNCTIONS ============
   const fetchProductos = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/productos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -127,7 +127,7 @@ export default function Productos() {
 
   const fetchCategorias = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/categorias`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -139,7 +139,7 @@ export default function Productos() {
 
   const fetchModificadores = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/modificadores`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -151,7 +151,7 @@ export default function Productos() {
 
   const fetchDescuentos = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/descuentos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -165,7 +165,7 @@ export default function Productos() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const data = {
         ...formData,
         precio: parseFloat(formData.precio),
@@ -196,7 +196,7 @@ export default function Productos() {
     if (!window.confirm('¿Estás seguro de eliminar este producto?')) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/productos/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -259,7 +259,7 @@ export default function Productos() {
     
     setUploadingImage(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
       
@@ -367,7 +367,7 @@ export default function Productos() {
   const handleCategoriaSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (editingCategoria) {
         await axios.put(`${API_URL}/api/categorias/${editingCategoria.id}`, categoriaForm, {
           headers: { Authorization: `Bearer ${token}` },
@@ -391,7 +391,7 @@ export default function Productos() {
   const handleDeleteCategoria = async (id) => {
     if (!window.confirm('¿Eliminar esta categoría?')) return;
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/categorias/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -406,7 +406,7 @@ export default function Productos() {
   const handleModificadorSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const data = { 
         nombre: modificadorForm.nombre,
         opciones: modificadorForm.opciones,
@@ -436,7 +436,7 @@ export default function Productos() {
   const handleDeleteModificador = async (id) => {
     if (!window.confirm('¿Eliminar este modificador?')) return;
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/modificadores/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -473,7 +473,7 @@ export default function Productos() {
   const handleDescuentoSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const data = { ...descuentoForm, porcentaje: parseFloat(descuentoForm.porcentaje) };
       if (editingDescuento) {
         await axios.put(`${API_URL}/api/descuentos/${editingDescuento.id}`, data, {
@@ -498,7 +498,7 @@ export default function Productos() {
   const handleDeleteDescuento = async (id) => {
     if (!window.confirm('¿Eliminar este descuento?')) return;
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/descuentos/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });

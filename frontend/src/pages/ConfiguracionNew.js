@@ -32,7 +32,7 @@ export default function ConfiguracionNew() {
 
   const fetchFuncionesConfig = React.useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/funciones`, {
         headers: { Authorization: `Bearer ${token}` },
       });

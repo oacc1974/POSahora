@@ -42,7 +42,7 @@ export default function Clientes() {
 
   const fetchClientes = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/clientes`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -57,7 +57,7 @@ export default function Clientes() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
 
       if (editingCliente) {
         await axios.put(
@@ -87,7 +87,7 @@ export default function Clientes() {
     if (!window.confirm('¿Estás seguro de eliminar este cliente?')) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/clientes/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });

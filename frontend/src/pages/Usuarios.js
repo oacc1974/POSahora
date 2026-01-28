@@ -117,7 +117,7 @@ export default function Usuarios() {
 
   const fetchUsuarios = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/usuarios`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -129,7 +129,7 @@ export default function Usuarios() {
 
   const fetchPerfiles = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/perfiles`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -153,7 +153,7 @@ export default function Usuarios() {
   const handleUserSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const dataToSend = { ...userFormData };
       
       if (userFormData.rol === 'propietario') {
@@ -190,7 +190,7 @@ export default function Usuarios() {
     if (!window.confirm('¿Estás seguro de eliminar este empleado?')) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/usuarios/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -230,7 +230,7 @@ export default function Usuarios() {
   const generatePin = async () => {
     setGeneratingPin(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.post(
         `${API_URL}/api/generar-pin`,
         {},
@@ -250,7 +250,7 @@ export default function Usuarios() {
   const handlePerfilSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       
       if (editingPerfil) {
         await axios.put(
@@ -281,7 +281,7 @@ export default function Usuarios() {
     if (!window.confirm('¿Estás seguro de eliminar este perfil?')) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/perfiles/${perfilId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });

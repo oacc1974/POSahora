@@ -26,7 +26,7 @@ export default function Organizaciones() {
 
   const fetchOrganizaciones = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/organizaciones`, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
@@ -49,7 +49,7 @@ export default function Organizaciones() {
     if (!orgToDelete) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/organizaciones/${orgToDelete.id}`, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true

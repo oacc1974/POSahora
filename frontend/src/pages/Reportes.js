@@ -130,7 +130,7 @@ export default function Reportes() {
   const [loadingTickets, setLoadingTickets] = useState(false);
   const [deletingTicket, setDeletingTicket] = useState(null);
   
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
   const isAdmin = ['propietario', 'administrador'].includes(user?.rol);
 
   useEffect(() => {
@@ -148,7 +148,7 @@ export default function Reportes() {
   const fetchTicketsAbiertos = async () => {
     setLoadingTickets(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/tickets-abiertos-pos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -166,7 +166,7 @@ export default function Reportes() {
     
     setDeletingTicket(ticketId);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/tickets-abiertos-pos/${ticketId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -184,7 +184,7 @@ export default function Reportes() {
     if (!window.confirm(`¿Estás seguro de eliminar los ${ticketsAbiertos.length} ticket(s) abiertos?`)) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       for (const ticket of ticketsAbiertos) {
         await axios.delete(`${API_URL}/api/tickets-abiertos-pos/${ticket.id}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -200,7 +200,7 @@ export default function Reportes() {
 
   const loadFilterData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
       const [empRes, tiendaRes] = await Promise.all([
@@ -218,7 +218,7 @@ export default function Reportes() {
   const fetchReportData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const params = new URLSearchParams();
       
       if (dateRange?.from) params.append('fecha_desde', format(dateRange.from, 'yyyy-MM-dd'));
@@ -1422,7 +1422,7 @@ function ReporteRecibos({ facturas, onReembolso }) {
   const [paginaActual, setPaginaActual] = useState(1);
   const [itemsPorPagina, setItemsPorPagina] = useState(20);
   
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   
   // Cargar configuración del ticket al montar
   useEffect(() => {
