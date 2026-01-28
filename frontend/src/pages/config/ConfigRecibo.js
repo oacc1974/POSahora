@@ -135,11 +135,34 @@ export default function ConfigRecibo() {
             </div>
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 const codigo = JSON.parse(localStorage.getItem('user') || '{}').codigo_tienda;
                 if (codigo) {
-                  navigator.clipboard.writeText(codigo);
-                  toast.success('Código copiado al portapapeles');
+                  try {
+                    if (navigator.clipboard && window.isSecureContext) {
+                      await navigator.clipboard.writeText(codigo);
+                      toast.success('Código copiado al portapapeles');
+                    } else {
+                      const textArea = document.createElement('textarea');
+                      textArea.value = codigo;
+                      textArea.style.position = 'fixed';
+                      textArea.style.left = '-999999px';
+                      textArea.style.top = '-999999px';
+                      textArea.setAttribute('readonly', '');
+                      document.body.appendChild(textArea);
+                      textArea.focus();
+                      textArea.select();
+                      const success = document.execCommand('copy');
+                      document.body.removeChild(textArea);
+                      if (success) {
+                        toast.success('Código copiado al portapapeles');
+                      } else {
+                        toast.info(`Código: ${codigo}`, { duration: 5000 });
+                      }
+                    }
+                  } catch (err) {
+                    toast.info(`Código: ${codigo}`, { duration: 5000 });
+                  }
                 }
               }}
               className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
