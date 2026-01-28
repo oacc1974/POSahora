@@ -2319,13 +2319,13 @@ export default function POS() {
       {/* ============ INDICADOR DE USUARIO Y TPV ============ */}
       {cajaActiva && (
         <div className="fixed bottom-4 left-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-slate-200 z-40 flex items-center gap-3">
-          <User size={16} className="text-blue-600" />
+          <User size={16} className={esMesero ? "text-orange-600" : "text-blue-600"} />
           <div className="text-sm flex flex-col">
             <span className="font-semibold text-slate-800">
               {currentUser?.nombre || 'Usuario'}
             </span>
-            <span className="text-xs text-slate-500">
-              TPV: {cajaActiva.tpv_nombre || 'Sin asignar'}
+            <span className={`text-xs ${esMesero ? 'text-orange-500' : 'text-slate-500'}`}>
+              {esMesero ? '🍽️ Modo Mesero' : `TPV: ${cajaActiva.tpv_nombre || 'Sin asignar'}`}
             </span>
           </div>
           <div className="border-l border-slate-300 h-8"></div>
