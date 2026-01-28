@@ -352,15 +352,19 @@ export default function POS() {
       return;
     }
 
-    // Obtener el rol actualizado del usuario
+    // Obtener el rol actualizado del usuario (doble verificación por si el estado no se actualizó)
     const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-    const esRolMesero = user?.rol === 'mesero';
+    const esRolMesero = user?.rol === 'mesero' || esMesero;
 
     // Meseros pueden guardar sin caja real, otros roles necesitan caja
+    // La caja virtual para meseros se asigna "mesero_virtual" en el backend
     if (!cajaActiva && !esRolMesero) {
       toast.error('Debes abrir una caja antes de guardar tickets');
       return;
     }
+    
+    // Log para debug (se puede remover después)
+    console.log('Guardando ticket:', { cajaActiva, esRolMesero, rol: user?.rol });
 
     setLoading(true);
     try {
