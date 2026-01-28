@@ -30,6 +30,7 @@ export default function ConfigRecibo() {
     logo_email: '',
     logo_impreso: '',
     logo_url: '', // URL del logo subido
+    ancho_ticket: 80, // Ancho del ticket en mm (58 o 80)
   });
 
   const handleLogoUpload = async (e) => {
