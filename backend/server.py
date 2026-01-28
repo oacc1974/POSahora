@@ -2128,7 +2128,21 @@ async def login_con_pin(pin_login: PINLogin):
 @app.get("/api/tienda/verificar/{codigo}")
 async def verificar_codigo_tienda(codigo: str):
     """Verificar si un código de tienda es válido y devolver info básica"""
-    # Buscar en tiendas por codigo_establecimiento
+    
+    # Primero buscar en tiendas por codigo_tienda (código único de cada tienda)
+    tienda = await db.tiendas.find_one({
+        "codigo_tienda": codigo.upper()
+    })
+    
+    if tienda:
+        org = await db.organizaciones.find_one({"_id": tienda["organizacion_id"]})
+        return {
+            "valido": True,
+            "tienda_nombre": tienda["nombre"],
+            "organizacion_nombre": org.get("nombre", "Organización") if org else "Organización"
+        }
+    
+    # Buscar por codigo_establecimiento (compatibilidad)
     tienda = await db.tiendas.find_one({
         "codigo_establecimiento": codigo.upper()
     })
@@ -2145,7 +2159,7 @@ async def verificar_codigo_tienda(codigo: str):
     org = await db.organizaciones.find_one({
         "$or": [
             {"codigo": codigo.upper()},
-            {"codigo_tienda": codigo.upper()},  # También buscar por codigo_tienda (generado automáticamente)
+            {"codigo_tienda": codigo.upper()},
             {"_id": codigo}
         ]
     })
