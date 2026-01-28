@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, ArrowLeft, Key, User, Delete, CornerDownLeft, Building2, RefreshCw, Check } from 'lucide-react';
+import { Store, ArrowLeft, Key, User, Delete, CornerDownLeft, Building2, RefreshCw, Check, AlertTriangle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card } from '../components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../components/ui/dialog';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -29,6 +36,11 @@ export default function LoginPOS({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Estados para sesión activa
+  const [showSesionActivaDialog, setShowSesionActivaDialog] = useState(false);
+  const [sesionActivaInfo, setSesionActivaInfo] = useState(null);
+  const [cerrandoSesion, setCerrandoSesion] = useState(false);
 
   // Cargar código de tienda guardado al iniciar
   useEffect(() => {
