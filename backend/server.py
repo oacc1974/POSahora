@@ -83,6 +83,7 @@ class TicketConfig(BaseModel):
     logo_email: Optional[str] = None
     logo_impreso: Optional[str] = None
     logo_url: Optional[str] = None  # URL del logo subido
+    ancho_ticket: Optional[int] = 80  # Ancho en mm: 58 o 80
 
 class ClienteCreate(BaseModel):
     nombre: str
