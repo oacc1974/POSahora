@@ -408,11 +408,68 @@ export default function Reportes() {
           </button>
         </div>
 
-        {/* Filtro Hora - oculto en móvil */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 border rounded-lg">
-          <Clock size={16} className="text-slate-400" />
-          <span className="text-sm">Todo el día</span>
-          <ChevronDown size={14} className="text-slate-400" />
+        {/* Filtro Hora - con dropdown */}
+        <div className="hidden sm:block relative">
+          <button
+            onClick={() => setShowHoraFilter(!showHoraFilter)}
+            className="flex items-center gap-2 px-3 py-1.5 border rounded-lg hover:bg-slate-50"
+          >
+            <Clock size={16} className="text-slate-400" />
+            <span className="text-sm">
+              {horaDesde === '00:00' && horaHasta === '23:59' 
+                ? 'Todo el día' 
+                : `${horaDesde} - ${horaHasta}`}
+            </span>
+            <ChevronDown size={14} className="text-slate-400" />
+          </button>
+          
+          {showHoraFilter && (
+            <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg p-3 z-50 min-w-[200px]">
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs text-slate-500">Hora desde</Label>
+                  <Input
+                    type="time"
+                    value={horaDesde}
+                    onChange={(e) => setHoraDesde(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-500">Hora hasta</Label>
+                  <Input
+                    type="time"
+                    value={horaHasta}
+                    onChange={(e) => setHoraHasta(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex gap-2 pt-2 border-t">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setHoraDesde('00:00');
+                      setHoraHasta('23:59');
+                    }}
+                  >
+                    Todo el día
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      setShowHoraFilter(false);
+                      fetchReportData();
+                    }}
+                  >
+                    Aplicar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Filtro Tiendas */}
