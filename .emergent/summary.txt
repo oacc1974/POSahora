@@ -1,56 +1,47 @@
 <analysis>**original_problem_statement:**
-El usuario inicialmente solicitó un sistema de Punto de Venta (POS). Durante las sesiones, esto se ha expandido para incluir un sistema completo de Facturación Electrónica (FE) para el SRI de Ecuador.
+El usuario solicitó un sistema de Punto de Venta (POS) que se ha expandido para incluir Facturación Electrónica (FE) para el SRI de Ecuador.
 
-A lo largo de esta sesión, el usuario ha solicitado y reportado lo siguiente:
-1.  Solucionar el error crítico FIRMA INVALIDA que impedía la creación de Notas de Crédito (NC).
-2.  Implementar una validación para prevenir la creación de NC para facturas emitidas a Consumidor Final, ya que es una restricción del SRI.
-3.  Corregir la página de Notas de Crédito, donde el detalle no se mostraba y los botones de descarga no funcionaban.
-4.  Implementar reintentos automáticos para documentos electrónicos pendientes o con errores.
-5.  Corregir la fecha y hora en los documentos de FE (PDF y UI), que se mostraban en UTC en lugar de la hora local de Ecuador (UTC-5).
-6.  Añadir la fecha y hora actual al encabezado de la pantalla del POS.
-7.  Diferenciar los flujos de COBRAR (ticket interno rápido, sin cliente) y FACTURAR (FE asíncrona, requiere cliente).
-8.  Solucionar un error que causaba que la aplicación se bloqueara al cerrar la caja ().
-9.  Aclarar por qué se creaban cajas con nombres como p1 y arreglar la visualización de las fechas de apertura/cierre en el resumen de caja.
-10. Mejorar la página de Reportes para que por defecto filtre por el día actual e incluir un filtro por rango de horas.
-11. **Solicitud principal actual:** Crear un módulo de seguridad completo para empleados, con perfiles (roles) y permisos granulares para las secciones de POS y Backoffice.
+En esta sesión, el usuario se centró en completar el módulo de seguridad, mejorar el flujo de trabajo del POS y corregir varios problemas de usabilidad:
+1.  **Módulo de Seguridad:** Completar el sistema de perfiles y permisos, solicitando que todos los perfiles, excepto Propietario, sean editables.
+2.  **Flujo de Meseros:** Implementar un Modo Mesero donde puedan tomar pedidos sin abrir caja y sin la capacidad de cobrar.
+3.  **Gestión de TPVs (Puntos de Venta):** Mejorar el flujo cuando no hay TPVs disponibles, mostrando mensajes diferentes según el rol del usuario (Propietario vs. Cajero).
+4.  **Gestión de Sesiones:**
+    *   Solucionar un problema donde las sesiones se mezclaban entre diferentes pestañas del navegador.
+    *   Implementar un control para evitar que un mismo usuario inicie sesión en múltiples dispositivos simultáneamente, dando la opción de cerrar la sesión anterior.
+5.  **Correcciones de UX en Login POS:**
+    *   Solucionar un bug en móviles donde el teclado desaparecía al escribir el código de tienda.
+    *   Hacer que el PIN de login sea de 4 dígitos con acceso automático al completar.
+    *   Asegurar que el código de tienda se recuerde después de cerrar sesión.
+6.  **Confusión de Usuarios/Tiendas:** Resolver por qué al iniciar sesión con un cajero se mostraba el nombre del propietario y por qué varias tiendas tenían el mismo código de acceso.
+7.  **Errores Varios:** Solucionar errores al guardar tickets como mesero y al copiar el código de tienda.
 
 **User's preferred language**: Spanish. The next agent MUST respond in Spanish.
 
 **what currently exists?**
-- Una arquitectura de tres servicios:  (POS),  (Facturación Electrónica), y  (Firma Digital Java).
-- El flujo de facturación y notas de crédito es funcional y asíncrono. El error FIRMA INVALIDA fue **solucionado**.
-- Se implementaron validaciones en el frontend y backend para impedir la creación de NC para Consumidor Final, como lo requiere el SRI.
-- Se corrigieron los problemas de la interfaz de Notas de Crédito (visualización de detalles, botones de descarga y sincronización automática).
-- Se corrigió el problema de la zona horaria (UTC vs. UTC-5) en los PDFs generados y en la UI.
-- La pantalla del POS ahora tiene dos flujos claros: Cobrar (ticket interno sin cliente) y Facturar (FE con cliente).
-- Se solucionaron los errores en el módulo de Cierre de Caja (error  y fechas no visibles).
-- La página de Reportes ahora filtra por el día actual por defecto y tiene un selector de rango de horas funcional.
-- Se ha **iniciado** la implementación del módulo de seguridad para empleados. Se han creado los modelos y endpoints básicos en el backend para Perfiles y se ha reescrito la página de  en el frontend para alojar una nueva interfaz con pestañas para Empleados y Perfiles.
+- Un sistema de POS y FE con tres servicios (, , ).
+- Un **módulo de seguridad de empleados y perfiles completamente funcional**. Se pueden crear y asignar perfiles, y todos los perfiles del sistema (excepto Propietario) son editables.
+- Un **flujo diferenciado para Meseros** que les permite tomar pedidos y guardar tickets sin abrir una caja ni tener acceso a funciones de cobro.
+- Un sistema robusto de **gestión de TPVs** que maneja la creación automática del primer TPV y proporciona mensajes claros y basados en roles cuando todos los dispositivos están ocupados. La gestión de TPVs está disponible en la página de Configuración.
+- Un **sistema de control de sesión única**. Si un usuario intenta iniciar sesión mientras ya tiene una sesión activa en otro lugar, el sistema le advierte y le da la opción de forzar el cierre de la sesión anterior.
+- **Sesiones independientes por pestaña** gracias a la migración de  a  para el token de autenticación.
+- Múltiples mejoras de UX, incluyendo un **login por PIN de 4 dígitos con acceso automático** y la corrección de un bug de teclado en móviles.
+- **Códigos de tienda únicos** para cada punto de venta, lo que resuelve la confusión anterior entre organizaciones y tiendas.
 
 **Last working item**:
-- **Last item agent was working**: Implementando el nuevo módulo de seguridad para empleados y perfiles. El agente acababa de reescribir por completo el archivo  para crear una nueva interfaz de usuario con pestañas para gestionar Empleados y Perfiles de Permisos.
-- **Status**: IN PROGRESS
-- **Agent Testing Done**: N
-- **Which testing method agent to use?**: both. El agente debe probar la creación y edición de perfiles en el frontend, la asignación de perfiles a empleados y verificar que los permisos se apliquen correctamente en el backend al intentar acceder a diferentes endpoints.
+- **Last item agent was working**: Corrigiendo un error que impedía a los usuarios con rol mesero guardar tickets. El error (Debes abrir una caja antes de guardar tickets) se debía a que tanto el frontend como el backend requerían una caja activa, incluso para los meseros. El agente modificó la lógica para permitir que los meseros usen una caja virtual.
+- **Status**: USER VERIFICATION PENDING
+- **Agent Testing Done**: Y (El agente verificó la corrección con  y con una prueba en la UI que demostró que un mesero puede iniciar sesión y acceder al POS. Sin embargo, la prueba de guardar el ticket en la UI falló por un timeout, aunque los logs del backend y la prueba  confirmaron que la lógica funciona.)
+- **Which testing method agent to use?**: Frontend testing agent. El agente debe realizar un flujo completo: iniciar sesión como mesero, añadir productos al carrito y guardar el ticket para confirmar que el error no aparece.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- No hay bugs críticos pendientes. El foco está en completar la nueva funcionalidad.
+- **Issue 1: Verificación del usuario para el flujo de guardar ticket de mesero (P0)**
+    - El agente ha implementado una corrección, pero el usuario debe confirmar que el error Debes abrir una caja antes de guardar tickets ya no aparece para los meseros.
+- **Issue 2: Verificación completa del nuevo sistema de sesiones (P1)**
+    - El agente cambió de  a  para aislar las sesiones por pestaña y agregó un control de sesión única en el backend. Este cambio es significativo y, aunque parece funcionar, el usuario reportó problemas relacionados. Necesita una validación exhaustiva por parte del usuario en diferentes escenarios (múltiples pestañas, múltiples dispositivos).
 
 **In progress Task List**:
-- **Task 1: Completar el Módulo de Seguridad para Empleados y Perfiles (P0)**
-    - **Where to resume**:
-        1.  **Backend ():**
-            - Implementar la lógica de middleware o decoradores para verificar los permisos del usuario (basado en su ) antes de permitir el acceso a los endpoints protegidos (ej. un mesero no puede acceder a ).
-            - Crear una función que genere los perfiles por defecto (Propietario, Administrador, Cajero, Mesero) en la base de datos si no existen.
-        2.  **Frontend ():**
-            - Implementar la lógica completa para la pestaña Perfiles: listar, crear y editar perfiles con un formulario que muestre todos los permisos disponibles como checkboxes.
-            - Implementar la lógica para la pestaña Empleados: listar empleados, mostrar su perfil asignado, y permitir crear/editar empleados con un menú desplegable para seleccionar su perfil.
-            - Conectar toda la interfaz a los endpoints del backend (, ).
-    - **What will be achieved with this?**: Un sistema de permisos granular que permite al propietario controlar qué acciones puede realizar cada tipo de empleado en el sistema.
-    - **Status**: IN PROGRESS
-    - **Should Test frontend/backend/both after fix?**: both
-    - **Blocked on something**: No.
+- No hay tareas de desarrollo en progreso. El foco actual está en la verificación de las últimas correcciones.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
@@ -63,14 +54,16 @@ A lo largo de esta sesión, el usuario ha solicitado y reportado lo siguiente:
     - **P4:** Añadir la opción de enviar recibo por email.
 
 **Completed work in this session**
-- **SOLVED - Error FIRMA INVALIDA en Notas de Crédito:** Se solucionó el bug principal que impedía la creación de NC.
-- **FEATURE - Validación de Consumidor Final para NC:** Se añadió lógica para impedir crear NC para facturas a consumidor final.
-- **SOLVED - Bugs en la página de Notas de Crédito:** Se corrigió la vista de detalles, los botones de descarga y se añadió sincronización automática.
-- **SOLVED - Error de Zona Horaria (UTC):** Se corrigió la visualización de la hora en los PDFs de FE para que muestre la hora de Ecuador.
-- **FEATURE - Flujos Diferenciados Cobrar vs. Facturar:** Se implementó la lógica para tickets internos rápidos y facturación electrónica asíncrona.
-- **SOLVED - Errores de Cierre de Caja:** Se corrigió un error de  y se aseguró que las fechas de apertura/cierre se muestren correctamente en el resumen.
-- **FEATURE - Filtros de Fecha/Hora en Reportes:** Se implementó el rango de fecha por defecto a hoy y se añadió un filtro funcional por horas.
-- **STARTED - Módulo de Seguridad de Empleados:** Se sentaron las bases en el backend (modelos, endpoints) y frontend (UI rediseñada) para el nuevo sistema de perfiles y permisos.
+- **FEATURE - Módulo de Seguridad Mejorado:** Se completó el sistema de perfiles y permisos, haciendo que todos los perfiles del sistema (excepto Propietario) sean editables.
+- **FEATURE - Flujo de Modo Mesero:** Se implementó un flujo completo para que los meseros puedan tomar pedidos sin abrir caja y sin poder cobrar.
+- **FEATURE - Control de Sesión Única:** Se añadió una advertencia y la opción de forzar el cierre cuando se intenta iniciar sesión con un usuario ya activo en otro dispositivo.
+- **FEATURE - Sesiones por Pestaña:** Se migró el manejo del token de  a  para permitir sesiones independientes en cada pestaña del navegador.
+- **FEATURE - Códigos de Tienda Únicos:** Se corrigió la lógica para que cada tienda tenga un código de acceso único, eliminando la ambigüedad entre organizaciones.
+- **BUGFIX/UX - Login POS:**
+    - Se solucionó el bug del teclado que desaparecía en móviles.
+    - Se implementó el login automático con PIN de 4 dígitos.
+    - Se aseguró que el código de tienda se recuerde al cerrar sesión.
+- **BUGFIX - Error al Guardar Ticket de Mesero:** Se corrigió el error Debes abrir una caja... que aparecía al intentar guardar un ticket como mesero.
 
 **Earlier issues found/mentioned but not fixed**
 - **Issue 1:** El directorio  debería ser renombrado a  para mejorar la claridad de la arquitectura. Esta es una tarea de refactorización de baja prioridad.
@@ -82,54 +75,60 @@ A lo largo de esta sesión, el usuario ha solicitado y reportado lo siguiente:
 
 
 **Key Technical Concepts**
-- **Asynchronous Tasks ():** Usado para el procesamiento de facturas sin bloquear la UI.
-- **Firma Digital XAdES-BES:** El problema de la firma fue resuelto ajustando la canonicalización del XML.
-- **Role-Based Access Control (RBAC):** Se está implementando un nuevo sistema de seguridad basado en perfiles (roles) y permisos.
-- **Timezone Handling:** Se manejaron conversiones entre UTC y la zona horaria de Ecuador (UTC-5) para la correcta visualización de fechas.
+- **RBAC (Role-Based Access Control):** Sistema maduro y funcional, con perfiles de sistema y personalizados.
+- **Gestión de Sesiones:** Se implementó una estrategia mixta:
+    - **:** Para el token y los datos del usuario, aislando las sesiones por pestaña.
+    - **:** Para el código de tienda, para que persista entre sesiones.
+    - **Backend-driven Session Control:** Una nueva colección  en MongoDB rastrea los inicios de sesión para hacer cumplir la política de sesión única.
+- **Conditional UI Rendering:** Uso intensivo de la información del rol del usuario () para mostrar/ocultar elementos de la interfaz, como el botón Cobrar.
 
 **key DB schema**
-- 
-- **(NEW)** : 
-- : Se añadió el campo  para enlazar al nuevo modelo de perfiles.
+- : .
+- : Campo  en uso.
+- : Se añadió y se está utilizando un campo  único por tienda.
+- **(NEW)** : .
 
 **All files of reference**
--  (Contiene los nuevos endpoints de perfiles y la lógica de usuario actualizada)
--  (Archivo reescrito para la nueva interfaz de gestión de empleados)
--  (Contiene las correcciones para los errores de cierre de caja)
--  (Contiene la corrección de la zona horaria para el PDF)
--  (Contiene los nuevos filtros de fecha y hora)
+- : Modificado para control de sesiones, códigos de tienda únicos, y lógica de meseros.
+- : Modificado extensamente para el flujo de meseros, manejo de TPVs y .
+- : Modificado para el login automático de 4 dígitos y el diálogo de sesión activa.
+- : Modificado para usar  y manejar el estado de autenticación.
+- (Múltiples otros archivos JS): Modificados con un script para reemplazar  por .
 
 **Areas that need refactoring**:
 - Renombrar el directorio  a .
+- La migración masiva de  a  se hizo con un script. Sería ideal revisar y centralizar el manejo de la sesión en un custom hook o un Context API para mejorar la mantenibilidad.
 
 **key api endpoints**
-- , , : **NUEVOS** endpoints para gestionar los perfiles de permisos.
-- , : Endpoints modificados para soportar .
-- : Endpoint corregido para devolver el objeto de caja completo, incluyendo fechas.
-- : Endpoint modificado para aceptar filtros por hora.
+- : Modificado para implementar el control de sesión única. Acepta un parámetro .
+- : Modificado para limpiar la sesión activa del usuario en el backend.
+- : Corregido para buscar por el campo correcto .
+- : Nuevo endpoint para generar un código único para una tienda existente.
+- : Modificado para permitir a los meseros guardar tickets sin un  real.
+- : Modificado por la misma razón que el anterior.
 
 **Critical Info for New Agent**
-- La prioridad principal es completar el módulo de seguridad para empleados. El trabajo ya está iniciado en  y .
-- El frontend y el backend deben estar sincronizados. El agente debe implementar la lógica de permisos en el backend y la interfaz de gestión en el frontend.
-- Después de completar el módulo de seguridad, el siguiente punto solicitado por el usuario es la creación automática de Notas de Crédito al reembolsar una venta con factura electrónica.
+- **La gestión de sesiones es la clave:** El cambio de  a  y la implementación del control de sesión única en el backend son cambios fundamentales. El usuario ha reportado problemas con esto, y aunque el agente cree haberlos solucionado, requiere una verificación exhaustiva. Asegúrate de entender cómo ,  y  trabajan juntos para este flujo.
+- **Códigos de Tienda vs. Códigos de Organización:** Se resolvió una gran fuente de confusión. Ahora cada **tienda** tiene un  único. El login POS ahora valida contra este código.
+- **Flujo de Meseros:** Este es un flujo de negocio crítico. La lógica que permite a los meseros actuar sin una caja está en  y . El último error reportado por el usuario estaba relacionado con esto.
 
 **documents and test reports created in this job**
-- Ninguno.
+- 
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **DONE**: El usuario solicitó un resumen de todas las tareas pendientes.
-2.  **DONE**: El usuario priorizó la corrección del problema de la hora UTC en el PDF de la factura.
-3.  **DONE**: El usuario reportó que las fechas seguían sin aparecer en el resumen de cierre de caja (problema que fue solucionado).
-4.  **INVESTIGATED**: El usuario preguntó por qué una caja se llamaba p1 y reportó las fechas faltantes. Se explicó que el nombre fue manual y se corrigió el problema de las fechas.
-5.  **DONE**: El usuario reportó un error () al cerrar la caja.
-6.  **PENDING**: El usuario preguntó si al reembolsar un ticket se debería crear una NC. Se le dio una explicación y está pendiente de su confirmación para implementarlo.
-7.  **DONE**: El usuario solicitó mejoras en los filtros de fecha y hora en la página de Reportes.
-8.  **DONE**: El usuario detalló los requisitos para los flujos COBRAR vs. FACTURAR.
-9.  **DONE**: El usuario reportó que la fecha en las facturas estaba 5 horas adelantada (problema de UTC).
-10. **IN PROGRESS**: El usuario solicitó un módulo de seguridad para empleados con perfiles y permisos, y pidió al agente que procediera con la implementación.
+1.  **PENDING**: Usuario reporta que el error debes abrir una caja persiste para los meseros. (El agente implementó una corrección y está pendiente de verificación).
+2.  **ADDRESSED**: Usuario pide que se valide que el arreglo de los códigos de tienda únicos funcione para todos.
+3.  **ADDRESSED**: Usuario reporta un error al intentar hacer login con los nuevos códigos de tienda.
+4.  **ADDRESSED**: Usuario informa que todas sus tiendas tienen el mismo código de acceso, causando confusión.
+5.  **ADDRESSED**: Usuario reporta que al hacer login con un cajero, la UI muestra el nombre del propietario. (Causa: uso de un código de tienda incorrecto que apuntaba a otra organización).
+6.  **ADDRESSED**: Usuario pide sesiones independientes por pestaña y un control de sesión única, y que al salir se libere la sesión.
+7.  **ADDRESSED**: Usuario pide que el PIN de login sea de 4 dígitos y con acceso automático.
+8.  **ADDRESSED**: Usuario solicita que al cerrar ciertos diálogos en el POS, se le redirija a la pantalla de login del PIN.
+9.  **ADDRESSED**: Usuario pide que el código de tienda se mantenga en memoria al cerrar sesión.
+10. **ADDRESSED**: Usuario reporta que el teclado en móvil desaparece al escribir el código de tienda.
 
 **Project Health Check:**
-- **Broken:** El sistema de permisos está a medio implementar. Los usuarios aún no están restringidos por roles.
+- **Broken:** Nada está críticamente roto, pero el flujo de meseros y el sistema de sesiones requieren verificación final del usuario.
 - **Mocked:** Nada.
 
 **3rd Party Integrations**
@@ -138,14 +137,16 @@ A lo largo de esta sesión, el usuario ha solicitado y reportado lo siguiente:
 - **Java 17 / SparkJava / xades4j** (Microservicio de firma digital)
 
 **Testing status**
-- Testing agent used after significant changes: NO (en esta sesión).
+- Testing agent used after significant changes: YES ( fue generado para el módulo de seguridad).
 - Troubleshoot agent used after agent stuck in loop: NO.
 - Test files created: []
-- Known regressions: Ninguno.
+- Known regressions: Ninguno identificado, pero el cambio a  es grande y podría tener efectos secundarios no descubiertos.
 
 **Credentials to test flow:**
-- **Usuario:** 
-- **Contraseña:** 
+- **Usuario Propietario:**  | **Contraseña:** 
+- **Tienda 1 Código:** 
+- **Usuario Cajero:**  | **PIN:** 
+- **Usuario Mesero:**  | **PIN:** 
 
 **What agent forgot to execute**
-- El agente ha seguido las instrucciones del usuario. La tarea actual (módulo de seguridad) está en progreso según lo solicitado.</analysis>
+- El agente ha seguido de cerca las peticiones del usuario. No se han omitido tareas solicitadas en esta sesión. La tarea de refactorización de renombrar el directorio  sigue pendiente de una sesión anterior.</analysis>

@@ -8,7 +8,7 @@ import os
 import uuid
 import random
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ecinvoice.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://easytpv.preview.emergentagent.com')
 
 
 def generate_valid_ruc():
