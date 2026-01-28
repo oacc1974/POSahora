@@ -111,8 +111,16 @@ export default function LoginPOS({ onLogin }) {
     }
   };
 
+  // Obtener nombre del dispositivo/navegador
+  const getDeviceName = () => {
+    const ua = navigator.userAgent;
+    if (/tablet|ipad/i.test(ua)) return 'Tablet';
+    if (/mobile|android|iphone/i.test(ua)) return 'Móvil';
+    return 'Computadora';
+  };
+
   // Login con PIN
-  const handlePinSubmit = async () => {
+  const handlePinSubmit = async (forzarCierre = false) => {
     if (pin.length < 4) {
       toast.error('El PIN debe tener al menos 4 dígitos');
       return;
@@ -123,24 +131,53 @@ export default function LoginPOS({ onLogin }) {
       return;
     }
     
-    setLoadingPin(true);
+    if (forzarCierre) {
+      setCerrandoSesion(true);
+    } else {
+      setLoadingPin(true);
+    }
+    
     try {
       const response = await axios.post(
         `${API_URL}/api/auth/login-pin`,
-        { pin, codigo_tienda: codigoTienda },
+        { 
+          pin, 
+          codigo_tienda: codigoTienda,
+          forzar_cierre: forzarCierre,
+          dispositivo: getDeviceName()
+        },
         { withCredentials: true }
       );
 
-      const { access_token, usuario, tienda } = response.data;
+      const { access_token, session_id, usuario, tienda } = response.data;
+      
+      // Guardar session_id para verificación
+      sessionStorage.setItem('pos_session_id', session_id);
+      
+      setShowSesionActivaDialog(false);
       onLogin(usuario, access_token);
       toast.success(`¡Bienvenido, ${usuario.nombre}!`, {
         description: `Tienda: ${tienda.nombre}`
       });
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'PIN inválido');
+      // Verificar si es error de sesión activa (código 409)
+      if (error.response?.status === 409) {
+        const detail = error.response.data?.detail;
+        if (detail?.code === 'SESSION_ACTIVE') {
+          setSesionActivaInfo(detail.session_info);
+          setShowSesionActivaDialog(true);
+          return; // No limpiar el PIN
+        }
+      }
+      
+      const errorMsg = typeof error.response?.data?.detail === 'string' 
+        ? error.response?.data?.detail 
+        : 'PIN inválido';
+      toast.error(errorMsg);
       setPin('');
     } finally {
       setLoadingPin(false);
+      setCerrandoSesion(false);
     }
   };
 
