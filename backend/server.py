@@ -4097,6 +4097,8 @@ async def get_facturas(
     current_user: dict = Depends(get_current_user),
     fecha_desde: Optional[str] = None,
     fecha_hasta: Optional[str] = None,
+    hora_desde: Optional[str] = None,
+    hora_hasta: Optional[str] = None,
     cajero_id: Optional[str] = None,
     tienda_id: Optional[str] = None,
     tpv_id: Optional[str] = None,
@@ -4110,14 +4112,21 @@ async def get_facturas(
     elif cajero_id:
         query["vendedor"] = cajero_id
     
-    # Filtro por fechas
+    # Filtro por fechas y horas
     if fecha_desde or fecha_hasta:
         query["fecha"] = {}
         if fecha_desde:
-            query["fecha"]["$gte"] = fecha_desde
+            # Si hay hora_desde, combinarla con la fecha
+            if hora_desde:
+                query["fecha"]["$gte"] = f"{fecha_desde}T{hora_desde}:00"
+            else:
+                query["fecha"]["$gte"] = fecha_desde
         if fecha_hasta:
-            # Agregar un día para incluir todo el día hasta
-            query["fecha"]["$lte"] = fecha_hasta + "T23:59:59"
+            # Si hay hora_hasta, combinarla con la fecha
+            if hora_hasta:
+                query["fecha"]["$lte"] = f"{fecha_hasta}T{hora_hasta}:59"
+            else:
+                query["fecha"]["$lte"] = fecha_hasta + "T23:59:59"
     
     # Filtro por tienda (a través de la caja)
     if tienda_id:
