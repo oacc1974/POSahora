@@ -18,6 +18,19 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ## Funcionalidades Implementadas
 
+### Completadas (28 Enero 2026)
+
+- [x] **MÓDULO DE SEGURIDAD PARA EMPLEADOS - COMPLETADO**
+  - **6 Perfiles predeterminados del sistema:** Propietario, Administrador, Cajero, Mesero, Supervisor, Cocinero
+  - **Perfiles del sistema protegidos:** No se pueden editar ni eliminar
+  - **Perfiles personalizados:** El propietario puede crear perfiles con permisos específicos
+  - **15 permisos POS:** ver_productos, agregar_ticket, guardar_ticket, recuperar_tickets_propios, recuperar_tickets_otros, cobrar, facturar_electronico, aplicar_descuentos, eliminar_items, anular_ventas, abrir_caja, cerrar_caja_propia, cerrar_caja_otros, dividir_ticket, cambiar_precio
+  - **18 permisos Backoffice:** ver_dashboard, ver_reportes, ver_reportes_propios, ver_productos, gestionar_productos, gestionar_categorias, ver_clientes, gestionar_clientes, gestionar_empleados, ver_configuracion, gestionar_configuracion, gestionar_tpv, gestionar_tiendas, gestionar_metodos_pago, gestionar_impuestos, ver_facturacion_electronica, gestionar_facturacion_electronica, gestionar_perfiles
+  - **UI rediseñada:** Página `/usuarios` con pestañas "Empleados" y "Perfiles y Permisos"
+  - **Asignación de perfiles:** Al crear/editar empleados se puede seleccionar su perfil
+  - **Auto-asignación:** Si no se especifica perfil, se asigna automáticamente según el rol
+  - **Tests:** 21/21 tests de backend pasados, UI completamente funcional
+
 ### Completadas (27 Enero 2026)
 
 - [x] **NOTAS DE CRÉDITO - FUNCIONANDO CORRECTAMENTE**
