@@ -1340,6 +1340,58 @@ async def logout(request: Request, response: Response):
     response.delete_cookie(key="session_token", path="/", samesite="none", secure=True)
     return {"message": "Sesión cerrada correctamente"}
 
+@app.post("/api/auth/logout-pos")
+async def logout_pos(request: Request, current_user: dict = Depends(get_current_user)):
+    """Cierra la sesión POS del usuario actual"""
+    user_id = str(current_user.get("_id") or current_user.get("user_id"))
+    
+    # Cerrar todas las sesiones activas del usuario
+    result = await db.sesiones_pos.update_many(
+        {"user_id": user_id, "activa": True},
+        {"$set": {"activa": False, "fecha_cierre": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Sesión cerrada correctamente", "sesiones_cerradas": result.modified_count}
+
+@app.get("/api/auth/verificar-sesion")
+async def verificar_sesion(request: Request, current_user: dict = Depends(get_current_user)):
+    """Verifica si la sesión actual del usuario sigue siendo válida"""
+    user_id = str(current_user.get("_id") or current_user.get("user_id"))
+    
+    # Obtener el session_id del token si está disponible
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header.replace("Bearer ", "")
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            session_id = payload.get("session_id")
+            
+            if session_id:
+                # Verificar si esta sesión específica sigue activa
+                sesion = await db.sesiones_pos.find_one({
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "activa": True
+                })
+                
+                if not sesion:
+                    return {
+                        "valida": False,
+                        "razon": "Tu sesión fue cerrada porque iniciaste sesión en otro dispositivo"
+                    }
+                
+                # Actualizar última actividad
+                await db.sesiones_pos.update_one(
+                    {"session_id": session_id},
+                    {"$set": {"ultima_actividad": datetime.now(timezone.utc).isoformat()}}
+                )
+                
+                return {"valida": True, "session_id": session_id}
+        except:
+            pass
+    
+    return {"valida": True}
+
 @app.get("/api/config")
 async def get_config(current_user: dict = Depends(get_current_user)):
     config = await db.configuraciones.find_one({"_id": current_user["organizacion_id"]})
