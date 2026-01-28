@@ -389,7 +389,7 @@ export default function LoginPOS({ onLogin }) {
                   <NumericKeypad />
                   
                   <Button
-                    onClick={handlePinSubmit}
+                    onClick={() => handlePinSubmit(false)}
                     disabled={pin.length < 4 || loadingPin}
                     className="w-full h-14 text-lg font-semibold mt-4 bg-blue-600 hover:bg-blue-700"
                   >
