@@ -336,7 +336,8 @@ export default function POS() {
       return;
     }
 
-    if (!cajaActiva) {
+    // Meseros pueden guardar sin caja real, otros roles necesitan caja
+    if (!cajaActiva && !esMesero) {
       toast.error('Debes abrir una caja antes de guardar tickets');
       return;
     }
