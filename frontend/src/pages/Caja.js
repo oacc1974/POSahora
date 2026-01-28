@@ -239,7 +239,9 @@ export default function Caja({ onLogout }) {
 
   const abrirCierreAdmin = (caja) => {
     setCajaParaCerrar(caja);
-    setEfectivoContadoAdmin((caja.monto_inicial + caja.monto_ventas).toFixed(2));
+    const montoInicial = caja.monto_inicial || 0;
+    const montoVentas = caja.monto_ventas || 0;
+    setEfectivoContadoAdmin((montoInicial + montoVentas).toFixed(2));
     setShowCierreAdmin(true);
   };
 
