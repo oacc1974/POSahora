@@ -2355,7 +2355,8 @@ export default function POS() {
               if (window.confirm('¿Estás seguro de cerrar sesión?')) {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                window.location.href = '/login';
+                // Mantener pos_tienda_codigo para que no tengan que ingresarlo de nuevo
+                window.location.href = '/login-pos';
               }
             }}
             className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
