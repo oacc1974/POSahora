@@ -373,9 +373,6 @@ export default function POS() {
       toast.error('Debes abrir una caja antes de guardar tickets');
       return;
     }
-    
-    // Log para debug (se puede remover después)
-    console.log('Guardando ticket:', { cajaActiva, esRolMesero, rol: user?.rol });
 
     setLoading(true);
     try {
