@@ -2600,7 +2600,7 @@ async def get_tiendas(current_user: dict = Depends(get_current_user)):
         "organizacion_id": current_user["organizacion_id"]
     }, {"_id": 0}).to_list(1000)
     
-    # Obtener el código de tienda de la organización
+    # Obtener el código de tienda de la organización (como fallback)
     org = await db.organizaciones.find_one({"_id": current_user["organizacion_id"]})
     codigo_tienda_org = org.get("codigo_tienda") if org else None
     
@@ -2614,7 +2614,8 @@ async def get_tiendas(current_user: dict = Depends(get_current_user)):
             email=t.get("email"),
             activa=t.get("activa", True),
             organizacion_id=t["organizacion_id"],
-            codigo_tienda=codigo_tienda_org,
+            # Usar el código propio de la tienda, o el de la organización como fallback
+            codigo_tienda=t.get("codigo_tienda") or codigo_tienda_org,
             fecha_creacion=t.get("fecha_creacion", "")
         )
         for t in tiendas
