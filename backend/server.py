@@ -1864,6 +1864,18 @@ async def update_usuario(user_id: str, user_update: UserUpdate, current_user: di
     if user_update.rol and user_update.rol in ["administrador", "cajero", "mesero"]:
         update_data["rol"] = user_update.rol
     
+    # Manejo de perfil_id
+    if user_update.perfil_id is not None:
+        if user_update.perfil_id:
+            # Verificar que el perfil exista
+            perfil = await db.perfiles.find_one({
+                "_id": user_update.perfil_id,
+                "organizacion_id": current_user["organizacion_id"]
+            })
+            if not perfil:
+                raise HTTPException(status_code=400, detail="El perfil especificado no existe")
+            update_data["perfil_id"] = user_update.perfil_id
+    
     # Manejo de PIN
     if user_update.pin is not None:
         if user_update.pin:
@@ -1888,11 +1900,20 @@ async def update_usuario(user_id: str, user_update: UserUpdate, current_user: di
     # Obtener usuario actualizado
     updated_user = await db.usuarios.find_one({"_id": user_id})
     
+    # Obtener nombre del perfil
+    perfil_nombre = updated_user["rol"].capitalize()
+    if updated_user.get("perfil_id"):
+        perfil = await db.perfiles.find_one({"_id": updated_user["perfil_id"]})
+        if perfil:
+            perfil_nombre = perfil["nombre"]
+    
     return UserResponse(
         id=updated_user["_id"],
         nombre=updated_user["nombre"],
         username=updated_user["username"],
         rol=updated_user["rol"],
+        perfil_id=updated_user.get("perfil_id"),
+        perfil_nombre=perfil_nombre,
         organizacion_id=updated_user["organizacion_id"],
         creado_por=updated_user.get("creado_por"),
         creado=updated_user["creado"],
