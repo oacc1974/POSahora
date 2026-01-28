@@ -1185,9 +1185,22 @@ export default function POS() {
       );
       printWindow.document.write('</body></html>');
       printWindow.document.close();
+      
+      // Esperar a que el documento esté completamente cargado antes de imprimir
+      printWindow.onload = function() {
+        setTimeout(() => {
+          printWindow.focus();
+          printWindow.print();
+        }, 300);
+      };
+      
+      // Fallback si onload no se dispara (algunos navegadores)
       setTimeout(() => {
-        printWindow.print();
-      }, 250);
+        if (printWindow && !printWindow.closed) {
+          printWindow.focus();
+          printWindow.print();
+        }
+      }, 500);
     } catch (error) {
       console.error('Error loading config:', error);
       toast.error('Error al imprimir ticket');
