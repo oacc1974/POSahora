@@ -3124,13 +3124,9 @@ async def get_tickets_abiertos_pos(current_user: dict = Depends(get_current_user
 async def create_ticket_abierto(ticket: TicketAbiertoCreate, current_user: dict = Depends(get_current_user)):
     caja_id = None
     
-    # Debug: imprimir datos del usuario
-    print(f"DEBUG create_ticket: user_id={current_user.get('_id')}, rol={current_user.get('rol')}")
-    
     # Los meseros no necesitan caja activa para guardar tickets
     if current_user.get("rol") == "mesero":
         caja_id = "mesero_virtual"
-        print(f"DEBUG: Usuario es mesero, usando caja virtual")
     else:
         # Verificar caja activa para otros roles
         caja_activa = await db.cajas.find_one({
@@ -3139,7 +3135,6 @@ async def create_ticket_abierto(ticket: TicketAbiertoCreate, current_user: dict 
         })
         
         if not caja_activa:
-            print(f"DEBUG: Usuario NO es mesero (rol={current_user.get('rol')}), y no tiene caja activa")
             raise HTTPException(status_code=400, detail="Debes abrir una caja antes de guardar tickets")
         
         caja_id = caja_activa["_id"]
