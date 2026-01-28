@@ -348,8 +348,12 @@ export default function POS() {
       return;
     }
 
+    // Obtener el rol actualizado del usuario
+    const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+    const esRolMesero = user?.rol === 'mesero';
+
     // Meseros pueden guardar sin caja real, otros roles necesitan caja
-    if (!cajaActiva && !esMesero) {
+    if (!cajaActiva && !esRolMesero) {
       toast.error('Debes abrir una caja antes de guardar tickets');
       return;
     }
