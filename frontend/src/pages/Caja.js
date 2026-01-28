@@ -64,7 +64,7 @@ export default function Caja({ onLogout }) {
     
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    localStorage.removeItem('pos_tienda_codigo');
+    // Mantener pos_tienda_codigo para que no tengan que ingresarlo de nuevo
     
     if (onLogout) {
       onLogout();
