@@ -483,6 +483,77 @@ export default function LoginPOS({ onLogin }) {
           </div>
         </Card>
       </div>
+
+      {/* Diálogo de Sesión Activa */}
+      <Dialog open={showSesionActivaDialog} onOpenChange={setShowSesionActivaDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle size={24} />
+              Sesión Activa Detectada
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-slate-700 mb-4">
+              Este usuario ya tiene una sesión iniciada en otro dispositivo.
+            </p>
+            
+            {sesionActivaInfo && (
+              <div className="bg-slate-50 rounded-lg p-4 mb-4">
+                <div className="text-sm space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Dispositivo:</span>
+                    <span className="font-medium">{sesionActivaInfo.dispositivo}</span>
+                  </div>
+                  {sesionActivaInfo.iniciada && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Iniciada:</span>
+                      <span className="font-medium">
+                        {new Date(sesionActivaInfo.iniciada).toLocaleString('es-EC')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            <p className="text-slate-600 text-sm">
+              ¿Deseas cerrar la otra sesión e iniciar aquí?
+            </p>
+          </div>
+          
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowSesionActivaDialog(false);
+                setPin('');
+              }}
+              disabled={cerrandoSesion}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => handlePinSubmit(true)}
+              disabled={cerrandoSesion}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {cerrandoSesion ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Cerrando...
+                </span>
+              ) : (
+                'Sí, iniciar aquí'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
