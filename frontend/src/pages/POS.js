@@ -2391,19 +2391,16 @@ export default function POS() {
         onOpenChange={(open) => {
           if (!open) {
             // Al cerrar el diálogo, regresar al login POS
+            const token = sessionStorage.getItem('token');
+            // Cerrar sesión en el backend
+            if (token) {
+              axios.post(`${API_URL}/api/auth/logout-pos`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+              }).catch(() => {});
+            }
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('user');
             sessionStorage.removeItem('pos_session_id');
-            // Cerrar sesión en el backend también
-            const token = sessionStorage.getItem('token');
-            if (token) {
-              try {
-                await axios.post(`${API_URL}/api/auth/logout-pos`, {}, {
-                  headers: { Authorization: `Bearer ${token}` }
-                });
-              } catch (e) {}
-            }
-            sessionStorage.removeItem('token');
             // Mantener pos_tienda_codigo en localStorage
             window.location.href = '/login-pos';
           }
