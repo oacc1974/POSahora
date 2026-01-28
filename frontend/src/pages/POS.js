@@ -2375,7 +2375,18 @@ export default function POS() {
       />
 
       {/* Dialog Apertura de Caja */}
-      <Dialog open={showAperturaCaja} onOpenChange={setShowAperturaCaja}>
+      <Dialog 
+        open={showAperturaCaja} 
+        onOpenChange={(open) => {
+          if (!open) {
+            // Al cerrar el diálogo, regresar al login POS
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Mantener pos_tienda_codigo
+            window.location.href = '/login-pos';
+          }
+        }}
+      >
         <DialogContent data-testid="apertura-caja-dialog" className="max-w-md mx-4">
           <DialogHeader>
             <DialogTitle>{esMesero ? 'Asignar TPV para Tomar Pedidos' : 'Abrir Caja para Vender'}</DialogTitle>
