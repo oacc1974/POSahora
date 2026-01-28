@@ -326,6 +326,9 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 - [x] ~~Buscador en páginas de Productos y Clientes~~ ✓ Completado 15 Enero 2026
 - [x] ~~Paginación en reporte de Recibos~~ ✓ Completado 15 Enero 2026
 - [x] ~~Mostrar logo de organización en el recibo impreso~~ ✓ Completado 15 Enero 2026
+- [x] ~~Módulo de Seguridad para Empleados (Perfiles y Permisos)~~ ✓ Completado 28 Enero 2026
+- [ ] Crear NC automática al reembolsar venta con factura autorizada (P1)
+- [ ] Verificar número de autorización SRI en ticket de POS después de FE asíncrona (P1)
 - [ ] Lógica interna de "Función de reloj" (UI de fichaje)
 - [ ] Lógica interna de "Impresoras de cocina"
 - [ ] Lógica interna de "Pantalla para clientes"
