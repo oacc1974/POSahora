@@ -182,6 +182,19 @@ export default function POS() {
   const verificarCaja = async () => {
     try {
       const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      // Si es mesero, crear una "caja virtual" sin necesidad de apertura real
+      if (user?.rol === 'mesero') {
+        // Los meseros no manejan dinero, solo toman pedidos
+        setCajaActiva({
+          id: 'mesero_virtual',
+          tpv_nombre: 'Modo Mesero',
+          es_mesero: true
+        });
+        return;
+      }
+      
       const response = await axios.get(`${API_URL}/api/caja/activa`, {
         headers: { Authorization: `Bearer ${token}` },
       });
