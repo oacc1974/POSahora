@@ -299,7 +299,63 @@ export default function LoginPOS({ onLogin }) {
           </div>
 
           {/* Código de Tienda */}
-          <CodigoTiendaInput />
+          <div className="mb-6">
+            {mostrarInputCodigo ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-600 mb-2">
+                  <Building2 size={18} />
+                  <span className="text-sm font-medium">Código de Tienda</span>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    value={codigoTienda}
+                    onChange={(e) => setCodigoTienda(e.target.value.toUpperCase())}
+                    placeholder="Ej: 001, GOLM, TIENDA1"
+                    className="flex-1 h-12 text-center text-lg font-mono uppercase"
+                    maxLength={20}
+                    autoComplete="off"
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => verificarCodigoTienda(codigoTienda)}
+                    disabled={!codigoTienda || verificandoTienda}
+                    className="h-12 px-4"
+                  >
+                    {verificandoTienda ? (
+                      <RefreshCw size={18} className="animate-spin" />
+                    ) : (
+                      <Check size={18} />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-400 text-center">
+                  El código está en la configuración de tu tienda
+                </p>
+              </div>
+            ) : (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <Building2 size={20} className="text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-green-800">{tiendaVerificada?.tienda_nombre}</p>
+                      <p className="text-xs text-green-600">{tiendaVerificada?.organizacion_nombre} • {codigoTienda}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={cambiarTienda}
+                    className="text-xs text-green-600 hover:text-green-800 underline"
+                  >
+                    Cambiar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Solo mostrar opciones de login si la tienda está verificada */}
           {tiendaVerificada && (
