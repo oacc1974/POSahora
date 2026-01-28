@@ -1376,6 +1376,337 @@ async def update_config(config: TicketConfig, current_user: dict = Depends(get_p
     )
     return {"message": "Configuración actualizada"}
 
+# ============ PERFILES Y PERMISOS ============
+
+async def crear_perfiles_predeterminados(organizacion_id: str):
+    """Crea los perfiles predeterminados para una organización"""
+    perfiles_default = [
+        {
+            "_id": f"{organizacion_id}_propietario",
+            "nombre": "Propietario",
+            "descripcion": "Acceso total al sistema",
+            "permisos_pos": {
+                "ver_productos": True, "agregar_ticket": True, "guardar_ticket": True,
+                "recuperar_tickets_propios": True, "recuperar_tickets_otros": True,
+                "cobrar": True, "facturar_electronico": True, "aplicar_descuentos": True,
+                "eliminar_items": True, "anular_ventas": True, "abrir_caja": True,
+                "cerrar_caja_propia": True, "cerrar_caja_otros": True,
+                "dividir_ticket": True, "cambiar_precio": True
+            },
+            "permisos_backoffice": {
+                "ver_reportes": True, "ver_reportes_propios": True, "ver_dashboard": True,
+                "ver_productos": True, "gestionar_productos": True, "gestionar_categorias": True,
+                "ver_clientes": True, "gestionar_clientes": True, "gestionar_empleados": True,
+                "ver_configuracion": True, "gestionar_configuracion": True,
+                "gestionar_tpv": True, "gestionar_tiendas": True,
+                "gestionar_metodos_pago": True, "gestionar_impuestos": True,
+                "ver_facturacion_electronica": True, "gestionar_facturacion_electronica": True,
+                "gestionar_perfiles": True
+            },
+            "es_predeterminado": True,
+            "es_sistema": True,
+            "organizacion_id": organizacion_id,
+            "created_at": datetime.utcnow().isoformat()
+        },
+        {
+            "_id": f"{organizacion_id}_administrador",
+            "nombre": "Administrador",
+            "descripcion": "Gestión del negocio sin acceso a empleados",
+            "permisos_pos": {
+                "ver_productos": True, "agregar_ticket": True, "guardar_ticket": True,
+                "recuperar_tickets_propios": True, "recuperar_tickets_otros": True,
+                "cobrar": True, "facturar_electronico": True, "aplicar_descuentos": True,
+                "eliminar_items": True, "anular_ventas": True, "abrir_caja": True,
+                "cerrar_caja_propia": True, "cerrar_caja_otros": True,
+                "dividir_ticket": True, "cambiar_precio": True
+            },
+            "permisos_backoffice": {
+                "ver_reportes": True, "ver_reportes_propios": True, "ver_dashboard": True,
+                "ver_productos": True, "gestionar_productos": True, "gestionar_categorias": True,
+                "ver_clientes": True, "gestionar_clientes": True, "gestionar_empleados": False,
+                "ver_configuracion": True, "gestionar_configuracion": False,
+                "gestionar_tpv": True, "gestionar_tiendas": True,
+                "gestionar_metodos_pago": True, "gestionar_impuestos": True,
+                "ver_facturacion_electronica": True, "gestionar_facturacion_electronica": True,
+                "gestionar_perfiles": False
+            },
+            "es_predeterminado": True,
+            "es_sistema": True,
+            "organizacion_id": organizacion_id,
+            "created_at": datetime.utcnow().isoformat()
+        },
+        {
+            "_id": f"{organizacion_id}_cajero",
+            "nombre": "Cajero",
+            "descripcion": "Puede vender, cobrar y gestionar su caja",
+            "permisos_pos": {
+                "ver_productos": True, "agregar_ticket": True, "guardar_ticket": True,
+                "recuperar_tickets_propios": True, "recuperar_tickets_otros": True,
+                "cobrar": True, "facturar_electronico": True, "aplicar_descuentos": True,
+                "eliminar_items": True, "anular_ventas": False, "abrir_caja": True,
+                "cerrar_caja_propia": True, "cerrar_caja_otros": False,
+                "dividir_ticket": True, "cambiar_precio": False
+            },
+            "permisos_backoffice": {
+                "ver_reportes": False, "ver_reportes_propios": True, "ver_dashboard": False,
+                "ver_productos": True, "gestionar_productos": False, "gestionar_categorias": False,
+                "ver_clientes": True, "gestionar_clientes": True, "gestionar_empleados": False,
+                "ver_configuracion": False, "gestionar_configuracion": False,
+                "gestionar_tpv": False, "gestionar_tiendas": False,
+                "gestionar_metodos_pago": False, "gestionar_impuestos": False,
+                "ver_facturacion_electronica": False, "gestionar_facturacion_electronica": False,
+                "gestionar_perfiles": False
+            },
+            "es_predeterminado": True,
+            "es_sistema": True,
+            "organizacion_id": organizacion_id,
+            "created_at": datetime.utcnow().isoformat()
+        },
+        {
+            "_id": f"{organizacion_id}_mesero",
+            "nombre": "Mesero",
+            "descripcion": "Solo puede tomar pedidos y guardar tickets",
+            "permisos_pos": {
+                "ver_productos": True, "agregar_ticket": True, "guardar_ticket": True,
+                "recuperar_tickets_propios": True, "recuperar_tickets_otros": False,
+                "cobrar": False, "facturar_electronico": False, "aplicar_descuentos": False,
+                "eliminar_items": True, "anular_ventas": False, "abrir_caja": False,
+                "cerrar_caja_propia": False, "cerrar_caja_otros": False,
+                "dividir_ticket": False, "cambiar_precio": False
+            },
+            "permisos_backoffice": {
+                "ver_reportes": False, "ver_reportes_propios": False, "ver_dashboard": False,
+                "ver_productos": True, "gestionar_productos": False, "gestionar_categorias": False,
+                "ver_clientes": False, "gestionar_clientes": False, "gestionar_empleados": False,
+                "ver_configuracion": False, "gestionar_configuracion": False,
+                "gestionar_tpv": False, "gestionar_tiendas": False,
+                "gestionar_metodos_pago": False, "gestionar_impuestos": False,
+                "ver_facturacion_electronica": False, "gestionar_facturacion_electronica": False,
+                "gestionar_perfiles": False
+            },
+            "es_predeterminado": True,
+            "es_sistema": True,
+            "organizacion_id": organizacion_id,
+            "created_at": datetime.utcnow().isoformat()
+        },
+        {
+            "_id": f"{organizacion_id}_supervisor",
+            "nombre": "Supervisor",
+            "descripcion": "Cajero con permisos de anulación y reportes",
+            "permisos_pos": {
+                "ver_productos": True, "agregar_ticket": True, "guardar_ticket": True,
+                "recuperar_tickets_propios": True, "recuperar_tickets_otros": True,
+                "cobrar": True, "facturar_electronico": True, "aplicar_descuentos": True,
+                "eliminar_items": True, "anular_ventas": True, "abrir_caja": True,
+                "cerrar_caja_propia": True, "cerrar_caja_otros": True,
+                "dividir_ticket": True, "cambiar_precio": True
+            },
+            "permisos_backoffice": {
+                "ver_reportes": True, "ver_reportes_propios": True, "ver_dashboard": True,
+                "ver_productos": True, "gestionar_productos": False, "gestionar_categorias": False,
+                "ver_clientes": True, "gestionar_clientes": True, "gestionar_empleados": False,
+                "ver_configuracion": False, "gestionar_configuracion": False,
+                "gestionar_tpv": False, "gestionar_tiendas": False,
+                "gestionar_metodos_pago": False, "gestionar_impuestos": False,
+                "ver_facturacion_electronica": True, "gestionar_facturacion_electronica": False,
+                "gestionar_perfiles": False
+            },
+            "es_predeterminado": True,
+            "es_sistema": True,
+            "organizacion_id": organizacion_id,
+            "created_at": datetime.utcnow().isoformat()
+        },
+        {
+            "_id": f"{organizacion_id}_cocinero",
+            "nombre": "Cocinero",
+            "descripcion": "Solo ve pedidos en pantalla de cocina",
+            "permisos_pos": {
+                "ver_productos": True, "agregar_ticket": False, "guardar_ticket": False,
+                "recuperar_tickets_propios": False, "recuperar_tickets_otros": False,
+                "cobrar": False, "facturar_electronico": False, "aplicar_descuentos": False,
+                "eliminar_items": False, "anular_ventas": False, "abrir_caja": False,
+                "cerrar_caja_propia": False, "cerrar_caja_otros": False,
+                "dividir_ticket": False, "cambiar_precio": False
+            },
+            "permisos_backoffice": {
+                "ver_reportes": False, "ver_reportes_propios": False, "ver_dashboard": False,
+                "ver_productos": True, "gestionar_productos": False, "gestionar_categorias": False,
+                "ver_clientes": False, "gestionar_clientes": False, "gestionar_empleados": False,
+                "ver_configuracion": False, "gestionar_configuracion": False,
+                "gestionar_tpv": False, "gestionar_tiendas": False,
+                "gestionar_metodos_pago": False, "gestionar_impuestos": False,
+                "ver_facturacion_electronica": False, "gestionar_facturacion_electronica": False,
+                "gestionar_perfiles": False
+            },
+            "es_predeterminado": True,
+            "es_sistema": True,
+            "organizacion_id": organizacion_id,
+            "created_at": datetime.utcnow().isoformat()
+        }
+    ]
+    
+    for perfil in perfiles_default:
+        await db.perfiles.update_one(
+            {"_id": perfil["_id"]},
+            {"$setOnInsert": perfil},
+            upsert=True
+        )
+
+@app.get("/api/perfiles", response_model=List[PerfilResponse])
+async def get_perfiles(current_user: dict = Depends(get_current_user)):
+    """Obtiene todos los perfiles de la organización"""
+    # Asegurar que existan los perfiles predeterminados
+    await crear_perfiles_predeterminados(current_user["organizacion_id"])
+    
+    perfiles = await db.perfiles.find(
+        {"organizacion_id": current_user["organizacion_id"]}
+    ).to_list(100)
+    
+    return [
+        PerfilResponse(
+            id=p["_id"],
+            nombre=p["nombre"],
+            descripcion=p.get("descripcion"),
+            permisos_pos=p.get("permisos_pos", {}),
+            permisos_backoffice=p.get("permisos_backoffice", {}),
+            es_predeterminado=p.get("es_predeterminado", False),
+            es_sistema=p.get("es_sistema", False),
+            organizacion_id=p["organizacion_id"],
+            created_at=p.get("created_at")
+        )
+        for p in perfiles
+    ]
+
+@app.get("/api/perfiles/{perfil_id}", response_model=PerfilResponse)
+async def get_perfil(perfil_id: str, current_user: dict = Depends(get_current_user)):
+    """Obtiene un perfil específico"""
+    perfil = await db.perfiles.find_one({
+        "_id": perfil_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if not perfil:
+        raise HTTPException(status_code=404, detail="Perfil no encontrado")
+    
+    return PerfilResponse(
+        id=perfil["_id"],
+        nombre=perfil["nombre"],
+        descripcion=perfil.get("descripcion"),
+        permisos_pos=perfil.get("permisos_pos", {}),
+        permisos_backoffice=perfil.get("permisos_backoffice", {}),
+        es_predeterminado=perfil.get("es_predeterminado", False),
+        es_sistema=perfil.get("es_sistema", False),
+        organizacion_id=perfil["organizacion_id"],
+        created_at=perfil.get("created_at")
+    )
+
+@app.post("/api/perfiles", response_model=PerfilResponse)
+async def create_perfil(perfil: PerfilCreate, current_user: dict = Depends(get_propietario_user)):
+    """Crea un nuevo perfil personalizado"""
+    perfil_id = str(uuid.uuid4())
+    
+    nuevo_perfil = {
+        "_id": perfil_id,
+        "nombre": perfil.nombre,
+        "descripcion": perfil.descripcion,
+        "permisos_pos": perfil.permisos_pos.dict(),
+        "permisos_backoffice": perfil.permisos_backoffice.dict(),
+        "es_predeterminado": False,
+        "es_sistema": False,
+        "organizacion_id": current_user["organizacion_id"],
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    await db.perfiles.insert_one(nuevo_perfil)
+    
+    return PerfilResponse(
+        id=perfil_id,
+        nombre=nuevo_perfil["nombre"],
+        descripcion=nuevo_perfil.get("descripcion"),
+        permisos_pos=nuevo_perfil["permisos_pos"],
+        permisos_backoffice=nuevo_perfil["permisos_backoffice"],
+        es_predeterminado=False,
+        es_sistema=False,
+        organizacion_id=current_user["organizacion_id"],
+        created_at=nuevo_perfil["created_at"]
+    )
+
+@app.put("/api/perfiles/{perfil_id}", response_model=PerfilResponse)
+async def update_perfil(perfil_id: str, perfil_update: PerfilUpdate, current_user: dict = Depends(get_propietario_user)):
+    """Actualiza un perfil existente"""
+    perfil = await db.perfiles.find_one({
+        "_id": perfil_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if not perfil:
+        raise HTTPException(status_code=404, detail="Perfil no encontrado")
+    
+    # No permitir editar perfiles del sistema
+    if perfil.get("es_sistema"):
+        raise HTTPException(status_code=403, detail="No se pueden editar los perfiles del sistema")
+    
+    update_data = {}
+    if perfil_update.nombre:
+        update_data["nombre"] = perfil_update.nombre
+    if perfil_update.descripcion is not None:
+        update_data["descripcion"] = perfil_update.descripcion
+    if perfil_update.permisos_pos:
+        update_data["permisos_pos"] = perfil_update.permisos_pos.dict()
+    if perfil_update.permisos_backoffice:
+        update_data["permisos_backoffice"] = perfil_update.permisos_backoffice.dict()
+    
+    if update_data:
+        await db.perfiles.update_one(
+            {"_id": perfil_id},
+            {"$set": update_data}
+        )
+    
+    updated = await db.perfiles.find_one({"_id": perfil_id})
+    
+    return PerfilResponse(
+        id=updated["_id"],
+        nombre=updated["nombre"],
+        descripcion=updated.get("descripcion"),
+        permisos_pos=updated.get("permisos_pos", {}),
+        permisos_backoffice=updated.get("permisos_backoffice", {}),
+        es_predeterminado=updated.get("es_predeterminado", False),
+        es_sistema=updated.get("es_sistema", False),
+        organizacion_id=updated["organizacion_id"],
+        created_at=updated.get("created_at")
+    )
+
+@app.delete("/api/perfiles/{perfil_id}")
+async def delete_perfil(perfil_id: str, current_user: dict = Depends(get_propietario_user)):
+    """Elimina un perfil personalizado"""
+    perfil = await db.perfiles.find_one({
+        "_id": perfil_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if not perfil:
+        raise HTTPException(status_code=404, detail="Perfil no encontrado")
+    
+    if perfil.get("es_sistema"):
+        raise HTTPException(status_code=403, detail="No se pueden eliminar los perfiles del sistema")
+    
+    # Verificar que no haya usuarios con este perfil
+    usuarios_con_perfil = await db.usuarios.count_documents({
+        "perfil_id": perfil_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if usuarios_con_perfil > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"No se puede eliminar. Hay {usuarios_con_perfil} empleado(s) con este perfil"
+        )
+    
+    await db.perfiles.delete_one({"_id": perfil_id})
+    return {"message": "Perfil eliminado correctamente"}
+
+# ============ USUARIOS/EMPLEADOS ============
+
 @app.get("/api/usuarios", response_model=List[UserResponse])
 async def get_usuarios(current_user: dict = Depends(get_propietario_user)):
     usuarios = await db.usuarios.find(
