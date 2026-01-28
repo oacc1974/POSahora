@@ -121,6 +121,7 @@ export default function POS() {
     direccion: '',
   });
   const [tpvsDisponibles, setTpvsDisponibles] = useState([]);
+  const [totalTpvs, setTotalTpvs] = useState(0);
   const [tpvSeleccionado, setTpvSeleccionado] = useState(null);
 
   useEffect(() => {
