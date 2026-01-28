@@ -392,36 +392,26 @@ export default function LoginPOS({ onLogin }) {
               {loginMode === 'pin' && (
                 <div>
                   <p className="text-center text-slate-600 text-sm mb-2">
-                    Ingresa tu PIN de acceso
+                    Ingresa tu PIN de 4 dígitos
                   </p>
                   
                   <PinDisplay />
                   
                   <NumericKeypad />
                   
-                  <Button
-                    onClick={() => handlePinSubmit(false)}
-                    disabled={pin.length < 4 || loadingPin}
-                    className="w-full h-14 text-lg font-semibold mt-4 bg-blue-600 hover:bg-blue-700"
-                  >
-                    {loadingPin ? (
-                      <span className="flex items-center gap-2">
-                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                        Verificando...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <CornerDownLeft size={20} />
-                        Ingresar
-                      </span>
-                    )}
-                  </Button>
+                  {/* Indicador de carga */}
+                  {loadingPin && (
+                    <div className="flex items-center justify-center gap-2 mt-4 text-blue-600">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      <span className="font-medium">Verificando...</span>
+                    </div>
+                  )}
                   
                   <p className="text-center text-xs text-slate-400 mt-4">
-                    También puedes usar el teclado numérico físico
+                    El acceso es automático al completar el PIN
                   </p>
                 </div>
               )}
