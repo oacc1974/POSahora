@@ -181,20 +181,30 @@ export default function Dashboard() {
                       // Método moderno
                       if (navigator.clipboard && window.isSecureContext) {
                         await navigator.clipboard.writeText(codigoTienda);
+                        toast.success('Código copiado al portapapeles');
                       } else {
                         // Fallback para contextos no seguros
                         const textArea = document.createElement('textarea');
                         textArea.value = codigoTienda;
                         textArea.style.position = 'fixed';
                         textArea.style.left = '-999999px';
+                        textArea.style.top = '-999999px';
+                        textArea.setAttribute('readonly', '');
                         document.body.appendChild(textArea);
+                        textArea.focus();
                         textArea.select();
-                        document.execCommand('copy');
+                        const success = document.execCommand('copy');
                         document.body.removeChild(textArea);
+                        if (success) {
+                          toast.success('Código copiado al portapapeles');
+                        } else {
+                          // Si el fallback falla, mostrar el código para copiar manualmente
+                          toast.info(`Código: ${codigoTienda}`, { duration: 5000 });
+                        }
                       }
-                      toast.success('Código copiado');
                     } catch (err) {
-                      toast.error('No se pudo copiar el código');
+                      // Mostrar el código para copiar manualmente
+                      toast.info(`Código: ${codigoTienda}`, { duration: 5000 });
                     }
                   }}
                   className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
