@@ -194,6 +194,71 @@ class MetodoPagoResponse(BaseModel):
     activo: bool
     organizacion_id: str
 
+# ============ MODELOS DE PERMISOS Y PERFILES ============
+
+class PermisosPOS(BaseModel):
+    """Permisos para el Punto de Venta"""
+    ver_productos: bool = True
+    agregar_ticket: bool = True
+    guardar_ticket: bool = True
+    recuperar_tickets_propios: bool = True
+    recuperar_tickets_otros: bool = False
+    cobrar: bool = False
+    facturar_electronico: bool = False
+    aplicar_descuentos: bool = False
+    eliminar_items: bool = True
+    anular_ventas: bool = False
+    abrir_caja: bool = False
+    cerrar_caja_propia: bool = False
+    cerrar_caja_otros: bool = False
+    dividir_ticket: bool = False
+    cambiar_precio: bool = False
+
+class PermisosBackoffice(BaseModel):
+    """Permisos para Administración/Backoffice"""
+    ver_reportes: bool = False
+    ver_reportes_propios: bool = False
+    ver_dashboard: bool = False
+    ver_productos: bool = True
+    gestionar_productos: bool = False
+    gestionar_categorias: bool = False
+    ver_clientes: bool = False
+    gestionar_clientes: bool = False
+    gestionar_empleados: bool = False
+    ver_configuracion: bool = False
+    gestionar_configuracion: bool = False
+    gestionar_tpv: bool = False
+    gestionar_tiendas: bool = False
+    gestionar_metodos_pago: bool = False
+    gestionar_impuestos: bool = False
+    ver_facturacion_electronica: bool = False
+    gestionar_facturacion_electronica: bool = False
+    gestionar_perfiles: bool = False
+
+class PerfilCreate(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = None
+    permisos_pos: PermisosPOS = PermisosPOS()
+    permisos_backoffice: PermisosBackoffice = PermisosBackoffice()
+    es_predeterminado: bool = False
+
+class PerfilUpdate(BaseModel):
+    nombre: Optional[str] = None
+    descripcion: Optional[str] = None
+    permisos_pos: Optional[PermisosPOS] = None
+    permisos_backoffice: Optional[PermisosBackoffice] = None
+
+class PerfilResponse(BaseModel):
+    id: str
+    nombre: str
+    descripcion: Optional[str] = None
+    permisos_pos: dict
+    permisos_backoffice: dict
+    es_predeterminado: bool
+    es_sistema: bool = False
+    organizacion_id: str
+    created_at: Optional[str] = None
+
 class FuncionesConfig(BaseModel):
     cierres_caja: bool = True
     tickets_abiertos: bool = False
