@@ -3122,14 +3122,22 @@ async def get_tickets_abiertos_pos(current_user: dict = Depends(get_current_user
 
 @app.post("/api/tickets-abiertos-pos")
 async def create_ticket_abierto(ticket: TicketAbiertoCreate, current_user: dict = Depends(get_current_user)):
-    # Verificar caja activa
-    caja_activa = await db.cajas.find_one({
-        "usuario_id": current_user["_id"],
-        "estado": "abierta"
-    })
+    caja_id = None
     
-    if not caja_activa:
-        raise HTTPException(status_code=400, detail="Debes abrir una caja antes de guardar tickets")
+    # Los meseros no necesitan caja activa para guardar tickets
+    if current_user.get("rol") == "mesero":
+        caja_id = "mesero_virtual"
+    else:
+        # Verificar caja activa para otros roles
+        caja_activa = await db.cajas.find_one({
+            "usuario_id": current_user["_id"],
+            "estado": "abierta"
+        })
+        
+        if not caja_activa:
+            raise HTTPException(status_code=400, detail="Debes abrir una caja antes de guardar tickets")
+        
+        caja_id = caja_activa["_id"]
     
     ticket_id = str(uuid.uuid4())
     
@@ -3141,7 +3149,7 @@ async def create_ticket_abierto(ticket: TicketAbiertoCreate, current_user: dict 
         "vendedor_id": current_user["_id"],
         "vendedor_nombre": current_user["nombre"],
         "organizacion_id": current_user["organizacion_id"],
-        "caja_id": caja_activa["_id"],
+        "caja_id": caja_id,
         "cliente_id": ticket.cliente_id,
         "cliente_nombre": ticket.cliente_nombre,
         "comentarios": ticket.comentarios,
@@ -3158,7 +3166,7 @@ async def create_ticket_abierto(ticket: TicketAbiertoCreate, current_user: dict 
         vendedor_id=current_user["_id"],
         vendedor_nombre=current_user["nombre"],
         organizacion_id=current_user["organizacion_id"],
-        caja_id=caja_activa["_id"],
+        caja_id=caja_id,
         cliente_id=ticket.cliente_id,
         cliente_nombre=ticket.cliente_nombre,
         comentarios=ticket.comentarios,
