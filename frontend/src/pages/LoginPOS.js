@@ -267,16 +267,14 @@ export default function LoginPOS({ onLogin }) {
 
   // Indicador de PIN (puntos)
   const PinDisplay = () => (
-    <div className="flex justify-center gap-3 my-6">
-      {[0, 1, 2, 3, 4, 5].map((i) => (
+    <div className="flex justify-center gap-4 my-6">
+      {[0, 1, 2, 3].map((i) => (
         <div
           key={i}
-          className={`w-4 h-4 rounded-full transition-all duration-200 ${
+          className={`w-5 h-5 rounded-full transition-all duration-200 ${
             i < pin.length 
-              ? 'bg-blue-600 scale-110' 
-              : i < 4 
-                ? 'bg-slate-300' 
-                : 'bg-slate-200 opacity-50'
+              ? 'bg-blue-600 scale-125' 
+              : 'bg-slate-300'
           }`}
         />
       ))}
