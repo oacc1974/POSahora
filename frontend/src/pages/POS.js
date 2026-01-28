@@ -305,6 +305,7 @@ export default function POS() {
   const fetchTpvsDisponibles = async () => {
     try {
       const token = localStorage.getItem('token');
+      // Obtener TPVs disponibles
       const response = await axios.get(`${API_URL}/api/tpv/disponibles`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -312,6 +313,16 @@ export default function POS() {
       // Si hay TPVs disponibles, seleccionar el primero por defecto
       if (response.data.length > 0) {
         setTpvSeleccionado(response.data[0].id);
+      }
+      
+      // También obtener el total de TPVs (para saber si hay ocupados)
+      try {
+        const totalRes = await axios.get(`${API_URL}/api/tpv`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setTotalTpvs(totalRes.data.length);
+      } catch (e) {
+        setTotalTpvs(0);
       }
     } catch (error) {
       console.error('Error al cargar TPVs disponibles:', error);
