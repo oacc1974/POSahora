@@ -3664,11 +3664,50 @@ async def cerrar_caja_admin(caja_id: str, cierre: CajaCierre, current_user: dict
         }
     )
     
-    return {
-        "message": "Caja cerrada correctamente",
-        "diferencia": diferencia,
-        "cerrada_por": current_user["nombre"]
-    }
+    # Actualizar el objeto caja para la respuesta
+    caja["estado"] = "cerrada"
+    caja["efectivo_contado"] = cierre.efectivo_contado
+    caja["diferencia"] = diferencia
+    caja["fecha_cierre"] = fecha_cierre
+    caja["monto_final"] = monto_final
+    
+    # Obtener ventas por método de pago
+    ventas_por_metodo = []
+    pipeline = [
+        {"$match": {"caja_id": caja_id, "organizacion_id": current_user["organizacion_id"]}},
+        {"$group": {"_id": "$metodo_pago_id", "total": {"$sum": "$total"}, "cantidad": {"$sum": 1}}}
+    ]
+    async for item in db.facturas.aggregate(pipeline):
+        metodo = await db.metodos_pago.find_one({"id": item["_id"]})
+        ventas_por_metodo.append({
+            "metodo_id": item["_id"],
+            "metodo_nombre": metodo["nombre"] if metodo else "Desconocido",
+            "total": item["total"],
+            "cantidad": item["cantidad"]
+        })
+    
+    return CajaResponse(
+        id=caja["_id"],
+        numero=caja["numero"],
+        usuario_id=caja["usuario_id"],
+        usuario_nombre=caja["usuario_nombre"],
+        monto_inicial=caja["monto_inicial"],
+        monto_ventas=caja["monto_ventas"],
+        monto_final=monto_final,
+        efectivo_contado=cierre.efectivo_contado,
+        diferencia=diferencia,
+        total_ventas=caja["total_ventas"],
+        fecha_apertura=caja["fecha_apertura"],
+        fecha_cierre=fecha_cierre,
+        estado="cerrada",
+        tpv_id=caja.get("tpv_id"),
+        tpv_nombre=caja.get("tpv_nombre"),
+        tienda_id=caja.get("tienda_id"),
+        tienda_nombre=caja.get("tienda_nombre"),
+        codigo_establecimiento=caja.get("codigo_establecimiento"),
+        punto_emision=caja.get("punto_emision"),
+        ventas_por_metodo=ventas_por_metodo
+    )
 
 @app.post("/api/facturas", response_model=InvoiceResponse)
 async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(get_current_user)):
