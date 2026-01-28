@@ -2301,13 +2301,16 @@ export default function POS() {
                   </Button>
                 )
               )}
-              <Button
-                onClick={handleCheckout}
-                disabled={cart.length === 0}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-              >
-                COBRAR
-              </Button>
+              {/* Ocultar COBRAR para meseros - ellos solo toman pedidos */}
+              {!esMesero && (
+                <Button
+                  onClick={handleCheckout}
+                  disabled={cart.length === 0}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                >
+                  COBRAR
+                </Button>
+              )}
             </div>
           </div>
         </div>
