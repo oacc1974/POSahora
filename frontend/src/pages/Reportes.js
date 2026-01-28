@@ -1523,6 +1523,13 @@ function ReporteRecibos({ facturas, onReembolso }) {
     if (!selectedFactura) return;
     
     const printWindow = window.open('', '_blank');
+    
+    // Verificar si el popup fue bloqueado
+    if (!printWindow || printWindow.closed) {
+      toast.error('El navegador bloqueó la ventana de impresión. Por favor, permite los popups para este sitio.');
+      return;
+    }
+    
     const fecha = selectedFactura.fecha ? new Date(selectedFactura.fecha) : new Date();
     
     // Construir HTML del logo si existe
