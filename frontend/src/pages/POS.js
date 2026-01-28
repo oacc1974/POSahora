@@ -1198,6 +1198,11 @@ export default function POS() {
       printWindow.document.write(
         `<div class="footer"><p>${config.mensaje_pie}</p></div>`
       );
+      
+      // Espacio extra para corte de papel (10 líneas)
+      printWindow.document.write('<div style="height: 80px;"></div>');
+      printWindow.document.write('<br><br><br><br><br><br><br><br><br><br>');
+      
       printWindow.document.write('</body></html>');
       printWindow.document.close();
       
