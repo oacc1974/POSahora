@@ -1717,12 +1717,21 @@ async def get_usuarios(current_user: dict = Depends(get_propietario_user)):
         {"organizacion_id": current_user["organizacion_id"]},
         {"password": 0}
     ).to_list(1000)
+    
+    # Obtener todos los perfiles para mapear nombres
+    perfiles = await db.perfiles.find(
+        {"organizacion_id": current_user["organizacion_id"]}
+    ).to_list(100)
+    perfiles_map = {p["_id"]: p["nombre"] for p in perfiles}
+    
     return [
         UserResponse(
             id=u["_id"],
             nombre=u["nombre"],
             username=u["username"],
             rol=u["rol"],
+            perfil_id=u.get("perfil_id"),
+            perfil_nombre=perfiles_map.get(u.get("perfil_id"), u["rol"].capitalize()),
             organizacion_id=u["organizacion_id"],
             creado_por=u.get("creado_por"),
             creado=u["creado"],
