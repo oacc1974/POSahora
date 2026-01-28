@@ -285,8 +285,8 @@ export default function Caja({ onLogout }) {
       caja.ventas_por_metodo.forEach(metodo => {
         printWindow.document.write(
           `<div class="item-small">
-            <span>${metodo.metodo_nombre} (${metodo.cantidad}):</span>
-            <span>$${metodo.total.toFixed(2)}</span>
+            <span>${metodo.metodo_nombre} (${metodo.cantidad || 0}):</span>
+            <span>$${(metodo.total || 0).toFixed(2)}</span>
           </div>`
         );
       });
