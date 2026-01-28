@@ -198,7 +198,43 @@ export default function ConfigTiendas() {
             <Key size={16} className="text-blue-600" />
             <span className="font-semibold text-blue-800">Código de Tienda para Login POS</span>
           </div>
-          <p className="text-2xl font-mono font-bold text-blue-700">{codigoTiendaLogin}</p>
+          <div className="flex items-center gap-3">
+            <p className="text-2xl font-mono font-bold text-blue-700">{codigoTiendaLogin}</p>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(codigoTiendaLogin);
+                    toast.success('Código copiado al portapapeles');
+                  } else {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = codigoTiendaLogin;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    textArea.setAttribute('readonly', '');
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    const success = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    if (success) {
+                      toast.success('Código copiado al portapapeles');
+                    } else {
+                      toast.info(`Código: ${codigoTiendaLogin}`, { duration: 5000 });
+                    }
+                  }
+                } catch (err) {
+                  toast.info(`Código: ${codigoTiendaLogin}`, { duration: 5000 });
+                }
+              }}
+              className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              title="Copiar código"
+            >
+              <Copy size={16} />
+            </button>
+          </div>
           <p className="text-xs text-blue-600 mt-1">Usa este código para que tus empleados accedan al punto de venta</p>
         </div>
       )}
