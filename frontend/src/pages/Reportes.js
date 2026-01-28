@@ -1617,7 +1617,23 @@ function ReporteRecibos({ facturas, onReembolso }) {
       </html>
     `);
     printWindow.document.close();
-    printWindow.print();
+    
+    // Esperar a que el documento esté listo antes de imprimir
+    printWindow.onload = function() {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 300);
+    };
+    
+    // Fallback si onload no se dispara
+    setTimeout(() => {
+      if (printWindow && !printWindow.closed) {
+        printWindow.focus();
+        printWindow.print();
+      }
+    }, 500);
+    
     setShowMenuRecibo(false);
   };
   
