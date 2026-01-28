@@ -2477,19 +2477,31 @@ export default function POS() {
             )}
 
             <div className="flex gap-3 pt-4">
-              <Button
-                type="submit"
-                data-testid="confirmar-apertura-pos-button"
-                className="flex-1"
-                disabled={esMesero && tpvsDisponibles.length > 0 && !tpvSeleccionado}
-              >
-                {esMesero 
-                  ? 'Comenzar a Tomar Pedidos'
-                  : requiereCierres 
-                    ? 'Abrir Caja y Comenzar' 
-                    : 'Comenzar a Vender'
-                }
-              </Button>
+              {/* Si todos los TPVs están ocupados, no mostrar botón de abrir caja */}
+              {tpvsDisponibles.length === 0 && totalTpvs > 0 && !esMesero ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => window.location.href = '/configuracion/dispositivos-tpv'}
+                >
+                  Crear Nuevo TPV
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  data-testid="confirmar-apertura-pos-button"
+                  className="flex-1"
+                  disabled={esMesero && tpvsDisponibles.length > 0 && !tpvSeleccionado}
+                >
+                  {esMesero 
+                    ? 'Comenzar a Tomar Pedidos'
+                    : requiereCierres 
+                      ? 'Abrir Caja y Comenzar' 
+                      : 'Comenzar a Vender'
+                  }
+                </Button>
+              )}
             </div>
           </form>
         </DialogContent>
