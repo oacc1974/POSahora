@@ -650,16 +650,16 @@ export default function Caja({ onLogout }) {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Base de Caja:</span>
-                    <span className="font-mono">${cajaActiva.monto_inicial.toFixed(2)}</span>
+                    <span className="font-mono">${(cajaActiva.monto_inicial || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Ventas ({cajaActiva.total_ventas}):</span>
-                    <span className="font-mono">${cajaActiva.monto_ventas.toFixed(2)}</span>
+                    <span>Ventas ({cajaActiva.total_ventas || 0}):</span>
+                    <span className="font-mono">${(cajaActiva.monto_ventas || 0).toFixed(2)}</span>
                   </div>
                   <div className="border-t pt-2 flex justify-between font-bold">
                     <span>Total Esperado:</span>
                     <span className="font-mono text-blue-600">
-                      ${cajaActiva.monto_final.toFixed(2)}
+                      ${(cajaActiva.monto_final || 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
