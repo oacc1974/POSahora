@@ -1621,6 +1621,10 @@ function ReporteRecibos({ facturas, onReembolso }) {
         <div class="footer">
           <p>¡Gracias por su compra!</p>
         </div>
+        
+        <!-- Espacio extra para corte de papel -->
+        <div style="height: 80px;"></div>
+        <br><br><br><br><br><br><br><br><br><br>
       </body>
       </html>
     `);
