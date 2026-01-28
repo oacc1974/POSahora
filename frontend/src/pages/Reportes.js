@@ -108,12 +108,18 @@ export default function Reportes() {
   const [showMobileMenu, setShowMobileMenu] = useState(true);
   
   // Filtros - usando objeto de rango de fechas
+  // Por defecto: solo el día actual
   const [dateRange, setDateRange] = useState({
-    from: subMonths(new Date(), 3),
-    to: addMonths(new Date(), 1)
+    from: new Date(),
+    to: new Date()
   });
   const [tiendaId, setTiendaId] = useState('');
   const [empleadoId, setEmpleadoId] = useState('');
+  
+  // Filtro de horas
+  const [horaDesde, setHoraDesde] = useState('00:00');
+  const [horaHasta, setHoraHasta] = useState('23:59');
+  const [showHoraFilter, setShowHoraFilter] = useState(false);
   
   // Datos para filtros
   const [empleados, setEmpleados] = useState([]);
