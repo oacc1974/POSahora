@@ -1998,16 +1998,19 @@ export default function POS() {
                   )}
                 </Button>
               )}
-              <Button
-                onClick={() => {
-                  setShowMobileCart(false);
-                  handleCheckout();
-                }}
-                disabled={cart.length === 0}
-                className={`bg-blue-600 hover:bg-blue-700 ${!ticketsAbiertosFuncionActiva ? 'col-span-2' : ''}`}
-              >
-                COBRAR ${total.toFixed(2)}
-              </Button>
+              {/* Ocultar COBRAR para meseros en móvil */}
+              {!esMesero && (
+                <Button
+                  onClick={() => {
+                    setShowMobileCart(false);
+                    handleCheckout();
+                  }}
+                  disabled={cart.length === 0}
+                  className={`bg-blue-600 hover:bg-blue-700 ${!ticketsAbiertosFuncionActiva ? 'col-span-2' : ''}`}
+                >
+                  COBRAR ${total.toFixed(2)}
+                </Button>
+              )}
             </div>
           </div>
         </div>
