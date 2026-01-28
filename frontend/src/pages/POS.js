@@ -2502,14 +2502,19 @@ export default function POS() {
                     Crear Nuevo Dispositivo TPV
                   </Button>
                 ) : (
-                  // Otros roles solo pueden cerrar el diálogo
+                  // Otros roles - volver al login POS
                   <Button
                     type="button"
                     variant="outline"
                     className="flex-1"
-                    onClick={() => setShowAperturaCaja(false)}
+                    onClick={() => {
+                      localStorage.removeItem('token');
+                      localStorage.removeItem('user');
+                      // Mantener pos_tienda_codigo
+                      window.location.href = '/login-pos';
+                    }}
                   >
-                    Entendido
+                    Volver al Inicio
                   </Button>
                 )
               ) : (
