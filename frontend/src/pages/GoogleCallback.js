@@ -59,8 +59,8 @@ export default function GoogleCallback() {
       } else {
         // Usuario existente - login exitoso
         const { access_token, user } = response.data;
-        localStorage.setItem('token', access_token);
-        localStorage.setItem('user', JSON.stringify(user));
+        sessionStorage.setItem('token', access_token);
+        sessionStorage.setItem('user', JSON.stringify(user));
         sessionStorage.setItem('just_authenticated', 'true');
         toast.success(`¡Bienvenido, ${user.nombre}!`);
         navigate('/dashboard', { replace: true });
@@ -101,8 +101,8 @@ export default function GoogleCallback() {
       );
 
       const { access_token, user } = response.data;
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('user', JSON.stringify(user));
+      sessionStorage.setItem('token', access_token);
+      sessionStorage.setItem('user', JSON.stringify(user));
       sessionStorage.setItem('just_authenticated', 'true');
       toast.success('¡Cuenta creada exitosamente!');
       navigate('/dashboard', { replace: true });

@@ -45,7 +45,7 @@ export default function AuthCallback() {
       );
 
       const user = response.data.user;
-      localStorage.setItem('user', JSON.stringify(user));
+      sessionStorage.setItem('user', JSON.stringify(user));
       sessionStorage.setItem('just_authenticated', 'true');
       navigate('/dashboard', { replace: true, state: { user } });
       window.location.reload();
@@ -90,7 +90,7 @@ export default function AuthCallback() {
 
       const user = response.data.user;
       
-      localStorage.setItem('user', JSON.stringify(user));
+      sessionStorage.setItem('user', JSON.stringify(user));
       sessionStorage.setItem('just_authenticated', 'true');
       toast.success('¡Cuenta creada exitosamente!');
       
