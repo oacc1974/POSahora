@@ -1545,25 +1545,33 @@ function ReporteRecibos({ facturas, onReembolso }) {
     // Construir HTML del nombre del negocio
     const nombreNegocio = ticketConfig?.nombre_negocio || 'Mi Negocio';
     
+    // Calcular ancho según configuración
+    const anchoTicket = ticketConfig?.ancho_ticket || 80;
+    const anchoPx = anchoTicket === 58 ? 220 : 300;
+    const fontSize = anchoTicket === 58 ? '10px' : '12px';
+    const fontSizeSmall = anchoTicket === 58 ? '9px' : '11px';
+    const fontSizeTitle = anchoTicket === 58 ? '14px' : '16px';
+    const logoMaxWidth = anchoTicket === 58 ? '120px' : '150px';
+    
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
         <title>Recibo ${selectedFactura.numero}</title>
         <style>
-          body { font-family: 'Courier New', monospace; padding: 20px; max-width: 300px; margin: 0 auto; font-size: 12px; }
-          .logo { text-align: center; margin-bottom: 10px; }
-          .logo img { max-width: 150px; max-height: 80px; }
-          .cabecera { text-align: center; font-size: 11px; font-weight: bold; margin-bottom: 8px; padding: 5px 0; border-bottom: 1px dashed #000; }
-          .header { text-align: center; margin-bottom: 15px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
-          .header h2 { margin: 0 0 5px 0; font-size: 16px; }
-          .items { margin: 15px 0; }
-          .item { display: flex; justify-content: space-between; margin: 5px 0; }
-          .totals { border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px; }
-          .total-row { display: flex; justify-content: space-between; margin: 3px 0; }
-          .total-row.final { font-weight: bold; font-size: 14px; border-top: 1px solid #000; padding-top: 5px; margin-top: 5px; }
-          .footer { text-align: center; margin-top: 20px; font-size: 10px; border-top: 1px dashed #000; padding-top: 10px; }
-          ${selectedFactura.estado === 'reembolsado' ? '.reembolsado { text-align: center; color: red; font-weight: bold; margin: 10px 0; border: 2px solid red; padding: 5px; }' : ''}
+          body { font-family: 'Courier New', monospace; padding: 10px; max-width: ${anchoPx}px; margin: 0 auto; font-size: ${fontSize}; }
+          .logo { text-align: center; margin-bottom: 8px; }
+          .logo img { max-width: ${logoMaxWidth}; max-height: 60px; }
+          .cabecera { text-align: center; font-size: ${fontSizeSmall}; font-weight: bold; margin-bottom: 6px; padding: 4px 0; border-bottom: 1px dashed #000; }
+          .header { text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 8px; }
+          .header h2 { margin: 0 0 4px 0; font-size: ${fontSizeTitle}; }
+          .items { margin: 10px 0; }
+          .item { display: flex; justify-content: space-between; margin: 4px 0; font-size: ${fontSizeSmall}; }
+          .totals { border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; }
+          .total-row { display: flex; justify-content: space-between; margin: 3px 0; font-size: ${fontSizeSmall}; }
+          .total-row.final { font-weight: bold; font-size: ${fontSize}; border-top: 1px solid #000; padding-top: 4px; margin-top: 4px; }
+          .footer { text-align: center; margin-top: 15px; font-size: ${fontSizeSmall}; border-top: 1px dashed #000; padding-top: 8px; }
+          ${selectedFactura.estado === 'reembolsado' ? '.reembolsado { text-align: center; color: red; font-weight: bold; margin: 8px 0; border: 2px solid red; padding: 4px; }' : ''}
         </style>
       </head>
       <body>
