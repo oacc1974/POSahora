@@ -2735,6 +2735,30 @@ async def delete_tienda(tienda_id: str, current_user: dict = Depends(get_current
     
     return {"message": "Tienda eliminada correctamente"}
 
+@app.post("/api/tiendas/{tienda_id}/regenerar-codigo")
+async def regenerar_codigo_tienda(tienda_id: str, current_user: dict = Depends(get_current_user)):
+    """Regenera el código único de una tienda"""
+    if current_user["rol"] not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso")
+    
+    tienda = await db.tiendas.find_one({
+        "id": tienda_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if not tienda:
+        raise HTTPException(status_code=404, detail="Tienda no encontrada")
+    
+    # Generar nuevo código único
+    nuevo_codigo = generar_codigo_tienda(tienda["nombre"])
+    
+    await db.tiendas.update_one(
+        {"id": tienda_id},
+        {"$set": {"codigo_tienda": nuevo_codigo}}
+    )
+    
+    return {"codigo_tienda": nuevo_codigo, "message": "Código regenerado correctamente"}
+
 # TPV (Dispositivos de Punto de Venta)
 @app.get("/api/tpv", response_model=List[TPVResponse])
 async def get_tpvs(current_user: dict = Depends(get_current_user)):
