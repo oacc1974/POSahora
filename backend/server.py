@@ -116,6 +116,7 @@ class UserCreate(BaseModel):
     username: str
     password: Optional[str] = None  # Opcional para cajeros/meseros que usan PIN
     rol: str
+    perfil_id: Optional[str] = None  # ID del perfil de permisos
     pin: Optional[str] = None  # PIN de 4-6 dígitos
     pin_activo: Optional[bool] = False
 
