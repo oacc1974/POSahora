@@ -43,8 +43,9 @@ function AppRouter() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('user');
+      // Usar sessionStorage para sesiones independientes por pestaña
+      const token = sessionStorage.getItem('token');
+      const userData = sessionStorage.getItem('user');
       
       if (token && userData) {
         setUser(JSON.parse(userData));
@@ -59,7 +60,7 @@ function AppRouter() {
         });
         
         const userData = response.data;
-        localStorage.setItem('user', JSON.stringify(userData));
+        sessionStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
       } catch (error) {
         console.log('No hay sesión activa');
@@ -73,9 +74,9 @@ function AppRouter() {
 
   const handleLogin = async (userData, token) => {
     if (token) {
-      localStorage.setItem('token', token);
+      sessionStorage.setItem('token', token);
     }
-    localStorage.setItem('user', JSON.stringify(userData));
+    sessionStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     
     try {
@@ -84,7 +85,7 @@ function AppRouter() {
         withCredentials: true
       });
       const fullUserData = response.data;
-      localStorage.setItem('user', JSON.stringify(fullUserData));
+      sessionStorage.setItem('user', JSON.stringify(fullUserData));
       setUser(fullUserData);
     } catch (error) {
       console.log('Error al obtener datos completos del usuario');
@@ -92,7 +93,16 @@ function AppRouter() {
   };
 
   const handleLogout = async () => {
+    const token = sessionStorage.getItem('token');
     try {
+      // Cerrar sesión POS primero (si existe)
+      if (token) {
+        await axios.post(`${API_URL}/api/auth/logout-pos`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true
+        });
+      }
+      // Luego cerrar sesión general
       await axios.post(`${API_URL}/api/auth/logout`, {}, {
         withCredentials: true
       });
@@ -100,8 +110,9 @@ function AppRouter() {
       console.error('Error al cerrar sesión:', error);
     }
     
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('pos_session_id');
     setUser(null);
   };
 
