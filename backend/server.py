@@ -137,6 +137,8 @@ class UserResponse(BaseModel):
     nombre: str
     username: str
     rol: str
+    perfil_id: Optional[str] = None
+    perfil_nombre: Optional[str] = None
     organizacion_id: str
     creado_por: Optional[str] = None
     creado: str
@@ -148,6 +150,7 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = None
     rol: Optional[str] = None
+    perfil_id: Optional[str] = None
     pin: Optional[str] = None
     pin_activo: Optional[bool] = None
 
