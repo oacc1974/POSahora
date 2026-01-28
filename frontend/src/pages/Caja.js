@@ -295,21 +295,22 @@ export default function Caja({ onLogout }) {
     }
     
     printWindow.document.write(
-      `<div class="item"><span>Base de Caja:</span><span>$${caja.monto_inicial.toFixed(2)}</span></div>`
+      `<div class="item"><span>Base de Caja:</span><span>$${(caja.monto_inicial || 0).toFixed(2)}</span></div>`
     );
     printWindow.document.write(
-      `<div class="item"><span>Ventas (${caja.total_ventas}):</span><span>$${caja.monto_ventas.toFixed(2)}</span></div>`
+      `<div class="item"><span>Ventas (${caja.total_ventas || 0}):</span><span>$${(caja.monto_ventas || 0).toFixed(2)}</span></div>`
     );
     printWindow.document.write(
-      `<div class="total"><div class="item"><span>TOTAL ESPERADO:</span><span>$${caja.monto_final.toFixed(2)}</span></div></div>`
+      `<div class="total"><div class="item"><span>TOTAL ESPERADO:</span><span>$${(caja.monto_final || 0).toFixed(2)}</span></div></div>`
     );
     printWindow.document.write('<div class="divider"></div>');
     printWindow.document.write(
-      `<div class="item"><span>Efectivo Contado:</span><span>$${caja.efectivo_contado.toFixed(2)}</span></div>`
+      `<div class="item"><span>Efectivo Contado:</span><span>$${(caja.efectivo_contado || 0).toFixed(2)}</span></div>`
     );
-    const diferenciaTxt = caja.diferencia >= 0 ? `+$${caja.diferencia.toFixed(2)}` : `-$${Math.abs(caja.diferencia).toFixed(2)}`;
+    const diferencia = caja.diferencia || 0;
+    const diferenciaTxt = diferencia >= 0 ? `+$${diferencia.toFixed(2)}` : `-$${Math.abs(diferencia).toFixed(2)}`;
     printWindow.document.write(
-      `<div class="item" style="font-weight: bold; color: ${caja.diferencia >= 0 ? 'green' : 'red'}"><span>Diferencia:</span><span>${diferenciaTxt}</span></div>`
+      `<div class="item" style="font-weight: bold; color: ${diferencia >= 0 ? 'green' : 'red'}"><span>Diferencia:</span><span>${diferenciaTxt}</span></div>`
     );
     printWindow.document.write('</body></html>');
     printWindow.document.close();
