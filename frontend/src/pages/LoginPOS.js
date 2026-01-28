@@ -90,13 +90,13 @@ export default function LoginPOS({ onLogin }) {
       } else if (e.key === 'Backspace') {
         setPin(prev => prev.slice(0, -1));
       } else if (e.key === 'Enter' && pin.length >= 4) {
-        handlePinSubmit();
+        handlePinSubmit(false);
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [loginMode, pin, tiendaVerificada]);
+  }, [loginMode, pin, tiendaVerificada, codigoTienda]);
 
   // Manejar clic en tecla del teclado numérico
   const handleKeyPress = (key) => {
