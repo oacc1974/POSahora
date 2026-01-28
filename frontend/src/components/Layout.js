@@ -42,7 +42,7 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
     const loadFunciones = async () => {
       try {
         const API_URL = process.env.REACT_APP_BACKEND_URL;
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token');
         const response = await fetch(`${API_URL}/api/funciones`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
