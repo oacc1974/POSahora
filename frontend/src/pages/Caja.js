@@ -811,11 +811,19 @@ export default function Caja({ onLogout }) {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Apertura:</span>
-                  <span className="font-medium">{new Date(resumenCierre.fecha_apertura).toLocaleString('es-ES')}</span>
+                  <span className="font-medium">
+                    {resumenCierre.fecha_apertura 
+                      ? new Date(resumenCierre.fecha_apertura).toLocaleString('es-ES')
+                      : 'No disponible'}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Cierre:</span>
-                  <span className="font-medium">{new Date(resumenCierre.fecha_cierre).toLocaleString('es-ES')}</span>
+                  <span className="font-medium">
+                    {resumenCierre.fecha_cierre 
+                      ? new Date(resumenCierre.fecha_cierre).toLocaleString('es-ES')
+                      : 'No disponible'}
+                  </span>
                 </div>
               </div>
 
