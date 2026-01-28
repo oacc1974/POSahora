@@ -183,6 +183,10 @@ export default function POS() {
   const verificarCaja = async () => {
     try {
       const token = sessionStorage.getItem('token');
+      
+      // Esperar un momento para asegurar que los datos del usuario están disponibles
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const user = JSON.parse(sessionStorage.getItem('user') || '{}');
       
       // Si es mesero, crear una "caja virtual" sin necesidad de apertura real
