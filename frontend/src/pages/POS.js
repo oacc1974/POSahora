@@ -1008,6 +1008,13 @@ export default function POS() {
       }
 
       const printWindow = window.open('', '', 'height=600,width=400');
+      
+      // Verificar si el popup fue bloqueado
+      if (!printWindow || printWindow.closed) {
+        toast.error('El navegador bloqueó la ventana de impresión. Por favor, permite los popups para este sitio.');
+        return;
+      }
+      
       printWindow.document.write('<html><head><title>Ticket</title>');
       printWindow.document.write('<style>');
       printWindow.document.write(`
