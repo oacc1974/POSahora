@@ -2351,11 +2351,22 @@ export default function POS() {
           </div>
           <div className="border-l border-slate-300 h-8"></div>
           <button
-            onClick={() => {
+            onClick={async () => {
               if (window.confirm('¿Estás seguro de cerrar sesión?')) {
+                try {
+                  const token = sessionStorage.getItem('token');
+                  if (token) {
+                    await axios.post(`${API_URL}/api/auth/logout-pos`, {}, {
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                  }
+                } catch (error) {
+                  console.error('Error al cerrar sesión:', error);
+                }
                 sessionStorage.removeItem('token');
                 sessionStorage.removeItem('user');
-                // Mantener pos_tienda_codigo para que no tengan que ingresarlo de nuevo
+                sessionStorage.removeItem('pos_session_id');
+                // Mantener pos_tienda_codigo en localStorage
                 window.location.href = '/login-pos';
               }
             }}
