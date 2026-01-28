@@ -470,7 +470,7 @@ export default function Usuarios() {
                       </p>
                     </div>
                     
-                    {!perfil.es_sistema && (
+                    {perfil.nombre !== 'Propietario' && (
                       <div className="flex gap-1">
                         <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleEditPerfil(perfil); }}>
                           <Pencil size={14} />
