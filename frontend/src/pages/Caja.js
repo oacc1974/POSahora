@@ -363,21 +363,21 @@ export default function Caja({ onLogout }) {
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-sm text-blue-700 mb-1">Base de Caja</p>
               <p className="text-2xl font-bold font-mono text-blue-900">
-                ${cajaActiva.monto_inicial.toFixed(2)}
+                ${(cajaActiva.monto_inicial || 0).toFixed(2)}
               </p>
             </div>
 
             <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-green-700 mb-1">Ventas ({cajaActiva.total_ventas})</p>
+              <p className="text-sm text-green-700 mb-1">Ventas ({cajaActiva.total_ventas || 0})</p>
               <p className="text-2xl font-bold font-mono text-green-900">
-                ${cajaActiva.monto_ventas.toFixed(2)}
+                ${(cajaActiva.monto_ventas || 0).toFixed(2)}
               </p>
             </div>
 
             <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
               <p className="text-sm text-purple-700 mb-1">Total en Caja</p>
               <p className="text-2xl font-bold font-mono text-purple-900">
-                ${cajaActiva.monto_final.toFixed(2)}
+                ${(cajaActiva.monto_final || 0).toFixed(2)}
               </p>
             </div>
           </div>
