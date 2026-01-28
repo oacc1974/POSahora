@@ -304,6 +304,10 @@ class TiendaCreate(BaseModel):
     email: Optional[str] = None
     activa: bool = True
 
+# Modelo para forzar cierre de sesión
+class ForzarCierreSesion(BaseModel):
+    forzar: bool = True
+
 class TiendaResponse(BaseModel):
     id: str
     nombre: str
