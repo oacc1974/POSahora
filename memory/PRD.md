@@ -339,6 +339,7 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 - **Contraseña:** admin*88
 
 ## Test Reports
+- `/app/test_reports/iteration_8.json` - Tests del Módulo de Seguridad (Perfiles y Usuarios) - 100% passed (21/21 backend)
 - `/app/test_reports/iteration_6.json` - Tests del módulo de Facturación Electrónica - 100% passed (10/10 backend, frontend OK)
 - `/app/test_reports/iteration_5.json` - Tests del nuevo header unificado y cajero indicator - 100% passed
 - `/app/test_reports/iteration_4.json` - Tests de UI del TPV (diálogo de cobro, botones billetes, tema azul) - 100% passed
