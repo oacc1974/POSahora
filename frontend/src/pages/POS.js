@@ -771,6 +771,12 @@ export default function POS() {
   };
 
   const handleCheckout = async () => {
+    // Los meseros no pueden cobrar
+    if (esMesero) {
+      toast.error('Los meseros no pueden cobrar. Guarda el ticket para que un cajero lo procese.');
+      return;
+    }
+    
     if (cart.length === 0) {
       toast.error('El carrito está vacío');
       return;
