@@ -11,8 +11,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from '../../components/ui/dialog';
-import { Store, Plus, Pencil, Trash2, MapPin, Phone, Mail, CheckCircle, XCircle, Hash, Key } from 'lucide-react';
+import { Store, Plus, Pencil, Trash2, MapPin, Phone, Mail, CheckCircle, XCircle, Hash, Key, Copy } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
