@@ -125,17 +125,28 @@ export default function POS() {
   const [tpvSeleccionado, setTpvSeleccionado] = useState(null);
 
   useEffect(() => {
-    // Esperar a que el token esté disponible en localStorage
+    // Esperar a que el token esté disponible en sessionStorage
     const initializePOS = async () => {
       // Pequeño delay para asegurar que el token se haya guardado
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const token = sessionStorage.getItem('token');
-      if (!token) {
-        console.log('Token no disponible, esperando...');
+      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+      
+      if (!token || !user?.rol) {
+        console.log('Token o usuario no disponible, esperando...');
         // Reintentar después de un delay más largo
         setTimeout(initializePOS, 500);
         return;
+      }
+      
+      // Para meseros, configurar la caja virtual inmediatamente
+      if (user.rol === 'mesero') {
+        setCajaActiva({
+          id: 'mesero_virtual',
+          tpv_nombre: 'Modo Mesero',
+          es_mesero: true
+        });
       }
       
       fetchProductos();
