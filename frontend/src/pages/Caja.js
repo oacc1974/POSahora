@@ -54,17 +54,26 @@ export default function Caja({ onLogout }) {
   const handleLogout = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      await axios.post(`${API_URL}/api/auth/logout`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true
-      });
+      if (token) {
+        // Cerrar sesión POS primero
+        await axios.post(`${API_URL}/api/auth/logout-pos`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true
+        });
+        // Luego cerrar sesión general
+        await axios.post(`${API_URL}/api/auth/logout`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true
+        });
+      }
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
     
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
-    // Mantener pos_tienda_codigo para que no tengan que ingresarlo de nuevo
+    sessionStorage.removeItem('pos_session_id');
+    // Mantener pos_tienda_codigo en localStorage
     
     if (onLogout) {
       onLogout();
