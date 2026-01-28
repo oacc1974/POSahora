@@ -1775,12 +1775,23 @@ async def create_usuario(user: UserCreate, current_user: dict = Depends(get_prop
         if pin_existe:
             raise HTTPException(status_code=400, detail="Este PIN ya está en uso. Por favor, elige otro.")
     
+    # Determinar perfil_id - si no se proporciona, usar el perfil del sistema según el rol
+    perfil_id = user.perfil_id
+    if not perfil_id:
+        # Asignar perfil del sistema basado en el rol
+        perfil_id = f"{current_user['organizacion_id']}_{user.rol}"
+    
+    # Verificar que el perfil exista
+    perfil = await db.perfiles.find_one({"_id": perfil_id})
+    perfil_nombre = perfil["nombre"] if perfil else user.rol.capitalize()
+    
     new_user = {
         "_id": user_id,
         "nombre": user.nombre,
         "username": user.username,
         "password": get_password_hash(user.password) if user.password else None,
         "rol": user.rol,
+        "perfil_id": perfil_id,
         "organizacion_id": current_user["organizacion_id"],
         "creado_por": current_user["_id"],
         "creado": datetime.now(timezone.utc).isoformat(),
@@ -1794,6 +1805,8 @@ async def create_usuario(user: UserCreate, current_user: dict = Depends(get_prop
         nombre=user.nombre,
         username=user.username,
         rol=user.rol,
+        perfil_id=perfil_id,
+        perfil_nombre=perfil_nombre,
         organizacion_id=current_user["organizacion_id"],
         creado_por=current_user["_id"],
         creado=new_user["creado"],
