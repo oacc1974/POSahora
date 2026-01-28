@@ -2635,14 +2635,15 @@ async def create_tienda(tienda: TiendaCreate, current_user: dict = Depends(get_c
     
     tienda_id = str(uuid.uuid4())
     
-    # Obtener el código de tienda de la organización
-    org = await db.organizaciones.find_one({"_id": current_user["organizacion_id"]})
-    codigo_tienda_org = org.get("codigo_tienda") if org else None
+    # Generar código único para esta tienda
+    codigo_tienda = generar_codigo_tienda(tienda.nombre)
     
     nueva_tienda = {
         "id": tienda_id,
+        "_id": tienda_id,
         "nombre": tienda.nombre,
         "codigo_establecimiento": tienda.codigo_establecimiento,
+        "codigo_tienda": codigo_tienda,  # Código único por tienda
         "direccion": tienda.direccion,
         "telefono": tienda.telefono,
         "email": tienda.email,
@@ -2662,7 +2663,7 @@ async def create_tienda(tienda: TiendaCreate, current_user: dict = Depends(get_c
         email=tienda.email,
         activa=tienda.activa,
         organizacion_id=current_user["organizacion_id"],
-        codigo_tienda=codigo_tienda_org,
+        codigo_tienda=codigo_tienda,
         fecha_creacion=nueva_tienda["fecha_creacion"]
     )
 
