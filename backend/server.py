@@ -1991,8 +1991,55 @@ async def login_con_pin(pin_login: PINLogin):
             detail="PIN inválido o no activo"
         )
     
-    # Crear token JWT - usar el _id como identificador (igual que en el login normal)
-    access_token = create_access_token(data={"sub": str(user["_id"])})
+    user_id = str(user["_id"])
+    
+    # Verificar si el usuario ya tiene una sesión activa
+    sesion_existente = await db.sesiones_pos.find_one({
+        "user_id": user_id,
+        "activa": True
+    })
+    
+    if sesion_existente:
+        # Si tiene sesión activa y no se está forzando el cierre
+        if not getattr(pin_login, 'forzar_cierre', False):
+            # Retornar error especial indicando sesión activa
+            raise HTTPException(
+                status_code=409,  # Conflict
+                detail={
+                    "code": "SESSION_ACTIVE",
+                    "message": "Este usuario ya tiene una sesión activa",
+                    "session_info": {
+                        "dispositivo": sesion_existente.get("dispositivo", "Desconocido"),
+                        "iniciada": sesion_existente.get("fecha_inicio", ""),
+                        "ultima_actividad": sesion_existente.get("ultima_actividad", "")
+                    }
+                }
+            )
+    
+    # Generar ID único para esta sesión
+    session_id = str(uuid.uuid4())
+    
+    # Cerrar cualquier sesión anterior del usuario
+    await db.sesiones_pos.update_many(
+        {"user_id": user_id, "activa": True},
+        {"$set": {"activa": False, "fecha_cierre": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    # Crear nueva sesión
+    nueva_sesion = {
+        "session_id": session_id,
+        "user_id": user_id,
+        "user_nombre": user.get("nombre", "Usuario"),
+        "organizacion_id": str(user["organizacion_id"]),
+        "dispositivo": pin_login.dispositivo if hasattr(pin_login, 'dispositivo') else "Navegador Web",
+        "activa": True,
+        "fecha_inicio": datetime.now(timezone.utc).isoformat(),
+        "ultima_actividad": datetime.now(timezone.utc).isoformat()
+    }
+    await db.sesiones_pos.insert_one(nueva_sesion)
+    
+    # Crear token JWT con el session_id incluido
+    access_token = create_access_token(data={"sub": user_id, "session_id": session_id})
     
     # Obtener nombre de la tienda para mostrar
     tienda_nombre = tienda["nombre"] if tienda else "Tienda Principal"
@@ -2000,8 +2047,9 @@ async def login_con_pin(pin_login: PINLogin):
     return {
         "access_token": access_token,
         "token_type": "bearer",
+        "session_id": session_id,
         "usuario": {
-            "id": str(user["_id"]),
+            "id": user_id,
             "nombre": user.get("nombre") or user.get("nombre_completo", "Usuario"),
             "username": user["username"],
             "rol": user["rol"],
