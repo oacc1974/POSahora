@@ -1646,9 +1646,9 @@ async def update_perfil(perfil_id: str, perfil_update: PerfilUpdate, current_use
     if not perfil:
         raise HTTPException(status_code=404, detail="Perfil no encontrado")
     
-    # No permitir editar perfiles del sistema
-    if perfil.get("es_sistema"):
-        raise HTTPException(status_code=403, detail="No se pueden editar los perfiles del sistema")
+    # Solo el perfil "Propietario" no se puede editar
+    if perfil.get("nombre") == "Propietario":
+        raise HTTPException(status_code=403, detail="El perfil Propietario no se puede editar")
     
     update_data = {}
     if perfil_update.nombre:
@@ -1691,8 +1691,9 @@ async def delete_perfil(perfil_id: str, current_user: dict = Depends(get_propiet
     if not perfil:
         raise HTTPException(status_code=404, detail="Perfil no encontrado")
     
-    if perfil.get("es_sistema"):
-        raise HTTPException(status_code=403, detail="No se pueden eliminar los perfiles del sistema")
+    # Solo el perfil "Propietario" no se puede eliminar, los demás del sistema sí
+    if perfil.get("nombre") == "Propietario":
+        raise HTTPException(status_code=403, detail="El perfil Propietario no se puede eliminar")
     
     # Verificar que no haya usuarios con este perfil
     usuarios_con_perfil = await db.usuarios.count_documents({
