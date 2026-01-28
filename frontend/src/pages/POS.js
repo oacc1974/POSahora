@@ -2420,37 +2420,49 @@ export default function POS() {
             )}
 
             {tpvsDisponibles.length === 0 && (
-              <div className={`p-3 rounded-lg border ${totalTpvs > 0 ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}`}>
+              <div className={`p-4 rounded-lg border ${totalTpvs > 0 ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'}`}>
                 {totalTpvs > 0 ? (
                   // Hay TPVs pero todos ocupados
                   <>
-                    <p className="text-orange-800 text-sm font-medium mb-2">
-                      ⚠️ Todos los TPVs están ocupados
+                    <p className="text-amber-800 font-medium mb-2">
+                      No hay puntos de venta disponibles
                     </p>
-                    <p className="text-orange-700 text-sm mb-3">
-                      {esMesero 
-                        ? 'No hay puntos de venta disponibles. Contacta al administrador.'
-                        : 'Puedes crear un nuevo TPV desde Configuración para abrir otra caja.'}
-                    </p>
-                    {!esMesero && (
-                      <Button 
-                        type="button"
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => window.location.href = '/configuracion/dispositivos-tpv'}
-                        className="w-full"
-                      >
-                        Ir a Configuración → Dispositivos TPV
-                      </Button>
+                    {currentUser?.rol === 'propietario' || currentUser?.rol === 'administrador' ? (
+                      // Propietario o Admin pueden crear TPV
+                      <>
+                        <p className="text-amber-700 text-sm mb-3">
+                          Todos los dispositivos TPV están siendo utilizados. Puede crear un nuevo punto de venta desde la configuración del sistema.
+                        </p>
+                        <Button 
+                          type="button"
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.location.href = '/configuracion/dispositivos-tpv'}
+                          className="w-full border-amber-300 text-amber-800 hover:bg-amber-100"
+                        >
+                          Administrar Dispositivos TPV
+                        </Button>
+                      </>
+                    ) : (
+                      // Otros roles no pueden crear TPV
+                      <p className="text-amber-700 text-sm">
+                        Todos los dispositivos TPV están siendo utilizados en este momento. Por favor, contacte a su administrador para habilitar un nuevo punto de venta.
+                      </p>
                     )}
                   </>
                 ) : (
                   // No hay TPVs - primera vez
-                  <p className="text-blue-800 text-sm">
-                    {esMesero 
-                      ? 'No hay TPVs configurados. Contacta al administrador.'
-                      : '✨ No hay TPVs creados. Se creará uno automáticamente al abrir la caja.'}
-                  </p>
+                  <>
+                    {currentUser?.rol === 'propietario' || currentUser?.rol === 'administrador' ? (
+                      <p className="text-blue-800 text-sm">
+                        No hay dispositivos TPV configurados. Se creará uno automáticamente al iniciar.
+                      </p>
+                    ) : (
+                      <p className="text-blue-800 text-sm">
+                        No hay dispositivos TPV configurados. Por favor, contacte a su administrador para configurar el sistema.
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             )}
