@@ -105,7 +105,7 @@ export default function LoginPOS({ onLogin }) {
     } else if (key === 'clear') {
       setPin('');
     } else if (key === 'enter') {
-      handlePinSubmit();
+      handlePinSubmit(false);
     } else if (pin.length < 6) {
       setPin(prev => prev + key);
     }
