@@ -226,6 +226,10 @@ export default function Reportes() {
       if (tiendaId) params.append('tienda_id', tiendaId);
       if (empleadoId) params.append('cajero_id', empleadoId);
       
+      // Filtros de hora
+      if (horaDesde && horaDesde !== '00:00') params.append('hora_desde', horaDesde);
+      if (horaHasta && horaHasta !== '23:59') params.append('hora_hasta', horaHasta);
+      
       const [dashboardRes, facturasRes] = await Promise.all([
         axios.get(`${API_URL}/api/dashboard?${params.toString()}`, {
           headers: { Authorization: `Bearer ${token}` }
