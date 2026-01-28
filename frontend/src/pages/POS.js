@@ -2299,17 +2299,19 @@ export default function POS() {
         </div>
       </div>
 
-      {/* ============ INDICADOR DE CAJERO ============ */}
+      {/* ============ INDICADOR DE USUARIO Y TPV ============ */}
       {cajaActiva && (
         <div className="fixed bottom-4 left-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-slate-200 z-40 flex items-center gap-3">
           <User size={16} className="text-blue-600" />
-          <div className="text-sm">
-            <span className="text-slate-500">Cajero: </span>
+          <div className="text-sm flex flex-col">
             <span className="font-semibold text-slate-800">
-              {cajaActiva.tpv_nombre || currentUser?.nombre || 'Sin asignar'}
+              {currentUser?.nombre || 'Usuario'}
+            </span>
+            <span className="text-xs text-slate-500">
+              TPV: {cajaActiva.tpv_nombre || 'Sin asignar'}
             </span>
           </div>
-          <div className="border-l border-slate-300 h-5"></div>
+          <div className="border-l border-slate-300 h-8"></div>
           <button
             onClick={() => {
               if (window.confirm('¿Estás seguro de cerrar sesión?')) {
