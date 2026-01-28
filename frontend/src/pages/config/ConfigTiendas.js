@@ -281,6 +281,42 @@ export default function ConfigTiendas() {
                       </span>
                     )}
                   </div>
+                  
+                  {/* Código de Tienda para Login POS */}
+                  <div className="flex items-center gap-2 mt-2">
+                    <Key size={14} className="text-blue-600" />
+                    <span className="text-sm text-slate-600">Código POS:</span>
+                    <span className="font-mono font-bold text-blue-700">{tienda.codigo_tienda}</span>
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          if (navigator.clipboard && window.isSecureContext) {
+                            await navigator.clipboard.writeText(tienda.codigo_tienda);
+                            toast.success('Código copiado');
+                          } else {
+                            const textArea = document.createElement('textarea');
+                            textArea.value = tienda.codigo_tienda;
+                            textArea.style.position = 'fixed';
+                            textArea.style.left = '-999999px';
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            toast.success('Código copiado');
+                          }
+                        } catch (err) {
+                          toast.info(`Código: ${tienda.codigo_tienda}`, { duration: 5000 });
+                        }
+                      }}
+                      className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                      title="Copiar código"
+                    >
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                  
                   <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
                     {tienda.direccion && (
                       <span className="flex items-center gap-1">
