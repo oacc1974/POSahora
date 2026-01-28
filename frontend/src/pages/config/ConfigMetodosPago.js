@@ -38,7 +38,7 @@ export default function ConfigMetodosPago() {
 
   const fetchMetodosPago = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/metodos-pago`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -53,7 +53,7 @@ export default function ConfigMetodosPago() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
 
       if (editingMetodo) {
         // Editar método existente
@@ -86,7 +86,7 @@ export default function ConfigMetodosPago() {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/metodos-pago/${metodoId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -114,7 +114,7 @@ export default function ConfigMetodosPago() {
 
   const handleToggleActivo = async (metodo) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.put(
         `${API_URL}/api/metodos-pago/${metodo.id}`,
         { nombre: metodo.nombre, activo: !metodo.activo },

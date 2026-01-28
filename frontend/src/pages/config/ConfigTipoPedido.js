@@ -38,7 +38,7 @@ export default function ConfigTipoPedido() {
 
   const fetchTiposPedido = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/tipos-pedido`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -53,7 +53,7 @@ export default function ConfigTipoPedido() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
 
       if (editingTipo) {
         await axios.put(
@@ -84,7 +84,7 @@ export default function ConfigTipoPedido() {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/tipos-pedido/${tipoId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -112,7 +112,7 @@ export default function ConfigTipoPedido() {
 
   const handleToggleActivo = async (tipo) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.put(
         `${API_URL}/api/tipos-pedido/${tipo.id}`,
         { nombre: tipo.nombre, activo: !tipo.activo },

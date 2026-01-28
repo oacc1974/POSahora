@@ -51,7 +51,7 @@ export default function ConfigRecibo() {
     
     setUploadingLogo(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
       
@@ -82,7 +82,7 @@ export default function ConfigRecibo() {
 
   const fetchConfig = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/config`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -98,7 +98,7 @@ export default function ConfigRecibo() {
     e.preventDefault();
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.put(`${API_URL}/api/config`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -130,13 +130,13 @@ export default function ConfigRecibo() {
             <div className="text-right">
               <p className="text-xs text-slate-600 mb-1">Código:</p>
               <p className="text-2xl md:text-3xl font-bold font-mono text-blue-600">
-                {JSON.parse(localStorage.getItem('user') || '{}').codigo_tienda || 'Cargando...'}
+                {JSON.parse(sessionStorage.getItem('user') || '{}').codigo_tienda || 'Cargando...'}
               </p>
             </div>
             <button
               type="button"
               onClick={async () => {
-                const codigo = JSON.parse(localStorage.getItem('user') || '{}').codigo_tienda;
+                const codigo = JSON.parse(sessionStorage.getItem('user') || '{}').codigo_tienda;
                 if (codigo) {
                   try {
                     if (navigator.clipboard && window.isSecureContext) {

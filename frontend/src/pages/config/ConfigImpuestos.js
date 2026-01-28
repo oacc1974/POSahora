@@ -33,7 +33,7 @@ export default function ConfigImpuestos() {
 
   const fetchImpuestos = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/impuestos`, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
@@ -51,7 +51,7 @@ export default function ConfigImpuestos() {
     e.preventDefault();
     
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const data = {
         ...formData,
         tasa: parseFloat(formData.tasa),
@@ -99,7 +99,7 @@ export default function ConfigImpuestos() {
     if (!window.confirm('¿Estás seguro de eliminar este impuesto?')) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/impuestos/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,

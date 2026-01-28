@@ -29,7 +29,7 @@ export default function ConfigTicketsAbiertos() {
 
   const fetchTickets = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/tickets-predefinidos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -47,7 +47,7 @@ export default function ConfigTicketsAbiertos() {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.post(
         `${API_URL}/api/tickets-predefinidos`,
         { nombre: nuevoNombre },
@@ -70,7 +70,7 @@ export default function ConfigTicketsAbiertos() {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/tickets-predefinidos/${ticketId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });

@@ -44,7 +44,7 @@ export default function ConfigTPV() {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const [tpvRes, tiendasRes] = await Promise.all([
         axios.get(`${API_URL}/api/tpv`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API_URL}/api/tiendas`, { headers: { Authorization: `Bearer ${token}` } })
@@ -101,7 +101,7 @@ export default function ConfigTPV() {
     setError('');
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const payload = {
         nombre: formData.nombre.trim(),
         punto_emision: formData.punto_emision.trim(),
@@ -148,7 +148,7 @@ export default function ConfigTPV() {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/tpv/${tpv.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });

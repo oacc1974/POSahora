@@ -39,7 +39,7 @@ export default function ConfigTiendas() {
 
   const fetchTiendas = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/tiendas`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -100,7 +100,7 @@ export default function ConfigTiendas() {
     setError('');
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const payload = {
         nombre: formData.nombre.trim(),
         codigo_establecimiento: formData.codigo_establecimiento.trim(),
@@ -148,7 +148,7 @@ export default function ConfigTiendas() {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/tiendas/${tienda.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });

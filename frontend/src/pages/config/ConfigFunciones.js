@@ -32,7 +32,7 @@ export default function ConfigFunciones() {
 
   const fetchFunciones = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/funciones`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -76,7 +76,7 @@ export default function ConfigFunciones() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.put(`${API_URL}/api/funciones`, funciones, {
         headers: { Authorization: `Bearer ${token}` },
       });
