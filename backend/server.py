@@ -3203,11 +3203,16 @@ async def update_ticket_abierto(ticket_id: str, ticket: TicketAbiertoCreate, cur
                 detail=f"Esta mesa pertenece a {ticket_existente['vendedor_nombre']}. Solo puedes editar tus propias mesas."
             )
     
-    # Verificar caja activa del usuario actual
-    caja_activa = await db.cajas.find_one({
-        "usuario_id": current_user["_id"],
-        "estado": "abierta"
-    })
+    # Determinar caja_id
+    caja_id = None
+    if current_user.get("rol") == "mesero":
+        caja_id = "mesero_virtual"
+    else:
+        caja_activa = await db.cajas.find_one({
+            "usuario_id": current_user["_id"],
+            "estado": "abierta"
+        })
+        caja_id = caja_activa["_id"] if caja_activa else None
     
     # Actualizar el ticket
     result = await db.tickets_abiertos.update_one(
@@ -3227,8 +3232,8 @@ async def update_ticket_abierto(ticket_id: str, ticket: TicketAbiertoCreate, cur
                 "ultimo_vendedor_id": current_user["_id"],
                 "ultimo_vendedor_nombre": current_user["nombre"],
                 "ultima_modificacion": datetime.now(timezone.utc).isoformat(),
-                # Actualizar caja_id si el usuario tiene caja abierta
-                "caja_id": caja_activa["_id"] if caja_activa else None
+                # Actualizar caja_id
+                "caja_id": caja_id
             }
         }
     )
