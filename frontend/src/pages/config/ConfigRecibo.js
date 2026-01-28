@@ -341,6 +341,25 @@ export default function ConfigRecibo() {
                 </Label>
               </div>
 
+              <div>
+                <Label htmlFor="ancho_ticket">Ancho del Ticket</Label>
+                <select
+                  id="ancho_ticket"
+                  data-testid="config-ancho-ticket-select"
+                  value={formData.ancho_ticket || 80}
+                  onChange={(e) =>
+                    setFormData({ ...formData, ancho_ticket: parseInt(e.target.value) })
+                  }
+                  className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={58}>58mm (Ticket pequeño)</option>
+                  <option value={80}>80mm (Ticket estándar)</option>
+                </select>
+                <p className="text-xs text-slate-500 mt-1">
+                  Selecciona el ancho según tu impresora térmica
+                </p>
+              </div>
+
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="mostrar_info_cliente"
