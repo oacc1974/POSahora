@@ -85,12 +85,15 @@ export default function LoginPOS({ onLogin }) {
     if (loginMode !== 'pin' || !tiendaVerificada) return;
     
     const handleKeyDown = (e) => {
-      if (e.key >= '0' && e.key <= '9' && pin.length < 6) {
-        setPin(prev => prev + e.key);
+      if (e.key >= '0' && e.key <= '9' && pin.length < 4) {
+        const newPin = pin + e.key;
+        setPin(newPin);
+        // Auto-login cuando se completan 4 dígitos
+        if (newPin.length === 4) {
+          setTimeout(() => handlePinSubmitWithPin(newPin, false), 100);
+        }
       } else if (e.key === 'Backspace') {
         setPin(prev => prev.slice(0, -1));
-      } else if (e.key === 'Enter' && pin.length >= 4) {
-        handlePinSubmit(false);
       }
     };
     
