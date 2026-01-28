@@ -465,10 +465,10 @@ export default function Caja({ onLogout }) {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <p className="text-sm text-slate-600">Base: ${caja.monto_inicial.toFixed(2)}</p>
-                    <p className="text-sm text-slate-600">Ventas: ${caja.monto_ventas.toFixed(2)}</p>
+                    <p className="text-sm text-slate-600">Base: ${(caja.monto_inicial || 0).toFixed(2)}</p>
+                    <p className="text-sm text-slate-600">Ventas: ${(caja.monto_ventas || 0).toFixed(2)}</p>
                     <p className="text-lg font-bold font-mono text-blue-600">
-                      Total: ${caja.monto_final.toFixed(2)}
+                      Total: ${(caja.monto_final || 0).toFixed(2)}
                     </p>
                   </div>
                   <Button
