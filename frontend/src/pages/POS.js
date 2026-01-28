@@ -1007,7 +1007,15 @@ export default function POS() {
         }
       }
 
-      const printWindow = window.open('', '', 'height=600,width=400');
+      // Calcular ancho en píxeles según configuración (58mm ≈ 220px, 80mm ≈ 300px)
+      const anchoTicket = config.ancho_ticket || 80;
+      const anchoPx = anchoTicket === 58 ? 220 : 300;
+      const fontSize = anchoTicket === 58 ? '10px' : '12px';
+      const fontSizeSmall = anchoTicket === 58 ? '9px' : '11px';
+      const fontSizeTitle = anchoTicket === 58 ? '14px' : '16px';
+      const logoMaxWidth = anchoTicket === 58 ? '120px' : '150px';
+      
+      const printWindow = window.open('', '', `height=600,width=${anchoPx + 40}`);
       
       // Verificar si el popup fue bloqueado
       if (!printWindow || printWindow.closed) {
@@ -1018,17 +1026,17 @@ export default function POS() {
       printWindow.document.write('<html><head><title>Ticket</title>');
       printWindow.document.write('<style>');
       printWindow.document.write(`
-        body { font-family: monospace; padding: 20px; font-size: 12px; }
-        h1 { text-align: center; font-size: 16px; margin: 0; }
-        .header { text-align: center; margin-bottom: 15px; }
-        .header p { margin: 2px 0; font-size: 11px; }
-        .divider { border-top: 1px dashed #000; margin: 10px 0; }
-        .item { display: flex; justify-content: space-between; margin: 5px 0; font-size: 11px; }
-        .total { border-top: 2px solid #000; margin-top: 10px; padding-top: 10px; font-weight: bold; }
-        .footer { margin-top: 15px; text-align: center; font-size: 11px; }
-        .logo { text-align: center; margin-bottom: 10px; }
-        .logo img { max-width: 150px; max-height: 80px; }
-        .warning { text-align: center; font-size: 9px; color: #666; margin-top: 10px; padding: 5px; border: 1px dashed #999; }
+        body { font-family: monospace; padding: 10px; font-size: ${fontSize}; max-width: ${anchoPx}px; margin: 0 auto; }
+        h1 { text-align: center; font-size: ${fontSizeTitle}; margin: 0; }
+        .header { text-align: center; margin-bottom: 10px; }
+        .header p { margin: 2px 0; font-size: ${fontSizeSmall}; }
+        .divider { border-top: 1px dashed #000; margin: 8px 0; }
+        .item { display: flex; justify-content: space-between; margin: 4px 0; font-size: ${fontSizeSmall}; }
+        .total { border-top: 2px solid #000; margin-top: 8px; padding-top: 8px; font-weight: bold; }
+        .footer { margin-top: 10px; text-align: center; font-size: ${fontSizeSmall}; }
+        .logo { text-align: center; margin-bottom: 8px; }
+        .logo img { max-width: ${logoMaxWidth}; max-height: 60px; }
+        .warning { text-align: center; font-size: 8px; color: #666; margin-top: 8px; padding: 4px; border: 1px dashed #999; }
       `);
       printWindow.document.write('</style></head><body>');
       
