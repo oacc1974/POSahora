@@ -43,7 +43,7 @@ export default function Dashboard() {
   const [empleados, setEmpleados] = useState([]);
   const [tiendas, setTiendas] = useState([]);
   
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
   const codigoTienda = user?.codigo_tienda;
   const isAdmin = ['propietario', 'administrador'].includes(user?.rol);
 
@@ -63,7 +63,7 @@ export default function Dashboard() {
     if (!isAdmin) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
       const [empRes, tiendaRes] = await Promise.all([
@@ -81,7 +81,7 @@ export default function Dashboard() {
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const params = new URLSearchParams();
       
       if (fechaDesde) params.append('fecha_desde', fechaDesde);

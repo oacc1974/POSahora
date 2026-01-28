@@ -104,7 +104,7 @@ export default function POS() {
   const [facturacionElectronicaActiva, setFacturacionElectronicaActiva] = useState(false);
   
   // Obtener usuario actual
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const currentUser = JSON.parse(sessionStorage.getItem('user') || '{}');
   const esMesero = currentUser?.rol === 'mesero';
   const esCajero = currentUser?.rol === 'cajero';
   const esEmpleado = esMesero || esCajero; // Empleados con acceso limitado
@@ -130,7 +130,7 @@ export default function POS() {
       // Pequeño delay para asegurar que el token se haya guardado
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (!token) {
         console.log('Token no disponible, esperando...');
         // Reintentar después de un delay más largo
@@ -154,7 +154,7 @@ export default function POS() {
 
   const fetchDescuentosPredefinidos = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/descuentos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -168,7 +168,7 @@ export default function POS() {
 
   const fetchImpuestos = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/impuestos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -182,8 +182,8 @@ export default function POS() {
 
   const verificarCaja = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const token = sessionStorage.getItem('token');
+      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
       
       // Si es mesero, crear una "caja virtual" sin necesidad de apertura real
       if (user?.rol === 'mesero') {
@@ -214,7 +214,7 @@ export default function POS() {
 
   const fetchProductos = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/productos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -226,7 +226,7 @@ export default function POS() {
 
   const fetchMetodosPago = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/metodos-pago`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -242,7 +242,7 @@ export default function POS() {
 
   const fetchTiposPedido = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/tipos-pedido`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -258,7 +258,7 @@ export default function POS() {
 
   const fetchFuncionesConfig = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/funciones`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -280,7 +280,7 @@ export default function POS() {
 
   const fetchMesasPredefinidas = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/tickets-predefinidos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -292,7 +292,7 @@ export default function POS() {
 
   const fetchTicketsAbiertos = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/tickets-abiertos-pos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -304,7 +304,7 @@ export default function POS() {
 
   const fetchTpvsDisponibles = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       // Obtener TPVs disponibles
       const response = await axios.get(`${API_URL}/api/tpv/disponibles`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -356,7 +356,7 @@ export default function POS() {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
 
       // Si hay un ticket actual (recuperado), actualizar ese ticket
@@ -448,7 +448,7 @@ export default function POS() {
     }
     
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.delete(`${API_URL}/api/tickets-abiertos-pos/${ticketId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -462,7 +462,7 @@ export default function POS() {
 
   const fetchModificadores = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/modificadores`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -687,7 +687,7 @@ export default function POS() {
 
   const handleScan = async (result) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(
         `${API_URL}/api/productos/barcode/${result.text}`,
         {
@@ -705,7 +705,7 @@ export default function POS() {
   const handleAbrirCaja = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const monto = requiereCierres ? parseFloat(montoInicial) : 0;
       const payload = { 
         monto_inicial: monto,
@@ -739,7 +739,7 @@ export default function POS() {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(
         `${API_URL}/api/clientes/buscar/${cedulaBusqueda}`,
         {
@@ -758,7 +758,7 @@ export default function POS() {
   const handleCrearNuevoCliente = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.post(
         `${API_URL}/api/clientes`,
         nuevoClienteForm,
@@ -821,7 +821,7 @@ export default function POS() {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
 
       // 1. Registrar la venta primero (siempre rápido)
       const response = await axios.post(
@@ -963,7 +963,7 @@ export default function POS() {
 
   const printInvoice = async (invoice, esFacturaElectronica = false) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const configResponse = await axios.get(`${API_URL}/api/config`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -1247,7 +1247,7 @@ export default function POS() {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       
       // Construir los items para el nuevo ticket y actualizar el carrito actual
       const productosNuevoTicket = [];
@@ -1353,7 +1353,7 @@ export default function POS() {
       setCart(itemsCombinados);
 
       // Eliminar los tickets combinados del servidor
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       for (const ticketId of ticketsParaCombinar) {
         await axios.delete(`${API_URL}/api/tickets-abiertos-pos/${ticketId}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -2353,8 +2353,8 @@ export default function POS() {
           <button
             onClick={() => {
               if (window.confirm('¿Estás seguro de cerrar sesión?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('user');
                 // Mantener pos_tienda_codigo para que no tengan que ingresarlo de nuevo
                 window.location.href = '/login-pos';
               }
@@ -2380,8 +2380,8 @@ export default function POS() {
         onOpenChange={(open) => {
           if (!open) {
             // Al cerrar el diálogo, regresar al login POS
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
             // Mantener pos_tienda_codigo
             window.location.href = '/login-pos';
           }
@@ -2519,8 +2519,8 @@ export default function POS() {
                     variant="outline"
                     className="flex-1"
                     onClick={() => {
-                      localStorage.removeItem('token');
-                      localStorage.removeItem('user');
+                      sessionStorage.removeItem('token');
+                      sessionStorage.removeItem('user');
                       // Mantener pos_tienda_codigo
                       window.location.href = '/login-pos';
                     }}

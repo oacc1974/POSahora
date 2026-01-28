@@ -47,13 +47,13 @@ export default function Caja({ onLogout }) {
   const [showResumenCierre, setShowResumenCierre] = useState(false);
   const [resumenCierre, setResumenCierre] = useState(null);
   
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
   const isAdmin = ['propietario', 'administrador'].includes(user.rol);
 
   // Función para cerrar sesión
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       await axios.post(`${API_URL}/api/auth/logout`, {}, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true
@@ -62,8 +62,8 @@ export default function Caja({ onLogout }) {
       console.error('Error al cerrar sesión:', error);
     }
     
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     // Mantener pos_tienda_codigo para que no tengan que ingresarlo de nuevo
     
     if (onLogout) {
@@ -84,7 +84,7 @@ export default function Caja({ onLogout }) {
 
   const fetchFunciones = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/funciones`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -96,7 +96,7 @@ export default function Caja({ onLogout }) {
 
   const fetchCajasAbiertas = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/caja/abiertas`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -109,7 +109,7 @@ export default function Caja({ onLogout }) {
   const fetchTpvsDisponibles = async () => {
     setLoadingTpvs(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       console.log('Fetching TPVs disponibles...');
       const response = await axios.get(`${API_URL}/api/tpv/disponibles`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -132,7 +132,7 @@ export default function Caja({ onLogout }) {
 
   const fetchCajaActiva = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/caja/activa`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -146,7 +146,7 @@ export default function Caja({ onLogout }) {
 
   const fetchHistorial = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/caja/historial`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -165,7 +165,7 @@ export default function Caja({ onLogout }) {
     }
     
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.post(
         `${API_URL}/api/caja/abrir`,
         { 
@@ -189,7 +189,7 @@ export default function Caja({ onLogout }) {
   const handleCerrarCaja = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.post(
         `${API_URL}/api/caja/cerrar`,
         { efectivo_contado: parseFloat(efectivoContado) },
@@ -215,7 +215,7 @@ export default function Caja({ onLogout }) {
     if (!cajaParaCerrar) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.post(
         `${API_URL}/api/caja/cerrar-admin/${cajaParaCerrar.id}`,
         { efectivo_contado: parseFloat(efectivoContadoAdmin) },
