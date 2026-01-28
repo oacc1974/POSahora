@@ -20,6 +20,16 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### Completadas (28 Enero 2026)
 
+- [x] **BUGFIX P0 - Flujo de Guardar Ticket para Meseros - CORREGIDO**
+  - **Problema:** Los meseros recibían el error "Debes abrir una caja antes de guardar tickets" al intentar guardar tickets
+  - **Causa raíz:** Condición de carrera en el frontend - el estado `cajaActiva` no se configuraba a tiempo para meseros
+  - **Solución:** 
+    1. Se configura la "caja virtual" inmediatamente en el `useEffect` cuando el usuario es mesero
+    2. Se agregó doble verificación del rol en `handleGuardarTicket` usando tanto el estado como `sessionStorage`
+  - **Archivos modificados:** `/app/frontend/src/pages/POS.js`
+  - **Tests:** 5/5 tests pasados (iteration_9.json)
+  - **Verificado:** El mesero puede guardar tickets sin necesidad de abrir caja
+
 - [x] **MÓDULO DE SEGURIDAD PARA EMPLEADOS - COMPLETADO**
   - **6 Perfiles predeterminados del sistema:** Propietario, Administrador, Cajero, Mesero, Supervisor, Cocinero
   - **Perfiles del sistema protegidos:** No se pueden editar ni eliminar
