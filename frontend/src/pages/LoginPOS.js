@@ -126,7 +126,12 @@ export default function LoginPOS({ onLogin }) {
 
   // Login con PIN (usa el PIN del estado)
   const handlePinSubmit = async (forzarCierre = false) => {
-    if (pin.length !== 4) {
+    return handlePinSubmitWithPin(pin, forzarCierre);
+  };
+
+  // Login con PIN (recibe el PIN directamente - para auto-login)
+  const handlePinSubmitWithPin = async (pinValue, forzarCierre = false) => {
+    if (pinValue.length !== 4) {
       toast.error('El PIN debe tener 4 dígitos');
       return;
     }
@@ -146,7 +151,7 @@ export default function LoginPOS({ onLogin }) {
       const response = await axios.post(
         `${API_URL}/api/auth/login-pin`,
         { 
-          pin, 
+          pin: pinValue, 
           codigo_tienda: codigoTienda,
           forzar_cierre: forzarCierre,
           dispositivo: getDeviceName()
