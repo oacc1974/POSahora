@@ -508,18 +508,18 @@ export default function Caja({ onLogout }) {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-slate-600">Base: ${caja.monto_inicial.toFixed(2)}</p>
-                    <p className="text-sm text-slate-600">Ventas: ${caja.monto_ventas.toFixed(2)}</p>
+                    <p className="text-sm text-slate-600">Base: ${(caja.monto_inicial || 0).toFixed(2)}</p>
+                    <p className="text-sm text-slate-600">Ventas: ${(caja.monto_ventas || 0).toFixed(2)}</p>
                     <p className="text-lg font-bold font-mono text-blue-600">
-                      Total: ${caja.monto_final.toFixed(2)}
+                      Total: ${(caja.monto_final || 0).toFixed(2)}
                     </p>
                     {caja.estado === 'cerrada' && caja.efectivo_contado !== null && (
                       <>
                         <p className="text-sm text-slate-600 mt-1">
-                          Contado: ${caja.efectivo_contado.toFixed(2)}
+                          Contado: ${(caja.efectivo_contado || 0).toFixed(2)}
                         </p>
-                        <p className={`text-sm font-semibold ${caja.diferencia >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          Diferencia: {caja.diferencia >= 0 ? '+' : ''}{caja.diferencia.toFixed(2)}
+                        <p className={`text-sm font-semibold ${(caja.diferencia || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          Diferencia: {(caja.diferencia || 0) >= 0 ? '+' : ''}{(caja.diferencia || 0).toFixed(2)}
                         </p>
                       </>
                     )}
