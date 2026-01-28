@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Switch } from '../components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -17,66 +19,103 @@ import {
   DialogTitle,
   DialogFooter,
 } from '../components/ui/dialog';
-import { Plus, Trash2, Users as UsersIcon, Shield, User, Key, RefreshCw, Pencil, Eye, EyeOff } from 'lucide-react';
+import { 
+  Plus, Trash2, Users as UsersIcon, Shield, User, Key, 
+  RefreshCw, Pencil, Eye, EyeOff, ShieldCheck, Settings,
+  Store, FileText, ChevronDown, ChevronUp, Check, X
+} from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Configuración de permisos para mostrar en la UI
+const PERMISOS_POS_CONFIG = [
+  { key: 'ver_productos', label: 'Ver productos', descripcion: 'Puede ver el catálogo de productos' },
+  { key: 'agregar_ticket', label: 'Agregar al ticket', descripcion: 'Puede agregar productos al ticket' },
+  { key: 'guardar_ticket', label: 'Guardar ticket', descripcion: 'Puede guardar tickets/mesas' },
+  { key: 'recuperar_tickets_propios', label: 'Recuperar tickets propios', descripcion: 'Puede ver sus propios tickets guardados' },
+  { key: 'recuperar_tickets_otros', label: 'Recuperar tickets de otros', descripcion: 'Puede ver tickets de otros empleados' },
+  { key: 'cobrar', label: 'Cobrar (ticket interno)', descripcion: 'Puede procesar cobros sin FE' },
+  { key: 'facturar_electronico', label: 'Facturar electrónicamente', descripcion: 'Puede emitir facturas electrónicas' },
+  { key: 'aplicar_descuentos', label: 'Aplicar descuentos', descripcion: 'Puede aplicar descuentos a ventas' },
+  { key: 'eliminar_items', label: 'Eliminar items del ticket', descripcion: 'Puede eliminar productos del ticket' },
+  { key: 'anular_ventas', label: 'Anular/Reembolsar ventas', descripcion: 'Puede anular o reembolsar ventas' },
+  { key: 'abrir_caja', label: 'Abrir caja', descripcion: 'Puede abrir una caja' },
+  { key: 'cerrar_caja_propia', label: 'Cerrar caja propia', descripcion: 'Puede cerrar su propia caja' },
+  { key: 'cerrar_caja_otros', label: 'Cerrar caja de otros', descripcion: 'Puede cerrar cajas de otros empleados' },
+  { key: 'dividir_ticket', label: 'Dividir ticket', descripcion: 'Puede dividir un ticket en varios' },
+  { key: 'cambiar_precio', label: 'Cambiar precio', descripcion: 'Puede modificar precios en el ticket' },
+];
+
+const PERMISOS_BACKOFFICE_CONFIG = [
+  { key: 'ver_dashboard', label: 'Ver Dashboard', descripcion: 'Acceso al panel principal' },
+  { key: 'ver_reportes', label: 'Ver todos los reportes', descripcion: 'Acceso a reportes completos' },
+  { key: 'ver_reportes_propios', label: 'Ver reportes propios', descripcion: 'Solo sus propias ventas' },
+  { key: 'ver_productos', label: 'Ver productos', descripcion: 'Puede ver catálogo en backoffice' },
+  { key: 'gestionar_productos', label: 'Gestionar productos', descripcion: 'Crear, editar, eliminar productos' },
+  { key: 'gestionar_categorias', label: 'Gestionar categorías', descripcion: 'Administrar categorías' },
+  { key: 'ver_clientes', label: 'Ver clientes', descripcion: 'Acceso a lista de clientes' },
+  { key: 'gestionar_clientes', label: 'Gestionar clientes', descripcion: 'Crear y editar clientes' },
+  { key: 'gestionar_empleados', label: 'Gestionar empleados', descripcion: 'Administrar empleados' },
+  { key: 'ver_configuracion', label: 'Ver configuración', descripcion: 'Ver ajustes del sistema' },
+  { key: 'gestionar_configuracion', label: 'Gestionar configuración', descripcion: 'Modificar ajustes' },
+  { key: 'gestionar_tpv', label: 'Gestionar TPV', descripcion: 'Administrar puntos de venta' },
+  { key: 'gestionar_tiendas', label: 'Gestionar tiendas', descripcion: 'Administrar tiendas' },
+  { key: 'gestionar_metodos_pago', label: 'Gestionar métodos de pago', descripcion: 'Configurar formas de pago' },
+  { key: 'gestionar_impuestos', label: 'Gestionar impuestos', descripcion: 'Configurar impuestos' },
+  { key: 'ver_facturacion_electronica', label: 'Ver Facturación Electrónica', descripcion: 'Acceso a FE' },
+  { key: 'gestionar_facturacion_electronica', label: 'Gestionar FE', descripcion: 'Configurar FE' },
+  { key: 'gestionar_perfiles', label: 'Gestionar perfiles', descripcion: 'Crear y editar perfiles' },
+];
+
 const getRolInfo = (rol) => {
   const roles = {
-    propietario: {
-      icon: Shield,
-      color: 'bg-purple-100 text-purple-700',
-      badgeColor: 'bg-purple-500',
-      text: 'Propietario',
-    },
-    administrador: {
-      icon: User,
-      color: 'bg-blue-100 text-blue-700',
-      badgeColor: 'bg-blue-500',
-      text: 'Administrador',
-    },
-    cajero: {
-      icon: UsersIcon,
-      color: 'bg-green-100 text-green-700',
-      badgeColor: 'bg-green-500',
-      text: 'Cajero',
-    },
-    mesero: {
-      icon: UsersIcon,
-      color: 'bg-orange-100 text-orange-700',
-      badgeColor: 'bg-orange-500',
-      text: 'Mesero',
-    },
+    propietario: { icon: Shield, color: 'bg-purple-100 text-purple-700', badgeColor: 'bg-purple-500', text: 'Propietario' },
+    administrador: { icon: User, color: 'bg-blue-100 text-blue-700', badgeColor: 'bg-blue-500', text: 'Administrador' },
+    cajero: { icon: UsersIcon, color: 'bg-green-100 text-green-700', badgeColor: 'bg-green-500', text: 'Cajero' },
+    mesero: { icon: UsersIcon, color: 'bg-orange-100 text-orange-700', badgeColor: 'bg-orange-500', text: 'Mesero' },
+    supervisor: { icon: ShieldCheck, color: 'bg-indigo-100 text-indigo-700', badgeColor: 'bg-indigo-500', text: 'Supervisor' },
+    cocinero: { icon: Store, color: 'bg-red-100 text-red-700', badgeColor: 'bg-red-500', text: 'Cocinero' },
   };
   return roles[rol] || roles.cajero;
 };
 
 export default function Usuarios() {
+  const [activeTab, setActiveTab] = useState('empleados');
+  
+  // Estados para Empleados
   const [usuarios, setUsuarios] = useState([]);
+  const [perfiles, setPerfiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showDialog, setShowDialog] = useState(false);
+  const [showUserDialog, setShowUserDialog] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [showPinDialog, setShowPinDialog] = useState(false);
-  const [selectedUserForPin, setSelectedUserForPin] = useState(null);
   const [showPin, setShowPin] = useState({});
   const [generatingPin, setGeneratingPin] = useState(false);
   
-  const [formData, setFormData] = useState({
+  const [userFormData, setUserFormData] = useState({
     nombre: '',
     username: '',
     password: '',
     rol: 'cajero',
+    perfil_id: '',
     pin: '',
     pin_activo: false,
   });
 
-  useEffect(() => {
-    fetchUsuarios();
-  }, []);
+  // Estados para Perfiles
+  const [showPerfilDialog, setShowPerfilDialog] = useState(false);
+  const [editingPerfil, setEditingPerfil] = useState(null);
+  const [expandedPerfil, setExpandedPerfil] = useState(null);
+  
+  const [perfilFormData, setPerfilFormData] = useState({
+    nombre: '',
+    descripcion: '',
+    permisos_pos: {},
+    permisos_backoffice: {},
+  });
 
-  const fetchUsuarios = async () => {
+  const fetchUsuarios = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(`${API_URL}/api/usuarios`, {
@@ -85,541 +124,608 @@ export default function Usuarios() {
       setUsuarios(response.data);
     } catch (error) {
       toast.error('Error al cargar empleados');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
-  const handleSubmit = async (e) => {
+  const fetchPerfiles = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/perfiles`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPerfiles(response.data);
+    } catch (error) {
+      toast.error('Error al cargar perfiles');
+    }
+  }, []);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchUsuarios(), fetchPerfiles()]);
+      setLoading(false);
+    };
+    loadData();
+  }, [fetchUsuarios, fetchPerfiles]);
+
+  // ============ FUNCIONES DE EMPLEADOS ============
+  
+  const handleUserSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
+      const dataToSend = { ...userFormData };
       
-      // Preparar datos según el rol
-      const dataToSend = { ...formData };
-      
-      // Para cajeros y meseros, el PIN es obligatorio, no necesitan contraseña
-      if (formData.rol === 'cajero' || formData.rol === 'mesero') {
-        dataToSend.pin_activo = true;
-        // La contraseña es opcional para estos roles
-        if (!dataToSend.password) {
-          delete dataToSend.password;
-        }
+      if (userFormData.rol === 'propietario') {
+        toast.error('No puedes crear usuarios con rol propietario');
+        return;
       }
-      
+
       if (editingUser) {
-        // Actualizar usuario existente
-        await axios.put(`${API_URL}/api/usuarios/${editingUser.id}`, dataToSend, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        toast.success('Empleado actualizado correctamente');
+        await axios.put(
+          `${API_URL}/api/usuarios/${editingUser.id}`,
+          dataToSend,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success('Empleado actualizado');
       } else {
-        // Crear nuevo usuario
-        await axios.post(`${API_URL}/api/usuarios`, dataToSend, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        toast.success('Empleado creado correctamente');
+        await axios.post(
+          `${API_URL}/api/usuarios`,
+          dataToSend,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success('Empleado creado');
       }
       
-      setShowDialog(false);
-      resetForm();
+      setShowUserDialog(false);
+      setEditingUser(null);
+      resetUserForm();
       fetchUsuarios();
     } catch (error) {
-      toast.error(
-        error.response?.data?.detail || 'Error al guardar empleado'
-      );
+      toast.error(error.response?.data?.detail || 'Error al guardar empleado');
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteUser = async (userId) => {
     if (!window.confirm('¿Estás seguro de eliminar este empleado?')) return;
-
+    
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/usuarios/${id}`, {
+      await axios.delete(`${API_URL}/api/usuarios/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success('Empleado eliminado correctamente');
+      toast.success('Empleado eliminado');
       fetchUsuarios();
     } catch (error) {
-      toast.error(
-        error.response?.data?.detail || 'Error al eliminar empleado'
-      );
+      toast.error(error.response?.data?.detail || 'Error al eliminar empleado');
     }
   };
 
-  const handleEdit = (usuario) => {
-    setEditingUser(usuario);
-    setFormData({
-      nombre: usuario.nombre,
-      username: usuario.username,
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setUserFormData({
+      nombre: user.nombre,
+      username: user.username,
       password: '',
-      rol: usuario.rol,
-      pin: usuario.pin || '',
-      pin_activo: usuario.pin_activo || false,
+      rol: user.rol,
+      perfil_id: user.perfil_id || '',
+      pin: user.pin || '',
+      pin_activo: user.pin_activo || false,
     });
-    setShowDialog(true);
+    setShowUserDialog(true);
   };
 
-  const handleGeneratePin = async (userId) => {
+  const resetUserForm = () => {
+    setUserFormData({
+      nombre: '',
+      username: '',
+      password: '',
+      rol: 'cajero',
+      perfil_id: '',
+      pin: '',
+      pin_activo: false,
+    });
+  };
+
+  const generatePin = async () => {
     setGeneratingPin(true);
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${API_URL}/api/usuarios/${userId}/generar-pin`,
+        `${API_URL}/api/generar-pin`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`Nuevo PIN generado: ${response.data.pin}`);
-      fetchUsuarios();
+      setUserFormData({ ...userFormData, pin: response.data.pin, pin_activo: true });
+      toast.success('PIN generado');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Error al generar PIN');
+      toast.error('Error al generar PIN');
     } finally {
       setGeneratingPin(false);
     }
   };
 
-  const handleTogglePin = async (usuario) => {
+  // ============ FUNCIONES DE PERFILES ============
+  
+  const handlePerfilSubmit = async (e) => {
+    e.preventDefault();
     try {
       const token = localStorage.getItem('token');
       
-      // Si está desactivando el PIN
-      if (usuario.pin_activo) {
+      if (editingPerfil) {
         await axios.put(
-          `${API_URL}/api/usuarios/${usuario.id}`,
-          { pin_activo: false },
+          `${API_URL}/api/perfiles/${editingPerfil.id}`,
+          perfilFormData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        toast.success('PIN desactivado');
+        toast.success('Perfil actualizado');
       } else {
-        // Si está activando el PIN y no tiene uno, generar uno nuevo
-        if (!usuario.pin) {
-          const response = await axios.post(
-            `${API_URL}/api/usuarios/${usuario.id}/generar-pin`,
-            {},
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          toast.success(`PIN activado: ${response.data.pin}`);
-        } else {
-          await axios.put(
-            `${API_URL}/api/usuarios/${usuario.id}`,
-            { pin_activo: true },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          toast.success('PIN activado');
-        }
+        await axios.post(
+          `${API_URL}/api/perfiles`,
+          perfilFormData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success('Perfil creado');
       }
-      fetchUsuarios();
+      
+      setShowPerfilDialog(false);
+      setEditingPerfil(null);
+      resetPerfilForm();
+      fetchPerfiles();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Error al cambiar estado del PIN');
+      toast.error(error.response?.data?.detail || 'Error al guardar perfil');
     }
   };
 
-  const openPinDialog = (usuario) => {
-    setSelectedUserForPin(usuario);
-    setShowPinDialog(true);
-  };
-
-  const handleUpdatePin = async (newPin) => {
-    if (!selectedUserForPin) return;
-    
-    if (newPin.length < 4 || newPin.length > 6) {
-      toast.error('El PIN debe tener entre 4 y 6 dígitos');
-      return;
-    }
+  const handleDeletePerfil = async (perfilId) => {
+    if (!window.confirm('¿Estás seguro de eliminar este perfil?')) return;
     
     try {
       const token = localStorage.getItem('token');
-      await axios.put(
-        `${API_URL}/api/usuarios/${selectedUserForPin.id}`,
-        { pin: newPin, pin_activo: true },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success('PIN actualizado correctamente');
-      setShowPinDialog(false);
-      setSelectedUserForPin(null);
-      fetchUsuarios();
+      await axios.delete(`${API_URL}/api/perfiles/${perfilId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Perfil eliminado');
+      fetchPerfiles();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Error al actualizar PIN');
+      toast.error(error.response?.data?.detail || 'Error al eliminar perfil');
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      nombre: '',
-      username: '',
-      password: '',
-      rol: 'cajero',
-      pin: '',
-      pin_activo: false,
+  const handleEditPerfil = (perfil) => {
+    setEditingPerfil(perfil);
+    setPerfilFormData({
+      nombre: perfil.nombre,
+      descripcion: perfil.descripcion || '',
+      permisos_pos: perfil.permisos_pos || {},
+      permisos_backoffice: perfil.permisos_backoffice || {},
     });
-    setEditingUser(null);
+    setShowPerfilDialog(true);
   };
 
-  const toggleShowPin = (userId) => {
-    setShowPin(prev => ({ ...prev, [userId]: !prev[userId] }));
+  const resetPerfilForm = () => {
+    setPerfilFormData({
+      nombre: '',
+      descripcion: '',
+      permisos_pos: {},
+      permisos_backoffice: {},
+    });
   };
 
-  // Determinar si el formulario requiere contraseña
-  const requiresPassword = formData.rol === 'administrador' || formData.rol === 'propietario';
+  const togglePermiso = (tipo, key) => {
+    const permisos = tipo === 'pos' ? 'permisos_pos' : 'permisos_backoffice';
+    setPerfilFormData({
+      ...perfilFormData,
+      [permisos]: {
+        ...perfilFormData[permisos],
+        [key]: !perfilFormData[permisos][key],
+      },
+    });
+  };
+
+  // Contar permisos activos
+  const contarPermisos = (permisos, config) => {
+    if (!permisos) return 0;
+    return config.filter(p => permisos[p.key]).length;
+  };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Cargando...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   return (
-    <div data-testid="users-page">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 md:mb-8">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
-            Empleados
-          </h1>
-          <p className="text-slate-600">Gestiona tu equipo de trabajo</p>
+          <h1 className="text-2xl font-bold text-slate-800">Empleados y Seguridad</h1>
+          <p className="text-sm text-slate-500 mt-1">Gestiona empleados y permisos del sistema</p>
         </div>
-        <Button
-          onClick={() => {
-            resetForm();
-            setShowDialog(true);
-          }}
-          data-testid="create-user-button"
-          size="lg"
-          className="gap-2 w-full md:w-auto"
-        >
-          <Plus size={20} />
-          Nuevo Empleado
-        </Button>
       </div>
 
-      {usuarios.length === 0 ? (
-        <Card className="p-8 md:p-12 text-center">
-          <UsersIcon size={64} className="mx-auto mb-4 text-slate-300" />
-          <h3 className="text-xl font-semibold mb-2">No hay empleados</h3>
-          <p className="text-slate-500 mb-6">
-            Comienza agregando tu primer empleado
-          </p>
-          <Button onClick={() => setShowDialog(true)}>
-            <Plus size={20} className="mr-2" />
-            Crear Empleado
-          </Button>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {usuarios.map((usuario) => {
-            const rolInfo = getRolInfo(usuario.rol);
-            const RolIcon = rolInfo.icon;
-            const esCajeroMesero = usuario.rol === 'cajero' || usuario.rol === 'mesero';
-            
-            return (
-              <Card
-                key={usuario.id}
-                data-testid={`user-card-${usuario.id}`}
-                className="p-4 md:p-6 relative overflow-hidden"
-              >
-                {/* Badge de rol en esquina */}
-                <div className={`absolute top-0 right-0 ${rolInfo.badgeColor} text-white text-xs px-3 py-1 rounded-bl-lg font-medium`}>
-                  {rolInfo.text}
-                </div>
-                
-                <div className="flex items-start gap-3 mb-4 mt-2">
-                  <div className={`w-12 h-12 ${rolInfo.color} rounded-full flex items-center justify-center flex-shrink-0`}>
-                    <RolIcon size={24} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-base md:text-lg truncate">
-                      {usuario.nombre}
-                    </h3>
-                    <p className="text-sm text-slate-500 truncate">
-                      @{usuario.username}
-                    </p>
-                  </div>
-                </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+          <TabsTrigger value="empleados" className="flex items-center gap-2">
+            <UsersIcon size={16} />
+            Empleados
+          </TabsTrigger>
+          <TabsTrigger value="perfiles" className="flex items-center gap-2">
+            <ShieldCheck size={16} />
+            Perfiles y Permisos
+          </TabsTrigger>
+        </TabsList>
 
-                {/* Sección de PIN */}
-                <div className="bg-slate-50 rounded-lg p-3 mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Key size={16} className={usuario.pin_activo ? 'text-green-600' : 'text-slate-400'} />
-                      <span className="text-sm font-medium">PIN de Acceso</span>
+        {/* ============ TAB EMPLEADOS ============ */}
+        <TabsContent value="empleados" className="space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={() => { resetUserForm(); setEditingUser(null); setShowUserDialog(true); }}>
+              <Plus size={16} className="mr-2" />
+              Nuevo Empleado
+            </Button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {usuarios.map((user) => {
+              const rolInfo = getRolInfo(user.rol);
+              const RolIcon = rolInfo.icon;
+              
+              return (
+                <Card key={user.id} className="p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${rolInfo.color}`}>
+                        <RolIcon size={20} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-800">{user.nombre}</h3>
+                        <p className="text-sm text-slate-500">@{user.username}</p>
+                      </div>
                     </div>
-                    {/* Solo mostrar toggle para propietario/admin */}
-                    {(usuario.rol === 'propietario' || usuario.rol === 'administrador') && (
-                      <button
-                        onClick={() => handleTogglePin(usuario)}
-                        className={`text-xs px-2 py-1 rounded-full font-medium transition-colors ${
-                          usuario.pin_activo 
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                            : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                        }`}
-                      >
-                        {usuario.pin_activo ? 'Activo' : 'Inactivo'}
-                      </button>
-                    )}
-                    {/* Para cajeros/meseros siempre está activo */}
-                    {esCajeroMesero && (
-                      <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-100 text-green-700">
-                        Obligatorio
-                      </span>
+                    
+                    {user.rol !== 'propietario' && (
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
+                          <Pencil size={14} />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)}>
+                          <Trash2 size={14} className="text-red-500" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                   
-                  {usuario.pin && (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-lg font-bold tracking-wider">
-                          {showPin[usuario.id] ? usuario.pin : '••••'}
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 rounded-full text-xs text-white ${rolInfo.badgeColor}`}>
+                        {user.perfil_nombre || rolInfo.text}
+                      </span>
+                    </div>
+                    
+                    {user.pin && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Key size={14} className="text-slate-400" />
+                        <span className="text-slate-600">PIN:</span>
+                        <span className="font-mono bg-slate-100 px-2 py-0.5 rounded">
+                          {showPin[user.id] ? user.pin : '••••'}
                         </span>
                         <button
-                          onClick={() => toggleShowPin(usuario.id)}
-                          className="p-1 text-slate-400 hover:text-slate-600"
+                          onClick={() => setShowPin({ ...showPin, [user.id]: !showPin[user.id] })}
+                          className="text-slate-400 hover:text-slate-600"
                         >
-                          {showPin[usuario.id] ? <EyeOff size={16} /> : <Eye size={16} />}
+                          {showPin[user.id] ? <EyeOff size={14} /> : <Eye size={14} />}
                         </button>
                       </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </TabsContent>
+
+        {/* ============ TAB PERFILES ============ */}
+        <TabsContent value="perfiles" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-slate-600">
+              Los perfiles del sistema no se pueden editar. Crea perfiles personalizados para necesidades específicas.
+            </p>
+            <Button onClick={() => { resetPerfilForm(); setEditingPerfil(null); setShowPerfilDialog(true); }}>
+              <Plus size={16} className="mr-2" />
+              Nuevo Perfil
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            {perfiles.map((perfil) => (
+              <Card key={perfil.id} className="overflow-hidden">
+                <div
+                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50"
+                  onClick={() => setExpandedPerfil(expandedPerfil === perfil.id ? null : perfil.id)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${perfil.es_sistema ? 'bg-slate-100' : 'bg-blue-100'}`}>
+                      <ShieldCheck size={20} className={perfil.es_sistema ? 'text-slate-600' : 'text-blue-600'} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-slate-800">{perfil.nombre}</h3>
+                        {perfil.es_sistema && (
+                          <span className="px-2 py-0.5 bg-slate-200 text-slate-600 text-xs rounded">Sistema</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-500">{perfil.descripcion}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="text-right text-sm">
+                      <p className="text-slate-600">
+                        <span className="font-medium text-green-600">{contarPermisos(perfil.permisos_pos, PERMISOS_POS_CONFIG)}</span> POS
+                      </p>
+                      <p className="text-slate-600">
+                        <span className="font-medium text-blue-600">{contarPermisos(perfil.permisos_backoffice, PERMISOS_BACKOFFICE_CONFIG)}</span> Backoffice
+                      </p>
+                    </div>
+                    
+                    {!perfil.es_sistema && (
                       <div className="flex gap-1">
-                        <button
-                          onClick={() => openPinDialog(usuario)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
-                          title="Cambiar PIN"
-                        >
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleEditPerfil(perfil); }}>
                           <Pencil size={14} />
-                        </button>
-                        <button
-                          onClick={() => handleGeneratePin(usuario.id)}
-                          disabled={generatingPin}
-                          className="p-1.5 text-green-600 hover:bg-green-50 rounded"
-                          title="Generar nuevo PIN"
-                        >
-                          <RefreshCw size={14} className={generatingPin ? 'animate-spin' : ''} />
-                        </button>
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDeletePerfil(perfil.id); }}>
+                          <Trash2 size={14} className="text-red-500" />
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {expandedPerfil === perfil.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                  </div>
+                </div>
+                
+                {expandedPerfil === perfil.id && (
+                  <div className="border-t p-4 bg-slate-50">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Permisos POS */}
+                      <div>
+                        <h4 className="font-semibold text-sm text-green-700 mb-3 flex items-center gap-2">
+                          <Store size={16} />
+                          Permisos POS
+                        </h4>
+                        <div className="space-y-1">
+                          {PERMISOS_POS_CONFIG.map((p) => (
+                            <div key={p.key} className="flex items-center gap-2 text-sm">
+                              {perfil.permisos_pos?.[p.key] ? (
+                                <Check size={14} className="text-green-600" />
+                              ) : (
+                                <X size={14} className="text-slate-300" />
+                              )}
+                              <span className={perfil.permisos_pos?.[p.key] ? 'text-slate-700' : 'text-slate-400'}>
+                                {p.label}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Permisos Backoffice */}
+                      <div>
+                        <h4 className="font-semibold text-sm text-blue-700 mb-3 flex items-center gap-2">
+                          <Settings size={16} />
+                          Permisos Backoffice
+                        </h4>
+                        <div className="space-y-1">
+                          {PERMISOS_BACKOFFICE_CONFIG.map((p) => (
+                            <div key={p.key} className="flex items-center gap-2 text-sm">
+                              {perfil.permisos_backoffice?.[p.key] ? (
+                                <Check size={14} className="text-blue-600" />
+                              ) : (
+                                <X size={14} className="text-slate-300" />
+                              )}
+                              <span className={perfil.permisos_backoffice?.[p.key] ? 'text-slate-700' : 'text-slate-400'}>
+                                {p.label}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  )}
-                  
-                  {!usuario.pin && usuario.pin_activo && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full mt-2"
-                      onClick={() => handleGeneratePin(usuario.id)}
-                    >
-                      <Key size={14} className="mr-2" />
-                      Generar PIN
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
-                  <span>Creado: {new Date(usuario.creado).toLocaleDateString('es-ES')}</span>
-                </div>
-
-                {usuario.rol !== 'propietario' && (
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleEdit(usuario)}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 gap-1"
-                    >
-                      <Pencil size={14} />
-                      Editar
-                    </Button>
-                    <Button
-                      onClick={() => handleDelete(usuario.id)}
-                      data-testid={`delete-user-${usuario.id}`}
-                      variant="destructive"
-                      size="sm"
-                      className="flex-1 gap-1"
-                    >
-                      <Trash2 size={14} />
-                      Eliminar
-                    </Button>
                   </div>
                 )}
               </Card>
-            );
-          })}
-        </div>
-      )}
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
 
-      {/* Dialog para crear/editar empleado */}
-      <Dialog open={showDialog} onOpenChange={(open) => { setShowDialog(open); if (!open) resetForm(); }}>
-        <DialogContent data-testid="user-dialog" className="max-w-md mx-4">
+      {/* ============ DIALOG EMPLEADO ============ */}
+      <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{editingUser ? 'Editar Empleado' : 'Nuevo Empleado'}</DialogTitle>
           </DialogHeader>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+          
+          <form onSubmit={handleUserSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="nombre">Nombre Completo *</Label>
+              <Label htmlFor="nombre">Nombre completo *</Label>
               <Input
                 id="nombre"
-                data-testid="user-name-input"
-                value={formData.nombre}
-                onChange={(e) =>
-                  setFormData({ ...formData, nombre: e.target.value })
-                }
+                value={userFormData.nombre}
+                onChange={(e) => setUserFormData({ ...userFormData, nombre: e.target.value })}
                 required
               />
             </div>
-
+            
             <div>
               <Label htmlFor="username">Usuario *</Label>
               <Input
                 id="username"
-                data-testid="user-username-input"
-                value={formData.username}
-                onChange={(e) =>
-                  setFormData({ ...formData, username: e.target.value })
-                }
+                value={userFormData.username}
+                onChange={(e) => setUserFormData({ ...userFormData, username: e.target.value })}
                 required
               />
             </div>
-
+            
             <div>
-              <Label htmlFor="rol">Rol *</Label>
+              <Label htmlFor="password">{editingUser ? 'Nueva contraseña (dejar vacío para mantener)' : 'Contraseña *'}</Label>
+              <Input
+                id="password"
+                type="password"
+                value={userFormData.password}
+                onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                required={!editingUser}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="perfil">Perfil de permisos *</Label>
               <Select
-                value={formData.rol}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, rol: value })
-                }
+                value={userFormData.perfil_id}
+                onValueChange={(value) => {
+                  const perfil = perfiles.find(p => p.id === value);
+                  const rol = perfil?.nombre.toLowerCase() || 'cajero';
+                  setUserFormData({ 
+                    ...userFormData, 
+                    perfil_id: value,
+                    rol: ['propietario', 'administrador', 'cajero', 'mesero', 'supervisor', 'cocinero'].includes(rol) ? rol : 'cajero'
+                  });
+                }}
               >
-                <SelectTrigger data-testid="user-rol-select">
-                  <SelectValue />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un perfil" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="administrador">Administrador</SelectItem>
-                  <SelectItem value="cajero">Cajero</SelectItem>
-                  <SelectItem value="mesero">Mesero</SelectItem>
+                  {perfiles.filter(p => p.nombre !== 'Propietario').map((perfil) => (
+                    <SelectItem key={perfil.id} value={perfil.id}>
+                      {perfil.nombre} {perfil.es_sistema && '(Sistema)'}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-slate-500 mt-2">
-                <strong>Administrador:</strong> Acceso completo, usa contraseña<br />
-                <strong>Cajero:</strong> Solo ventas, usa PIN<br />
-                <strong>Mesero:</strong> Solo pedidos, usa PIN
-              </p>
             </div>
-
-            {/* Campos de contraseña solo para administradores */}
-            {requiresPassword && (
-              <div>
-                <Label htmlFor="password">
-                  Contraseña {editingUser ? '(dejar vacío para no cambiar)' : '*'}
-                </Label>
+            
+            <div className="border-t pt-4">
+              <Label>PIN de acceso rápido</Label>
+              <div className="flex gap-2 mt-2">
                 <Input
-                  id="password"
-                  data-testid="user-password-input"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  required={!editingUser && requiresPassword}
+                  value={userFormData.pin}
+                  onChange={(e) => setUserFormData({ ...userFormData, pin: e.target.value })}
+                  placeholder="PIN de 4-6 dígitos"
+                  maxLength={6}
+                  className="font-mono"
                 />
+                <Button type="button" variant="outline" onClick={generatePin} disabled={generatingPin}>
+                  <RefreshCw size={16} className={generatingPin ? 'animate-spin' : ''} />
+                </Button>
               </div>
-            )}
-
-            {/* Campos de PIN para cajeros/meseros */}
-            {!requiresPassword && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Key size={18} className="text-blue-600" />
-                  <span className="font-medium text-blue-800">Acceso por PIN</span>
-                </div>
-                <p className="text-sm text-blue-700 mb-3">
-                  Los cajeros y meseros acceden al sistema usando un PIN de 4 dígitos.
-                  {!editingUser && ' Se generará automáticamente al crear el empleado.'}
-                </p>
-                {editingUser && formData.pin && (
-                  <div className="flex items-center gap-2">
-                    <Label>PIN actual:</Label>
-                    <span className="font-mono font-bold">{formData.pin}</span>
-                  </div>
-                )}
+              <div className="flex items-center gap-2 mt-2">
+                <Switch
+                  checked={userFormData.pin_activo}
+                  onCheckedChange={(checked) => setUserFormData({ ...userFormData, pin_activo: checked })}
+                />
+                <span className="text-sm text-slate-600">PIN activo para login rápido</span>
               </div>
-            )}
-
-            {/* Opción de PIN para administradores */}
-            {requiresPassword && (
-              <div className="border rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Key size={18} className="text-slate-600" />
-                    <span className="font-medium">Habilitar acceso por PIN</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, pin_activo: !formData.pin_activo })}
-                    className={`w-12 h-6 rounded-full transition-colors ${
-                      formData.pin_activo ? 'bg-green-500' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                      formData.pin_activo ? 'translate-x-6' : 'translate-x-0.5'
-                    }`} />
-                  </button>
-                </div>
-                <p className="text-xs text-slate-500 mt-2">
-                  Permite al administrador acceder también con PIN
-                </p>
-              </div>
-            )}
-
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => { setShowDialog(false); resetForm(); }}
-                className="flex-1"
-              >
+            </div>
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowUserDialog(false)}>
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                data-testid="save-user-button"
-                className="flex-1"
-              >
-                {editingUser ? 'Guardar' : 'Crear'}
+              <Button type="submit">
+                {editingUser ? 'Actualizar' : 'Crear'}
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para cambiar PIN */}
-      <Dialog open={showPinDialog} onOpenChange={setShowPinDialog}>
-        <DialogContent className="max-w-sm">
+      {/* ============ DIALOG PERFIL ============ */}
+      <Dialog open={showPerfilDialog} onOpenChange={setShowPerfilDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Cambiar PIN</DialogTitle>
+            <DialogTitle>{editingPerfil ? 'Editar Perfil' : 'Nuevo Perfil'}</DialogTitle>
           </DialogHeader>
           
-          <div className="py-4">
-            <p className="text-sm text-slate-600 mb-4">
-              Ingresa un nuevo PIN de 4 dígitos para <strong>{selectedUserForPin?.nombre}</strong>
-            </p>
-            <Input
-              type="text"
-              maxLength={6}
-              placeholder="Nuevo PIN (4-6 dígitos)"
-              className="text-center text-2xl font-mono tracking-widest"
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '');
-                e.target.value = value;
-              }}
-              id="new-pin-input"
-            />
-          </div>
-          
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowPinDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={() => {
-              const input = document.getElementById('new-pin-input');
-              handleUpdatePin(input.value);
-            }}>
-              Guardar PIN
-            </Button>
-          </DialogFooter>
+          <form onSubmit={handlePerfilSubmit} className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="perfil_nombre">Nombre del perfil *</Label>
+                <Input
+                  id="perfil_nombre"
+                  value={perfilFormData.nombre}
+                  onChange={(e) => setPerfilFormData({ ...perfilFormData, nombre: e.target.value })}
+                  placeholder="Ej: Cajero Senior"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="perfil_descripcion">Descripción</Label>
+                <Input
+                  id="perfil_descripcion"
+                  value={perfilFormData.descripcion}
+                  onChange={(e) => setPerfilFormData({ ...perfilFormData, descripcion: e.target.value })}
+                  placeholder="Descripción breve del perfil"
+                />
+              </div>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6 border-t pt-4">
+              {/* Permisos POS */}
+              <div>
+                <h4 className="font-semibold text-green-700 mb-3 flex items-center gap-2">
+                  <Store size={16} />
+                  Permisos POS
+                </h4>
+                <div className="space-y-2">
+                  {PERMISOS_POS_CONFIG.map((p) => (
+                    <div key={p.key} className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">{p.label}</p>
+                        <p className="text-xs text-slate-500">{p.descripcion}</p>
+                      </div>
+                      <Switch
+                        checked={perfilFormData.permisos_pos[p.key] || false}
+                        onCheckedChange={() => togglePermiso('pos', p.key)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Permisos Backoffice */}
+              <div>
+                <h4 className="font-semibold text-blue-700 mb-3 flex items-center gap-2">
+                  <Settings size={16} />
+                  Permisos Backoffice
+                </h4>
+                <div className="space-y-2">
+                  {PERMISOS_BACKOFFICE_CONFIG.map((p) => (
+                    <div key={p.key} className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">{p.label}</p>
+                        <p className="text-xs text-slate-500">{p.descripcion}</p>
+                      </div>
+                      <Switch
+                        checked={perfilFormData.permisos_backoffice[p.key] || false}
+                        onCheckedChange={() => togglePermiso('backoffice', p.key)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowPerfilDialog(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                {editingPerfil ? 'Actualizar' : 'Crear'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
