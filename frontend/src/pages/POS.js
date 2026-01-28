@@ -2489,22 +2489,36 @@ export default function POS() {
             )}
 
             <div className="flex gap-3 pt-4">
-              {/* Si todos los TPVs están ocupados, no mostrar botón de abrir caja */}
-              {tpvsDisponibles.length === 0 && totalTpvs > 0 && !esMesero ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => window.location.href = '/configuracion/dispositivos-tpv'}
-                >
-                  Crear Nuevo TPV
-                </Button>
+              {/* Si todos los TPVs están ocupados */}
+              {tpvsDisponibles.length === 0 && totalTpvs > 0 ? (
+                // Solo propietario/admin pueden ir a crear TPV
+                (currentUser?.rol === 'propietario' || currentUser?.rol === 'administrador') ? (
+                  <Button
+                    type="button"
+                    className="flex-1"
+                    onClick={() => window.location.href = '/configuracion/dispositivos-tpv'}
+                  >
+                    Crear Nuevo Dispositivo TPV
+                  </Button>
+                ) : (
+                  // Otros roles solo pueden cerrar el diálogo
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowAperturaCaja(false)}
+                  >
+                    Entendido
+                  </Button>
+                )
               ) : (
+                // Hay TPVs disponibles o no hay ninguno (se creará automático)
                 <Button
                   type="submit"
                   data-testid="confirmar-apertura-pos-button"
                   className="flex-1"
-                  disabled={esMesero && tpvsDisponibles.length > 0 && !tpvSeleccionado}
+                  disabled={(esMesero && tpvsDisponibles.length > 0 && !tpvSeleccionado) || 
+                           (tpvsDisponibles.length === 0 && totalTpvs === 0 && currentUser?.rol !== 'propietario' && currentUser?.rol !== 'administrador')}
                 >
                   {esMesero 
                     ? 'Comenzar a Tomar Pedidos'
