@@ -2420,12 +2420,38 @@ export default function POS() {
             )}
 
             {tpvsDisponibles.length === 0 && (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-blue-800 text-sm">
-                  {esMesero 
-                    ? 'No hay TPVs disponibles. Todos están ocupados o no existen. Contacta al administrador.'
-                    : 'No hay TPVs disponibles. Se creará uno automáticamente al abrir la caja.'}
-                </p>
+              <div className={`p-3 rounded-lg border ${totalTpvs > 0 ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}`}>
+                {totalTpvs > 0 ? (
+                  // Hay TPVs pero todos ocupados
+                  <>
+                    <p className="text-orange-800 text-sm font-medium mb-2">
+                      ⚠️ Todos los TPVs están ocupados
+                    </p>
+                    <p className="text-orange-700 text-sm mb-3">
+                      {esMesero 
+                        ? 'No hay puntos de venta disponibles. Contacta al administrador.'
+                        : 'Puedes crear un nuevo TPV desde Configuración para abrir otra caja.'}
+                    </p>
+                    {!esMesero && (
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.location.href = '/configuracion/dispositivos-tpv'}
+                        className="w-full"
+                      >
+                        Ir a Configuración → Dispositivos TPV
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  // No hay TPVs - primera vez
+                  <p className="text-blue-800 text-sm">
+                    {esMesero 
+                      ? 'No hay TPVs configurados. Contacta al administrador.'
+                      : '✨ No hay TPVs creados. Se creará uno automáticamente al abrir la caja.'}
+                  </p>
+                )}
               </div>
             )}
 
