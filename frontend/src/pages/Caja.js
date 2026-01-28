@@ -827,7 +827,7 @@ export default function Caja({ onLogout }) {
                     {resumenCierre.ventas_por_metodo.map((metodo, idx) => (
                       <div key={idx} className="flex justify-between text-sm">
                         <span className="text-slate-600">{metodo.metodo_nombre} ({metodo.cantidad}):</span>
-                        <span className="font-medium">${metodo.total.toFixed(2)}</span>
+                        <span className="font-medium">${(metodo.total || 0).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
@@ -838,15 +838,15 @@ export default function Caja({ onLogout }) {
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Base de Caja:</span>
-                  <span className="font-medium">${resumenCierre.monto_inicial.toFixed(2)}</span>
+                  <span className="font-medium">${(resumenCierre.monto_inicial || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Ventas ({resumenCierre.total_ventas}):</span>
-                  <span className="font-medium">${resumenCierre.monto_ventas.toFixed(2)}</span>
+                  <span className="text-slate-600">Ventas ({resumenCierre.total_ventas || 0}):</span>
+                  <span className="font-medium">${(resumenCierre.monto_ventas || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-base border-t pt-2">
                   <span>Total Esperado:</span>
-                  <span>${resumenCierre.monto_final.toFixed(2)}</span>
+                  <span>${(resumenCierre.monto_final || 0).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -854,12 +854,12 @@ export default function Caja({ onLogout }) {
               <div className="bg-slate-100 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Efectivo Contado:</span>
-                  <span className="font-medium">${resumenCierre.efectivo_contado.toFixed(2)}</span>
+                  <span className="font-medium">${(resumenCierre.efectivo_contado || 0).toFixed(2)}</span>
                 </div>
-                <div className={`flex justify-between font-semibold ${resumenCierre.diferencia >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`flex justify-between font-semibold ${(resumenCierre.diferencia || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   <span>Diferencia:</span>
                   <span>
-                    {resumenCierre.diferencia >= 0 ? '+' : '-'}${Math.abs(resumenCierre.diferencia).toFixed(2)}
+                    {(resumenCierre.diferencia || 0) >= 0 ? '+' : '-'}${Math.abs(resumenCierre.diferencia || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
