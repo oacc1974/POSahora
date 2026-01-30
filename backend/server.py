@@ -4233,6 +4233,22 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         if tpv.get("ocupado"):
             raise HTTPException(status_code=400, detail="El TPV ya está ocupado por otro usuario")
         
+        # Verificar estado de sesión del TPV (nuevo sistema)
+        estado_sesion = tpv.get("estado_sesion", "disponible")
+        usuario_reservado = tpv.get("usuario_reservado_id")
+        user_id = str(current_user.get("_id") or current_user.get("user_id"))
+        
+        if estado_sesion == "pausado" and usuario_reservado and usuario_reservado != user_id:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Este TPV está reservado por {tpv.get('usuario_reservado_nombre', 'otro usuario')} que tiene caja abierta"
+            )
+        elif estado_sesion == "ocupado" and usuario_reservado != user_id:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Este TPV está siendo usado por {tpv.get('usuario_reservado_nombre', 'otro usuario')}"
+            )
+        
         # Obtener datos de la tienda
         tienda = await db.tiendas.find_one({"id": tpv["tienda_id"]}, {"_id": 0})
         if not tienda:
