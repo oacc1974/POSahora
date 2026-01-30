@@ -1538,14 +1538,6 @@ function ReporteRecibos({ facturas, onReembolso }) {
       }
     }
     
-    const printWindow = window.open('', '_blank');
-    
-    // Verificar si el popup fue bloqueado
-    if (!printWindow || printWindow.closed) {
-      toast.error('El navegador bloqueó la ventana de impresión. Por favor, permite los popups para este sitio.');
-      return;
-    }
-    
     const fecha = selectedFactura.fecha ? new Date(selectedFactura.fecha) : new Date();
     
     // Construir HTML del logo si existe
@@ -1593,7 +1585,19 @@ function ReporteRecibos({ facturas, onReembolso }) {
     const fontSizeTitle = anchoTicket === 58 ? '14px' : '16px';
     const logoMaxWidth = anchoTicket === 58 ? '120px' : '150px';
     
-    printWindow.document.write(`
+    // Crear iframe oculto para impresión sin preview
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'absolute';
+    printFrame.style.top = '-10000px';
+    printFrame.style.left = '-10000px';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = 'none';
+    document.body.appendChild(printFrame);
+    
+    const printDocument = printFrame.contentWindow.document;
+    printDocument.open();
+    printDocument.write(`
       <!DOCTYPE html>
       <html>
       <head>
@@ -1612,6 +1616,7 @@ function ReporteRecibos({ facturas, onReembolso }) {
           .total-row { display: flex; justify-content: space-between; margin: 3px 0; font-size: ${fontSizeSmall}; }
           .total-row.final { font-weight: bold; font-size: ${fontSize}; border-top: 1px solid #000; padding-top: 4px; margin-top: 4px; }
           .footer { text-align: center; margin-top: 15px; font-size: ${fontSizeSmall}; border-top: 1px dashed #000; padding-top: 8px; }
+          @media print { body { margin: 0; padding: 5px; } }
           ${selectedFactura.estado === 'reembolsado' ? '.reembolsado { text-align: center; color: red; font-weight: bold; margin: 8px 0; border: 2px solid red; padding: 4px; }' : ''}
         </style>
       </head>
@@ -1672,23 +1677,32 @@ function ReporteRecibos({ facturas, onReembolso }) {
       </body>
       </html>
     `);
-    printWindow.document.close();
+    printDocument.close();
     
-    // Esperar a que el documento esté listo antes de imprimir
-    printWindow.onload = function() {
+    // Esperar a que el iframe cargue y luego imprimir
+    printFrame.onload = function() {
       setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
+        printFrame.contentWindow.focus();
+        printFrame.contentWindow.print();
+        // Eliminar iframe después de imprimir
+        setTimeout(() => {
+          document.body.removeChild(printFrame);
+        }, 1000);
       }, 300);
     };
     
     // Fallback si onload no se dispara
     setTimeout(() => {
-      if (printWindow && !printWindow.closed) {
-        printWindow.focus();
-        printWindow.print();
+      if (printFrame && document.body.contains(printFrame)) {
+        printFrame.contentWindow.focus();
+        printFrame.contentWindow.print();
+        setTimeout(() => {
+          if (document.body.contains(printFrame)) {
+            document.body.removeChild(printFrame);
+          }
+        }, 1000);
       }
-    }, 500);
+    }, 600);
     
     setShowMenuRecibo(false);
   };
