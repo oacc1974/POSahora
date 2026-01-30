@@ -2133,19 +2133,56 @@ async def login_con_pin(pin_login: PINLogin):
         )
     
     user_id = str(user["_id"])
+    organizacion_id = str(user["organizacion_id"])
     
-    # Verificar si el usuario ya tiene una sesión activa
+    # ============ SISTEMA DE SESIONES POR TPV ============
+    
+    # 1. Verificar si el usuario tiene una sesión PAUSADA (salió sin cerrar caja)
+    sesion_pausada = await db.sesiones_pos.find_one({
+        "user_id": user_id,
+        "estado": "pausada"
+    })
+    
+    if sesion_pausada:
+        tpv_reservado = sesion_pausada.get("tpv_id")
+        caja_id = sesion_pausada.get("caja_abierta_id")
+        
+        # Obtener info del TPV reservado
+        tpv_info = await db.tpv.find_one({"id": tpv_reservado}) if tpv_reservado else None
+        tpv_nombre = tpv_info.get("nombre", "TPV") if tpv_info else "TPV"
+        
+        # Obtener monto de la caja
+        caja = await db.cajas.find_one({"_id": ObjectId(caja_id)}) if caja_id else None
+        monto_caja = caja.get("monto_actual", 0) if caja else 0
+        
+        if not getattr(pin_login, 'forzar_cierre', False):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "SESSION_PAUSED",
+                    "message": "Tienes una caja abierta que debes cerrar",
+                    "session_info": {
+                        "usuario_nombre": user.get("nombre", "Usuario"),
+                        "usuario_rol": user.get("rol", ""),
+                        "tpv_id": tpv_reservado,
+                        "tpv_nombre": tpv_nombre,
+                        "monto_caja": monto_caja,
+                        "fecha_pausa": sesion_pausada.get("fecha_pausa", "")
+                    }
+                }
+            )
+        # Si forzar_cierre=True, continuar y reactivar la sesión en el mismo TPV
+    
+    # 2. Verificar si el usuario ya tiene una sesión ACTIVA
     sesion_existente = await db.sesiones_pos.find_one({
         "user_id": user_id,
         "activa": True
     })
     
     if sesion_existente:
-        # Si tiene sesión activa y no se está forzando el cierre
         if not getattr(pin_login, 'forzar_cierre', False):
-            # Retornar error especial indicando sesión activa
             raise HTTPException(
-                status_code=409,  # Conflict
+                status_code=409,
                 detail={
                     "code": "SESSION_ACTIVE",
                     "message": "Este usuario ya tiene una sesión activa",
@@ -2153,33 +2190,108 @@ async def login_con_pin(pin_login: PINLogin):
                         "usuario_nombre": user.get("nombre", "Usuario"),
                         "usuario_rol": user.get("rol", ""),
                         "dispositivo": sesion_existente.get("dispositivo", "Desconocido"),
+                        "tpv_nombre": sesion_existente.get("tpv_nombre", ""),
                         "iniciada": sesion_existente.get("fecha_inicio", ""),
                         "ultima_actividad": sesion_existente.get("ultima_actividad", "")
                     }
                 }
             )
     
-    # Generar ID único para esta sesión
+    # 3. Verificar si el TPV seleccionado está disponible (si se especificó uno)
+    tpv_id_seleccionado = getattr(pin_login, 'tpv_id', None)
+    
+    if tpv_id_seleccionado:
+        tpv = await db.tpv.find_one({"id": tpv_id_seleccionado})
+        if tpv:
+            estado_tpv = tpv.get("estado_sesion", "disponible")
+            usuario_reservado = tpv.get("usuario_reservado_id")
+            
+            if estado_tpv == "pausado" and usuario_reservado and usuario_reservado != user_id:
+                # TPV reservado por otro usuario
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "TPV_RESERVED",
+                        "message": f"Este TPV está reservado por {tpv.get('usuario_reservado_nombre', 'otro usuario')} que tiene caja abierta",
+                        "tpv_info": {
+                            "nombre": tpv.get("nombre"),
+                            "usuario_reservado": tpv.get("usuario_reservado_nombre")
+                        }
+                    }
+                )
+            elif estado_tpv == "ocupado" and usuario_reservado != user_id:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "TPV_BUSY",
+                        "message": f"Este TPV está siendo usado por {tpv.get('usuario_reservado_nombre', 'otro usuario')}",
+                        "tpv_info": {
+                            "nombre": tpv.get("nombre"),
+                            "usuario_reservado": tpv.get("usuario_reservado_nombre")
+                        }
+                    }
+                )
+    
+    # ============ CREAR/REACTIVAR SESIÓN ============
+    
     session_id = str(uuid.uuid4())
     
-    # Cerrar cualquier sesión anterior del usuario
-    await db.sesiones_pos.update_many(
-        {"user_id": user_id, "activa": True},
-        {"$set": {"activa": False, "fecha_cierre": datetime.now(timezone.utc).isoformat()}}
-    )
-    
-    # Crear nueva sesión
-    nueva_sesion = {
-        "session_id": session_id,
-        "user_id": user_id,
-        "user_nombre": user.get("nombre", "Usuario"),
-        "organizacion_id": str(user["organizacion_id"]),
-        "dispositivo": pin_login.dispositivo if hasattr(pin_login, 'dispositivo') else "Navegador Web",
-        "activa": True,
-        "fecha_inicio": datetime.now(timezone.utc).isoformat(),
-        "ultima_actividad": datetime.now(timezone.utc).isoformat()
-    }
-    await db.sesiones_pos.insert_one(nueva_sesion)
+    # Si tenía sesión pausada, reactivarla en el mismo TPV
+    if sesion_pausada:
+        tpv_id_seleccionado = sesion_pausada.get("tpv_id")
+        
+        # Reactivar la sesión pausada
+        await db.sesiones_pos.update_one(
+            {"_id": sesion_pausada["_id"]},
+            {"$set": {
+                "session_id": session_id,
+                "activa": True,
+                "estado": "activa",
+                "fecha_reactivacion": datetime.now(timezone.utc).isoformat(),
+                "ultima_actividad": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # Marcar TPV como ocupado
+        if tpv_id_seleccionado:
+            await db.tpv.update_one(
+                {"id": tpv_id_seleccionado},
+                {"$set": {"estado_sesion": "ocupado"}}
+            )
+    else:
+        # Cerrar cualquier sesión anterior del usuario
+        await db.sesiones_pos.update_many(
+            {"user_id": user_id, "activa": True},
+            {"$set": {"activa": False, "estado": "cerrada", "fecha_cierre": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        # Liberar TPV anterior si lo tenía
+        await db.tpv.update_many(
+            {"usuario_reservado_id": user_id, "estado_sesion": {"$in": ["ocupado", "pausado"]}},
+            {"$set": {
+                "estado_sesion": "disponible",
+                "usuario_reservado_id": None,
+                "usuario_reservado_nombre": None,
+                "caja_abierta_id": None
+            }}
+        )
+        
+        # Crear nueva sesión
+        nueva_sesion = {
+            "session_id": session_id,
+            "user_id": user_id,
+            "user_nombre": user.get("nombre", "Usuario"),
+            "user_rol": user.get("rol", ""),
+            "organizacion_id": organizacion_id,
+            "tpv_id": tpv_id_seleccionado,
+            "tpv_nombre": "",
+            "dispositivo": getattr(pin_login, 'dispositivo', None) or "Navegador Web",
+            "activa": True,
+            "estado": "activa",
+            "fecha_inicio": datetime.now(timezone.utc).isoformat(),
+            "ultima_actividad": datetime.now(timezone.utc).isoformat()
+        }
+        await db.sesiones_pos.insert_one(nueva_sesion)
     
     # Crear token JWT con el session_id incluido
     access_token = create_access_token(data={"sub": user_id, "session_id": session_id})
