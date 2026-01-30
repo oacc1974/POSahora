@@ -1018,17 +1018,21 @@ export default function POS() {
       const fontSizeTitle = anchoTicket === 58 ? '14px' : '16px';
       const logoMaxWidth = anchoTicket === 58 ? '120px' : '150px';
       
-      const printWindow = window.open('', '', `height=600,width=${anchoPx + 40}`);
+      // Crear iframe oculto para impresión sin preview
+      const printFrame = document.createElement('iframe');
+      printFrame.style.position = 'absolute';
+      printFrame.style.top = '-10000px';
+      printFrame.style.left = '-10000px';
+      printFrame.style.width = '0';
+      printFrame.style.height = '0';
+      printFrame.style.border = 'none';
+      document.body.appendChild(printFrame);
       
-      // Verificar si el popup fue bloqueado
-      if (!printWindow || printWindow.closed) {
-        toast.error('El navegador bloqueó la ventana de impresión. Por favor, permite los popups para este sitio.');
-        return;
-      }
-      
-      printWindow.document.write('<html><head><title>Ticket</title>');
-      printWindow.document.write('<style>');
-      printWindow.document.write(`
+      const printDocument = printFrame.contentWindow.document;
+      printDocument.open();
+      printDocument.write('<html><head><title>Ticket</title>');
+      printDocument.write('<style>');
+      printDocument.write(`
         body { font-family: monospace; padding: 10px; font-size: ${fontSize}; max-width: ${anchoPx}px; margin: 0 auto; }
         h1 { text-align: center; font-size: ${fontSizeTitle}; margin: 0; }
         .header { text-align: center; margin-bottom: 10px; }
@@ -1040,8 +1044,9 @@ export default function POS() {
         .logo { text-align: center; margin-bottom: 8px; }
         .logo img { max-width: ${logoMaxWidth}; max-height: 60px; }
         .warning { text-align: center; font-size: 8px; color: #666; margin-top: 8px; padding: 4px; border: 1px dashed #999; }
+        @media print { body { margin: 0; padding: 5px; } }
       `);
-      printWindow.document.write('</style></head><body>');
+      printDocument.write('</style></head><body>');
       
       // Mostrar logo si existe
       if (config.logo_url) {
