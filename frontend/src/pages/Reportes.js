@@ -1623,10 +1623,10 @@ function ReporteRecibos({ facturas, onReembolso }) {
         </div>
         
         <!-- Espacio extra para corte de papel -->
-        <div style="height: 120px;"></div>
-        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-        <p style="text-align: center; color: #ccc; font-size: 8px;">. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .</p>
+        <div style="height: 40px;"></div>
         <br><br><br>
+        <p style="text-align: center; color: #ccc; font-size: 8px;">. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .</p>
+        <br>
       </body>
       </html>
     `);
