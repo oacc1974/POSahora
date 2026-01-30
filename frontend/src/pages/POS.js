@@ -1205,6 +1205,8 @@ export default function POS() {
       // Espacio extra para corte de papel
       printWindow.document.write('<div style="height: 120px;"></div>');
       printWindow.document.write('<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>');
+      printWindow.document.write('<p style="text-align: center; color: #ccc; font-size: 8px;">. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .</p>');
+      printWindow.document.write('<br><br><br>');
       
       printWindow.document.write('</body></html>');
       printWindow.document.close();
