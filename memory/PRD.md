@@ -18,6 +18,23 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ## Funcionalidades Implementadas
 
+### Completadas (30 Enero 2026)
+
+- [x] **SISTEMA DE SESIONES POR TPV - COMPLETADO**
+  - **Flujo nuevo de login:** 1) Código tienda → 2) PIN → 3) Seleccionar TPV → 4) Entrar al POS
+  - **Un usuario = Un TPV:** Cada usuario solo puede estar en un TPV a la vez
+  - **Sesión PAUSADA:** Si sale sin cerrar caja, el TPV queda reservado hasta que vuelva
+  - **Nuevo endpoint:** `POST /api/auth/validar-pin` - Valida PIN y retorna TPVs disponibles
+  - **TPV asignado en login:** El TPV se guarda en `sessionStorage` y se usa automáticamente al abrir caja
+  - **Panel admin:** Endpoint para ver estado de todos los TPVs y liberar forzadamente
+  - **Documentación:** `/app/docs/API_SESIONES_TPV.md` con flujo completo para APK
+  - **Archivos modificados:** `LoginPOS.js`, `POS.js`, `server.py`
+
+- [x] **MEJORAS DE IMPRESIÓN DE TICKETS**
+  - **Ancho configurable:** 58mm o 80mm en Configuración → Recibo
+  - **Espacio para corte:** 15 líneas adicionales al final del ticket
+  - **Verificación de popup:** Mensaje amigable si el navegador bloquea la ventana
+
 ### Completadas (28 Enero 2026)
 
 - [x] **BUGFIX P0 - Flujo de Guardar Ticket para Meseros - CORREGIDO**
