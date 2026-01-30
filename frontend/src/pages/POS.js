@@ -1260,6 +1260,178 @@ export default function POS() {
     toast.success('Ticket despejado');
   };
 
+  // Función para imprimir precuenta (sin cobrar)
+  const handlePrecuenta = async () => {
+    if (cart.length === 0) {
+      toast.info('El ticket está vacío');
+      return;
+    }
+    
+    setShowTicketMenu(false);
+    setShowMobileTicketMenu(false);
+    
+    try {
+      const token = sessionStorage.getItem('token');
+      const configResponse = await axios.get(`${API_URL}/api/config`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const config = configResponse.data;
+      
+      // Calcular totales
+      const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+      const totalDescuentos = descuentos.reduce((sum, d) => sum + (d.monto || 0), 0);
+      const subtotalConDescuento = subtotal - totalDescuentos;
+      
+      // Calcular impuestos
+      let totalImpuestos = 0;
+      let desgloseImpuestos = [];
+      if (impuestosActivos && impuestosActivos.length > 0) {
+        impuestosActivos.forEach(imp => {
+          const montoImp = imp.tipo === 'incluido' 
+            ? subtotalConDescuento - (subtotalConDescuento / (1 + imp.tasa / 100))
+            : subtotalConDescuento * (imp.tasa / 100);
+          desgloseImpuestos.push({ nombre: imp.nombre, tasa: imp.tasa, tipo: imp.tipo, monto: montoImp });
+          if (imp.tipo !== 'incluido') totalImpuestos += montoImp;
+        });
+      }
+      const total = subtotalConDescuento + totalImpuestos;
+      
+      const anchoTicket = config.ancho_ticket || 80;
+      const anchoPx = anchoTicket === 58 ? 220 : 300;
+      const fontSize = anchoTicket === 58 ? '10px' : '12px';
+      const fontSizeSmall = anchoTicket === 58 ? '9px' : '11px';
+      const fontSizeTitle = anchoTicket === 58 ? '14px' : '16px';
+      
+      // Crear iframe oculto
+      const printFrame = document.createElement('iframe');
+      printFrame.style.position = 'absolute';
+      printFrame.style.top = '-10000px';
+      printFrame.style.left = '-10000px';
+      printFrame.style.width = '0';
+      printFrame.style.height = '0';
+      printFrame.style.border = 'none';
+      document.body.appendChild(printFrame);
+      
+      const printDocument = printFrame.contentWindow.document;
+      printDocument.open();
+      printDocument.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Precuenta</title>
+          <style>
+            body { font-family: 'Courier New', monospace; padding: 10px; font-size: ${fontSize}; max-width: ${anchoPx}px; margin: 0 auto; }
+            .header { text-align: center; margin-bottom: 10px; }
+            .header h1 { font-size: ${fontSizeTitle}; margin: 0; }
+            .header p { margin: 2px 0; font-size: ${fontSizeSmall}; }
+            .precuenta-badge { 
+              text-align: center; 
+              padding: 8px; 
+              margin: 10px 0; 
+              background: #fef3c7; 
+              border: 2px dashed #f59e0b;
+              font-weight: bold;
+            }
+            .divider { border-top: 1px dashed #000; margin: 8px 0; }
+            .item { display: flex; justify-content: space-between; margin: 4px 0; font-size: ${fontSizeSmall}; }
+            .total { border-top: 2px solid #000; margin-top: 8px; padding-top: 8px; font-weight: bold; }
+            .footer { margin-top: 15px; text-align: center; font-size: ${fontSizeSmall}; }
+            .nota { text-align: center; font-size: 9px; color: #666; margin-top: 10px; padding: 5px; border: 1px dashed #999; }
+            @media print { body { margin: 0; padding: 5px; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${config.nombre_negocio || 'Mi Negocio'}</h1>
+            ${config.direccion ? `<p>${config.direccion}</p>` : ''}
+            ${config.telefono ? `<p>Tel: ${config.telefono}</p>` : ''}
+          </div>
+          
+          <div class="precuenta-badge">
+            📋 PRECUENTA
+          </div>
+          
+          <p style="text-align:center; font-size: 10px;">Fecha: ${new Date().toLocaleString('es-ES')}</p>
+          ${ticketActualId ? `<p style="text-align:center; font-size: 10px;">Mesa/Ticket: ${cart[0]?.mesa || 'N/A'}</p>` : ''}
+          
+          <div class="divider"></div>
+          
+          ${clienteSeleccionado ? `
+            <div style="margin-bottom: 8px;">
+              <p style="font-weight: bold; margin: 2px 0;">Cliente: ${clienteSeleccionado.nombre}</p>
+            </div>
+            <div class="divider"></div>
+          ` : ''}
+          
+          <div class="items">
+            ${cart.map(item => `
+              <div class="item">
+                <span>${item.nombre} x${item.cantidad}</span>
+                <span>$${item.subtotal.toFixed(2)}</span>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div class="item"><span>Subtotal:</span><span>$${subtotal.toFixed(2)}</span></div>
+          
+          ${totalDescuentos > 0 ? `
+            <div class="item" style="color: #dc2626;"><span>Descuentos:</span><span>-$${totalDescuentos.toFixed(2)}</span></div>
+          ` : ''}
+          
+          ${desgloseImpuestos.map(imp => `
+            <div class="item"><span>${imp.nombre} (${imp.tasa}%):</span><span>$${imp.monto.toFixed(2)}</span></div>
+          `).join('')}
+          
+          <div class="total">
+            <div class="item"><span>TOTAL A PAGAR:</span><span>$${total.toFixed(2)}</span></div>
+          </div>
+          
+          <div class="nota">
+            ⚠️ Este documento es solo informativo.<br>
+            Solicite su ticket de venta al momento de pagar.
+          </div>
+          
+          <div class="footer">
+            <p>¡Gracias por su preferencia!</p>
+          </div>
+          
+          <!-- Espacio para corte -->
+          <div style="height: 30px;"></div>
+          <br><br>
+          <p style="text-align: center; color: #ccc; font-size: 8px;">. . . . . . . . . . . . . . . . . . . . . . . .</p>
+          <br>
+        </body>
+        </html>
+      `);
+      printDocument.close();
+      
+      let printed = false;
+      const executePrint = () => {
+        if (printed) return;
+        printed = true;
+        printFrame.contentWindow.focus();
+        printFrame.contentWindow.print();
+        setTimeout(() => {
+          if (document.body.contains(printFrame)) {
+            document.body.removeChild(printFrame);
+          }
+        }, 1000);
+      };
+      
+      printFrame.onload = function() {
+        setTimeout(executePrint, 300);
+      };
+      setTimeout(executePrint, 800);
+      
+      toast.success('Precuenta enviada a imprimir');
+    } catch (error) {
+      console.error('Error al imprimir precuenta:', error);
+      toast.error('Error al imprimir precuenta');
+    }
+  };
+
   const handleDividirTicket = () => {
     // Calcular total de unidades en el carrito
     const totalUnidades = cart.reduce((sum, item) => sum + item.cantidad, 0);
