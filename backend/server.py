@@ -4261,16 +4261,29 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         codigo_establecimiento = tienda.get("codigo_establecimiento", "001")
         punto_emision = tpv["punto_emision"]
         
-        # Marcar el TPV como ocupado
+        # Marcar el TPV como ocupado (sistema nuevo y legacy)
+        user_id = str(current_user.get("_id") or current_user.get("user_id"))
         await db.tpv.update_one(
             {"id": tpv_id},
             {
                 "$set": {
                     "ocupado": True,
                     "ocupado_por": current_user["_id"],
-                    "ocupado_por_nombre": current_user["nombre"]
+                    "ocupado_por_nombre": current_user["nombre"],
+                    "estado_sesion": "ocupado",
+                    "usuario_reservado_id": user_id,
+                    "usuario_reservado_nombre": current_user["nombre"]
                 }
             }
+        )
+        
+        # Actualizar la sesión del usuario con el TPV asignado
+        await db.sesiones_pos.update_one(
+            {"user_id": user_id, "activa": True},
+            {"$set": {
+                "tpv_id": tpv_id,
+                "tpv_nombre": tpv_nombre
+            }}
         )
         
         # El nombre de la caja será el nombre del TPV
