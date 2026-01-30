@@ -2076,6 +2076,8 @@ async def login_con_pin(pin_login: PINLogin):
                     "code": "SESSION_ACTIVE",
                     "message": "Este usuario ya tiene una sesión activa",
                     "session_info": {
+                        "usuario_nombre": user.get("nombre", "Usuario"),
+                        "usuario_rol": user.get("rol", ""),
                         "dispositivo": sesion_existente.get("dispositivo", "Desconocido"),
                         "iniciada": sesion_existente.get("fecha_inicio", ""),
                         "ultima_actividad": sesion_existente.get("ultima_actividad", "")
