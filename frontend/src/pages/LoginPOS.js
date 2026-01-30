@@ -174,13 +174,28 @@ export default function LoginPOS({ onLogin }) {
         description: `Tienda: ${tienda.nombre}`
       });
     } catch (error) {
-      // Verificar si es error de sesión activa (código 409)
+      // Verificar si es error de sesión (código 409)
       if (error.response?.status === 409) {
         const detail = error.response.data?.detail;
+        
         if (detail?.code === 'SESSION_ACTIVE') {
           setSesionActivaInfo(detail.session_info);
+          setTipoSesionConflicto('active');
           setShowSesionActivaDialog(true);
-          return; // No limpiar el PIN
+          return;
+        }
+        
+        if (detail?.code === 'SESSION_PAUSED') {
+          setSesionActivaInfo(detail.session_info);
+          setTipoSesionConflicto('paused');
+          setShowSesionActivaDialog(true);
+          return;
+        }
+        
+        if (detail?.code === 'TPV_RESERVED' || detail?.code === 'TPV_BUSY') {
+          toast.error(detail.message || 'TPV no disponible');
+          setPin('');
+          return;
         }
       }
       
