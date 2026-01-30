@@ -1872,7 +1872,7 @@ async def get_usuarios(current_user: dict = Depends(get_propietario_user)):
             perfil_nombre=perfiles_map.get(u.get("perfil_id"), u["rol"].capitalize()),
             organizacion_id=u["organizacion_id"],
             creado_por=u.get("creado_por"),
-            creado=u["creado"],
+            creado=u.get("creado", ""),
             pin=u.get("pin"),
             pin_activo=u.get("pin_activo", False)
         )
