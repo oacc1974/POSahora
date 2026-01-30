@@ -173,28 +173,40 @@ export default function LoginPOS({ onLogin }) {
 
       const { usuario, tienda, tpvs_disponibles, sesion_pausada, sesion_activa } = response.data;
       
-      // Si tiene sesión pausada (caja abierta), ir directo al login con ese TPV
+      // Si tiene sesión pausada (caja abierta), mostrar su TPV en la lista
       if (sesion_pausada) {
-        setSesionActivaInfo({
-          ...sesion_pausada,
-          usuario_nombre: usuario.nombre,
-          usuario_rol: usuario.rol
-        });
-        setTipoSesionConflicto('paused');
         setPinValidado(pinValue);
         setUsuarioPreLogin(usuario);
-        setShowSesionActivaDialog(true);
+        // Crear un TPV virtual con la info de la sesión pausada
+        const tpvPausado = {
+          id: sesion_pausada.tpv_id,
+          nombre: sesion_pausada.tpv_nombre + " (Tu caja pendiente)",
+          tienda_nombre: tienda?.nombre || "Tienda",
+          punto_emision: "001",
+          es_mi_caja: true
+        };
+        setTpvsDisponibles([tpvPausado]);
+        setTpvSeleccionado(tpvPausado);
+        setPaso('tpv');
+        
+        // Mostrar mensaje informativo
+        toast.info(`Tienes una caja abierta en ${sesion_pausada.tpv_nombre}`, {
+          description: "Debes continuar en el mismo TPV"
+        });
         return;
       }
       
-      // Si tiene sesión activa, también mostrar su TPV
+      // Si tiene sesión activa, mostrar su TPV
       if (sesion_activa) {
-        setSesionActivaInfo({
-          ...sesion_activa,
-          usuario_nombre: usuario.nombre,
-          usuario_rol: usuario.rol
-        });
-        // No mostrar diálogo, solo continuar con los TPVs disponibles
+        setPinValidado(pinValue);
+        setUsuarioPreLogin(usuario);
+        // El TPV ya viene en tpvs_disponibles con "(Tu sesión activa)"
+        setTpvsDisponibles(tpvs_disponibles || []);
+        if (tpvs_disponibles?.length === 1) {
+          setTpvSeleccionado(tpvs_disponibles[0]);
+        }
+        setPaso('tpv');
+        return;
       }
       
       // Guardar datos para el siguiente paso
