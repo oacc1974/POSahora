@@ -20,6 +20,12 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### Completadas (30 Enero 2026)
 
+- [x] **MEJORAS P0 - IMPRESIÓN Y DATOS DE CLIENTE - COMPLETADO**
+  - **Espacio de corte reducido:** Se redujo el espacio extra al final del ticket de impresión (de ~120px+15br a ~40px+3br)
+  - **Datos del cliente siempre visibles:** Ahora los tickets reimpresos desde Reportes siempre muestran los datos del cliente
+  - **Nuevo endpoint:** `GET /api/clientes/id/{cliente_id}` para buscar cliente por ID
+  - **Archivos modificados:** `POS.js`, `Reportes.js`, `server.py`
+
 - [x] **SISTEMA DE SESIONES POR TPV - COMPLETADO**
   - **Flujo nuevo de login:** 1) Código tienda → 2) PIN → 3) Seleccionar TPV → 4) Entrar al POS
   - **Un usuario = Un TPV:** Cada usuario solo puede estar en un TPV a la vez
@@ -32,7 +38,7 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 - [x] **MEJORAS DE IMPRESIÓN DE TICKETS**
   - **Ancho configurable:** 58mm o 80mm en Configuración → Recibo
-  - **Espacio para corte:** 15 líneas adicionales al final del ticket
+  - **Espacio para corte:** Espacio adicional al final del ticket (ajustado a preferencia del usuario)
   - **Verificación de popup:** Mensaje amigable si el navegador bloquea la ventana
 
 ### Completadas (28 Enero 2026)
