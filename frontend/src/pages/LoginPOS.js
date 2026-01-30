@@ -136,12 +136,12 @@ export default function LoginPOS({ onLogin }) {
     return 'Computadora';
   };
 
-  // Login con PIN (usa el PIN del estado)
+  // PASO 1: Validar PIN y mostrar TPVs disponibles
   const handlePinSubmit = async (forzarCierre = false) => {
     return handlePinSubmitWithPin(pin, forzarCierre);
   };
 
-  // Login con PIN (recibe el PIN directamente - para auto-login)
+  // Validar PIN y cargar TPVs (no hace login completo aún)
   const handlePinSubmitWithPin = async (pinValue, forzarCierre = false) => {
     if (pinValue.length !== 4) {
       toast.error('El PIN debe tener 4 dígitos');
@@ -160,27 +160,47 @@ export default function LoginPOS({ onLogin }) {
     }
     
     try {
+      // Validar PIN primero (sin asignar TPV aún)
       const response = await axios.post(
-        `${API_URL}/api/auth/login-pin`,
+        `${API_URL}/api/auth/validar-pin`,
         { 
           pin: pinValue, 
           codigo_tienda: codigoTienda,
-          forzar_cierre: forzarCierre,
-          dispositivo: getDeviceName()
+          forzar_cierre: forzarCierre
         },
         { withCredentials: true }
       );
 
-      const { access_token, session_id, usuario, tienda } = response.data;
+      const { usuario, tienda, tpvs_disponibles, sesion_pausada } = response.data;
       
-      // Guardar session_id para verificación
-      sessionStorage.setItem('pos_session_id', session_id);
+      // Si tiene sesión pausada (caja abierta), ir directo al login con ese TPV
+      if (sesion_pausada) {
+        setSesionActivaInfo({
+          ...sesion_pausada,
+          usuario_nombre: usuario.nombre,
+          usuario_rol: usuario.rol
+        });
+        setTipoSesionConflicto('paused');
+        setPinValidado(pinValue);
+        setUsuarioPreLogin(usuario);
+        setShowSesionActivaDialog(true);
+        return;
+      }
       
+      // Guardar datos para el siguiente paso
+      setPinValidado(pinValue);
+      setUsuarioPreLogin(usuario);
+      setTpvsDisponibles(tpvs_disponibles || []);
+      
+      // Si solo hay un TPV, seleccionarlo automáticamente
+      if (tpvs_disponibles?.length === 1) {
+        setTpvSeleccionado(tpvs_disponibles[0]);
+      }
+      
+      // Pasar al paso de selección de TPV
+      setPaso('tpv');
       setShowSesionActivaDialog(false);
-      onLogin(usuario, access_token);
-      toast.success(`¡Bienvenido, ${usuario.nombre}!`, {
-        description: `Tienda: ${tienda.nombre}`
-      });
+      
     } catch (error) {
       // Verificar si es error de sesión (código 409)
       if (error.response?.status === 409) {
@@ -189,6 +209,7 @@ export default function LoginPOS({ onLogin }) {
         if (detail?.code === 'SESSION_ACTIVE') {
           setSesionActivaInfo(detail.session_info);
           setTipoSesionConflicto('active');
+          setPinValidado(pinValue);
           setShowSesionActivaDialog(true);
           return;
         }
@@ -196,6 +217,7 @@ export default function LoginPOS({ onLogin }) {
         if (detail?.code === 'SESSION_PAUSED') {
           setSesionActivaInfo(detail.session_info);
           setTipoSesionConflicto('paused');
+          setPinValidado(pinValue);
           setShowSesionActivaDialog(true);
           return;
         }
@@ -215,6 +237,60 @@ export default function LoginPOS({ onLogin }) {
     } finally {
       setLoadingPin(false);
       setCerrandoSesion(false);
+    }
+  };
+
+  // PASO 2: Confirmar TPV y hacer login completo
+  const handleConfirmarTPV = async (forzarCierre = false) => {
+    if (!tpvSeleccionado && !forzarCierre) {
+      toast.error('Selecciona un punto de venta');
+      return;
+    }
+    
+    setLoadingPin(true);
+    
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/auth/login-pin`,
+        { 
+          pin: pinValidado, 
+          codigo_tienda: codigoTienda,
+          tpv_id: tpvSeleccionado?.id || sesionActivaInfo?.tpv_id,
+          forzar_cierre: forzarCierre,
+          dispositivo: getDeviceName()
+        },
+        { withCredentials: true }
+      );
+
+      const { access_token, session_id, usuario, tienda } = response.data;
+      
+      // Guardar session_id y TPV asignado
+      sessionStorage.setItem('pos_session_id', session_id);
+      sessionStorage.setItem('pos_tpv_asignado', JSON.stringify(tpvSeleccionado || { id: sesionActivaInfo?.tpv_id, nombre: sesionActivaInfo?.tpv_nombre }));
+      
+      setShowSesionActivaDialog(false);
+      onLogin(usuario, access_token);
+      toast.success(`¡Bienvenido, ${usuario.nombre}!`, {
+        description: `TPV: ${tpvSeleccionado?.nombre || sesionActivaInfo?.tpv_nombre || 'Asignado'}`
+      });
+    } catch (error) {
+      const errorMsg = typeof error.response?.data?.detail === 'string' 
+        ? error.response?.data?.detail 
+        : 'Error al iniciar sesión';
+      toast.error(errorMsg);
+    } finally {
+      setLoadingPin(false);
+    }
+  };
+
+  // Volver al paso anterior
+  const volverAPaso = (pasoAnterior) => {
+    setPaso(pasoAnterior);
+    if (pasoAnterior === 'pin') {
+      setPin('');
+      setPinValidado(null);
+      setTpvSeleccionado(null);
+      setUsuarioPreLogin(null);
     }
   };
 
