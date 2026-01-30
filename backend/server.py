@@ -1336,9 +1336,6 @@ async def register_user(user_data: UserRegister, response: Response):
     }
     await db.tpv.insert_one(tpv_default)
     
-    # Crear perfiles por defecto para la organización
-    await crear_perfiles_default(org_id)
-    
     session_token = f"session_{uuid.uuid4().hex}"
     await db.user_sessions.insert_one({
         "user_id": user_id,
