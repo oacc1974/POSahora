@@ -501,45 +501,88 @@ export default function LoginPOS({ onLogin }) {
         </Card>
       </div>
 
-      {/* Diálogo de Sesión Activa */}
+      {/* Diálogo de Sesión Activa / Pausada */}
       <Dialog open={showSesionActivaDialog} onOpenChange={setShowSesionActivaDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-600">
               <AlertTriangle size={24} />
-              Sesión Activa Detectada
+              {tipoSesionConflicto === 'paused' ? 'Caja Abierta Pendiente' : 'Sesión Activa Detectada'}
             </DialogTitle>
           </DialogHeader>
           
           <div className="py-4">
-            <p className="text-slate-700 mb-4">
-              <strong>{sesionActivaInfo?.usuario_nombre || 'Este usuario'}</strong> 
-              {sesionActivaInfo?.usuario_rol && <span className="text-slate-500 text-sm"> ({sesionActivaInfo.usuario_rol})</span>}
-              {' '}ya tiene una sesión iniciada en otro dispositivo.
-            </p>
-            
-            {sesionActivaInfo && (
-              <div className="bg-slate-50 rounded-lg p-4 mb-4">
-                <div className="text-sm space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Dispositivo:</span>
-                    <span className="font-medium">{sesionActivaInfo.dispositivo}</span>
-                  </div>
-                  {sesionActivaInfo.iniciada && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Iniciada:</span>
-                      <span className="font-medium">
-                        {new Date(sesionActivaInfo.iniciada).toLocaleString('es-EC')}
-                      </span>
+            {tipoSesionConflicto === 'paused' ? (
+              <>
+                <p className="text-slate-700 mb-4">
+                  <strong>{sesionActivaInfo?.usuario_nombre || 'Tú'}</strong> tienes una caja abierta que no has cerrado.
+                </p>
+                
+                {sesionActivaInfo && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                    <div className="text-sm space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">TPV:</span>
+                        <span className="font-medium">{sesionActivaInfo.tpv_nombre || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Monto en caja:</span>
+                        <span className="font-bold text-green-600">${sesionActivaInfo.monto_caja?.toFixed(2) || '0.00'}</span>
+                      </div>
+                      {sesionActivaInfo.fecha_pausa && (
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Pausada:</span>
+                          <span className="font-medium">
+                            {new Date(sesionActivaInfo.fecha_pausa).toLocaleString('es-EC')}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
+                )}
+                
+                <p className="text-slate-600 text-sm">
+                  Debes volver al mismo TPV para cerrar tu caja. ¿Deseas continuar?
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-slate-700 mb-4">
+                  <strong>{sesionActivaInfo?.usuario_nombre || 'Este usuario'}</strong> 
+                  {sesionActivaInfo?.usuario_rol && <span className="text-slate-500 text-sm"> ({sesionActivaInfo.usuario_rol})</span>}
+                  {' '}ya tiene una sesión iniciada en otro dispositivo.
+                </p>
+                
+                {sesionActivaInfo && (
+                  <div className="bg-slate-50 rounded-lg p-4 mb-4">
+                    <div className="text-sm space-y-2">
+                      {sesionActivaInfo.tpv_nombre && (
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">TPV:</span>
+                          <span className="font-medium">{sesionActivaInfo.tpv_nombre}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Dispositivo:</span>
+                        <span className="font-medium">{sesionActivaInfo.dispositivo}</span>
+                      </div>
+                      {sesionActivaInfo.iniciada && (
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Iniciada:</span>
+                          <span className="font-medium">
+                            {new Date(sesionActivaInfo.iniciada).toLocaleString('es-EC')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                <p className="text-slate-600 text-sm">
+                  ¿Deseas cerrar la otra sesión e iniciar aquí?
+                </p>
+              </>
             )}
-            
-            <p className="text-slate-600 text-sm">
-              ¿Deseas cerrar la otra sesión e iniciar aquí?
-            </p>
           </div>
           
           <DialogFooter className="flex gap-2">
@@ -548,6 +591,7 @@ export default function LoginPOS({ onLogin }) {
               onClick={() => {
                 setShowSesionActivaDialog(false);
                 setPin('');
+                setTipoSesionConflicto(null);
               }}
               disabled={cerrandoSesion}
             >
@@ -564,10 +608,10 @@ export default function LoginPOS({ onLogin }) {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Cerrando...
+                  {tipoSesionConflicto === 'paused' ? 'Abriendo...' : 'Cerrando...'}
                 </span>
               ) : (
-                'Sí, iniciar aquí'
+                tipoSesionConflicto === 'paused' ? 'Continuar a mi caja' : 'Sí, iniciar aquí'
               )}
             </Button>
           </DialogFooter>
