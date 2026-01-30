@@ -2519,7 +2519,7 @@ export default function POS() {
               </div>
             )}
 
-            {tpvsDisponibles.length === 0 && (
+            {!tpvAsignadoEnLogin && tpvsDisponibles.length === 0 && (
               <div className={`p-4 rounded-lg border ${totalTpvs > 0 ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'}`}>
                 {totalTpvs > 0 ? (
                   // Hay TPVs pero todos ocupados
