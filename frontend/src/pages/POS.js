@@ -1050,71 +1050,71 @@ export default function POS() {
       
       // Mostrar logo si existe
       if (config.logo_url) {
-        printWindow.document.write('<div class="logo">');
-        printWindow.document.write(`<img src="${API_URL}${config.logo_url}" alt="Logo" />`);
-        printWindow.document.write('</div>');
+        printDocument.write('<div class="logo">');
+        printDocument.write(`<img src="${API_URL}${config.logo_url}" alt="Logo" />`);
+        printDocument.write('</div>');
       }
       
       if (config.cabecera && config.cabecera.trim() !== '') {
-        printWindow.document.write('<div style="text-align:center; margin-bottom: 8px; padding: 5px 0;">');
-        printWindow.document.write(`<p style="font-size: 11px; font-weight: bold; margin: 0;">${config.cabecera}</p>`);
-        printWindow.document.write('</div>');
-        printWindow.document.write('<div class="divider"></div>');
+        printDocument.write('<div style="text-align:center; margin-bottom: 8px; padding: 5px 0;">');
+        printDocument.write(`<p style="font-size: 11px; font-weight: bold; margin: 0;">${config.cabecera}</p>`);
+        printDocument.write('</div>');
+        printDocument.write('<div class="divider"></div>');
       }
-      printWindow.document.write('<div class="header">');
-      printWindow.document.write(`<h1>${config.nombre_negocio || 'Mi Negocio'}</h1>`);
+      printDocument.write('<div class="header">');
+      printDocument.write(`<h1>${config.nombre_negocio || 'Mi Negocio'}</h1>`);
       if (config.direccion) {
-        printWindow.document.write(`<p>${config.direccion}</p>`);
+        printDocument.write(`<p>${config.direccion}</p>`);
       }
       if (config.telefono) {
-        printWindow.document.write(`<p>Tel: ${config.telefono}</p>`);
+        printDocument.write(`<p>Tel: ${config.telefono}</p>`);
       }
       if (config.rfc) {
-        printWindow.document.write(`<p>RUC: ${config.rfc}</p>`);
+        printDocument.write(`<p>RUC: ${config.rfc}</p>`);
       }
       if (config.email) {
-        printWindow.document.write(`<p>${config.email}</p>`);
+        printDocument.write(`<p>${config.email}</p>`);
       }
       if (config.sitio_web) {
-        printWindow.document.write(`<p>${config.sitio_web}</p>`);
+        printDocument.write(`<p>${config.sitio_web}</p>`);
       }
-      printWindow.document.write('</div>');
-      printWindow.document.write('<div class="divider"></div>');
+      printDocument.write('</div>');
+      printDocument.write('<div class="divider"></div>');
       
       // === DIFERENCIACIÓN DE TIPO DE DOCUMENTO ===
       if (esFacturaElectronica && invoice.factura_electronica) {
         // FACTURA ELECTRÓNICA
-        printWindow.document.write('<div style="text-align:center; margin: 5px 0; padding: 5px; background: #f0f9f0; border: 1px solid #4ade80;">');
-        printWindow.document.write('<p style="font-weight: bold; font-size: 12px; margin: 2px 0;">📄 FACTURA ELECTRÓNICA</p>');
-        printWindow.document.write(`<p style="font-size: 11px; margin: 2px 0;">No. ${invoice.factura_electronica.numero_documento || 'Pendiente'}</p>`);
-        printWindow.document.write('</div>');
+        printDocument.write('<div style="text-align:center; margin: 5px 0; padding: 5px; background: #f0f9f0; border: 1px solid #4ade80;">');
+        printDocument.write('<p style="font-weight: bold; font-size: 12px; margin: 2px 0;">📄 FACTURA ELECTRÓNICA</p>');
+        printDocument.write(`<p style="font-size: 11px; margin: 2px 0;">No. ${invoice.factura_electronica.numero_documento || 'Pendiente'}</p>`);
+        printDocument.write('</div>');
         
         if (invoice.factura_electronica.clave_acceso) {
-          printWindow.document.write('<div style="text-align:center; margin: 5px 0;">');
-          printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0;">Clave de Acceso:</p>`);
-          printWindow.document.write(`<p style="font-size: 8px; margin: 2px 0; word-break: break-all;">${invoice.factura_electronica.clave_acceso}</p>`);
+          printDocument.write('<div style="text-align:center; margin: 5px 0;">');
+          printDocument.write(`<p style="font-size: 9px; margin: 2px 0;">Clave de Acceso:</p>`);
+          printDocument.write(`<p style="font-size: 8px; margin: 2px 0; word-break: break-all;">${invoice.factura_electronica.clave_acceso}</p>`);
           if (invoice.factura_electronica.estado) {
-            printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0; font-weight: bold;">Estado: ${invoice.factura_electronica.estado}</p>`);
+            printDocument.write(`<p style="font-size: 9px; margin: 2px 0; font-weight: bold;">Estado: ${invoice.factura_electronica.estado}</p>`);
           }
           if (invoice.factura_electronica.numero_autorizacion) {
-            printWindow.document.write(`<p style="font-size: 9px; margin: 2px 0;">Autorización: ${invoice.factura_electronica.numero_autorizacion}</p>`);
+            printDocument.write(`<p style="font-size: 9px; margin: 2px 0;">Autorización: ${invoice.factura_electronica.numero_autorizacion}</p>`);
           }
-          printWindow.document.write('</div>');
+          printDocument.write('</div>');
         }
       } else {
         // TICKET DE VENTA / COMPROBANTE INTERNO
-        printWindow.document.write('<div style="text-align:center; margin: 5px 0; padding: 5px; background: #f0f0f0;">');
-        printWindow.document.write('<p style="font-weight: bold; font-size: 12px; margin: 2px 0;">🧾 TICKET DE VENTA</p>');
-        printWindow.document.write('<p style="font-size: 10px; margin: 2px 0;">COMPROBANTE INTERNO</p>');
-        printWindow.document.write('</div>');
+        printDocument.write('<div style="text-align:center; margin: 5px 0; padding: 5px; background: #f0f0f0;">');
+        printDocument.write('<p style="font-weight: bold; font-size: 12px; margin: 2px 0;">🧾 TICKET DE VENTA</p>');
+        printDocument.write('<p style="font-size: 10px; margin: 2px 0;">COMPROBANTE INTERNO</p>');
+        printDocument.write('</div>');
       }
       
       // Número de orden interno
-      printWindow.document.write(`<p style="text-align:center; margin: 5px 0;">Orden: ${invoice.numero}</p>`);
-      printWindow.document.write(
+      printDocument.write(`<p style="text-align:center; margin: 5px 0;">Orden: ${invoice.numero}</p>`);
+      printDocument.write(
         `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Fecha: ${new Date(invoice.fecha).toLocaleString('es-ES')}</p>`
       );
-      printWindow.document.write(
+      printDocument.write(
         `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Atendió: ${invoice.vendedor_nombre}</p>`
       );
       
