@@ -111,6 +111,9 @@ export default function POS() {
   const esAdministrador = currentUser?.rol === 'administrador';
   const esPropietario = currentUser?.rol === 'propietario';
   
+  // Obtener TPV asignado en el login
+  const tpvAsignadoEnLogin = JSON.parse(sessionStorage.getItem('pos_tpv_asignado') || 'null');
+  
   // Obtener categorías únicas
   const categorias = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
   const [nuevoClienteForm, setNuevoClienteForm] = useState({
@@ -122,7 +125,7 @@ export default function POS() {
   });
   const [tpvsDisponibles, setTpvsDisponibles] = useState([]);
   const [totalTpvs, setTotalTpvs] = useState(0);
-  const [tpvSeleccionado, setTpvSeleccionado] = useState(null);
+  const [tpvSeleccionado, setTpvSeleccionado] = useState(tpvAsignadoEnLogin?.id || null);
 
   useEffect(() => {
     // Esperar a que el token esté disponible en sessionStorage
