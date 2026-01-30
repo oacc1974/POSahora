@@ -2152,9 +2152,21 @@ async def login_con_pin(pin_login: PINLogin):
         tpv_info = await db.tpv.find_one({"id": tpv_reservado}) if tpv_reservado else None
         tpv_nombre = tpv_info.get("nombre", "TPV") if tpv_info else "TPV"
         
-        # Obtener monto de la caja
-        caja = await db.cajas.find_one({"_id": ObjectId(caja_id)}) if caja_id else None
-        monto_caja = caja.get("monto_actual", 0) if caja else 0
+        # Obtener monto de la caja (buscar por múltiples formatos de ID)
+        caja = None
+        monto_caja = 0
+        if caja_id:
+            try:
+                # Intentar primero con ObjectId
+                caja = await db.cajas.find_one({"_id": ObjectId(caja_id)})
+            except:
+                # Si falla, buscar como string o por usuario
+                caja = await db.cajas.find_one({
+                    "usuario_id": user_id,
+                    "estado": "abierta"
+                })
+            if caja:
+                monto_caja = caja.get("monto_actual", 0)
         
         if not getattr(pin_login, 'forzar_cierre', False):
             raise HTTPException(
