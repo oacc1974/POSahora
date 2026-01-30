@@ -171,7 +171,7 @@ export default function LoginPOS({ onLogin }) {
         { withCredentials: true }
       );
 
-      const { usuario, tienda, tpvs_disponibles, sesion_pausada } = response.data;
+      const { usuario, tienda, tpvs_disponibles, sesion_pausada, sesion_activa } = response.data;
       
       // Si tiene sesión pausada (caja abierta), ir directo al login con ese TPV
       if (sesion_pausada) {
