@@ -759,18 +759,27 @@ export default function LoginPOS({ onLogin }) {
               onClick={() => {
                 setShowSesionActivaDialog(false);
                 setPin('');
+                setPinValidado(null);
                 setTipoSesionConflicto(null);
               }}
-              disabled={cerrandoSesion}
+              disabled={cerrandoSesion || loadingPin}
             >
               Cancelar
             </Button>
             <Button
-              onClick={() => handlePinSubmit(true)}
-              disabled={cerrandoSesion}
+              onClick={() => {
+                if (tipoSesionConflicto === 'paused') {
+                  // Si tiene sesión pausada, ir directo al login con el TPV reservado
+                  handleConfirmarTPV(true);
+                } else {
+                  // Si es sesión activa, primero validar y luego mostrar TPVs
+                  handlePinSubmitWithPin(pinValidado || pin, true);
+                }
+              }}
+              disabled={cerrandoSesion || loadingPin}
               className="bg-amber-600 hover:bg-amber-700"
             >
-              {cerrandoSesion ? (
+              {(cerrandoSesion || loadingPin) ? (
                 <span className="flex items-center gap-2">
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
