@@ -1124,9 +1124,6 @@ async def google_auth(body: GoogleAuthRequest, response: Response):
         }
         await db.tpv.insert_one(tpv_default)
         
-        # Crear perfiles por defecto
-        await crear_perfiles_default(org_id)
-        
         # Crear funciones por defecto
         await db.funciones.insert_one({
             "_id": str(uuid.uuid4()),
