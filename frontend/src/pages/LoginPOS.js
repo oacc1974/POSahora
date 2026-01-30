@@ -41,6 +41,7 @@ export default function LoginPOS({ onLogin }) {
   const [showSesionActivaDialog, setShowSesionActivaDialog] = useState(false);
   const [sesionActivaInfo, setSesionActivaInfo] = useState(null);
   const [cerrandoSesion, setCerrandoSesion] = useState(false);
+  const [tipoSesionConflicto, setTipoSesionConflicto] = useState(null); // 'active' | 'paused' | 'tpv_reserved'
 
   // Cargar código de tienda guardado al iniciar
   useEffect(() => {
