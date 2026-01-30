@@ -564,6 +564,90 @@ export default function LoginPOS({ onLogin }) {
             </>
           )}
 
+          {/* PASO: Selección de TPV */}
+          {tiendaVerificada && paso === 'tpv' && (
+            <div className="space-y-4">
+              {/* Info del usuario */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                <p className="text-blue-800 font-medium">
+                  ¡Hola, {usuarioPreLogin?.nombre || 'Usuario'}!
+                </p>
+                <p className="text-blue-600 text-sm">
+                  Selecciona el punto de venta donde trabajarás
+                </p>
+              </div>
+
+              {/* Lista de TPVs */}
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {tpvsDisponibles.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500">
+                    <Store size={32} className="mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No hay puntos de venta disponibles</p>
+                    <p className="text-xs mt-1">Contacta al administrador</p>
+                  </div>
+                ) : (
+                  tpvsDisponibles.map((tpv) => (
+                    <button
+                      key={tpv.id}
+                      onClick={() => setTpvSeleccionado(tpv)}
+                      className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                        tpvSeleccionado?.id === tpv.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-slate-900">
+                            {tpv.nombre}
+                            {tpv.es_mi_caja && (
+                              <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">
+                                Tu caja pendiente
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-sm text-slate-500">{tpv.tienda_nombre}</p>
+                        </div>
+                        {tpvSeleccionado?.id === tpv.id && (
+                          <Check size={24} className="text-blue-600" />
+                        )}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => volverAPaso('pin')}
+                  className="flex-1"
+                >
+                  <ArrowLeft size={18} className="mr-2" />
+                  Volver
+                </Button>
+                <Button
+                  onClick={() => handleConfirmarTPV()}
+                  disabled={!tpvSeleccionado || loadingPin}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  {loadingPin ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Entrando...
+                    </span>
+                  ) : (
+                    'Entrar al POS'
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Mensaje si no hay tienda verificada */}
           {!tiendaVerificada && mostrarInputCodigo && (
             <div className="text-center py-8 text-slate-400">
