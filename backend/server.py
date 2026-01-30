@@ -4461,20 +4461,24 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         if not tpv:
             raise HTTPException(status_code=404, detail="TPV no encontrado o no está activo")
         
-        if tpv.get("ocupado"):
-            raise HTTPException(status_code=400, detail="El TPV ya está ocupado por otro usuario")
-        
-        # Verificar estado de sesión del TPV (nuevo sistema)
-        estado_sesion = tpv.get("estado_sesion", "disponible")
-        usuario_reservado = tpv.get("usuario_reservado_id")
+        # Obtener user_id del usuario actual
         user_id = str(current_user.get("_id") or current_user.get("user_id"))
         
-        if estado_sesion == "pausado" and usuario_reservado and usuario_reservado != user_id:
+        # Verificar estado de sesión del TPV
+        estado_sesion = tpv.get("estado_sesion", "disponible")
+        usuario_reservado = tpv.get("usuario_reservado_id")
+        
+        # Si el TPV está ocupado/reservado por ESTE usuario, permitir
+        if usuario_reservado == user_id:
+            pass  # OK, es su propio TPV
+        elif tpv.get("ocupado") and usuario_reservado and usuario_reservado != user_id:
+            raise HTTPException(status_code=400, detail=f"El TPV ya está ocupado por {tpv.get('usuario_reservado_nombre', 'otro usuario')}")
+        elif estado_sesion == "pausado" and usuario_reservado:
             raise HTTPException(
                 status_code=400, 
                 detail=f"Este TPV está reservado por {tpv.get('usuario_reservado_nombre', 'otro usuario')} que tiene caja abierta"
             )
-        elif estado_sesion == "ocupado" and usuario_reservado != user_id:
+        elif estado_sesion == "ocupado" and usuario_reservado:
             raise HTTPException(
                 status_code=400,
                 detail=f"Este TPV está siendo usado por {tpv.get('usuario_reservado_nombre', 'otro usuario')}"
