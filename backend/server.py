@@ -1296,6 +1296,7 @@ async def register_user(user_data: UserRegister, response: Response):
     tienda_default = {
         "id": str(uuid.uuid4()),
         "nombre": user_data.nombre_tienda,
+        "codigo_tienda": nueva_org["codigo_tienda"],  # Usar el mismo código de la organización
         "direccion": None,
         "telefono": None,
         "email": user_data.email,
