@@ -460,7 +460,7 @@ export default function LoginPOS({ onLogin }) {
           </div>
 
           {/* Solo mostrar opciones de login si la tienda está verificada */}
-          {tiendaVerificada && (
+          {tiendaVerificada && paso !== 'tpv' && (
             <>
               {/* Tabs de modo de login */}
               <div className="flex bg-slate-200 rounded-lg p-1 mb-6">
