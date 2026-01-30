@@ -2409,7 +2409,10 @@ async def login_con_pin(pin_login: PINLogin):
             estado_tpv = tpv.get("estado_sesion", "disponible")
             usuario_reservado = tpv.get("usuario_reservado_id")
             
-            if estado_tpv == "pausado" and usuario_reservado and usuario_reservado != user_id:
+            # Si el TPV está ocupado/pausado por ESTE mismo usuario, permitir
+            if usuario_reservado == user_id:
+                pass  # OK, es su propio TPV
+            elif estado_tpv == "pausado" and usuario_reservado:
                 # TPV reservado por otro usuario
                 raise HTTPException(
                     status_code=409,
@@ -2422,7 +2425,7 @@ async def login_con_pin(pin_login: PINLogin):
                         }
                     }
                 )
-            elif estado_tpv == "ocupado" and usuario_reservado != user_id:
+            elif estado_tpv == "ocupado" and usuario_reservado:
                 raise HTTPException(
                     status_code=409,
                     detail={
