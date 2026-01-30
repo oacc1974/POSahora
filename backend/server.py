@@ -1345,14 +1345,88 @@ async def logout(request: Request, response: Response):
 async def logout_pos(request: Request, current_user: dict = Depends(get_current_user)):
     """Cierra la sesión POS del usuario actual"""
     user_id = str(current_user.get("_id") or current_user.get("user_id"))
+    organizacion_id = str(current_user.get("organizacion_id"))
     
-    # Cerrar todas las sesiones activas del usuario
-    result = await db.sesiones_pos.update_many(
-        {"user_id": user_id, "activa": True},
-        {"$set": {"activa": False, "fecha_cierre": datetime.now(timezone.utc).isoformat()}}
-    )
+    # Verificar si el usuario tiene caja abierta
+    caja_abierta = await db.cajas.find_one({
+        "usuario_id": user_id,
+        "organizacion_id": organizacion_id,
+        "estado": "abierta"
+    })
     
-    return {"message": "Sesión cerrada correctamente", "sesiones_cerradas": result.modified_count}
+    if caja_abierta:
+        # Tiene caja abierta - PAUSAR la sesión en lugar de cerrarla
+        tpv_id = caja_abierta.get("tpv_id")
+        
+        # Marcar sesión como pausada (no cerrada)
+        await db.sesiones_pos.update_many(
+            {"user_id": user_id, "activa": True},
+            {"$set": {
+                "estado": "pausada",
+                "activa": False,
+                "tpv_id": tpv_id,
+                "caja_abierta_id": str(caja_abierta["_id"]),
+                "fecha_pausa": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # Marcar el TPV como pausado/reservado
+        if tpv_id:
+            await db.tpv.update_one(
+                {"id": tpv_id},
+                {"$set": {
+                    "estado_sesion": "pausado",
+                    "usuario_reservado_id": user_id,
+                    "usuario_reservado_nombre": current_user.get("nombre", "Usuario"),
+                    "caja_abierta_id": str(caja_abierta["_id"])
+                }}
+            )
+        
+        return {
+            "message": "Sesión pausada - Tienes caja abierta",
+            "estado": "pausada",
+            "tpv_reservado": tpv_id,
+            "debe_cerrar_caja": True,
+            "monto_caja": caja_abierta.get("monto_actual", 0)
+        }
+    else:
+        # No tiene caja abierta - cerrar sesión completamente
+        # Obtener el TPV de la sesión para liberarlo
+        sesion = await db.sesiones_pos.find_one({"user_id": user_id, "activa": True})
+        tpv_id = sesion.get("tpv_id") if sesion else None
+        
+        # Cerrar todas las sesiones activas del usuario
+        await db.sesiones_pos.update_many(
+            {"user_id": user_id, "activa": True},
+            {"$set": {
+                "activa": False,
+                "estado": "cerrada",
+                "fecha_cierre": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # Liberar el TPV si estaba asignado
+        if tpv_id:
+            await db.tpv.update_one(
+                {"id": tpv_id},
+                {"$set": {
+                    "estado_sesion": "disponible",
+                    "usuario_reservado_id": None,
+                    "usuario_reservado_nombre": None,
+                    "caja_abierta_id": None
+                }}
+            )
+        
+        # También limpiar sesiones pausadas del usuario (si cerró caja desde otro lugar)
+        await db.sesiones_pos.update_many(
+            {"user_id": user_id, "estado": "pausada"},
+            {"$set": {
+                "estado": "cerrada",
+                "fecha_cierre": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        return {"message": "Sesión cerrada correctamente", "estado": "cerrada"}
 
 @app.get("/api/auth/verificar-sesion")
 async def verificar_sesion(request: Request, current_user: dict = Depends(get_current_user)):
