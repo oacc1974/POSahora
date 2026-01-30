@@ -129,6 +129,7 @@ class UserLogin(BaseModel):
 class PINLogin(BaseModel):
     pin: str
     codigo_tienda: str  # Código de tienda obligatorio para mayor seguridad
+    tpv_id: Optional[str] = None  # TPV seleccionado en el login
     forzar_cierre: Optional[bool] = False  # Si es True, cierra la sesión anterior
     dispositivo: Optional[str] = "Navegador Web"  # Identificador del dispositivo
 
