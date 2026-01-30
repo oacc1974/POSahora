@@ -1110,6 +1110,23 @@ async def google_auth(body: GoogleAuthRequest, response: Response):
         }
         await db.tiendas.insert_one(nueva_tienda)
         
+        # Crear TPV por defecto
+        tpv_default = {
+            "id": str(uuid.uuid4()),
+            "nombre": "Caja Principal",
+            "punto_emision": "001",
+            "tienda_id": tienda_id,
+            "activo": True,
+            "ocupado": False,
+            "estado_sesion": "disponible",
+            "organizacion_id": org_id,
+            "fecha_creacion": datetime.now(timezone.utc).isoformat()
+        }
+        await db.tpv.insert_one(tpv_default)
+        
+        # Crear perfiles por defecto
+        await crear_perfiles_default(org_id)
+        
         # Crear funciones por defecto
         await db.funciones.insert_one({
             "_id": str(uuid.uuid4()),
