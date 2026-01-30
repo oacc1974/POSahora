@@ -43,6 +43,14 @@ export default function LoginPOS({ onLogin }) {
   const [cerrandoSesion, setCerrandoSesion] = useState(false);
   const [tipoSesionConflicto, setTipoSesionConflicto] = useState(null); // 'active' | 'paused' | 'tpv_reserved'
 
+  // Estados para selección de TPV
+  const [paso, setPaso] = useState('tienda'); // 'tienda' | 'pin' | 'tpv'
+  const [tpvsDisponibles, setTpvsDisponibles] = useState([]);
+  const [tpvSeleccionado, setTpvSeleccionado] = useState(null);
+  const [cargandoTpvs, setCargandoTpvs] = useState(false);
+  const [pinValidado, setPinValidado] = useState(null); // Guarda el PIN validado temporalmente
+  const [usuarioPreLogin, setUsuarioPreLogin] = useState(null); // Info del usuario antes de confirmar TPV
+
   // Cargar código de tienda guardado al iniciar
   useEffect(() => {
     const codigoGuardado = localStorage.getItem(STORAGE_KEY);
