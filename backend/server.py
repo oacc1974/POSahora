@@ -2438,7 +2438,26 @@ async def login_con_pin(pin_login: PINLogin):
             }}
         )
         
-        # Crear nueva sesión
+        # Obtener info del TPV seleccionado
+        tpv_nombre = ""
+        if tpv_id_seleccionado:
+            tpv_info = await db.tpv.find_one({"id": tpv_id_seleccionado})
+            if tpv_info:
+                tpv_nombre = tpv_info.get("nombre", "")
+                # Marcar TPV como ocupado desde el login
+                await db.tpv.update_one(
+                    {"id": tpv_id_seleccionado},
+                    {"$set": {
+                        "estado_sesion": "ocupado",
+                        "usuario_reservado_id": user_id,
+                        "usuario_reservado_nombre": user.get("nombre", "Usuario"),
+                        "ocupado": True,
+                        "ocupado_por": user_id,
+                        "ocupado_por_nombre": user.get("nombre", "Usuario")
+                    }}
+                )
+        
+        # Crear nueva sesión con TPV asignado
         nueva_sesion = {
             "session_id": session_id,
             "user_id": user_id,
@@ -2446,7 +2465,7 @@ async def login_con_pin(pin_login: PINLogin):
             "user_rol": user.get("rol", ""),
             "organizacion_id": organizacion_id,
             "tpv_id": tpv_id_seleccionado,
-            "tpv_nombre": "",
+            "tpv_nombre": tpv_nombre,
             "dispositivo": getattr(pin_login, 'dispositivo', None) or "Navegador Web",
             "activa": True,
             "estado": "activa",
