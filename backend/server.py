@@ -1368,6 +1368,16 @@ async def register_user(user_data: UserRegister, response: Response):
             "username": new_user["username"],
             "rol": new_user["rol"],
             "organizacion_id": new_user["organizacion_id"]
+        },
+        "organizacion": {
+            "id": org_id,
+            "nombre": nueva_org["nombre"],
+            "codigo_tienda": nueva_org["codigo_tienda"]
+        },
+        "tienda": {
+            "id": tienda_default["id"],
+            "nombre": tienda_default["nombre"],
+            "codigo_tienda": tienda_default["codigo_tienda"]
         }
     }
 
