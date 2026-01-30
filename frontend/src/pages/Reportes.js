@@ -1519,8 +1519,24 @@ function ReporteRecibos({ facturas, onReembolso }) {
     }
   };
   
-  const handleImprimir = () => {
+  const handleImprimir = async () => {
     if (!selectedFactura) return;
+    
+    const token = sessionStorage.getItem('token');
+    
+    // Obtener datos del cliente si existe cliente_id
+    let clienteData = null;
+    if (selectedFactura.cliente_id) {
+      try {
+        const clienteResponse = await axios.get(
+          `${API_URL}/api/clientes/buscar/${selectedFactura.cliente_id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        clienteData = clienteResponse.data;
+      } catch (error) {
+        console.error('Error loading client:', error);
+      }
+    }
     
     const printWindow = window.open('', '_blank');
     
@@ -1545,6 +1561,30 @@ function ReporteRecibos({ facturas, onReembolso }) {
     // Construir HTML del nombre del negocio
     const nombreNegocio = ticketConfig?.nombre_negocio || 'Mi Negocio';
     
+    // Construir HTML de datos del cliente
+    let clienteHtml = '';
+    if (clienteData) {
+      clienteHtml = `
+        <div class="cliente">
+          <p style="font-weight: bold; margin: 2px 0;">CLIENTE:</p>
+          <p style="margin: 2px 0;">${clienteData.nombre}</p>
+          ${clienteData.cedula_ruc ? `<p style="margin: 2px 0;">Cédula/RUC: ${clienteData.cedula_ruc}</p>` : ''}
+          ${clienteData.direccion ? `<p style="margin: 2px 0;">${clienteData.direccion}</p>` : ''}
+          ${clienteData.telefono ? `<p style="margin: 2px 0;">Tel: ${clienteData.telefono}</p>` : ''}
+        </div>
+        <div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
+      `;
+    } else {
+      clienteHtml = `
+        <div class="cliente">
+          <p style="font-weight: bold; margin: 2px 0;">CLIENTE:</p>
+          <p style="margin: 2px 0;">CONSUMIDOR FINAL</p>
+          <p style="margin: 2px 0;">ID: 9999999999999</p>
+        </div>
+        <div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
+      `;
+    }
+    
     // Calcular ancho según configuración
     const anchoTicket = ticketConfig?.ancho_ticket || 80;
     const anchoPx = anchoTicket === 58 ? 220 : 300;
@@ -1565,6 +1605,7 @@ function ReporteRecibos({ facturas, onReembolso }) {
           .cabecera { text-align: center; font-size: ${fontSizeSmall}; font-weight: bold; margin-bottom: 6px; padding: 4px 0; border-bottom: 1px dashed #000; }
           .header { text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 8px; }
           .header h2 { margin: 0 0 4px 0; font-size: ${fontSizeTitle}; }
+          .cliente { margin-bottom: 8px; font-size: ${fontSizeSmall}; }
           .items { margin: 10px 0; }
           .item { display: flex; justify-content: space-between; margin: 4px 0; font-size: ${fontSizeSmall}; }
           .totals { border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; }
@@ -1584,6 +1625,7 @@ function ReporteRecibos({ facturas, onReembolso }) {
           <p>Atendido por: ${selectedFactura.vendedor_nombre || '-'}</p>
         </div>
         ${selectedFactura.estado === 'reembolsado' ? '<div class="reembolsado">*** REEMBOLSADO ***</div>' : ''}
+        ${clienteHtml}
         <div class="items">
           ${(selectedFactura.items || []).map(item => `
             <div class="item">
