@@ -4489,7 +4489,7 @@ async def cerrar_caja(cierre: CajaCierre, current_user: dict = Depends(get_curre
         }
     )
     
-    # Liberar el TPV si estaba asignado
+    # Liberar el TPV si estaba asignado (sistema nuevo y legacy)
     if caja.get("tpv_id"):
         await db.tpv.update_one(
             {"id": caja["tpv_id"]},
@@ -4497,10 +4497,24 @@ async def cerrar_caja(cierre: CajaCierre, current_user: dict = Depends(get_curre
                 "$set": {
                     "ocupado": False,
                     "ocupado_por": None,
-                    "ocupado_por_nombre": None
+                    "ocupado_por_nombre": None,
+                    "estado_sesion": "disponible",
+                    "usuario_reservado_id": None,
+                    "usuario_reservado_nombre": None,
+                    "caja_abierta_id": None
                 }
             }
         )
+    
+    # Limpiar sesiones pausadas del usuario (ya cerró su caja)
+    user_id = str(current_user.get("_id") or current_user.get("user_id"))
+    await db.sesiones_pos.update_many(
+        {"user_id": user_id, "estado": "pausada"},
+        {"$set": {
+            "estado": "cerrada",
+            "fecha_cierre": datetime.now(timezone.utc).isoformat()
+        }}
+    )
     
     caja["estado"] = "cerrada"
     caja["fecha_cierre"] = datetime.now(timezone.utc).isoformat()
