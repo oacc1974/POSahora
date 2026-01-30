@@ -187,6 +187,16 @@ export default function LoginPOS({ onLogin }) {
         return;
       }
       
+      // Si tiene sesión activa, también mostrar su TPV
+      if (sesion_activa) {
+        setSesionActivaInfo({
+          ...sesion_activa,
+          usuario_nombre: usuario.nombre,
+          usuario_rol: usuario.rol
+        });
+        // No mostrar diálogo, solo continuar con los TPVs disponibles
+      }
+      
       // Guardar datos para el siguiente paso
       setPinValidado(pinValue);
       setUsuarioPreLogin(usuario);
