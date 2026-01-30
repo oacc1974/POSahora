@@ -3005,8 +3005,10 @@ async def get_tpvs(current_user: dict = Depends(get_current_user)):
 
 @app.get("/api/tpv/disponibles", response_model=List[TPVResponse])
 async def get_tpvs_disponibles(current_user: dict = Depends(get_current_user)):
-    """Obtiene solo los TPV activos y no ocupados para selección al abrir caja"""
-    # Buscar TPVs de la organización que estén activos (o sin el campo activo) y no ocupados
+    """Obtiene solo los TPV activos y disponibles para selección al abrir caja"""
+    user_id = str(current_user.get("_id") or current_user.get("user_id"))
+    
+    # Buscar TPVs de la organización que estén activos
     tpvs = await db.tpv.find({
         "organizacion_id": current_user["organizacion_id"],
         "$or": [
@@ -3015,20 +3017,36 @@ async def get_tpvs_disponibles(current_user: dict = Depends(get_current_user)):
         ]
     }, {"_id": 0}).to_list(1000)
     
-    # Filtrar los que no están ocupados
     result = []
     for t in tpvs:
-        # Considerar disponible si ocupado es False, None, o no existe
-        ocupado = t.get("ocupado")
-        if ocupado is True:
-            continue  # Este está ocupado, saltar
+        estado_sesion = t.get("estado_sesion", "disponible")
+        usuario_reservado = t.get("usuario_reservado_id")
+        
+        # El TPV está disponible si:
+        # 1. estado_sesion es "disponible" o no existe
+        # 2. está pausado pero reservado para ESTE usuario (puede volver a su caja)
+        # 3. campo ocupado antiguo es False/None
+        ocupado_legacy = t.get("ocupado")
+        
+        esta_disponible = (
+            estado_sesion == "disponible" or 
+            estado_sesion is None or
+            (estado_sesion == "pausado" and usuario_reservado == user_id) or
+            (estado_sesion not in ["ocupado", "pausado"] and ocupado_legacy != True)
+        )
+        
+        if not esta_disponible:
+            continue
             
         tienda = await db.tiendas.find_one({"id": t["tienda_id"]}, {"_id": 0, "nombre": 1})
         tienda_nombre = tienda["nombre"] if tienda else "Sin tienda"
         
+        # Indicar si es un TPV reservado para este usuario (tiene caja abierta)
+        es_reservado_para_mi = estado_sesion == "pausado" and usuario_reservado == user_id
+        
         result.append(TPVResponse(
             id=t["id"],
-            nombre=t["nombre"],
+            nombre=t["nombre"] + (" (Tu caja abierta)" if es_reservado_para_mi else ""),
             punto_emision=t["punto_emision"],
             tienda_id=t["tienda_id"],
             tienda_nombre=tienda_nombre,
