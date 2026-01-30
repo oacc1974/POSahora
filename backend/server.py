@@ -2077,6 +2077,154 @@ async def generar_nuevo_pin(user_id: str, current_user: dict = Depends(get_propi
     
     return {"pin": nuevo_pin, "message": "PIN generado correctamente"}
 
+class ValidarPINRequest(BaseModel):
+    pin: str
+    codigo_tienda: str
+    forzar_cierre: bool = False
+
+@app.post("/api/auth/validar-pin")
+async def validar_pin(request: ValidarPINRequest):
+    """
+    PASO 1 del login: Valida el PIN y retorna los TPVs disponibles.
+    No crea sesión aún - solo valida credenciales y muestra opciones.
+    """
+    tienda = None
+    organizacion_id = None
+    
+    # Buscar la tienda por su codigo_tienda único
+    tienda = await db.tiendas.find_one({
+        "codigo_tienda": request.codigo_tienda.upper()
+    })
+    
+    if tienda:
+        organizacion_id = tienda["organizacion_id"]
+    else:
+        # Buscar por codigo_establecimiento (compatibilidad)
+        tienda = await db.tiendas.find_one({
+            "codigo_establecimiento": request.codigo_tienda.upper()
+        })
+        
+        if tienda:
+            organizacion_id = tienda["organizacion_id"]
+        else:
+            raise HTTPException(status_code=401, detail="Código de tienda no válido")
+    
+    # Buscar usuario con ese PIN
+    org_id_str = str(organizacion_id)
+    user = await db.usuarios.find_one({
+        "pin": request.pin,
+        "pin_activo": True,
+        "$or": [
+            {"organizacion_id": organizacion_id},
+            {"organizacion_id": org_id_str}
+        ]
+    })
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="PIN inválido o no activo")
+    
+    user_id = str(user["_id"])
+    
+    # Verificar si tiene sesión ACTIVA en otro dispositivo
+    sesion_activa = await db.sesiones_pos.find_one({
+        "user_id": user_id,
+        "activa": True
+    })
+    
+    if sesion_activa and not request.forzar_cierre:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "SESSION_ACTIVE",
+                "message": "Este usuario ya tiene una sesión activa",
+                "session_info": {
+                    "usuario_nombre": user.get("nombre", "Usuario"),
+                    "usuario_rol": user.get("rol", ""),
+                    "tpv_id": sesion_activa.get("tpv_id"),
+                    "tpv_nombre": sesion_activa.get("tpv_nombre"),
+                    "dispositivo": sesion_activa.get("dispositivo", "Desconocido"),
+                    "iniciada": sesion_activa.get("fecha_inicio", "")
+                }
+            }
+        )
+    
+    # Verificar si tiene sesión PAUSADA (caja abierta)
+    sesion_pausada = await db.sesiones_pos.find_one({
+        "user_id": user_id,
+        "estado": "pausada"
+    })
+    
+    if sesion_pausada:
+        tpv_id = sesion_pausada.get("tpv_id")
+        tpv_info = await db.tpv.find_one({"id": tpv_id}) if tpv_id else None
+        
+        # Buscar caja abierta del usuario
+        caja = await db.cajas.find_one({
+            "usuario_id": user_id,
+            "estado": "abierta"
+        })
+        monto_caja = caja.get("monto_actual", 0) if caja else 0
+        
+        return {
+            "usuario": {
+                "id": user_id,
+                "nombre": user.get("nombre", "Usuario"),
+                "rol": user.get("rol", "")
+            },
+            "tienda": {
+                "codigo": request.codigo_tienda.upper(),
+                "nombre": tienda["nombre"] if tienda else "Tienda"
+            },
+            "sesion_pausada": {
+                "tpv_id": tpv_id,
+                "tpv_nombre": tpv_info.get("nombre") if tpv_info else "TPV",
+                "monto_caja": monto_caja,
+                "fecha_pausa": sesion_pausada.get("fecha_pausa", "")
+            },
+            "tpvs_disponibles": []  # No mostrar otros TPVs si tiene caja abierta
+        }
+    
+    # Obtener TPVs disponibles para este usuario
+    tpvs = await db.tpv.find({
+        "organizacion_id": org_id_str,
+        "$or": [{"activo": True}, {"activo": {"$exists": False}}]
+    }, {"_id": 0}).to_list(100)
+    
+    tpvs_disponibles = []
+    for t in tpvs:
+        estado_sesion = t.get("estado_sesion", "disponible")
+        usuario_reservado = t.get("usuario_reservado_id")
+        
+        # Disponible si: está libre, o está reservado para este usuario
+        if estado_sesion == "disponible" or estado_sesion is None or \
+           (estado_sesion == "pausado" and usuario_reservado == user_id) or \
+           (estado_sesion not in ["ocupado", "pausado"] and t.get("ocupado") != True):
+            
+            tienda_tpv = await db.tiendas.find_one({"id": t["tienda_id"]}, {"_id": 0, "nombre": 1})
+            
+            tpvs_disponibles.append({
+                "id": t["id"],
+                "nombre": t["nombre"],
+                "tienda_nombre": tienda_tpv["nombre"] if tienda_tpv else "Sin tienda",
+                "punto_emision": t.get("punto_emision", "001"),
+                "es_mi_caja": estado_sesion == "pausado" and usuario_reservado == user_id
+            })
+    
+    return {
+        "usuario": {
+            "id": user_id,
+            "nombre": user.get("nombre", "Usuario"),
+            "rol": user.get("rol", "")
+        },
+        "tienda": {
+            "codigo": request.codigo_tienda.upper(),
+            "nombre": tienda["nombre"] if tienda else "Tienda"
+        },
+        "sesion_pausada": None,
+        "tpvs_disponibles": tpvs_disponibles
+    }
+
+
 @app.post("/api/auth/login-pin")
 async def login_con_pin(pin_login: PINLogin):
     """Login usando PIN + Código de Tienda (para cajeros, meseros y empleados con PIN activo)"""
