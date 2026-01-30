@@ -264,7 +264,7 @@ export default function LoginPOS({ onLogin }) {
 
   // PASO 2: Confirmar TPV y hacer login completo
   const handleConfirmarTPV = async (forzarCierre = false) => {
-    if (!tpvSeleccionado && !forzarCierre) {
+    if (!tpvSeleccionado) {
       toast.error('Selecciona un punto de venta');
       return;
     }
@@ -277,25 +277,29 @@ export default function LoginPOS({ onLogin }) {
         { 
           pin: pinValidado, 
           codigo_tienda: codigoTienda,
-          tpv_id: tpvSeleccionado?.id || sesionActivaInfo?.tpv_id,
-          forzar_cierre: forzarCierre,
+          tpv_id: tpvSeleccionado.id,
+          forzar_cierre: true, // Siempre forzar para reactivar sesiones
           dispositivo: getDeviceName()
         },
         { withCredentials: true }
       );
 
-      const { access_token, session_id, usuario, tienda } = response.data;
+      const { access_token, session_id, usuario, tpv } = response.data;
       
       // Guardar session_id y TPV asignado
       sessionStorage.setItem('pos_session_id', session_id);
-      sessionStorage.setItem('pos_tpv_asignado', JSON.stringify(tpvSeleccionado || { id: sesionActivaInfo?.tpv_id, nombre: sesionActivaInfo?.tpv_nombre }));
+      sessionStorage.setItem('pos_tpv_asignado', JSON.stringify({
+        id: tpv?.id || tpvSeleccionado.id,
+        nombre: tpv?.nombre || tpvSeleccionado.nombre?.replace(' (Tu caja pendiente)', '').replace(' (Tu sesión activa)', '').replace(' (Tu caja)', '')
+      }));
       
       setShowSesionActivaDialog(false);
       onLogin(usuario, access_token);
       toast.success(`¡Bienvenido, ${usuario.nombre}!`, {
-        description: `TPV: ${tpvSeleccionado?.nombre || sesionActivaInfo?.tpv_nombre || 'Asignado'}`
+        description: `TPV: ${tpv?.nombre || tpvSeleccionado.nombre}`
       });
     } catch (error) {
+      console.error('Error login:', error.response?.data);
       const errorMsg = typeof error.response?.data?.detail === 'string' 
         ? error.response?.data?.detail 
         : 'Error al iniciar sesión';
