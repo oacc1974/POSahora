@@ -1529,7 +1529,7 @@ function ReporteRecibos({ facturas, onReembolso }) {
     if (selectedFactura.cliente_id) {
       try {
         const clienteResponse = await axios.get(
-          `${API_URL}/api/clientes/buscar/${selectedFactura.cliente_id}`,
+          `${API_URL}/api/clientes/id/${selectedFactura.cliente_id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         clienteData = clienteResponse.data;
