@@ -2479,8 +2479,21 @@ export default function POS() {
           </div>
 
           <form onSubmit={handleAbrirCaja} className="space-y-4">
-            {/* Selección de TPV */}
-            {tpvsDisponibles.length > 0 && (
+            {/* Mostrar TPV asignado en el login (no editable) */}
+            {tpvAsignadoEnLogin && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <Label className="text-blue-800 font-medium">TPV Asignado</Label>
+                <p className="text-lg font-semibold text-blue-900 mt-1">
+                  {tpvAsignadoEnLogin.nombre}
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Este TPV fue seleccionado al iniciar sesión
+                </p>
+              </div>
+            )}
+
+            {/* Selección de TPV - Solo si NO hay TPV asignado en login */}
+            {!tpvAsignadoEnLogin && tpvsDisponibles.length > 0 && (
               <div>
                 <Label htmlFor="tpv_seleccion">Selecciona un TPV (Punto de Venta) {esMesero && '*'}</Label>
                 <select
