@@ -2237,19 +2237,28 @@ async def validar_pin(request: ValidarPINRequest):
         estado_sesion = t.get("estado_sesion", "disponible")
         usuario_reservado = t.get("usuario_reservado_id")
         
-        # Disponible si: está libre, o está reservado para este usuario
-        if estado_sesion == "disponible" or estado_sesion is None or \
-           (estado_sesion == "pausado" and usuario_reservado == user_id) or \
-           (estado_sesion not in ["ocupado", "pausado"] and t.get("ocupado") != True):
-            
+        # Disponible si:
+        # 1. Está libre (disponible o sin estado)
+        # 2. Está ocupado/pausado por ESTE mismo usuario
+        # 3. El campo legacy "ocupado" es False/None
+        es_disponible = (
+            estado_sesion == "disponible" or 
+            estado_sesion is None or
+            usuario_reservado == user_id or  # Si es mi TPV, siempre disponible para mí
+            (estado_sesion not in ["ocupado", "pausado"] and t.get("ocupado") != True)
+        )
+        
+        if es_disponible:
             tienda_tpv = await db.tiendas.find_one({"id": t["tienda_id"]}, {"_id": 0, "nombre": 1})
+            
+            es_mi_caja = usuario_reservado == user_id and estado_sesion in ["ocupado", "pausado"]
             
             tpvs_disponibles.append({
                 "id": t["id"],
                 "nombre": t["nombre"],
                 "tienda_nombre": tienda_tpv["nombre"] if tienda_tpv else "Sin tienda",
                 "punto_emision": t.get("punto_emision", "001"),
-                "es_mi_caja": estado_sesion == "pausado" and usuario_reservado == user_id
+                "es_mi_caja": es_mi_caja
             })
     
     return {
