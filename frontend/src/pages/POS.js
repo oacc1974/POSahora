@@ -1118,66 +1118,66 @@ export default function POS() {
         `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Atendió: ${invoice.vendedor_nombre}</p>`
       );
       
-      printWindow.document.write('<div class="divider"></div>');
+      printDocument.write('<div class="divider"></div>');
       
       // Mostrar información del cliente o CONSUMIDOR FINAL
       if (clienteData) {
         // Cliente específico seleccionado
-        printWindow.document.write('<div style="margin-bottom: 10px;">');
-        printWindow.document.write('<p style="font-weight: bold; font-size: 11px; margin: 2px 0;">CLIENTE:</p>');
-        printWindow.document.write(`<p style="font-size: 11px; margin: 2px 0;">${clienteData.nombre}</p>`);
+        printDocument.write('<div style="margin-bottom: 10px;">');
+        printDocument.write('<p style="font-weight: bold; font-size: 11px; margin: 2px 0;">CLIENTE:</p>');
+        printDocument.write(`<p style="font-size: 11px; margin: 2px 0;">${clienteData.nombre}</p>`);
         if (clienteData.cedula_ruc) {
-          printWindow.document.write(`<p style="font-size: 10px; margin: 2px 0;">Cédula/RUC: ${clienteData.cedula_ruc}</p>`);
+          printDocument.write(`<p style="font-size: 10px; margin: 2px 0;">Cédula/RUC: ${clienteData.cedula_ruc}</p>`);
         }
         if (clienteData.direccion) {
-          printWindow.document.write(`<p style="font-size: 10px; margin: 2px 0;">${clienteData.direccion}</p>`);
+          printDocument.write(`<p style="font-size: 10px; margin: 2px 0;">${clienteData.direccion}</p>`);
         }
         if (clienteData.telefono) {
-          printWindow.document.write(`<p style="font-size: 10px; margin: 2px 0;">Tel: ${clienteData.telefono}</p>`);
+          printDocument.write(`<p style="font-size: 10px; margin: 2px 0;">Tel: ${clienteData.telefono}</p>`);
         }
-        printWindow.document.write('</div>');
-        printWindow.document.write('<div class="divider"></div>');
+        printDocument.write('</div>');
+        printDocument.write('<div class="divider"></div>');
       } else if (!esFacturaElectronica) {
         // Ticket interno sin cliente = CONSUMIDOR FINAL
-        printWindow.document.write('<div style="margin-bottom: 10px;">');
-        printWindow.document.write('<p style="font-weight: bold; font-size: 11px; margin: 2px 0;">CLIENTE:</p>');
-        printWindow.document.write('<p style="font-size: 11px; margin: 2px 0;">CONSUMIDOR FINAL</p>');
-        printWindow.document.write('<p style="font-size: 10px; margin: 2px 0;">ID: 9999999999999</p>');
-        printWindow.document.write('</div>');
-        printWindow.document.write('<div class="divider"></div>');
+        printDocument.write('<div style="margin-bottom: 10px;">');
+        printDocument.write('<p style="font-weight: bold; font-size: 11px; margin: 2px 0;">CLIENTE:</p>');
+        printDocument.write('<p style="font-size: 11px; margin: 2px 0;">CONSUMIDOR FINAL</p>');
+        printDocument.write('<p style="font-size: 10px; margin: 2px 0;">ID: 9999999999999</p>');
+        printDocument.write('</div>');
+        printDocument.write('<div class="divider"></div>');
       }
       
       if (config.mostrar_comentarios && invoice.comentarios) {
-        printWindow.document.write('<div style="margin-bottom: 10px;">');
-        printWindow.document.write('<p style="font-weight: bold; font-size: 11px; margin: 2px 0;">COMENTARIOS:</p>');
-        printWindow.document.write(`<p style="font-size: 10px; margin: 2px 0;">${invoice.comentarios}</p>`);
-        printWindow.document.write('</div>');
-        printWindow.document.write('<div class="divider"></div>');
+        printDocument.write('<div style="margin-bottom: 10px;">');
+        printDocument.write('<p style="font-weight: bold; font-size: 11px; margin: 2px 0;">COMENTARIOS:</p>');
+        printDocument.write(`<p style="font-size: 10px; margin: 2px 0;">${invoice.comentarios}</p>`);
+        printDocument.write('</div>');
+        printDocument.write('<div class="divider"></div>');
       }
-      printWindow.document.write('<div class="items">');
+      printDocument.write('<div class="items">');
       invoice.items.forEach((item) => {
-        printWindow.document.write(
+        printDocument.write(
           `<div class="item"><span>${item.nombre} x${item.cantidad}</span><span>$${item.subtotal.toFixed(2)}</span></div>`
         );
       });
-      printWindow.document.write('</div>');
+      printDocument.write('</div>');
       
       // Mostrar subtotal si hay impuestos
       if (invoice.desglose_impuestos && invoice.desglose_impuestos.length > 0) {
-        printWindow.document.write('<div class="divider"></div>');
-        printWindow.document.write(
+        printDocument.write('<div class="divider"></div>');
+        printDocument.write(
           `<div class="item"><span>SUBTOTAL:</span><span>$${invoice.subtotal.toFixed(2)}</span></div>`
         );
         
         // Mostrar cada impuesto
         invoice.desglose_impuestos.forEach((impuesto) => {
-          printWindow.document.write(
+          printDocument.write(
             `<div class="item"><span>${impuesto.nombre} (${impuesto.tasa}%) ${impuesto.tipo === 'incluido' ? '[Incluido]' : ''}:</span><span>$${impuesto.monto.toFixed(2)}</span></div>`
           );
         });
       }
       
-      printWindow.document.write(
+      printDocument.write(
         `<div class="total"><div class="item"><span>TOTAL:</span><span>$${invoice.total.toFixed(2)}</span></div></div>`
       );
       
