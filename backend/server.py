@@ -1101,10 +1101,12 @@ async def google_auth(body: GoogleAuthRequest, response: Response):
             "nombre": "Tienda Principal",
             "codigo": "001",
             "codigo_establecimiento": "001",
+            "codigo_tienda": nueva_org["codigo_tienda"],  # Usar el mismo código de la organización
             "direccion": "",
             "telefono": "",
             "organizacion_id": org_id,
-            "activo": True
+            "activo": True,
+            "fecha_creacion": datetime.now(timezone.utc).isoformat()
         }
         await db.tiendas.insert_one(nueva_tienda)
         
