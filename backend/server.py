@@ -2174,21 +2174,35 @@ async def validar_pin(request: ValidarPINRequest):
     })
     
     if sesion_activa and not request.forzar_cierre:
-        raise HTTPException(
-            status_code=409,
-            detail={
-                "code": "SESSION_ACTIVE",
-                "message": "Este usuario ya tiene una sesión activa",
-                "session_info": {
-                    "usuario_nombre": user.get("nombre", "Usuario"),
-                    "usuario_rol": user.get("rol", ""),
-                    "tpv_id": sesion_activa.get("tpv_id"),
-                    "tpv_nombre": sesion_activa.get("tpv_nombre"),
-                    "dispositivo": sesion_activa.get("dispositivo", "Desconocido"),
-                    "iniciada": sesion_activa.get("fecha_inicio", "")
-                }
-            }
-        )
+        # En lugar de rechazar, retornar info de la sesión activa y su TPV
+        tpv_id = sesion_activa.get("tpv_id")
+        tpv_info = await db.tpv.find_one({"id": tpv_id}) if tpv_id else None
+        
+        return {
+            "usuario": {
+                "id": user_id,
+                "nombre": user.get("nombre", "Usuario"),
+                "rol": user.get("rol", "")
+            },
+            "tienda": {
+                "codigo": request.codigo_tienda.upper(),
+                "nombre": tienda["nombre"] if tienda else "Tienda"
+            },
+            "sesion_activa": {
+                "tpv_id": tpv_id,
+                "tpv_nombre": tpv_info.get("nombre") if tpv_info else "TPV",
+                "dispositivo": sesion_activa.get("dispositivo", "Desconocido"),
+                "iniciada": sesion_activa.get("fecha_inicio", "")
+            },
+            "sesion_pausada": None,
+            "tpvs_disponibles": [{
+                "id": tpv_id,
+                "nombre": (tpv_info.get("nombre") if tpv_info else "TPV") + " (Tu sesión activa)",
+                "tienda_nombre": tienda["nombre"] if tienda else "Tienda",
+                "punto_emision": tpv_info.get("punto_emision", "001") if tpv_info else "001",
+                "es_mi_caja": True
+            }] if tpv_id else []
+        }
     
     # Verificar si tiene sesión PAUSADA (caja abierta)
     sesion_pausada = await db.sesiones_pos.find_one({
