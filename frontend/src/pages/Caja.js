@@ -255,77 +255,200 @@ export default function Caja({ onLogout }) {
   };
 
   const printCierreCaja = (caja) => {
-    const printWindow = window.open('', '', 'height=600,width=400');
-    printWindow.document.write('<html><head><title>Cierre de Caja</title>');
-    printWindow.document.write('<style>');
-    printWindow.document.write(`
-      body { font-family: monospace; padding: 20px; font-size: 12px; }
-      h1 { text-align: center; font-size: 16px; margin: 0; }
-      h2 { font-size: 14px; margin: 15px 0 10px 0; }
-      .header { text-align: center; margin-bottom: 15px; }
-      .divider { border-top: 1px dashed #000; margin: 10px 0; }
-      .item { display: flex; justify-content: space-between; margin: 8px 0; }
-      .item-small { display: flex; justify-content: space-between; margin: 5px 0; font-size: 11px; }
-      .total { border-top: 2px solid #000; margin-top: 10px; padding-top: 10px; font-weight: bold; font-size: 14px; }
-      .section { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; }
-    `);
-    printWindow.document.write('</style></head><body>');
-    printWindow.document.write('<div class="header">');
-    printWindow.document.write('<h1>CIERRE DE CAJA</h1>');
-    printWindow.document.write(`<p>${caja.numero}</p>`);
-    printWindow.document.write('</div>');
-    printWindow.document.write('<div class="divider"></div>');
-    printWindow.document.write(`<p>Cajero: ${caja.usuario_nombre}</p>`);
-    if (caja.tpv_nombre) {
-      printWindow.document.write(`<p>TPV: ${caja.tpv_nombre}</p>`);
-    }
-    printWindow.document.write(
-      `<p>Apertura: ${new Date(caja.fecha_apertura).toLocaleString('es-ES')}</p>`
-    );
-    printWindow.document.write(
-      `<p>Cierre: ${new Date(caja.fecha_cierre).toLocaleString('es-ES')}</p>`
-    );
-    printWindow.document.write('<div class="divider"></div>');
+    // Crear iframe oculto para impresión sin preview
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'absolute';
+    printFrame.style.top = '-10000px';
+    printFrame.style.left = '-10000px';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = 'none';
+    document.body.appendChild(printFrame);
     
-    // Detalle de ventas por método de pago
-    if (caja.ventas_por_metodo && caja.ventas_por_metodo.length > 0) {
-      printWindow.document.write('<h2>VENTAS POR MÉTODO DE PAGO</h2>');
-      printWindow.document.write('<div class="section">');
-      caja.ventas_por_metodo.forEach(metodo => {
-        printWindow.document.write(
-          `<div class="item-small">
-            <span>${metodo.metodo_nombre} (${metodo.cantidad || 0}):</span>
-            <span>$${(metodo.total || 0).toFixed(2)}</span>
-          </div>`
-        );
-      });
-      printWindow.document.write('</div>');
-      printWindow.document.write('<div class="divider"></div>');
-    }
-    
-    printWindow.document.write(
-      `<div class="item"><span>Base de Caja:</span><span>$${(caja.monto_inicial || 0).toFixed(2)}</span></div>`
-    );
-    printWindow.document.write(
-      `<div class="item"><span>Ventas (${caja.total_ventas || 0}):</span><span>$${(caja.monto_ventas || 0).toFixed(2)}</span></div>`
-    );
-    printWindow.document.write(
-      `<div class="total"><div class="item"><span>TOTAL ESPERADO:</span><span>$${(caja.monto_final || 0).toFixed(2)}</span></div></div>`
-    );
-    printWindow.document.write('<div class="divider"></div>');
-    printWindow.document.write(
-      `<div class="item"><span>Efectivo Contado:</span><span>$${(caja.efectivo_contado || 0).toFixed(2)}</span></div>`
-    );
+    const printDocument = printFrame.contentWindow.document;
     const diferencia = caja.diferencia || 0;
     const diferenciaTxt = diferencia >= 0 ? `+$${diferencia.toFixed(2)}` : `-$${Math.abs(diferencia).toFixed(2)}`;
-    printWindow.document.write(
-      `<div class="item" style="font-weight: bold; color: ${diferencia >= 0 ? 'green' : 'red'}"><span>Diferencia:</span><span>${diferenciaTxt}</span></div>`
-    );
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+    const diferenciaColor = diferencia >= 0 ? '#16a34a' : '#dc2626';
+    
+    printDocument.open();
+    printDocument.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Cierre de Caja</title>
+        <style>
+          body { 
+            font-family: 'Courier New', monospace; 
+            padding: 15px; 
+            font-size: 11px; 
+            max-width: 280px; 
+            margin: 0 auto; 
+          }
+          .header { 
+            text-align: center; 
+            border-bottom: 2px solid #000; 
+            padding-bottom: 10px; 
+            margin-bottom: 10px; 
+          }
+          .header h1 { 
+            font-size: 16px; 
+            margin: 0 0 5px 0; 
+            letter-spacing: 2px;
+          }
+          .header .caja-num { 
+            font-size: 12px; 
+            color: #666; 
+          }
+          .divider { 
+            border-top: 1px dashed #000; 
+            margin: 10px 0; 
+          }
+          .info-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin: 5px 0; 
+          }
+          .section-title { 
+            font-weight: bold; 
+            font-size: 11px; 
+            margin: 12px 0 8px 0; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+          }
+          .metodo-item { 
+            display: flex; 
+            justify-content: space-between; 
+            margin: 4px 0; 
+            padding: 4px 8px;
+            background: #f5f5f5;
+            font-size: 10px;
+          }
+          .total-section { 
+            border-top: 2px solid #000; 
+            margin-top: 10px; 
+            padding-top: 10px; 
+          }
+          .total-row { 
+            display: flex; 
+            justify-content: space-between; 
+            font-weight: bold; 
+            font-size: 13px; 
+            margin: 5px 0;
+          }
+          .diferencia { 
+            font-weight: bold; 
+            color: ${diferenciaColor}; 
+          }
+          .footer {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #000;
+            font-size: 9px;
+            color: #666;
+          }
+          @media print { body { margin: 0; padding: 10px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>CIERRE DE CAJA</h1>
+          <div class="caja-num">${caja.tpv_nombre || caja.numero}</div>
+        </div>
+        
+        <div class="info-row">
+          <span>Cajero:</span>
+          <span>${caja.usuario_nombre}</span>
+        </div>
+        ${caja.tpv_nombre ? `
+        <div class="info-row">
+          <span>TPV:</span>
+          <span>${caja.tpv_nombre}</span>
+        </div>
+        ` : ''}
+        <div class="info-row">
+          <span>Apertura:</span>
+          <span>${new Date(caja.fecha_apertura).toLocaleString('es-ES')}</span>
+        </div>
+        <div class="info-row">
+          <span>Cierre:</span>
+          <span>${new Date(caja.fecha_cierre).toLocaleString('es-ES')}</span>
+        </div>
+        
+        <div class="divider"></div>
+        
+        ${caja.ventas_por_metodo && caja.ventas_por_metodo.length > 0 ? `
+          <div class="section-title">Ventas por Método de Pago</div>
+          ${caja.ventas_por_metodo.map(metodo => `
+            <div class="metodo-item">
+              <span>${metodo.metodo_nombre} (${metodo.cantidad || 0})</span>
+              <span>$${(metodo.total || 0).toFixed(2)}</span>
+            </div>
+          `).join('')}
+          <div class="divider"></div>
+        ` : ''}
+        
+        <div class="info-row">
+          <span>Base de Caja:</span>
+          <span>$${(caja.monto_inicial || 0).toFixed(2)}</span>
+        </div>
+        <div class="info-row">
+          <span>Ventas (${caja.total_ventas || 0}):</span>
+          <span>$${(caja.monto_ventas || 0).toFixed(2)}</span>
+        </div>
+        
+        <div class="total-section">
+          <div class="total-row">
+            <span>TOTAL ESPERADO:</span>
+            <span>$${(caja.monto_final || 0).toFixed(2)}</span>
+          </div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="info-row">
+          <span>Efectivo Contado:</span>
+          <span>$${(caja.efectivo_contado || 0).toFixed(2)}</span>
+        </div>
+        <div class="info-row diferencia">
+          <span>Diferencia:</span>
+          <span>${diferenciaTxt}</span>
+        </div>
+        
+        <div class="footer">
+          <p>Documento generado automáticamente</p>
+        </div>
+        
+        <!-- Espacio para corte -->
+        <div style="height: 30px;"></div>
+        <br><br>
+        <p style="text-align: center; color: #ccc; font-size: 8px;">. . . . . . . . . . . . . . . . . . . . . . . .</p>
+        <br>
+      </body>
+      </html>
+    `);
+    printDocument.close();
+    
+    // Bandera para evitar doble impresión
+    let printed = false;
+    
+    const executePrint = () => {
+      if (printed) return;
+      printed = true;
+      printFrame.contentWindow.focus();
+      printFrame.contentWindow.print();
+      setTimeout(() => {
+        if (document.body.contains(printFrame)) {
+          document.body.removeChild(printFrame);
+        }
+      }, 1000);
+    };
+    
+    printFrame.onload = function() {
+      setTimeout(executePrint, 300);
+    };
+    
+    setTimeout(executePrint, 800);
   };
 
   if (loading) {
