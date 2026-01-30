@@ -1182,55 +1182,64 @@ export default function POS() {
       );
       
       // Mostrar método de pago y tipo de pedido
-      printWindow.document.write('<div class="divider"></div>');
+      printDocument.write('<div class="divider"></div>');
       if (invoice.metodo_pago_nombre) {
-        printWindow.document.write(
+        printDocument.write(
           `<div style="text-align: center; margin: 5px 0;"><p style="font-size: 11px; font-weight: bold;">Método de Pago: ${invoice.metodo_pago_nombre}</p></div>`
         );
       }
       if (invoice.tipo_pedido_nombre) {
-        printWindow.document.write(
+        printDocument.write(
           `<div style="text-align: center; margin: 5px 0;"><p style="font-size: 11px; font-weight: bold;">Tipo de Pedido: ${invoice.tipo_pedido_nombre}</p></div>`
         );
       }
       
       // === LEYENDA OBLIGATORIA PARA TICKETS INTERNOS ===
       if (!esFacturaElectronica || !invoice.factura_electronica) {
-        printWindow.document.write('<div class="warning">');
-        printWindow.document.write('<p>⚠️ Este documento NO constituye comprobante tributario.</p>');
-        printWindow.document.write('<p>Solicite su factura electrónica si la requiere.</p>');
-        printWindow.document.write('</div>');
+        printDocument.write('<div class="warning">');
+        printDocument.write('<p>⚠️ Este documento NO constituye comprobante tributario.</p>');
+        printDocument.write('<p>Solicite su factura electrónica si la requiere.</p>');
+        printDocument.write('</div>');
       }
       
-      printWindow.document.write('<div class="divider"></div>');
-      printWindow.document.write(
+      printDocument.write('<div class="divider"></div>');
+      printDocument.write(
         `<div class="footer"><p>${config.mensaje_pie}</p></div>`
       );
       
       // Espacio extra para corte de papel
-      printWindow.document.write('<div style="height: 40px;"></div>');
-      printWindow.document.write('<br><br><br>');
-      printWindow.document.write('<p style="text-align: center; color: #ccc; font-size: 8px;">. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .</p>');
-      printWindow.document.write('<br>');
+      printDocument.write('<div style="height: 40px;"></div>');
+      printDocument.write('<br><br><br>');
+      printDocument.write('<p style="text-align: center; color: #ccc; font-size: 8px;">. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .</p>');
+      printDocument.write('<br>');
       
-      printWindow.document.write('</body></html>');
-      printWindow.document.close();
+      printDocument.write('</body></html>');
+      printDocument.close();
       
-      // Esperar a que el documento esté completamente cargado antes de imprimir
-      printWindow.onload = function() {
+      // Esperar a que el iframe cargue y luego imprimir
+      printFrame.onload = function() {
         setTimeout(() => {
-          printWindow.focus();
-          printWindow.print();
+          printFrame.contentWindow.focus();
+          printFrame.contentWindow.print();
+          // Eliminar iframe después de imprimir
+          setTimeout(() => {
+            document.body.removeChild(printFrame);
+          }, 1000);
         }, 300);
       };
       
-      // Fallback si onload no se dispara (algunos navegadores)
+      // Fallback si onload no se dispara
       setTimeout(() => {
-        if (printWindow && !printWindow.closed) {
-          printWindow.focus();
-          printWindow.print();
+        if (printFrame && document.body.contains(printFrame)) {
+          printFrame.contentWindow.focus();
+          printFrame.contentWindow.print();
+          setTimeout(() => {
+            if (document.body.contains(printFrame)) {
+              document.body.removeChild(printFrame);
+            }
+          }, 1000);
         }
-      }, 500);
+      }, 600);
     } catch (error) {
       console.error('Error loading config:', error);
       toast.error('Error al imprimir ticket');
