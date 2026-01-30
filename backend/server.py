@@ -3060,6 +3060,110 @@ async def get_tpvs_disponibles(current_user: dict = Depends(get_current_user)):
     
     return result
 
+@app.get("/api/tpv/estado-sesiones")
+async def get_estado_sesiones_tpv(current_user: dict = Depends(get_current_user)):
+    """Obtiene el estado de sesiones de todos los TPVs (para panel de admin)"""
+    # Verificar que sea propietario o admin
+    if current_user.get("rol") not in ["propietario", "admin", "administrador"]:
+        raise HTTPException(status_code=403, detail="Solo el propietario puede ver el estado de sesiones")
+    
+    tpvs = await db.tpv.find({
+        "organizacion_id": current_user["organizacion_id"],
+        "$or": [{"activo": True}, {"activo": {"$exists": False}}]
+    }, {"_id": 0}).to_list(100)
+    
+    result = []
+    for t in tpvs:
+        tienda = await db.tiendas.find_one({"id": t["tienda_id"]}, {"_id": 0, "nombre": 1})
+        
+        # Obtener info de caja abierta si existe
+        caja_info = None
+        if t.get("caja_abierta_id"):
+            try:
+                caja = await db.cajas.find_one({"_id": ObjectId(t["caja_abierta_id"])})
+                if caja:
+                    caja_info = {
+                        "monto_inicial": caja.get("monto_inicial", 0),
+                        "monto_actual": caja.get("monto_actual", 0),
+                        "fecha_apertura": caja.get("fecha_apertura", "")
+                    }
+            except:
+                pass
+        
+        result.append({
+            "id": t["id"],
+            "nombre": t["nombre"],
+            "tienda_nombre": tienda["nombre"] if tienda else "Sin tienda",
+            "estado_sesion": t.get("estado_sesion", "disponible"),
+            "usuario_nombre": t.get("usuario_reservado_nombre"),
+            "usuario_id": t.get("usuario_reservado_id"),
+            "caja_info": caja_info
+        })
+    
+    return result
+
+@app.post("/api/tpv/{tpv_id}/liberar")
+async def liberar_tpv(tpv_id: str, current_user: dict = Depends(get_current_user)):
+    """Libera un TPV forzadamente (solo propietario) - cierra la caja si está abierta"""
+    if current_user.get("rol") not in ["propietario", "admin", "administrador"]:
+        raise HTTPException(status_code=403, detail="Solo el propietario puede liberar TPVs")
+    
+    tpv = await db.tpv.find_one({"id": tpv_id, "organizacion_id": current_user["organizacion_id"]})
+    if not tpv:
+        raise HTTPException(status_code=404, detail="TPV no encontrado")
+    
+    usuario_afectado = tpv.get("usuario_reservado_id")
+    caja_id = tpv.get("caja_abierta_id")
+    
+    # Si hay caja abierta, cerrarla con el monto actual
+    if caja_id:
+        try:
+            caja = await db.cajas.find_one({"_id": ObjectId(caja_id)})
+            if caja and caja.get("estado") == "abierta":
+                await db.cajas.update_one(
+                    {"_id": ObjectId(caja_id)},
+                    {"$set": {
+                        "estado": "cerrada",
+                        "fecha_cierre": datetime.now(timezone.utc).isoformat(),
+                        "cerrado_por": "admin_forzado",
+                        "cerrado_por_nombre": current_user.get("nombre", "Admin")
+                    }}
+                )
+        except:
+            pass
+    
+    # Cerrar sesiones del usuario afectado
+    if usuario_afectado:
+        await db.sesiones_pos.update_many(
+            {"user_id": usuario_afectado},
+            {"$set": {
+                "activa": False,
+                "estado": "cerrada_por_admin",
+                "fecha_cierre": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+    
+    # Liberar el TPV
+    await db.tpv.update_one(
+        {"id": tpv_id},
+        {"$set": {
+            "estado_sesion": "disponible",
+            "usuario_reservado_id": None,
+            "usuario_reservado_nombre": None,
+            "caja_abierta_id": None,
+            "ocupado": False,
+            "ocupado_por": None,
+            "ocupado_por_nombre": None
+        }}
+    )
+    
+    return {
+        "message": "TPV liberado correctamente",
+        "usuario_afectado": usuario_afectado,
+        "caja_cerrada": caja_id is not None
+    }
+
+
 @app.post("/api/tpv/crear-automatico")
 async def crear_tpv_automatico(current_user: dict = Depends(get_current_user)):
     """Crea automáticamente una tienda y TPV por defecto SOLO si no existe ninguno (primera vez)"""
