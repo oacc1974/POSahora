@@ -3264,14 +3264,14 @@ async def get_tpvs_disponibles(current_user: dict = Depends(get_current_user)):
         
         # El TPV está disponible si:
         # 1. estado_sesion es "disponible" o no existe
-        # 2. está pausado pero reservado para ESTE usuario (puede volver a su caja)
+        # 2. está ocupado/pausado pero reservado para ESTE usuario
         # 3. campo ocupado antiguo es False/None
         ocupado_legacy = t.get("ocupado")
         
         esta_disponible = (
             estado_sesion == "disponible" or 
             estado_sesion is None or
-            (estado_sesion == "pausado" and usuario_reservado == user_id) or
+            usuario_reservado == user_id or  # Si es mi TPV, siempre disponible para mí
             (estado_sesion not in ["ocupado", "pausado"] and ocupado_legacy != True)
         )
         
@@ -3281,12 +3281,12 @@ async def get_tpvs_disponibles(current_user: dict = Depends(get_current_user)):
         tienda = await db.tiendas.find_one({"id": t["tienda_id"]}, {"_id": 0, "nombre": 1})
         tienda_nombre = tienda["nombre"] if tienda else "Sin tienda"
         
-        # Indicar si es un TPV reservado para este usuario (tiene caja abierta)
-        es_reservado_para_mi = estado_sesion == "pausado" and usuario_reservado == user_id
+        # Indicar si es un TPV reservado para este usuario
+        es_mi_tpv = usuario_reservado == user_id and estado_sesion in ["ocupado", "pausado"]
         
         result.append(TPVResponse(
             id=t["id"],
-            nombre=t["nombre"] + (" (Tu caja abierta)" if es_reservado_para_mi else ""),
+            nombre=t["nombre"] + (" (Tu caja)" if es_mi_tpv else ""),
             punto_emision=t["punto_emision"],
             tienda_id=t["tienda_id"],
             tienda_nombre=tienda_nombre,
