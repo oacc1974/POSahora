@@ -1679,30 +1679,29 @@ function ReporteRecibos({ facturas, onReembolso }) {
     `);
     printDocument.close();
     
+    // Bandera para evitar doble impresión
+    let printed = false;
+    
+    const executePrint = () => {
+      if (printed) return;
+      printed = true;
+      printFrame.contentWindow.focus();
+      printFrame.contentWindow.print();
+      // Eliminar iframe después de imprimir
+      setTimeout(() => {
+        if (document.body.contains(printFrame)) {
+          document.body.removeChild(printFrame);
+        }
+      }, 1000);
+    };
+    
     // Esperar a que el iframe cargue y luego imprimir
     printFrame.onload = function() {
-      setTimeout(() => {
-        printFrame.contentWindow.focus();
-        printFrame.contentWindow.print();
-        // Eliminar iframe después de imprimir
-        setTimeout(() => {
-          document.body.removeChild(printFrame);
-        }, 1000);
-      }, 300);
+      setTimeout(executePrint, 300);
     };
     
     // Fallback si onload no se dispara
-    setTimeout(() => {
-      if (printFrame && document.body.contains(printFrame)) {
-        printFrame.contentWindow.focus();
-        printFrame.contentWindow.print();
-        setTimeout(() => {
-          if (document.body.contains(printFrame)) {
-            document.body.removeChild(printFrame);
-          }
-        }, 1000);
-      }
-    }, 600);
+    setTimeout(executePrint, 800);
     
     setShowMenuRecibo(false);
   };
