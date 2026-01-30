@@ -2489,11 +2489,17 @@ async def login_con_pin(pin_login: PINLogin):
             "nombre": user.get("nombre") or user.get("nombre_completo", "Usuario"),
             "username": user["username"],
             "rol": user["rol"],
-            "organizacion_id": str(user["organizacion_id"])
+            "organizacion_id": str(user["organizacion_id"]),
+            "tpv_id": tpv_id_seleccionado,
+            "tpv_nombre": tpv_nombre if 'tpv_nombre' in dir() else sesion_pausada.get("tpv_nombre", "") if sesion_pausada else ""
         },
         "tienda": {
             "codigo": pin_login.codigo_tienda.upper(),
             "nombre": tienda_nombre
+        },
+        "tpv": {
+            "id": tpv_id_seleccionado,
+            "nombre": tpv_nombre if 'tpv_nombre' in dir() else ""
         }
     }
 
