@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class BillingSystemTester:
-    def __init__(self, base_url="https://easytpv.preview.emergentagent.com"):
+    def __init__(self, base_url="https://ecombot-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.admin_user = None
