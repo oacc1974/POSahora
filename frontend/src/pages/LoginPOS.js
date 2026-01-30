@@ -497,7 +497,9 @@ export default function LoginPOS({ onLogin }) {
           
           <div className="py-4">
             <p className="text-slate-700 mb-4">
-              Este usuario ya tiene una sesión iniciada en otro dispositivo.
+              <strong>{sesionActivaInfo?.usuario_nombre || 'Este usuario'}</strong> 
+              {sesionActivaInfo?.usuario_rol && <span className="text-slate-500 text-sm"> ({sesionActivaInfo.usuario_rol})</span>}
+              {' '}ya tiene una sesión iniciada en otro dispositivo.
             </p>
             
             {sesionActivaInfo && (
