@@ -426,6 +426,12 @@ class InvoiceResponse(BaseModel):
     tipo_pedido_nombre: Optional[str] = None
     estado: Optional[str] = "completado"
     fecha: str
+    # Campos para tracking de mesero
+    mesero_id: Optional[str] = None
+    mesero_nombre: Optional[str] = None
+    # Campos para tracking de quien cobró
+    cobrado_por_id: Optional[str] = None
+    cobrado_por_nombre: Optional[str] = None
 
 class TicketAbiertoCreate(BaseModel):
     nombre: str
