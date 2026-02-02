@@ -1336,9 +1336,28 @@ export default function POS() {
       
       const anchoTicket = config.ancho_ticket || 80;
       const anchoPx = anchoTicket === 58 ? 220 : 300;
-      const fontSize = anchoTicket === 58 ? '10px' : '12px';
-      const fontSizeSmall = anchoTicket === 58 ? '9px' : '11px';
-      const fontSizeTitle = anchoTicket === 58 ? '14px' : '16px';
+      const charWidth = anchoTicket === 58 ? 32 : 42;
+      
+      // Obtener nombre del mesero actual
+      const userData = JSON.parse(sessionStorage.getItem('user') || '{}');
+      const meseroNombre = userData.nombre || 'Cajero';
+      
+      // Generar número de ticket
+      const ticketNum = ticketActualId ? ticketActualId.slice(-5).toUpperCase() : String(Date.now()).slice(-5);
+      
+      // Fecha y hora actual
+      const ahora = new Date();
+      const fecha = ahora.toLocaleDateString('es-ES');
+      const hora = ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      
+      // Función para centrar texto
+      const centrar = (texto, ancho) => {
+        const espacios = Math.max(0, Math.floor((ancho - texto.length) / 2));
+        return ' '.repeat(espacios) + texto;
+      };
+      
+      // Función para línea de separación
+      const separador = '-'.repeat(charWidth);
       
       // Crear iframe oculto
       const printFrame = document.createElement('iframe');
@@ -1358,88 +1377,211 @@ export default function POS() {
         <head>
           <title>Precuenta</title>
           <style>
-            body { font-family: 'Courier New', monospace; padding: 10px; font-size: ${fontSize}; max-width: ${anchoPx}px; margin: 0 auto; }
-            .header { text-align: center; margin-bottom: 10px; }
-            .header h1 { font-size: ${fontSizeTitle}; margin: 0; }
-            .header p { margin: 2px 0; font-size: ${fontSizeSmall}; }
-            .precuenta-badge { 
-              text-align: center; 
-              padding: 8px; 
-              margin: 10px 0; 
-              background: #fef3c7; 
-              border: 2px dashed #f59e0b;
-              font-weight: bold;
+            body { 
+              font-family: 'Courier New', Courier, monospace; 
+              font-size: 12px; 
+              max-width: ${anchoPx}px; 
+              margin: 0 auto; 
+              padding: 10px;
+              line-height: 1.4;
             }
-            .divider { border-top: 1px dashed #000; margin: 8px 0; }
-            .item { display: flex; justify-content: space-between; margin: 4px 0; font-size: ${fontSizeSmall}; }
-            .total { border-top: 2px solid #000; margin-top: 8px; padding-top: 8px; font-weight: bold; }
-            .footer { margin-top: 15px; text-align: center; font-size: ${fontSizeSmall}; }
-            .nota { text-align: center; font-size: 9px; color: #666; margin-top: 10px; padding: 5px; border: 1px dashed #999; }
-            @media print { body { margin: 0; padding: 5px; } }
+            .center { text-align: center; }
+            .bold { font-weight: bold; }
+            .separator { 
+              text-align: center; 
+              letter-spacing: -1px;
+              margin: 5px 0;
+            }
+            .header-title {
+              font-size: 14px;
+              font-weight: bold;
+              margin: 5px 0;
+            }
+            .precuenta-title {
+              font-size: 16px;
+              font-weight: bold;
+              margin: 8px 0 2px 0;
+            }
+            .info-row {
+              display: flex;
+              justify-content: space-between;
+              margin: 2px 0;
+            }
+            .items-header {
+              display: flex;
+              justify-content: space-between;
+              font-weight: bold;
+              margin: 5px 0;
+            }
+            .item-row {
+              display: flex;
+              margin: 3px 0;
+            }
+            .item-cant {
+              width: 35px;
+              text-align: left;
+            }
+            .item-desc {
+              flex: 1;
+              text-align: left;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+            .item-price {
+              width: 60px;
+              text-align: right;
+            }
+            .total-section {
+              margin-top: 5px;
+            }
+            .total-row {
+              display: flex;
+              justify-content: space-between;
+              margin: 2px 0;
+            }
+            .total-final {
+              font-weight: bold;
+              font-size: 14px;
+              margin: 5px 0;
+            }
+            .factura-section {
+              margin-top: 10px;
+            }
+            .factura-field {
+              margin: 8px 0;
+            }
+            .factura-label {
+              font-size: 11px;
+              margin-bottom: 2px;
+            }
+            .factura-line {
+              border-bottom: 1px solid #000;
+              height: 18px;
+            }
+            .footer-msg {
+              margin-top: 15px;
+              font-size: 11px;
+            }
+            @media print { 
+              body { margin: 0; padding: 5px; } 
+            }
           </style>
         </head>
         <body>
-          <div class="header">
-            <h1>${config.nombre_negocio || 'Mi Negocio'}</h1>
-            ${config.direccion ? `<p>${config.direccion}</p>` : ''}
-            ${config.telefono ? `<p>Tel: ${config.telefono}</p>` : ''}
+          <!-- HEADER -->
+          <div class="center header-title">${config.nombre_negocio || 'MI NEGOCIO'}</div>
+          ${config.direccion ? `<div class="center" style="font-size: 11px;">${config.direccion}</div>` : ''}
+          ${config.telefono ? `<div class="center" style="font-size: 11px;">Tel: ${config.telefono}</div>` : ''}
+          
+          <div class="separator">${separador}</div>
+          
+          <!-- TITULO PRECUENTA -->
+          <div class="center precuenta-title">PRE - CUENTA</div>
+          <div class="center" style="font-size: 10px; margin-bottom: 5px;">(NO VÁLIDO COMO FACTURA)</div>
+          
+          <div class="separator">${separador}</div>
+          
+          <!-- INFO MESA Y MESERO -->
+          <div class="info-row">
+            <span>Mesa: ${ticketActualId ? (cart[0]?.mesa || '--') : '--'}</span>
+            <span>Mesero: ${meseroNombre}</span>
+          </div>
+          <div class="info-row">
+            <span>Fecha: ${fecha}</span>
+            <span>Hora: ${hora}</span>
+          </div>
+          <div class="center" style="margin: 3px 0;">Ticket #: ${ticketNum}</div>
+          
+          <div class="separator">${separador}</div>
+          
+          <!-- ENCABEZADO ITEMS -->
+          <div class="items-header">
+            <span class="item-cant">CANT</span>
+            <span class="item-desc">DESCRIPCIÓN</span>
+            <span class="item-price">SUBT</span>
           </div>
           
-          <div class="precuenta-badge">
-            📋 PRECUENTA
-          </div>
+          <div class="separator">${separador}</div>
           
-          <p style="text-align:center; font-size: 10px;">Fecha: ${new Date().toLocaleString('es-ES')}</p>
-          ${ticketActualId ? `<p style="text-align:center; font-size: 10px;">Mesa/Ticket: ${cart[0]?.mesa || 'N/A'}</p>` : ''}
-          
-          <div class="divider"></div>
-          
-          ${clienteSeleccionado ? `
-            <div style="margin-bottom: 8px;">
-              <p style="font-weight: bold; margin: 2px 0;">Cliente: ${clienteSeleccionado.nombre}</p>
+          <!-- ITEMS -->
+          ${cart.map(item => `
+            <div class="item-row">
+              <span class="item-cant">${item.cantidad}</span>
+              <span class="item-desc">${item.nombre}</span>
+              <span class="item-price">${item.subtotal.toFixed(2)}</span>
             </div>
-            <div class="divider"></div>
-          ` : ''}
+          `).join('')}
           
-          <div class="items">
-            ${cart.map(item => `
-              <div class="item">
-                <span>${item.nombre} x${item.cantidad}</span>
-                <span>$${item.subtotal.toFixed(2)}</span>
+          <div class="separator">${separador}</div>
+          
+          <!-- TOTALES -->
+          <div class="total-section">
+            <div class="total-row">
+              <span>SUBTOTAL:</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+            ${totalDescuentos > 0 ? `
+              <div class="total-row" style="color: #c00;">
+                <span>DESCUENTO:</span>
+                <span>-${totalDescuentos.toFixed(2)}</span>
+              </div>
+            ` : ''}
+            ${desgloseImpuestos.map(imp => `
+              <div class="total-row">
+                <span>${imp.nombre} (${imp.tasa}%):</span>
+                <span>${imp.monto.toFixed(2)}</span>
               </div>
             `).join('')}
           </div>
           
-          <div class="divider"></div>
+          <div class="separator">${separador}</div>
           
-          <div class="item"><span>Subtotal:</span><span>$${subtotal.toFixed(2)}</span></div>
-          
-          ${totalDescuentos > 0 ? `
-            <div class="item" style="color: #dc2626;"><span>Descuentos:</span><span>-$${totalDescuentos.toFixed(2)}</span></div>
-          ` : ''}
-          
-          ${desgloseImpuestos.map(imp => `
-            <div class="item"><span>${imp.nombre} (${imp.tasa}%):</span><span>$${imp.monto.toFixed(2)}</span></div>
-          `).join('')}
-          
-          <div class="total">
-            <div class="item"><span>TOTAL A PAGAR:</span><span>$${total.toFixed(2)}</span></div>
+          <div class="total-row total-final">
+            <span>TOTAL A PAGAR:</span>
+            <span>${total.toFixed(2)}</span>
           </div>
           
-          <div class="nota">
-            ⚠️ Este documento es solo informativo.<br>
-            Solicite su ticket de venta al momento de pagar.
+          <div class="separator">${separador}</div>
+          
+          <!-- SECCION DATOS PARA FACTURA -->
+          <div class="factura-section">
+            <div class="center bold" style="margin-bottom: 8px;">DATOS PARA FACTURA</div>
+            <div class="separator">${separador}</div>
+            
+            <div class="factura-field">
+              <div class="factura-label">Nombre / Razón Social:</div>
+              <div class="factura-line"></div>
+            </div>
+            
+            <div class="factura-field">
+              <div class="factura-label">RUC / CÉDULA:</div>
+              <div class="factura-line"></div>
+            </div>
+            
+            <div class="factura-field">
+              <div class="factura-label">Correo Electrónico:</div>
+              <div class="factura-line"></div>
+            </div>
+            
+            <div class="factura-field">
+              <div class="factura-label">Dirección:</div>
+              <div class="factura-line"></div>
+            </div>
           </div>
           
-          <div class="footer">
-            <p>¡Gracias por su preferencia!</p>
+          <div class="separator">${separador}</div>
+          
+          <!-- MENSAJE FINAL -->
+          <div class="center footer-msg">
+            <p style="margin: 5px 0;">Gracias por su visita</p>
           </div>
+          
+          <div class="separator">${separador}</div>
           
           <!-- Espacio para corte -->
           <div style="height: 30px;"></div>
           <br><br>
-          <p style="text-align: center; color: #ccc; font-size: 8px;">. . . . . . . . . . . . . . . . . . . . . . . .</p>
-          <br>
         </body>
         </html>
       `);
