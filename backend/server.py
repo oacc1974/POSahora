@@ -2358,80 +2358,97 @@ async def login_con_pin(pin_login: PINLogin):
     
     user_id = str(user["_id"])
     organizacion_id = str(user["organizacion_id"])
+    es_mesero = user.get("rol") == "mesero"
     
     # ============ SISTEMA DE SESIONES POR TPV ============
     
-    # 1. Verificar si el usuario tiene una sesión PAUSADA (salió sin cerrar caja)
-    sesion_pausada = await db.sesiones_pos.find_one({
-        "user_id": user_id,
-        "estado": "pausada"
-    })
-    
-    if sesion_pausada:
-        tpv_reservado = sesion_pausada.get("tpv_id")
-        caja_id = sesion_pausada.get("caja_abierta_id")
+    # Los meseros no tienen las mismas restricciones de sesión (no manejan caja)
+    if es_mesero:
+        # Cerrar cualquier sesión anterior del mesero automáticamente
+        await db.sesiones_pos.update_many(
+            {"user_id": user_id, "activa": True},
+            {"$set": {"activa": False, "estado": "cerrada", "fecha_cierre": datetime.now(timezone.utc).isoformat()}}
+        )
+    else:
+        # 1. Verificar si el usuario tiene una sesión PAUSADA (salió sin cerrar caja)
+        sesion_pausada = await db.sesiones_pos.find_one({
+            "user_id": user_id,
+            "estado": "pausada"
+        })
         
-        # Obtener info del TPV reservado
-        tpv_info = await db.tpv.find_one({"id": tpv_reservado}) if tpv_reservado else None
-        tpv_nombre = tpv_info.get("nombre", "TPV") if tpv_info else "TPV"
-        
-        # Obtener monto de la caja (buscar por múltiples formatos de ID)
-        caja = None
-        monto_caja = 0
-        if caja_id:
-            try:
-                # Intentar primero con ObjectId
-                caja = await db.cajas.find_one({"_id": ObjectId(caja_id)})
-            except:
-                # Si falla, buscar como string o por usuario
-                caja = await db.cajas.find_one({
-                    "usuario_id": user_id,
-                    "estado": "abierta"
-                })
-            if caja:
-                monto_caja = caja.get("monto_actual", 0)
-        
-        if not getattr(pin_login, 'forzar_cierre', False):
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": "SESSION_PAUSED",
-                    "message": "Tienes una caja abierta que debes cerrar",
-                    "session_info": {
-                        "usuario_nombre": user.get("nombre", "Usuario"),
-                        "usuario_rol": user.get("rol", ""),
-                        "tpv_id": tpv_reservado,
-                        "tpv_nombre": tpv_nombre,
-                        "monto_caja": monto_caja,
-                        "fecha_pausa": sesion_pausada.get("fecha_pausa", "")
+        if sesion_pausada:
+            tpv_reservado = sesion_pausada.get("tpv_id")
+            caja_id = sesion_pausada.get("caja_abierta_id")
+            
+            # Obtener info del TPV reservado
+            tpv_info = await db.tpv.find_one({"id": tpv_reservado}) if tpv_reservado else None
+            tpv_nombre = tpv_info.get("nombre", "TPV") if tpv_info else "TPV"
+            
+            # Obtener monto de la caja (buscar por múltiples formatos de ID)
+            caja = None
+            monto_caja = 0
+            if caja_id:
+                try:
+                    # Intentar primero con ObjectId
+                    caja = await db.cajas.find_one({"_id": ObjectId(caja_id)})
+                except:
+                    # Si falla, buscar como string o por usuario
+                    caja = await db.cajas.find_one({
+                        "usuario_id": user_id,
+                        "estado": "abierta"
+                    })
+                if caja:
+                    monto_caja = caja.get("monto_actual", 0)
+            
+            if not getattr(pin_login, 'forzar_cierre', False):
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "SESSION_PAUSED",
+                        "message": "Tienes una caja abierta que debes cerrar",
+                        "session_info": {
+                            "usuario_nombre": user.get("nombre", "Usuario"),
+                            "usuario_rol": user.get("rol", ""),
+                            "tpv_id": tpv_reservado,
+                            "tpv_nombre": tpv_nombre,
+                            "monto_caja": monto_caja,
+                            "fecha_pausa": sesion_pausada.get("fecha_pausa", "")
+                        }
                     }
-                }
-            )
-        # Si forzar_cierre=True, continuar y reactivar la sesión en el mismo TPV
-    
-    # 2. Verificar si el usuario ya tiene una sesión ACTIVA
-    sesion_existente = await db.sesiones_pos.find_one({
-        "user_id": user_id,
-        "activa": True
-    })
-    
-    if sesion_existente:
-        if not getattr(pin_login, 'forzar_cierre', False):
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": "SESSION_ACTIVE",
-                    "message": "Este usuario ya tiene una sesión activa",
-                    "session_info": {
-                        "usuario_nombre": user.get("nombre", "Usuario"),
-                        "usuario_rol": user.get("rol", ""),
-                        "dispositivo": sesion_existente.get("dispositivo", "Desconocido"),
-                        "tpv_nombre": sesion_existente.get("tpv_nombre", ""),
-                        "iniciada": sesion_existente.get("fecha_inicio", ""),
-                        "ultima_actividad": sesion_existente.get("ultima_actividad", "")
+                )
+            # Si forzar_cierre=True, continuar y reactivar la sesión en el mismo TPV
+        
+        # 2. Verificar si el usuario ya tiene una sesión ACTIVA
+        sesion_existente = await db.sesiones_pos.find_one({
+            "user_id": user_id,
+            "activa": True
+        })
+        
+        if sesion_existente:
+            if not getattr(pin_login, 'forzar_cierre', False):
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "SESSION_ACTIVE",
+                        "message": "Este usuario ya tiene una sesión activa",
+                        "session_info": {
+                            "usuario_nombre": user.get("nombre", "Usuario"),
+                            "usuario_rol": user.get("rol", ""),
+                            "dispositivo": sesion_existente.get("dispositivo", "Desconocido"),
+                            "tpv_nombre": sesion_existente.get("tpv_nombre", ""),
+                            "iniciada": sesion_existente.get("fecha_inicio", ""),
+                            "ultima_actividad": sesion_existente.get("ultima_actividad", "")
+                        }
                     }
-                }
-            )
+                )
+    
+    # Variable para rastrear sesión pausada (solo para no-meseros)
+    sesion_pausada = None
+    if not es_mesero:
+        sesion_pausada = await db.sesiones_pos.find_one({
+            "user_id": user_id,
+            "estado": "pausada"
+        })
     
     # 3. Verificar si el TPV seleccionado está disponible (si se especificó uno)
     tpv_id_seleccionado = getattr(pin_login, 'tpv_id', None)
