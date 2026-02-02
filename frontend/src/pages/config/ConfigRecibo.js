@@ -473,6 +473,23 @@ export default function ConfigRecibo() {
                 </p>
               </div>
 
+              {/* Botón de prueba de impresión */}
+              <div className="pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleTestPrint}
+                  className="w-full gap-2 border-amber-300 text-amber-700 hover:bg-amber-50"
+                  data-testid="config-test-print-button"
+                >
+                  <Printer size={18} />
+                  Probar Impresión
+                </Button>
+                <p className="text-xs text-slate-500 mt-1 text-center">
+                  Imprime un ticket de prueba con la configuración actual
+                </p>
+              </div>
+
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="mostrar_info_cliente"
