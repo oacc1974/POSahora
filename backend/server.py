@@ -5249,7 +5249,11 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         metodo_pago_nombre=metodo_pago_nombre,
         tipo_pedido_id=invoice.tipo_pedido_id,
         tipo_pedido_nombre=tipo_pedido_nombre,
-        fecha=new_invoice["fecha"]
+        fecha=new_invoice["fecha"],
+        mesero_id=invoice.mesero_id,
+        mesero_nombre=invoice.mesero_nombre,
+        cobrado_por_id=current_user["_id"],
+        cobrado_por_nombre=current_user["nombre"]
     )
 
 
