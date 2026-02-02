@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
-import { Store, Save, Upload, X, Image } from 'lucide-react';
+import { Store, Save, Upload, X, Image, Printer } from 'lucide-react';
 import { Checkbox } from '../../components/ui/checkbox';
 import axios from 'axios';
 import { toast } from 'sonner';
