@@ -450,6 +450,16 @@ export default function POS() {
     setCart(ticket.items);
     setTicketActualId(ticket.id);
     
+    // Guardar mesero original si existe
+    if (ticket.mesero_id || ticket.vendedor_id) {
+      setMeseroOriginal({
+        id: ticket.mesero_id || ticket.vendedor_id,
+        nombre: ticket.mesero_nombre || ticket.vendedor_nombre
+      });
+    } else {
+      setMeseroOriginal(null);
+    }
+    
     if (ticket.cliente_id) {
       setClienteSeleccionado({
         id: ticket.cliente_id,
