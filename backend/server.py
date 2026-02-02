@@ -393,6 +393,9 @@ class InvoiceCreate(BaseModel):
     comentarios: Optional[str] = None
     metodo_pago_id: Optional[str] = None
     tipo_pedido_id: Optional[str] = None
+    # Campos para tracking de mesero
+    mesero_id: Optional[str] = None
+    mesero_nombre: Optional[str] = None
 
 class ImpuestoDesglose(BaseModel):
     nombre: str
