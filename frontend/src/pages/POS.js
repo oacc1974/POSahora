@@ -1580,8 +1580,10 @@ export default function POS() {
           <div class="separator">${separador}</div>
           
           <!-- Espacio para corte -->
-          <div style="height: 30px;"></div>
-          <br><br>
+          <div style="height: 40px;"></div>
+          <br><br><br>
+          <p style="text-align: center; color: #ccc; font-size: 8px;">. . . . . . . . . . . . . . . . . . . . . . . .</p>
+          <br>
         </body>
         </html>
       `);
