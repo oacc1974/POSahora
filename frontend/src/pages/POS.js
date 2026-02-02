@@ -1281,6 +1281,7 @@ export default function POS() {
     setClienteSeleccionado(null);
     setComentarios('');
     setTicketActualId(null);
+    setMeseroOriginal(null);
     setShowTicketMenu(false);
     toast.success('Ticket despejado');
   };
