@@ -1129,9 +1129,19 @@ export default function POS() {
       printDocument.write(
         `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Fecha: ${new Date(invoice.fecha).toLocaleString('es-ES')}</p>`
       );
+      
+      // Mostrar Atendido por (mesero si existe, sino vendedor)
+      const atendidoPor = invoice.mesero_nombre || invoice.vendedor_nombre;
       printDocument.write(
-        `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Atendió: ${invoice.vendedor_nombre}</p>`
+        `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Atendido por: ${atendidoPor}</p>`
       );
+      
+      // Si hay mesero y cobrador diferente, mostrar quien cobró
+      if (invoice.mesero_nombre && invoice.cobrado_por_nombre && invoice.mesero_nombre !== invoice.cobrado_por_nombre) {
+        printDocument.write(
+          `<p style="text-align:center; margin: 5px 0; font-size: 10px;">Cobrado por: ${invoice.cobrado_por_nombre}</p>`
+        );
+      }
       
       printDocument.write('<div class="divider"></div>');
       
