@@ -3714,6 +3714,9 @@ async def create_ticket_abierto(ticket: TicketAbiertoCreate, current_user: dict 
     
     ticket_id = str(uuid.uuid4())
     
+    # Determinar si es mesero para guardar como creador original
+    es_mesero = current_user.get("rol") == "mesero"
+    
     new_ticket = {
         "id": ticket_id,
         "nombre": ticket.nombre,
@@ -3721,6 +3724,9 @@ async def create_ticket_abierto(ticket: TicketAbiertoCreate, current_user: dict 
         "subtotal": ticket.subtotal,
         "vendedor_id": current_user["_id"],
         "vendedor_nombre": current_user["nombre"],
+        # Guardar mesero original si aplica
+        "mesero_id": current_user["_id"] if es_mesero else None,
+        "mesero_nombre": current_user["nombre"] if es_mesero else None,
         "organizacion_id": current_user["organizacion_id"],
         "caja_id": caja_id,
         "cliente_id": ticket.cliente_id,
