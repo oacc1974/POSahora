@@ -461,6 +461,9 @@ class TicketAbiertoResponse(BaseModel):
     # Campo para indicar si el usuario actual puede editar este ticket
     puede_editar: Optional[bool] = True
     es_propio: Optional[bool] = True
+    # Campos para tracking de mesero
+    mesero_id: Optional[str] = None
+    mesero_nombre: Optional[str] = None
 
 class CajaApertura(BaseModel):
     monto_inicial: Optional[float] = 0.0
