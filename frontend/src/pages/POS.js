@@ -151,8 +151,20 @@ export default function POS() {
           tpv_nombre: 'Modo Mesero',
           es_mesero: true
         });
+        // Meseros no verifican caja, cargar datos directamente
+        fetchProductos();
+        fetchMetodosPago();
+        fetchTiposPedido();
+        fetchFuncionesConfig();
+        fetchMesasPredefinidas();
+        fetchModificadores();
+        fetchImpuestos();
+        fetchDescuentosPredefinidos();
+        fetchTicketsAbiertos();
+        return;
       }
       
+      // Para otros roles, flujo normal
       fetchProductos();
       verificarCaja();
       fetchMetodosPago();
