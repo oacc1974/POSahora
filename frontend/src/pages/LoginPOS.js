@@ -202,7 +202,8 @@ export default function LoginPOS({ onLogin }) {
             description: 'Acceso como mesero'
           });
           
-          navigate('/pos');
+          // Usar window.location para forzar recarga y que App.js lea el nuevo usuario
+          window.location.href = '/pos';
           return;
         } catch (loginError) {
           console.error('Error en login de mesero:', loginError);
