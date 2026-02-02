@@ -2426,6 +2426,11 @@ async def login_con_pin(pin_login: PINLogin):
     
     # 3. Verificar si el TPV seleccionado está disponible (si se especificó uno)
     tpv_id_seleccionado = getattr(pin_login, 'tpv_id', None)
+    es_mesero = user.get("rol") == "mesero"
+    
+    # Los meseros no necesitan TPV
+    if es_mesero:
+        tpv_id_seleccionado = None  # Forzar a None para meseros
     
     if tpv_id_seleccionado:
         tpv = await db.tpv.find_one({"id": tpv_id_seleccionado})
