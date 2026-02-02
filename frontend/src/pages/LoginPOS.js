@@ -171,7 +171,45 @@ export default function LoginPOS({ onLogin }) {
         { withCredentials: true }
       );
 
-      const { usuario, tienda, tpvs_disponibles, sesion_pausada, sesion_activa } = response.data;
+      const { usuario, tienda, tpvs_disponibles, sesion_pausada, sesion_activa, es_mesero } = response.data;
+      
+      // Si es mesero, hacer login directo sin seleccionar TPV
+      if (es_mesero || usuario.rol === 'mesero') {
+        try {
+          const loginResponse = await axios.post(
+            `${API_URL}/api/auth/login-pin`,
+            {
+              codigo_tienda: codigoTienda,
+              pin: pinValue,
+              tpv_id: null, // Meseros no necesitan TPV
+              dispositivo: 'Navegador Web'
+            },
+            { withCredentials: true }
+          );
+          
+          const { access_token, session_id, usuario: user } = loginResponse.data;
+          
+          sessionStorage.setItem('token', access_token);
+          sessionStorage.setItem('pos_session_id', session_id);
+          sessionStorage.setItem('user', JSON.stringify({
+            ...user,
+            token: access_token
+          }));
+          // Meseros no tienen TPV asignado
+          sessionStorage.removeItem('pos_tpv_asignado');
+          
+          toast.success(`¡Bienvenido, ${user.nombre}!`, {
+            description: 'Acceso como mesero'
+          });
+          
+          navigate('/pos');
+          return;
+        } catch (loginError) {
+          console.error('Error en login de mesero:', loginError);
+          toast.error(loginError.response?.data?.detail?.message || 'Error al iniciar sesión');
+          return;
+        }
+      }
       
       // Si tiene sesión pausada (caja abierta), mostrar su TPV en la lista
       if (sesion_pausada) {
