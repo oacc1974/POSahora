@@ -877,6 +877,9 @@ export default function POS() {
           comentarios: comentarios || null,
           metodo_pago_id: metodoPagoSeleccionado,
           tipo_pedido_id: tipoPedidoSeleccionado,
+          // Tracking de mesero si el ticket fue creado por uno
+          mesero_id: meseroOriginal?.id || null,
+          mesero_nombre: meseroOriginal?.nombre || null,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -903,6 +906,7 @@ export default function POS() {
       setClienteSeleccionado(null);
       setComentarios('');
       setTicketActualId(null);
+      setMeseroOriginal(null); // Limpiar mesero
       setShowCobroDialog(false);
       setEfectivoRecibido('');
       setLoading(false);
