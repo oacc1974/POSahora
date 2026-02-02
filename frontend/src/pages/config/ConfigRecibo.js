@@ -111,6 +111,119 @@ export default function ConfigRecibo() {
     }
   };
 
+  // Función para probar la impresión
+  const handleTestPrint = () => {
+    const anchoTicket = formData.ancho_ticket || 80;
+    const anchoPx = anchoTicket === 58 ? 220 : 300;
+    const fontSize = anchoTicket === 58 ? '10px' : '12px';
+    const fontSizeSmall = anchoTicket === 58 ? '9px' : '11px';
+    const fontSizeTitle = anchoTicket === 58 ? '14px' : '16px';
+    const logoMaxWidth = anchoTicket === 58 ? '120px' : '150px';
+    
+    // Crear iframe oculto
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'absolute';
+    printFrame.style.top = '-10000px';
+    printFrame.style.left = '-10000px';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = 'none';
+    document.body.appendChild(printFrame);
+    
+    const printDocument = printFrame.contentWindow.document;
+    printDocument.open();
+    printDocument.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Prueba de Impresión</title>
+        <style>
+          body { font-family: 'Courier New', monospace; padding: 10px; font-size: ${fontSize}; max-width: ${anchoPx}px; margin: 0 auto; }
+          .header { text-align: center; margin-bottom: 10px; }
+          .header h1 { font-size: ${fontSizeTitle}; margin: 0; }
+          .header p { margin: 2px 0; font-size: ${fontSizeSmall}; }
+          .divider { border-top: 1px dashed #000; margin: 8px 0; }
+          .test-box { border: 2px solid #000; padding: 10px; margin: 10px 0; text-align: center; }
+          .item { display: flex; justify-content: space-between; margin: 4px 0; font-size: ${fontSizeSmall}; }
+          .total { border-top: 2px solid #000; margin-top: 8px; padding-top: 8px; font-weight: bold; }
+          .footer { margin-top: 10px; text-align: center; font-size: ${fontSizeSmall}; }
+          .logo { text-align: center; margin-bottom: 8px; }
+          .logo img { max-width: ${logoMaxWidth}; max-height: 60px; }
+          @media print { body { margin: 0; padding: 5px; } }
+        </style>
+      </head>
+      <body>
+        ${formData.logo_url ? `<div class="logo"><img src="${API_URL}${formData.logo_url}" alt="Logo" /></div>` : ''}
+        
+        <div class="header">
+          <h1>${formData.nombre_negocio || 'Mi Negocio'}</h1>
+          ${formData.direccion ? `<p>${formData.direccion}</p>` : ''}
+          ${formData.telefono ? `<p>Tel: ${formData.telefono}</p>` : ''}
+          ${formData.rfc ? `<p>RUC: ${formData.rfc}</p>` : ''}
+        </div>
+        
+        <div class="test-box">
+          <strong>🖨️ PRUEBA DE IMPRESIÓN</strong>
+          <p style="font-size: 10px; margin-top: 5px;">Ancho: ${anchoTicket}mm</p>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <p style="text-align: center; font-size: 10px;">
+          Fecha: ${new Date().toLocaleString('es-ES')}
+        </p>
+        
+        <div class="divider"></div>
+        
+        <div class="item"><span>Producto de prueba x1</span><span>$10.00</span></div>
+        <div class="item"><span>Otro producto x2</span><span>$25.00</span></div>
+        <div class="item"><span>Servicio ejemplo x1</span><span>$15.00</span></div>
+        
+        <div class="total">
+          <div class="item"><span>TOTAL:</span><span>$50.00</span></div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="footer">
+          <p>${formData.mensaje_pie || '¡Gracias por su compra!'}</p>
+        </div>
+        
+        <p style="text-align: center; font-size: 9px; color: #666; margin-top: 10px;">
+          ✓ Si puedes leer esto, la impresión funciona correctamente
+        </p>
+        
+        <!-- Espacio para corte -->
+        <div style="height: 30px;"></div>
+        <br><br>
+        <p style="text-align: center; color: #ccc; font-size: 8px;">. . . . . . . . . . . . . . . . . . . . . . . .</p>
+        <br>
+      </body>
+      </html>
+    `);
+    printDocument.close();
+    
+    let printed = false;
+    const executePrint = () => {
+      if (printed) return;
+      printed = true;
+      printFrame.contentWindow.focus();
+      printFrame.contentWindow.print();
+      setTimeout(() => {
+        if (document.body.contains(printFrame)) {
+          document.body.removeChild(printFrame);
+        }
+      }, 1000);
+    };
+    
+    printFrame.onload = function() {
+      setTimeout(executePrint, 300);
+    };
+    setTimeout(executePrint, 800);
+    
+    toast.success('Ticket de prueba enviado a la impresora');
+  };
+
   if (loading) {
     return <div>Cargando...</div>;
   }
