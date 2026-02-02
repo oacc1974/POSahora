@@ -5199,6 +5199,12 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
         "total": total_final,
         "vendedor": current_user["_id"],
         "vendedor_nombre": current_user["nombre"],
+        # Guardar mesero original si viene del frontend (ticket guardado por mesero)
+        "mesero_id": invoice.mesero_id,
+        "mesero_nombre": invoice.mesero_nombre,
+        # Quien cobra la factura
+        "cobrado_por_id": current_user["_id"],
+        "cobrado_por_nombre": current_user["nombre"],
         "organizacion_id": current_user["organizacion_id"],
         "caja_id": caja_activa["_id"],
         "cliente_id": invoice.cliente_id,
