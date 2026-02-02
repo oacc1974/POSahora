@@ -3670,13 +3670,18 @@ async def get_tickets_abiertos_pos(current_user: dict = Depends(get_current_user
     )
     mesas_por_mesero = config.get("mesas_por_mesero", False) if config else False
     
-    # Obtener TODOS los tickets abiertos de la organización (compartidos entre empleados)
-    tickets = await db.tickets_abiertos.find({
-        "organizacion_id": current_user["organizacion_id"]
-    }, {"_id": 0}).sort("fecha_creacion", -1).to_list(1000)
-    
     user_id = current_user["_id"]
     user_rol = current_user["rol"]
+    
+    # Filtro base
+    filtro = {"organizacion_id": current_user["organizacion_id"]}
+    
+    # Si es mesero y mesas_por_mesero está activado, solo mostrar SUS tickets
+    if user_rol == "mesero" and mesas_por_mesero:
+        filtro["vendedor_id"] = user_id
+    
+    # Obtener tickets según el filtro
+    tickets = await db.tickets_abiertos.find(filtro, {"_id": 0}).sort("fecha_creacion", -1).to_list(1000)
     
     result = []
     for t in tickets:
@@ -3713,7 +3718,9 @@ async def get_tickets_abiertos_pos(current_user: dict = Depends(get_current_user
             ultimo_vendedor_nombre=t.get("ultimo_vendedor_nombre"),
             ultima_modificacion=t.get("ultima_modificacion"),
             puede_editar=puede_editar,
-            es_propio=es_propio
+            es_propio=es_propio,
+            mesero_id=t.get("mesero_id"),
+            mesero_nombre=t.get("mesero_nombre")
         ))
     
     return result
