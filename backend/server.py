@@ -2286,7 +2286,8 @@ async def validar_pin(request: ValidarPINRequest):
             "nombre": tienda["nombre"] if tienda else "Tienda"
         },
         "sesion_pausada": None,
-        "tpvs_disponibles": tpvs_disponibles
+        "tpvs_disponibles": tpvs_disponibles,
+        "es_mesero": user.get("rol") == "mesero"  # Indicador para el frontend
     }
 
 
