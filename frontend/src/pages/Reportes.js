@@ -1627,7 +1627,10 @@ function ReporteRecibos({ facturas, onReembolso }) {
           <h2>${nombreNegocio}</h2>
           <p>Nº ${selectedFactura.numero}</p>
           <p>${fecha.toLocaleDateString('es-ES')} ${fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
-          <p>Atendido por: ${selectedFactura.vendedor_nombre || '-'}</p>
+          <p>Atendido por: ${selectedFactura.mesero_nombre || selectedFactura.vendedor_nombre || '-'}</p>
+          ${selectedFactura.mesero_nombre && selectedFactura.cobrado_por_nombre && selectedFactura.mesero_nombre !== selectedFactura.cobrado_por_nombre 
+            ? `<p>Cobrado por: ${selectedFactura.cobrado_por_nombre}</p>` 
+            : ''}
         </div>
         ${selectedFactura.estado === 'reembolsado' ? '<div class="reembolsado">*** REEMBOLSADO ***</div>' : ''}
         ${clienteHtml}
