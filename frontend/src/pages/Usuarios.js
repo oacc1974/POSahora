@@ -385,16 +385,16 @@ export default function Usuarios() {
                       </div>
                     </div>
                     
-                    {user.rol !== 'propietario' && (
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
-                          <Pencil size={14} />
-                        </Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
+                        <Pencil size={14} />
+                      </Button>
+                      {user.rol !== 'propietario' && (
                         <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)}>
                           <Trash2 size={14} className="text-red-500" />
                         </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                   
                   <div className="mt-3 space-y-2">
