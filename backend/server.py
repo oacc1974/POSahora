@@ -1032,10 +1032,8 @@ async def google_auth(body: GoogleAuthRequest, response: Response):
         codigo_tienda = org.get("codigo_tienda") if org else None
         
         # Crear token JWT
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         jwt_token = create_access_token(
-            data={"sub": user_id, "rol": user["rol"], "organizacion_id": user["organizacion_id"]},
-            expires_delta=access_token_expires
+            data={"sub": user_id, "rol": user["rol"], "organizacion_id": user["organizacion_id"]}
         )
         
         response.set_cookie(
