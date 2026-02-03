@@ -1236,10 +1236,8 @@ async def google_register(body: GoogleRegisterRequest, response: Response):
     })
     
     # Crear token JWT
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     jwt_token = create_access_token(
-        data={"sub": user_id, "rol": "propietario", "organizacion_id": org_id},
-        expires_delta=access_token_expires
+        data={"sub": user_id, "rol": "propietario", "organizacion_id": org_id}
     )
     
     response.set_cookie(
