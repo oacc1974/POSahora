@@ -627,8 +627,8 @@ export default function Usuarios() {
                 <Input
                   value={userFormData.pin}
                   onChange={(e) => setUserFormData({ ...userFormData, pin: e.target.value })}
-                  placeholder="PIN de 4-6 dígitos"
-                  maxLength={6}
+                  placeholder="PIN de 4 dígitos"
+                  maxLength={4}
                   className="font-mono"
                 />
                 <Button type="button" variant="outline" onClick={generatePin} disabled={generatingPin}>
