@@ -156,17 +156,32 @@ export default function Usuarios() {
       const token = sessionStorage.getItem('token');
       const dataToSend = { ...userFormData };
       
-      if (userFormData.rol === 'propietario') {
+      // Solo bloquear la CREACIÓN de propietarios, no la edición
+      if (!editingUser && userFormData.rol === 'propietario') {
         toast.error('No puedes crear usuarios con rol propietario');
         return;
       }
 
       if (editingUser) {
-        await axios.put(
-          `${API_URL}/api/usuarios/${editingUser.id}`,
-          dataToSend,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        // Si es propietario, solo enviar los campos permitidos (nombre, pin, pin_activo)
+        if (editingUser.rol === 'propietario') {
+          const propietarioData = {
+            nombre: dataToSend.nombre,
+            pin: dataToSend.pin,
+            pin_activo: dataToSend.pin_activo
+          };
+          await axios.put(
+            `${API_URL}/api/usuarios/${editingUser.id}`,
+            propietarioData,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        } else {
+          await axios.put(
+            `${API_URL}/api/usuarios/${editingUser.id}`,
+            dataToSend,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
         toast.success('Empleado actualizado');
       } else {
         await axios.post(
