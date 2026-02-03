@@ -1218,18 +1218,18 @@ async def google_register(body: GoogleRegisterRequest, response: Response):
     
     return {
         "access_token": jwt_token,
-            "token_type": "bearer",
-            "is_new_user": True,
-            "user": {
-                "id": user_id,
-                "nombre": nombre,
-                "email": email,
-                "username": email,
-                "rol": "propietario",
-                "organizacion_id": org_id,
-                "codigo_tienda": nueva_org["codigo_tienda"]
-            }
+        "token_type": "bearer",
+        "is_new_user": True,
+        "user": {
+            "id": user_id,
+            "nombre": body.nombre,
+            "email": body.email,
+            "username": body.email,
+            "rol": "propietario",
+            "organizacion_id": org_id,
+            "codigo_tienda": nueva_org["codigo_tienda"]
         }
+    }
 
 @app.post("/api/auth/register")
 async def register_user(user_data: UserRegister, response: Response):
