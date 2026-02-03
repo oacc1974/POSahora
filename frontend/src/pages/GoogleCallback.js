@@ -91,14 +91,15 @@ export default function GoogleCallback() {
     setLoading(true);
 
     try {
-      const redirectUri = window.location.origin + '/auth/google/callback';
+      // Usar el nuevo endpoint que no requiere el código de Google
       const response = await axios.post(
-        `${API_URL}/api/auth/google`,
+        `${API_URL}/api/auth/google/register`,
         { 
-          code: googleCode,
-          redirect_uri: redirectUri,
+          email: userData.email,
+          nombre: userData.nombre,
           nombre_tienda: storeName,
-          password: password
+          password: password,
+          picture: userData.picture
         },
         { withCredentials: true }
       );
