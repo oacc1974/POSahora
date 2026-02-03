@@ -1091,67 +1091,67 @@ async def google_register(body: GoogleRegisterRequest, response: Response):
     
     if len(body.password) < 6:
         raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 6 caracteres")
-        
-        # Crear nuevo usuario y organización
-        user_id = f"user_{uuid.uuid4().hex[:12]}"
-        org_id = str(uuid.uuid4())
-        
-        new_user = {
-            "_id": user_id,
-            "user_id": user_id,
-            "nombre": nombre,
-            "email": email,
-            "username": email,
-            "password": get_password_hash(body.password),
-            "picture": picture,
-            "rol": "propietario",
-            "organizacion_id": org_id,
-            "google_auth": True,
-            "creado_por": None,
-            "creado": datetime.now(timezone.utc).isoformat()
-        }
-        await db.usuarios.insert_one(new_user)
-        
-        nueva_org = {
-            "_id": org_id,
-            "nombre": body.nombre_tienda,
-            "codigo_tienda": generar_codigo_tienda(body.nombre_tienda),
-            "propietario_id": user_id,
-            "fecha_creacion": datetime.now(timezone.utc).isoformat(),
-            "ultima_actividad": datetime.now(timezone.utc).isoformat()
-        }
-        await db.organizaciones.insert_one(nueva_org)
-        
-        # Crear tienda por defecto
-        tienda_id = str(uuid.uuid4())
-        nueva_tienda = {
-            "_id": tienda_id,
-            "id": tienda_id,
-            "nombre": "Tienda Principal",
-            "codigo": "001",
-            "codigo_establecimiento": "001",
-            "codigo_tienda": nueva_org["codigo_tienda"],  # Usar el mismo código de la organización
-            "direccion": "",
-            "telefono": "",
-            "organizacion_id": org_id,
-            "activo": True,
-            "fecha_creacion": datetime.now(timezone.utc).isoformat()
-        }
-        await db.tiendas.insert_one(nueva_tienda)
-        
-        # Crear TPV por defecto
-        tpv_default = {
-            "id": str(uuid.uuid4()),
-            "nombre": "Caja Principal",
-            "punto_emision": "001",
-            "tienda_id": tienda_id,
-            "activo": True,
-            "ocupado": False,
-            "estado_sesion": "disponible",
-            "organizacion_id": org_id,
-            "fecha_creacion": datetime.now(timezone.utc).isoformat()
-        }
-        await db.tpv.insert_one(tpv_default)
+    
+    # Crear nuevo usuario y organización
+    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    org_id = str(uuid.uuid4())
+    
+    new_user = {
+        "_id": user_id,
+        "user_id": user_id,
+        "nombre": body.nombre,
+        "email": body.email,
+        "username": body.email,
+        "password": get_password_hash(body.password),
+        "picture": body.picture,
+        "rol": "propietario",
+        "organizacion_id": org_id,
+        "google_auth": True,
+        "creado_por": None,
+        "creado": datetime.now(timezone.utc).isoformat()
+    }
+    await db.usuarios.insert_one(new_user)
+    
+    nueva_org = {
+        "_id": org_id,
+        "nombre": body.nombre_tienda,
+        "codigo_tienda": generar_codigo_tienda(body.nombre_tienda),
+        "propietario_id": user_id,
+        "fecha_creacion": datetime.now(timezone.utc).isoformat(),
+        "ultima_actividad": datetime.now(timezone.utc).isoformat()
+    }
+    await db.organizaciones.insert_one(nueva_org)
+    
+    # Crear tienda por defecto
+    tienda_id = str(uuid.uuid4())
+    nueva_tienda = {
+        "_id": tienda_id,
+        "id": tienda_id,
+        "nombre": "Tienda Principal",
+        "codigo": "001",
+        "codigo_establecimiento": "001",
+        "codigo_tienda": nueva_org["codigo_tienda"],
+        "direccion": "",
+        "telefono": "",
+        "organizacion_id": org_id,
+        "activo": True,
+        "fecha_creacion": datetime.now(timezone.utc).isoformat()
+    }
+    await db.tiendas.insert_one(nueva_tienda)
+    
+    # Crear TPV por defecto
+    tpv_default = {
+        "id": str(uuid.uuid4()),
+        "nombre": "Caja Principal",
+        "punto_emision": "001",
+        "tienda_id": tienda_id,
+        "activo": True,
+        "ocupado": False,
+        "estado_sesion": "disponible",
+        "organizacion_id": org_id,
+        "fecha_creacion": datetime.now(timezone.utc).isoformat()
+    }
+    await db.tpv.insert_one(tpv_default)
         
         # Crear funciones por defecto
         await db.funciones.insert_one({
