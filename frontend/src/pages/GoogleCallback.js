@@ -91,10 +91,12 @@ export default function GoogleCallback() {
     setLoading(true);
 
     try {
+      const redirectUri = window.location.origin + '/auth/google/callback';
       const response = await axios.post(
         `${API_URL}/api/auth/google`,
         { 
           code: googleCode,
+          redirect_uri: redirectUri,
           nombre_tienda: storeName,
           password: password
         },
