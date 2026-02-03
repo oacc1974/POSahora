@@ -2670,10 +2670,13 @@ async def get_organizaciones(current_user: dict = Depends(get_current_user)):
     
     result = []
     for org in organizaciones:
-        propietario = await db.usuarios.find_one(
-            {"$or": [{"user_id": org["propietario_id"]}, {"_id": org["propietario_id"]}]},
-            {"_id": 0, "nombre": 1, "email": 1}
-        )
+        propietario_id = org.get("propietario_id")
+        propietario = None
+        if propietario_id:
+            propietario = await db.usuarios.find_one(
+                {"$or": [{"user_id": propietario_id}, {"_id": propietario_id}]},
+                {"_id": 0, "nombre": 1, "email": 1}
+            )
         
         total_usuarios = await db.usuarios.count_documents({"organizacion_id": org["_id"]})
         total_productos = await db.productos.count_documents({"organizacion_id": org["_id"]})
@@ -2682,7 +2685,7 @@ async def get_organizaciones(current_user: dict = Depends(get_current_user)):
         result.append(OrganizacionResponse(
             id=org["_id"],
             nombre=org.get("nombre", "Sin nombre"),
-            propietario_id=org["propietario_id"],
+            propietario_id=propietario_id or "N/A",
             propietario_nombre=propietario["nombre"] if propietario else "Desconocido",
             propietario_email=propietario.get("email") if propietario else None,
             fecha_creacion=org.get("fecha_creacion", ""),
