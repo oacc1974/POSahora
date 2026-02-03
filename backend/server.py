@@ -1083,12 +1083,51 @@ class GoogleRegisterRequest(BaseModel):
 async def google_register(body: GoogleRegisterRequest, response: Response):
     """
     Completa el registro de un usuario nuevo que se autenticó con Google.
+    Si el usuario ya existe, simplemente hace login.
     """
-    # Verificar que el email no exista ya
+    # Verificar si el usuario ya existe
     existing_user = await db.usuarios.find_one({"email": body.email})
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Este email ya está registrado")
     
+    if existing_user:
+        # Usuario ya existe - hacer login automático
+        user_id = existing_user.get("_id") or existing_user.get("user_id")
+        
+        # Obtener código de tienda
+        org = await db.organizaciones.find_one({"_id": existing_user["organizacion_id"]}, {"_id": 0})
+        codigo_tienda = org.get("codigo_tienda") if org else None
+        
+        # Crear token JWT
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        jwt_token = create_access_token(
+            data={"sub": user_id, "rol": existing_user["rol"], "organizacion_id": existing_user["organizacion_id"]},
+            expires_delta=access_token_expires
+        )
+        
+        response.set_cookie(
+            key="access_token",
+            value=jwt_token,
+            httponly=True,
+            secure=True,
+            samesite="none",
+            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        )
+        
+        return {
+            "access_token": jwt_token,
+            "token_type": "bearer",
+            "is_new_user": False,
+            "user": {
+                "id": user_id,
+                "nombre": existing_user["nombre"],
+                "email": existing_user["email"],
+                "username": existing_user.get("username"),
+                "rol": existing_user["rol"],
+                "organizacion_id": existing_user["organizacion_id"],
+                "codigo_tienda": codigo_tienda
+            }
+        }
+    
+    # Usuario nuevo - crear cuenta
     if len(body.password) < 6:
         raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 6 caracteres")
     
