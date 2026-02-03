@@ -626,10 +626,16 @@ export default function Usuarios() {
               <div className="flex gap-2 mt-2">
                 <Input
                   value={userFormData.pin}
-                  onChange={(e) => setUserFormData({ ...userFormData, pin: e.target.value })}
+                  onChange={(e) => {
+                    // Solo permitir números
+                    const value = e.target.value.replace(/\D/g, '');
+                    setUserFormData({ ...userFormData, pin: value });
+                  }}
                   placeholder="PIN de 4 dígitos"
                   maxLength={4}
                   className="font-mono"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                 />
                 <Button type="button" variant="outline" onClick={generatePin} disabled={generatingPin}>
                   <RefreshCw size={16} className={generatingPin ? 'animate-spin' : ''} />
