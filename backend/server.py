@@ -957,6 +957,7 @@ GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "https://www.posahor
 
 class GoogleAuthRequest(BaseModel):
     code: str
+    redirect_uri: Optional[str] = None  # URI que usó el frontend
     nombre_tienda: Optional[str] = None
     password: Optional[str] = None
 
@@ -969,6 +970,9 @@ async def google_auth(body: GoogleAuthRequest, response: Response):
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
         raise HTTPException(status_code=500, detail="Google OAuth no configurado en el servidor")
     
+    # Usar el redirect_uri que envió el frontend, o el por defecto
+    redirect_uri = body.redirect_uri or GOOGLE_REDIRECT_URI
+    
     # Intercambiar código por tokens con Google
     async with httpx.AsyncClient() as client:
         try:
@@ -978,7 +982,7 @@ async def google_auth(body: GoogleAuthRequest, response: Response):
                     "code": body.code,
                     "client_id": GOOGLE_CLIENT_ID,
                     "client_secret": GOOGLE_CLIENT_SECRET,
-                    "redirect_uri": GOOGLE_REDIRECT_URI,
+                    "redirect_uri": redirect_uri,
                     "grant_type": "authorization_code"
                 },
                 timeout=10.0
