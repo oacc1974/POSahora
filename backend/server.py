@@ -1062,22 +1062,35 @@ async def google_auth(body: GoogleAuthRequest, response: Response):
             }
         }
     else:
-        # Usuario nuevo - necesita nombre_tienda y password
-        if not body.nombre_tienda:
-            return {
-                "is_new_user": True,
-                "needs_registration": True,
-                "email": email,
-                "nombre": nombre,
-                "picture": picture,
-                "message": "Usuario nuevo. Se requiere nombre de tienda y contraseña."
-            }
-        
-        if not body.password:
-            raise HTTPException(status_code=400, detail="Se requiere una contraseña para nuevos usuarios")
-        
-        if len(body.password) < 6:
-            raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 6 caracteres")
+        # Usuario nuevo - devolver datos para que complete el registro
+        return {
+            "is_new_user": True,
+            "needs_registration": True,
+            "email": email,
+            "nombre": nombre,
+            "picture": picture,
+            "message": "Usuario nuevo. Se requiere nombre de tienda y contraseña."
+        }
+
+class GoogleRegisterRequest(BaseModel):
+    email: str
+    nombre: str
+    nombre_tienda: str
+    password: str
+    picture: Optional[str] = None
+
+@app.post("/api/auth/google/register")
+async def google_register(body: GoogleRegisterRequest, response: Response):
+    """
+    Completa el registro de un usuario nuevo que se autenticó con Google.
+    """
+    # Verificar que el email no exista ya
+    existing_user = await db.usuarios.find_one({"email": body.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Este email ya está registrado")
+    
+    if len(body.password) < 6:
+        raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 6 caracteres")
         
         # Crear nuevo usuario y organización
         user_id = f"user_{uuid.uuid4().hex[:12]}"
