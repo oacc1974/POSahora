@@ -42,9 +42,10 @@ export default function GoogleCallback() {
 
   const processGoogleCode = async (code) => {
     try {
+      const redirectUri = window.location.origin + '/auth/google/callback';
       const response = await axios.post(
         `${API_URL}/api/auth/google`,
-        { code },
+        { code, redirect_uri: redirectUri },
         { withCredentials: true }
       );
 
