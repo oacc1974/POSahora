@@ -2678,18 +2678,31 @@ async def get_organizaciones(current_user: dict = Depends(get_current_user)):
                 {"_id": 0, "nombre": 1, "email": 1}
             )
         
-        total_usuarios = await db.usuarios.count_documents({"organizacion_id": org["_id"]})
-        total_productos = await db.productos.count_documents({"organizacion_id": org["_id"]})
-        total_ventas = await db.facturas.count_documents({"organizacion_id": org["_id"]})
+        total_usuarios = await db.usuarios.count_documents({"organizacion_id": str(org["_id"])})
+        total_productos = await db.productos.count_documents({"organizacion_id": str(org["_id"])})
+        total_ventas = await db.facturas.count_documents({"organizacion_id": str(org["_id"])})
+        
+        # Convertir fecha a string si es datetime
+        fecha_creacion = org.get("fecha_creacion", "")
+        if hasattr(fecha_creacion, 'isoformat'):
+            fecha_creacion = fecha_creacion.isoformat()
+        elif not isinstance(fecha_creacion, str):
+            fecha_creacion = str(fecha_creacion) if fecha_creacion else ""
+            
+        ultima_actividad = org.get("ultima_actividad")
+        if hasattr(ultima_actividad, 'isoformat'):
+            ultima_actividad = ultima_actividad.isoformat()
+        elif ultima_actividad and not isinstance(ultima_actividad, str):
+            ultima_actividad = str(ultima_actividad)
         
         result.append(OrganizacionResponse(
-            id=org["_id"],
+            id=str(org["_id"]),
             nombre=org.get("nombre", "Sin nombre"),
-            propietario_id=propietario_id or "N/A",
+            propietario_id=str(propietario_id) if propietario_id else "N/A",
             propietario_nombre=propietario["nombre"] if propietario else "Desconocido",
             propietario_email=propietario.get("email") if propietario else None,
-            fecha_creacion=org.get("fecha_creacion", ""),
-            ultima_actividad=org.get("ultima_actividad"),
+            fecha_creacion=fecha_creacion,
+            ultima_actividad=ultima_actividad,
             total_usuarios=total_usuarios,
             total_productos=total_productos,
             total_ventas=total_ventas
