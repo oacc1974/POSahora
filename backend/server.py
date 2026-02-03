@@ -1152,72 +1152,72 @@ async def google_register(body: GoogleRegisterRequest, response: Response):
         "fecha_creacion": datetime.now(timezone.utc).isoformat()
     }
     await db.tpv.insert_one(tpv_default)
-        
-        # Crear funciones por defecto
-        await db.funciones.insert_one({
-            "_id": str(uuid.uuid4()),
-            "organizacion_id": org_id,
-            "cierres_caja": True,
-            "tickets_abiertos": True,
-            "mesas_por_mesero": False,
-            "tipo_pedido": False,
-            "venta_con_stock": False,
-            "reloj_checador": False,
-            "impresoras_cocina": False,
-            "pantalla_cliente": False
-        })
-        
-        # Crear configuración de ticket
-        await db.ticket_config.insert_one({
-            "_id": str(uuid.uuid4()),
-            "organizacion_id": org_id,
-            "nombre_negocio": body.nombre_tienda,
-            "direccion": "",
-            "telefono": "",
-            "mensaje_pie": "¡Gracias por su compra!",
-            "imprimir_ticket": False,
-            "mostrar_info_cliente": False,
-            "mostrar_comentarios": False
-        })
-        
-        # Crear método de pago por defecto
-        await db.metodos_pago.insert_one({
-            "_id": str(uuid.uuid4()),
-            "id": str(uuid.uuid4()),
-            "nombre": "Efectivo",
-            "organizacion_id": org_id,
-            "activo": True
-        })
-        
-        # Crear impuesto por defecto
-        await db.impuestos.insert_one({
-            "_id": str(uuid.uuid4()),
-            "id": str(uuid.uuid4()),
-            "nombre": "IVA",
-            "porcentaje": 12,
-            "tipo": "agregado",
-            "organizacion_id": org_id,
-            "activo": True
-        })
-        
-        # Crear token JWT
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        jwt_token = create_access_token(
-            data={"sub": user_id, "rol": "propietario", "organizacion_id": org_id},
-            expires_delta=access_token_expires
-        )
-        
-        response.set_cookie(
-            key="access_token",
-            value=jwt_token,
-            httponly=True,
-            secure=True,
-            samesite="none",
-            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
-        )
-        
-        return {
-            "access_token": jwt_token,
+    
+    # Crear funciones por defecto
+    await db.funciones.insert_one({
+        "_id": str(uuid.uuid4()),
+        "organizacion_id": org_id,
+        "cierres_caja": True,
+        "tickets_abiertos": True,
+        "mesas_por_mesero": False,
+        "tipo_pedido": False,
+        "venta_con_stock": False,
+        "reloj_checador": False,
+        "impresoras_cocina": False,
+        "pantalla_cliente": False
+    })
+    
+    # Crear configuración de ticket
+    await db.ticket_config.insert_one({
+        "_id": str(uuid.uuid4()),
+        "organizacion_id": org_id,
+        "nombre_negocio": body.nombre_tienda,
+        "direccion": "",
+        "telefono": "",
+        "mensaje_pie": "¡Gracias por su compra!",
+        "imprimir_ticket": False,
+        "mostrar_info_cliente": False,
+        "mostrar_comentarios": False
+    })
+    
+    # Crear método de pago por defecto
+    await db.metodos_pago.insert_one({
+        "_id": str(uuid.uuid4()),
+        "id": str(uuid.uuid4()),
+        "nombre": "Efectivo",
+        "organizacion_id": org_id,
+        "activo": True
+    })
+    
+    # Crear impuesto por defecto
+    await db.impuestos.insert_one({
+        "_id": str(uuid.uuid4()),
+        "id": str(uuid.uuid4()),
+        "nombre": "IVA",
+        "porcentaje": 12,
+        "tipo": "agregado",
+        "organizacion_id": org_id,
+        "activo": True
+    })
+    
+    # Crear token JWT
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    jwt_token = create_access_token(
+        data={"sub": user_id, "rol": "propietario", "organizacion_id": org_id},
+        expires_delta=access_token_expires
+    )
+    
+    response.set_cookie(
+        key="access_token",
+        value=jwt_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+    
+    return {
+        "access_token": jwt_token,
             "token_type": "bearer",
             "is_new_user": True,
             "user": {
