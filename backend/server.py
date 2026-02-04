@@ -6158,12 +6158,15 @@ async def get_superadmin_dashboard(current_user: dict = Depends(get_super_admin)
     
     # Organizaciones recientes
     orgs_recientes = await db.organizaciones.find(
-        {"propietario_id": {"$ne": "admin"}}
+        {"propietario_id": {"$ne": "admin", "$exists": True}}
     ).sort("fecha_creacion", -1).limit(10).to_list(10)
     
     orgs_list = []
     for org in orgs_recientes:
-        propietario = await db.usuarios.find_one({"_id": org["propietario_id"]})
+        propietario_id = org.get("propietario_id")
+        propietario = None
+        if propietario_id:
+            propietario = await db.usuarios.find_one({"_id": propietario_id})
         orgs_list.append({
             "id": org["_id"],
             "nombre": org["nombre"],
