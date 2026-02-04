@@ -314,8 +314,20 @@ export default function MiPlan() {
                       </li>
                     </ul>
                     
-                    <Button className="w-full mt-4" variant={planOp.destacado ? 'default' : 'outline'}>
-                      Seleccionar
+                    <Button 
+                      className="w-full mt-4" 
+                      variant={planOp.destacado ? 'default' : 'outline'}
+                      onClick={() => handleSubscribePlan(planOp.id)}
+                      disabled={processingPlan !== null}
+                    >
+                      {processingPlan === planOp.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Procesando...
+                        </>
+                      ) : (
+                        'Seleccionar'
+                      )}
                     </Button>
                   </CardContent>
                 </Card>
