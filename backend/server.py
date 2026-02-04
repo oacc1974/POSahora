@@ -6328,11 +6328,14 @@ async def cambiar_plan_organizacion(org_id: str, request: CambiarPlanRequest, cu
         "vencimiento": vencimiento.isoformat()
     }
 
-# ============ ENDPOINTS DE SUSCRIPCIÓN Y PAGOS (STRIPE) ============
+# ============ ENDPOINTS DE SUSCRIPCIÓN RECURRENTE (STRIPE) ============
 
 class CreateSubscriptionRequest(BaseModel):
     plan_id: str
     origin_url: str
+
+class CancelSubscriptionRequest(BaseModel):
+    cancel_at_period_end: bool = True  # Por defecto, cancela al final del período
 
 class PaymentStatusResponse(BaseModel):
     status: str
@@ -6340,145 +6343,235 @@ class PaymentStatusResponse(BaseModel):
     plan_id: Optional[str] = None
     message: str
 
+class SubscriptionStatusResponse(BaseModel):
+    has_subscription: bool
+    subscription_id: Optional[str] = None
+    plan_id: Optional[str] = None
+    plan_nombre: Optional[str] = None
+    status: Optional[str] = None  # active, canceled, past_due, etc.
+    current_period_end: Optional[str] = None
+    cancel_at_period_end: bool = False
+    days_remaining: Optional[int] = None
+
 # Definición de precios de planes (server-side)
+# IMPORTANTE: Cuando tengas tu cuenta de Stripe real, crea Products y Prices en el Dashboard
+# y reemplaza estos IDs con los reales (price_xxxxx)
 PLAN_PRICES = {
-    "gratis": 0.00,
-    "basico": 15.00,
-    "pro": 35.00,
-    "enterprise": 75.00
+    "gratis": {"amount": 0.00, "stripe_price_id": None},
+    "basico": {"amount": 15.00, "stripe_price_id": None},  # Reemplazar con price_xxxxx real
+    "pro": {"amount": 35.00, "stripe_price_id": None},      # Reemplazar con price_xxxxx real
+    "enterprise": {"amount": 75.00, "stripe_price_id": None}  # Reemplazar con price_xxxxx real
 }
+
+def get_stripe_client():
+    """Inicializa y retorna el cliente de Stripe"""
+    api_key = os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="Stripe no configurado")
+    stripe.api_key = api_key
+    return stripe
+
+async def get_or_create_stripe_customer(org_id: str, user_email: str, user_name: str):
+    """Obtiene o crea un cliente de Stripe para la organización"""
+    org = await db.organizaciones.find_one({"_id": org_id})
+    
+    if org and org.get("stripe_customer_id"):
+        return org["stripe_customer_id"]
+    
+    # Crear nuevo cliente en Stripe
+    stripe_client = get_stripe_client()
+    customer = stripe_client.Customer.create(
+        email=user_email,
+        name=user_name,
+        metadata={"org_id": org_id}
+    )
+    
+    # Guardar ID del cliente en la organización
+    await db.organizaciones.update_one(
+        {"_id": org_id},
+        {"$set": {"stripe_customer_id": customer.id}}
+    )
+    
+    return customer.id
+
+async def create_stripe_price_if_needed(plan_id: str, plan: dict):
+    """Crea un precio en Stripe si no existe (para modo test)"""
+    # Si ya tiene un price_id configurado, usarlo
+    if PLAN_PRICES.get(plan_id, {}).get("stripe_price_id"):
+        return PLAN_PRICES[plan_id]["stripe_price_id"]
+    
+    # Buscar si ya creamos un precio para este plan
+    existing = await db.stripe_prices.find_one({"plan_id": plan_id})
+    if existing:
+        return existing["stripe_price_id"]
+    
+    # Crear producto y precio en Stripe
+    stripe_client = get_stripe_client()
+    
+    # Crear producto
+    product = stripe_client.Product.create(
+        name=f"POS Ahora - {plan['nombre']}",
+        description=plan.get("descripcion", f"Plan {plan['nombre']}"),
+        metadata={"plan_id": plan_id}
+    )
+    
+    # Crear precio recurrente
+    price = stripe_client.Price.create(
+        product=product.id,
+        unit_amount=int(plan["precio"] * 100),  # Stripe usa centavos
+        currency="usd",
+        recurring={"interval": "month"},
+        metadata={"plan_id": plan_id}
+    )
+    
+    # Guardar referencia
+    await db.stripe_prices.insert_one({
+        "plan_id": plan_id,
+        "stripe_product_id": product.id,
+        "stripe_price_id": price.id,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return price.id
 
 @app.post("/api/suscripcion/crear")
 async def crear_suscripcion(request_data: CreateSubscriptionRequest, request: Request, current_user: dict = Depends(get_current_user)):
-    """Crea una sesión de checkout de Stripe para suscribirse a un plan"""
+    """Crea una sesión de checkout de Stripe para suscripción recurrente"""
+    
+    # Solo propietarios pueden suscribirse
+    if current_user.get("rol") != "propietario":
+        raise HTTPException(status_code=403, detail="Solo el propietario puede gestionar la suscripción")
     
     # Verificar que el plan existe
     plan = await db.planes.find_one({"id": request_data.plan_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan no encontrado")
     
-    # Obtener precio del plan (server-side, nunca del frontend)
-    precio = plan.get("precio", PLAN_PRICES.get(request_data.plan_id, 0))
-    
+    precio = plan.get("precio", 0)
     if precio <= 0:
         raise HTTPException(status_code=400, detail="Este plan es gratuito, no requiere pago")
     
-    # Configurar Stripe
-    stripe_api_key = os.environ.get("STRIPE_API_KEY")
-    if not stripe_api_key:
-        raise HTTPException(status_code=500, detail="Stripe no configurado")
+    # Verificar si ya tiene una suscripción activa
+    org = await db.organizaciones.find_one({"_id": current_user["organizacion_id"]})
+    if org and org.get("stripe_subscription_id"):
+        sub_id = org["stripe_subscription_id"]
+        try:
+            stripe_client = get_stripe_client()
+            existing_sub = stripe_client.Subscription.retrieve(sub_id)
+            if existing_sub.status in ["active", "trialing"]:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Ya tienes una suscripción activa. Cancela la actual antes de cambiar de plan."
+                )
+        except stripe.error.InvalidRequestError:
+            pass  # Suscripción no existe, continuar
     
-    host_url = str(request.base_url).rstrip('/')
-    webhook_url = f"{host_url}/api/webhook/stripe"
+    stripe_client = get_stripe_client()
     
-    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
+    # Obtener o crear cliente de Stripe
+    user = await db.usuarios.find_one({"_id": current_user["_id"]})
+    customer_id = await get_or_create_stripe_customer(
+        current_user["organizacion_id"],
+        user.get("email", ""),
+        user.get("nombre", "")
+    )
+    
+    # Obtener o crear precio en Stripe
+    price_id = await create_stripe_price_if_needed(request_data.plan_id, plan)
     
     # Construir URLs dinámicas
     origin = request_data.origin_url.rstrip('/')
     success_url = f"{origin}/suscripcion/exito?session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{origin}/mi-plan"
     
-    # Metadata para identificar la transacción
-    metadata = {
-        "org_id": current_user["organizacion_id"],
-        "user_id": current_user["_id"],
-        "plan_id": request_data.plan_id,
-        "plan_nombre": plan["nombre"],
-        "tipo": "suscripcion"
-    }
-    
     try:
-        # Crear sesión de checkout
-        checkout_request = CheckoutSessionRequest(
-            amount=float(precio),
-            currency="usd",
+        # Crear sesión de checkout para suscripción
+        checkout_session = stripe_client.checkout.Session.create(
+            customer=customer_id,
+            payment_method_types=["card"],
+            line_items=[{
+                "price": price_id,
+                "quantity": 1,
+            }],
+            mode="subscription",
             success_url=success_url,
             cancel_url=cancel_url,
-            metadata=metadata
+            metadata={
+                "org_id": current_user["organizacion_id"],
+                "user_id": current_user["_id"],
+                "plan_id": request_data.plan_id,
+            },
+            subscription_data={
+                "metadata": {
+                    "org_id": current_user["organizacion_id"],
+                    "plan_id": request_data.plan_id,
+                }
+            }
         )
         
-        session = await stripe_checkout.create_checkout_session(checkout_request)
-        
-        # Crear registro de transacción ANTES del redirect
+        # Crear registro de transacción
         transaction_id = str(uuid.uuid4())
         await db.payment_transactions.insert_one({
             "_id": transaction_id,
-            "session_id": session.session_id,
+            "session_id": checkout_session.id,
             "organizacion_id": current_user["organizacion_id"],
             "user_id": current_user["_id"],
             "plan_id": request_data.plan_id,
             "amount": precio,
             "currency": "usd",
+            "type": "subscription",
             "status": "pending",
             "payment_status": "initiated",
-            "metadata": metadata,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat()
         })
         
         return {
-            "checkout_url": session.url,
-            "session_id": session.session_id,
+            "checkout_url": checkout_session.url,
+            "session_id": checkout_session.id,
             "transaction_id": transaction_id
         }
         
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al crear sesión de pago: {str(e)}")
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=500, detail=f"Error de Stripe: {str(e)}")
 
 @app.get("/api/suscripcion/estado/{session_id}")
 async def verificar_estado_pago(session_id: str, current_user: dict = Depends(get_current_user)):
-    """Verifica el estado de un pago y actualiza el plan si es exitoso"""
+    """Verifica el estado de un pago de suscripción"""
     
-    # Buscar transacción
-    transaction = await db.payment_transactions.find_one({"session_id": session_id})
-    if not transaction:
-        raise HTTPException(status_code=404, detail="Transacción no encontrada")
-    
-    # Verificar que la transacción pertenece al usuario o su organización
-    if transaction["organizacion_id"] != current_user["organizacion_id"]:
-        raise HTTPException(status_code=403, detail="No autorizado")
-    
-    # Si ya está completado, no volver a procesar
-    if transaction.get("payment_status") == "paid":
-        return PaymentStatusResponse(
-            status="completed",
-            payment_status="paid",
-            plan_id=transaction.get("plan_id"),
-            message="El pago ya fue procesado exitosamente"
-        )
-    
-    # Consultar estado en Stripe
-    stripe_api_key = os.environ.get("STRIPE_API_KEY")
-    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url="")
+    stripe_client = get_stripe_client()
     
     try:
-        checkout_status = await stripe_checkout.get_checkout_status(session_id)
+        # Obtener sesión de checkout
+        checkout_session = stripe_client.checkout.Session.retrieve(session_id)
         
         # Actualizar transacción
         await db.payment_transactions.update_one(
             {"session_id": session_id},
             {"$set": {
-                "status": checkout_status.status,
-                "payment_status": checkout_status.payment_status,
+                "status": checkout_session.status,
+                "payment_status": checkout_session.payment_status,
+                "subscription_id": checkout_session.subscription,
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )
         
-        # Si el pago fue exitoso, activar el plan
-        if checkout_status.payment_status == "paid":
-            plan_id = transaction.get("plan_id")
-            org_id = transaction.get("organizacion_id")
+        if checkout_session.payment_status == "paid" and checkout_session.subscription:
+            # Obtener detalles de la suscripción
+            subscription = stripe_client.Subscription.retrieve(checkout_session.subscription)
+            plan_id = subscription.metadata.get("plan_id")
             
-            # Actualizar plan de la organización
-            ahora = datetime.now(timezone.utc)
-            vencimiento = ahora + timedelta(days=30)
+            # Actualizar organización con la suscripción
+            period_end = datetime.fromtimestamp(subscription.current_period_end, tz=timezone.utc)
             
             await db.organizaciones.update_one(
-                {"_id": org_id},
+                {"_id": current_user["organizacion_id"]},
                 {"$set": {
                     "plan": plan_id,
-                    "plan_inicio": ahora.isoformat(),
-                    "plan_vencimiento": vencimiento.isoformat(),
+                    "stripe_subscription_id": subscription.id,
+                    "plan_inicio": datetime.now(timezone.utc).isoformat(),
+                    "plan_vencimiento": period_end.isoformat(),
+                    "subscription_status": subscription.status,
                     "facturas_mes_actual": 0
                 }}
             )
@@ -6487,85 +6580,315 @@ async def verificar_estado_pago(session_id: str, current_user: dict = Depends(ge
                 status="completed",
                 payment_status="paid",
                 plan_id=plan_id,
-                message=f"¡Pago exitoso! Tu plan ha sido actualizado."
+                message="¡Suscripción activada! Tu plan ha sido actualizado."
             )
         
-        elif checkout_status.status == "expired":
+        elif checkout_session.status == "expired":
             return PaymentStatusResponse(
                 status="expired",
-                payment_status=checkout_status.payment_status,
+                payment_status=checkout_session.payment_status or "unpaid",
                 plan_id=None,
                 message="La sesión de pago ha expirado. Por favor, intenta de nuevo."
             )
         
         else:
             return PaymentStatusResponse(
-                status=checkout_status.status,
-                payment_status=checkout_status.payment_status,
+                status=checkout_session.status,
+                payment_status=checkout_session.payment_status or "pending",
                 plan_id=None,
                 message="Pago en proceso..."
             )
             
-    except Exception as e:
+    except stripe.error.StripeError as e:
         raise HTTPException(status_code=500, detail=f"Error al verificar pago: {str(e)}")
+
+@app.get("/api/suscripcion/actual")
+async def obtener_suscripcion_actual(current_user: dict = Depends(get_current_user)):
+    """Obtiene el estado de la suscripción actual"""
+    
+    org = await db.organizaciones.find_one({"_id": current_user["organizacion_id"]})
+    if not org:
+        raise HTTPException(status_code=404, detail="Organización no encontrada")
+    
+    subscription_id = org.get("stripe_subscription_id")
+    
+    if not subscription_id:
+        return SubscriptionStatusResponse(
+            has_subscription=False,
+            plan_id=org.get("plan", "gratis"),
+            plan_nombre="Gratis"
+        )
+    
+    try:
+        stripe_client = get_stripe_client()
+        subscription = stripe_client.Subscription.retrieve(subscription_id)
+        
+        plan_id = subscription.metadata.get("plan_id", org.get("plan"))
+        plan = await db.planes.find_one({"id": plan_id})
+        
+        period_end = datetime.fromtimestamp(subscription.current_period_end, tz=timezone.utc)
+        days_remaining = (period_end - datetime.now(timezone.utc)).days
+        
+        # Actualizar estado en DB
+        await db.organizaciones.update_one(
+            {"_id": current_user["organizacion_id"]},
+            {"$set": {
+                "subscription_status": subscription.status,
+                "plan_vencimiento": period_end.isoformat(),
+                "cancel_at_period_end": subscription.cancel_at_period_end
+            }}
+        )
+        
+        return SubscriptionStatusResponse(
+            has_subscription=True,
+            subscription_id=subscription.id,
+            plan_id=plan_id,
+            plan_nombre=plan["nombre"] if plan else plan_id,
+            status=subscription.status,
+            current_period_end=period_end.isoformat(),
+            cancel_at_period_end=subscription.cancel_at_period_end,
+            days_remaining=max(0, days_remaining)
+        )
+        
+    except stripe.error.InvalidRequestError:
+        # Suscripción ya no existe
+        await db.organizaciones.update_one(
+            {"_id": current_user["organizacion_id"]},
+            {"$unset": {"stripe_subscription_id": 1, "subscription_status": 1}}
+        )
+        return SubscriptionStatusResponse(
+            has_subscription=False,
+            plan_id=org.get("plan", "gratis"),
+            plan_nombre="Gratis"
+        )
+
+@app.post("/api/suscripcion/cancelar")
+async def cancelar_suscripcion(request_data: CancelSubscriptionRequest, current_user: dict = Depends(get_current_user)):
+    """Cancela la suscripción (al final del período por defecto)"""
+    
+    if current_user.get("rol") != "propietario":
+        raise HTTPException(status_code=403, detail="Solo el propietario puede cancelar la suscripción")
+    
+    org = await db.organizaciones.find_one({"_id": current_user["organizacion_id"]})
+    if not org or not org.get("stripe_subscription_id"):
+        raise HTTPException(status_code=404, detail="No tienes una suscripción activa")
+    
+    try:
+        stripe_client = get_stripe_client()
+        
+        # Cancelar al final del período (el usuario sigue usando hasta que termine)
+        subscription = stripe_client.Subscription.modify(
+            org["stripe_subscription_id"],
+            cancel_at_period_end=True
+        )
+        
+        period_end = datetime.fromtimestamp(subscription.current_period_end, tz=timezone.utc)
+        
+        # Actualizar estado en DB
+        await db.organizaciones.update_one(
+            {"_id": current_user["organizacion_id"]},
+            {"$set": {
+                "subscription_status": "canceled",
+                "cancel_at_period_end": True,
+                "cancellation_date": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # Registrar evento
+        await db.payment_transactions.insert_one({
+            "_id": str(uuid.uuid4()),
+            "organizacion_id": current_user["organizacion_id"],
+            "user_id": current_user["_id"],
+            "type": "cancellation",
+            "subscription_id": subscription.id,
+            "status": "canceled",
+            "effective_date": period_end.isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        
+        return {
+            "message": f"Suscripción cancelada. Tu plan seguirá activo hasta el {period_end.strftime('%d/%m/%Y')}.",
+            "effective_date": period_end.isoformat(),
+            "days_remaining": (period_end - datetime.now(timezone.utc)).days
+        }
+        
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=500, detail=f"Error al cancelar: {str(e)}")
+
+@app.post("/api/suscripcion/reactivar")
+async def reactivar_suscripcion(current_user: dict = Depends(get_current_user)):
+    """Reactiva una suscripción cancelada (si aún no ha vencido)"""
+    
+    if current_user.get("rol") != "propietario":
+        raise HTTPException(status_code=403, detail="Solo el propietario puede gestionar la suscripción")
+    
+    org = await db.organizaciones.find_one({"_id": current_user["organizacion_id"]})
+    if not org or not org.get("stripe_subscription_id"):
+        raise HTTPException(status_code=404, detail="No tienes una suscripción para reactivar")
+    
+    try:
+        stripe_client = get_stripe_client()
+        
+        subscription = stripe_client.Subscription.retrieve(org["stripe_subscription_id"])
+        
+        if not subscription.cancel_at_period_end:
+            raise HTTPException(status_code=400, detail="Tu suscripción no está cancelada")
+        
+        # Reactivar quitando la cancelación programada
+        subscription = stripe_client.Subscription.modify(
+            org["stripe_subscription_id"],
+            cancel_at_period_end=False
+        )
+        
+        # Actualizar estado en DB
+        await db.organizaciones.update_one(
+            {"_id": current_user["organizacion_id"]},
+            {"$set": {
+                "subscription_status": subscription.status,
+                "cancel_at_period_end": False
+            },
+            "$unset": {"cancellation_date": 1}}
+        )
+        
+        return {
+            "message": "¡Suscripción reactivada! Tu plan continuará renovándose automáticamente.",
+            "status": subscription.status
+        }
+        
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=500, detail=f"Error al reactivar: {str(e)}")
 
 @app.post("/api/webhook/stripe")
 async def stripe_webhook(request: Request):
-    """Webhook para recibir eventos de Stripe"""
-    stripe_api_key = os.environ.get("STRIPE_API_KEY")
-    if not stripe_api_key:
-        raise HTTPException(status_code=500, detail="Stripe no configurado")
+    """Webhook para recibir eventos de Stripe (suscripciones)"""
     
-    host_url = str(request.base_url).rstrip('/')
-    webhook_url = f"{host_url}/api/webhook/stripe"
-    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
+    stripe_client = get_stripe_client()
+    payload = await request.body()
+    sig_header = request.headers.get("Stripe-Signature")
+    
+    # En producción, verificar con webhook secret
+    # endpoint_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
     
     try:
-        body = await request.body()
-        signature = request.headers.get("Stripe-Signature")
-        
-        webhook_response = await stripe_checkout.handle_webhook(body, signature)
-        
-        # Buscar y actualizar la transacción
-        if webhook_response.session_id:
-            transaction = await db.payment_transactions.find_one({"session_id": webhook_response.session_id})
+        event = stripe.Event.construct_from(
+            stripe.util.convert_to_dict(stripe.util.json.loads(payload)),
+            stripe.api_key
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    
+    # Manejar diferentes tipos de eventos
+    event_type = event.type
+    data = event.data.object
+    
+    print(f"Webhook recibido: {event_type}")
+    
+    if event_type == "checkout.session.completed":
+        # Pago inicial completado
+        if data.mode == "subscription" and data.subscription:
+            org_id = data.metadata.get("org_id")
+            plan_id = data.metadata.get("plan_id")
             
-            if transaction and transaction.get("payment_status") != "paid":
-                # Actualizar transacción
-                await db.payment_transactions.update_one(
-                    {"session_id": webhook_response.session_id},
+            if org_id and plan_id:
+                subscription = stripe_client.Subscription.retrieve(data.subscription)
+                period_end = datetime.fromtimestamp(subscription.current_period_end, tz=timezone.utc)
+                
+                await db.organizaciones.update_one(
+                    {"_id": org_id},
                     {"$set": {
-                        "status": webhook_response.event_type,
-                        "payment_status": webhook_response.payment_status,
-                        "updated_at": datetime.now(timezone.utc).isoformat()
+                        "plan": plan_id,
+                        "stripe_subscription_id": subscription.id,
+                        "subscription_status": subscription.status,
+                        "plan_inicio": datetime.now(timezone.utc).isoformat(),
+                        "plan_vencimiento": period_end.isoformat(),
+                        "facturas_mes_actual": 0
+                    }}
+                )
+    
+    elif event_type == "invoice.paid":
+        # Renovación mensual exitosa
+        subscription_id = data.subscription
+        if subscription_id:
+            subscription = stripe_client.Subscription.retrieve(subscription_id)
+            org_id = subscription.metadata.get("org_id")
+            
+            if org_id:
+                period_end = datetime.fromtimestamp(subscription.current_period_end, tz=timezone.utc)
+                
+                await db.organizaciones.update_one(
+                    {"_id": org_id},
+                    {"$set": {
+                        "subscription_status": "active",
+                        "plan_vencimiento": period_end.isoformat(),
+                        "facturas_mes_actual": 0  # Reiniciar contador mensual
                     }}
                 )
                 
-                # Si el pago fue exitoso, activar el plan
-                if webhook_response.payment_status == "paid":
-                    metadata = webhook_response.metadata
-                    plan_id = metadata.get("plan_id")
-                    org_id = metadata.get("org_id")
-                    
-                    if plan_id and org_id:
-                        ahora = datetime.now(timezone.utc)
-                        vencimiento = ahora + timedelta(days=30)
-                        
-                        await db.organizaciones.update_one(
-                            {"_id": org_id},
-                            {"$set": {
-                                "plan": plan_id,
-                                "plan_inicio": ahora.isoformat(),
-                                "plan_vencimiento": vencimiento.isoformat(),
-                                "facturas_mes_actual": 0
-                            }}
-                        )
+                # Registrar pago
+                await db.payment_transactions.insert_one({
+                    "_id": str(uuid.uuid4()),
+                    "organizacion_id": org_id,
+                    "type": "renewal",
+                    "subscription_id": subscription_id,
+                    "amount": data.amount_paid / 100,
+                    "currency": data.currency,
+                    "status": "paid",
+                    "invoice_id": data.id,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                })
+    
+    elif event_type == "invoice.payment_failed":
+        # Pago fallido
+        subscription_id = data.subscription
+        if subscription_id:
+            subscription = stripe_client.Subscription.retrieve(subscription_id)
+            org_id = subscription.metadata.get("org_id")
+            
+            if org_id:
+                await db.organizaciones.update_one(
+                    {"_id": org_id},
+                    {"$set": {
+                        "subscription_status": "past_due",
+                        "payment_failed_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+    
+    elif event_type == "customer.subscription.deleted":
+        # Suscripción terminada (después del período)
+        org_id = data.metadata.get("org_id")
         
-        return {"received": True}
+        if org_id:
+            # Degradar a plan gratis
+            await db.organizaciones.update_one(
+                {"_id": org_id},
+                {"$set": {
+                    "plan": "gratis",
+                    "subscription_status": "canceled",
+                    "plan_vencimiento": None
+                },
+                "$unset": {
+                    "stripe_subscription_id": 1,
+                    "cancel_at_period_end": 1
+                }}
+            )
+    
+    elif event_type == "customer.subscription.updated":
+        # Cambios en la suscripción
+        org_id = data.metadata.get("org_id")
         
-    except Exception as e:
-        print(f"Error en webhook de Stripe: {str(e)}")
-        return {"received": True, "error": str(e)}
+        if org_id:
+            period_end = datetime.fromtimestamp(data.current_period_end, tz=timezone.utc)
+            
+            await db.organizaciones.update_one(
+                {"_id": org_id},
+                {"$set": {
+                    "subscription_status": data.status,
+                    "cancel_at_period_end": data.cancel_at_period_end,
+                    "plan_vencimiento": period_end.isoformat()
+                }}
+            )
+    
+    return {"received": True}
 
 @app.get("/api/mis-pagos")
 async def obtener_mis_pagos(current_user: dict = Depends(get_current_user)):
@@ -6577,6 +6900,7 @@ async def obtener_mis_pagos(current_user: dict = Depends(get_current_user)):
     return [
         {
             "id": p["_id"],
+            "type": p.get("type", "payment"),
             "plan_id": p.get("plan_id"),
             "amount": p.get("amount"),
             "currency": p.get("currency", "usd"),
