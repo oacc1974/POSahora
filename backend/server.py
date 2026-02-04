@@ -5976,6 +5976,323 @@ async def get_empleados_filtro(current_user: dict = Depends(get_current_user)):
 async def root():
     return {"message": "Sistema de Facturación API"}
 
+# ============ ENDPOINTS DE PLANES Y SUSCRIPCIONES ============
+
+@app.get("/api/planes")
+async def get_planes_publicos():
+    """Obtiene todos los planes visibles para la landing page"""
+    planes = await db.planes.find(
+        {"activo": True, "visible_en_web": True}
+    ).sort("orden", 1).to_list(100)
+    
+    return [
+        {
+            "id": p["id"],
+            "nombre": p["nombre"],
+            "descripcion": p.get("descripcion", ""),
+            "precio": p["precio"],
+            "moneda": p.get("moneda", "USD"),
+            "periodo": p.get("periodo", "mensual"),
+            "limite_facturas": p["limite_facturas"],
+            "limite_usuarios": p["limite_usuarios"],
+            "limite_productos": p["limite_productos"],
+            "limite_tpv": p["limite_tpv"],
+            "limite_clientes": p["limite_clientes"],
+            "dias_historial": p["dias_historial"],
+            "funciones": p.get("funciones", {}),
+            "destacado": p.get("destacado", False),
+            "color": p.get("color", "#3b82f6")
+        }
+        for p in planes
+    ]
+
+@app.get("/api/mi-plan")
+async def get_mi_plan(current_user: dict = Depends(get_current_user)):
+    """Obtiene el plan actual de la organización del usuario con uso actual"""
+    org_id = current_user["organizacion_id"]
+    
+    org = await db.organizaciones.find_one({"_id": org_id})
+    if not org:
+        raise HTTPException(status_code=404, detail="Organización no encontrada")
+    
+    plan_id = org.get("plan", "gratis")
+    plan = await db.planes.find_one({"id": plan_id})
+    
+    if not plan:
+        plan = {
+            "id": "gratis",
+            "nombre": "Gratis",
+            "precio": 0,
+            "periodo": "mensual",
+            "limite_facturas": 50,
+            "limite_usuarios": 1,
+            "limite_productos": 50,
+            "limite_tpv": 1,
+            "limite_clientes": 20,
+            "dias_historial": 7,
+            "funciones": {}
+        }
+    
+    uso = await get_uso_actual(org_id)
+    
+    # Calcular días restantes si hay fecha de vencimiento
+    dias_restantes = None
+    fecha_vencimiento = org.get("plan_vencimiento")
+    if fecha_vencimiento:
+        try:
+            if isinstance(fecha_vencimiento, str):
+                vencimiento = datetime.fromisoformat(fecha_vencimiento.replace('Z', '+00:00'))
+            else:
+                vencimiento = fecha_vencimiento
+            dias_restantes = (vencimiento - datetime.now(timezone.utc)).days
+        except:
+            pass
+    
+    return {
+        "plan_id": plan["id"],
+        "plan_nombre": plan["nombre"],
+        "plan_precio": plan["precio"],
+        "plan_periodo": plan.get("periodo", "mensual"),
+        "limites": {
+            "facturas": plan["limite_facturas"],
+            "usuarios": plan["limite_usuarios"],
+            "productos": plan["limite_productos"],
+            "tpv": plan["limite_tpv"],
+            "clientes": plan["limite_clientes"],
+            "dias_historial": plan["dias_historial"]
+        },
+        "uso_actual": {
+            "facturas_mes": uso["facturas_mes"],
+            "usuarios": uso["usuarios"],
+            "productos": uso["productos"],
+            "tpvs": uso["tpvs"],
+            "clientes": uso["clientes"],
+            "tiendas": uso["tiendas"]
+        },
+        "funciones": plan.get("funciones", {}),
+        "fecha_inicio": org.get("plan_inicio"),
+        "fecha_vencimiento": fecha_vencimiento,
+        "dias_restantes": dias_restantes
+    }
+
+@app.get("/api/verificar-limite/{recurso}")
+async def verificar_limite(recurso: str, current_user: dict = Depends(get_current_user)):
+    """Verifica si se puede crear un nuevo recurso según el plan"""
+    puede, mensaje, uso_actual, limite = await verificar_limite_plan(
+        current_user["organizacion_id"], 
+        recurso
+    )
+    
+    return {
+        "puede_crear": puede,
+        "mensaje": mensaje,
+        "uso_actual": uso_actual,
+        "limite": limite,
+        "ilimitado": limite == -1
+    }
+
+# ============ ENDPOINTS DE SUPER ADMINISTRADOR ============
+
+async def get_super_admin(current_user: dict = Depends(get_current_user)):
+    """Dependency que verifica si el usuario es el super admin"""
+    if current_user.get("_id") != "admin" and current_user.get("user_id") != "admin":
+        raise HTTPException(status_code=403, detail="Acceso restringido a super administrador")
+    return current_user
+
+@app.get("/api/superadmin/dashboard")
+async def get_superadmin_dashboard(current_user: dict = Depends(get_super_admin)):
+    """Dashboard del super administrador con métricas globales"""
+    # Total de organizaciones (excluyendo la de admin)
+    total_orgs = await db.organizaciones.count_documents({"propietario_id": {"$ne": "admin"}})
+    
+    # Total de usuarios
+    total_usuarios = await db.usuarios.count_documents({"_id": {"$ne": "admin"}})
+    
+    # Total de facturas del mes
+    inicio_mes = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    total_facturas_mes = await db.facturas.count_documents({
+        "fecha": {"$gte": inicio_mes.isoformat()}
+    })
+    
+    # Organizaciones por plan
+    pipeline = [
+        {"$match": {"propietario_id": {"$ne": "admin"}}},
+        {"$group": {"_id": "$plan", "count": {"$sum": 1}}}
+    ]
+    orgs_por_plan_result = await db.organizaciones.aggregate(pipeline).to_list(100)
+    orgs_por_plan = {r["_id"] or "gratis": r["count"] for r in orgs_por_plan_result}
+    
+    # Calcular ingresos mensuales estimados
+    planes = await db.planes.find({}).to_list(100)
+    planes_dict = {p["id"]: p["precio"] for p in planes}
+    
+    ingresos_mensuales = 0
+    for plan_id, count in orgs_por_plan.items():
+        precio = planes_dict.get(plan_id, 0)
+        ingresos_mensuales += precio * count
+    
+    # Organizaciones recientes
+    orgs_recientes = await db.organizaciones.find(
+        {"propietario_id": {"$ne": "admin"}}
+    ).sort("fecha_creacion", -1).limit(10).to_list(10)
+    
+    orgs_list = []
+    for org in orgs_recientes:
+        propietario = await db.usuarios.find_one({"_id": org["propietario_id"]})
+        orgs_list.append({
+            "id": org["_id"],
+            "nombre": org["nombre"],
+            "plan": org.get("plan", "gratis"),
+            "propietario": propietario["nombre"] if propietario else "N/A",
+            "email": propietario.get("email", "N/A") if propietario else "N/A",
+            "fecha_creacion": org.get("fecha_creacion"),
+            "ultima_actividad": org.get("ultima_actividad")
+        })
+    
+    return {
+        "total_organizaciones": total_orgs,
+        "total_usuarios": total_usuarios,
+        "total_facturas_mes": total_facturas_mes,
+        "organizaciones_por_plan": orgs_por_plan,
+        "ingresos_mensuales_estimados": ingresos_mensuales,
+        "organizaciones_recientes": orgs_list
+    }
+
+@app.get("/api/superadmin/planes")
+async def get_all_planes(current_user: dict = Depends(get_super_admin)):
+    """Obtiene todos los planes (incluyendo los ocultos) para el admin"""
+    planes = await db.planes.find({}).sort("orden", 1).to_list(100)
+    
+    return [
+        {
+            "id": p["id"],
+            "nombre": p["nombre"],
+            "descripcion": p.get("descripcion", ""),
+            "precio": p["precio"],
+            "moneda": p.get("moneda", "USD"),
+            "periodo": p.get("periodo", "mensual"),
+            "limite_facturas": p["limite_facturas"],
+            "limite_usuarios": p["limite_usuarios"],
+            "limite_productos": p["limite_productos"],
+            "limite_tpv": p["limite_tpv"],
+            "limite_clientes": p["limite_clientes"],
+            "dias_historial": p["dias_historial"],
+            "funciones": p.get("funciones", {}),
+            "visible_en_web": p.get("visible_en_web", True),
+            "activo": p.get("activo", True),
+            "destacado": p.get("destacado", False),
+            "color": p.get("color", "#3b82f6"),
+            "orden": p.get("orden", 1)
+        }
+        for p in planes
+    ]
+
+@app.post("/api/superadmin/planes")
+async def create_plan(plan: PlanCreate, current_user: dict = Depends(get_super_admin)):
+    """Crea un nuevo plan"""
+    # Verificar que no exista
+    existe = await db.planes.find_one({"id": plan.id})
+    if existe:
+        raise HTTPException(status_code=400, detail="Ya existe un plan con ese ID")
+    
+    plan_data = plan.model_dump()
+    plan_data["funciones"] = plan_data["funciones"] if isinstance(plan_data["funciones"], dict) else plan_data["funciones"].model_dump()
+    
+    await db.planes.insert_one(plan_data)
+    
+    return {"message": "Plan creado exitosamente", "plan_id": plan.id}
+
+@app.put("/api/superadmin/planes/{plan_id}")
+async def update_plan(plan_id: str, plan: PlanCreate, current_user: dict = Depends(get_super_admin)):
+    """Actualiza un plan existente"""
+    existe = await db.planes.find_one({"id": plan_id})
+    if not existe:
+        raise HTTPException(status_code=404, detail="Plan no encontrado")
+    
+    plan_data = plan.model_dump()
+    plan_data["funciones"] = plan_data["funciones"] if isinstance(plan_data["funciones"], dict) else plan_data["funciones"].model_dump()
+    
+    await db.planes.update_one({"id": plan_id}, {"$set": plan_data})
+    
+    return {"message": "Plan actualizado exitosamente"}
+
+@app.delete("/api/superadmin/planes/{plan_id}")
+async def delete_plan(plan_id: str, current_user: dict = Depends(get_super_admin)):
+    """Elimina un plan (solo si no hay organizaciones usándolo)"""
+    # Verificar que ninguna organización use este plan
+    usando = await db.organizaciones.count_documents({"plan": plan_id})
+    if usando > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"No se puede eliminar: {usando} organizaciones usan este plan"
+        )
+    
+    result = await db.planes.delete_one({"id": plan_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Plan no encontrado")
+    
+    return {"message": "Plan eliminado exitosamente"}
+
+@app.get("/api/superadmin/organizaciones")
+async def get_all_organizaciones_admin(current_user: dict = Depends(get_super_admin)):
+    """Obtiene todas las organizaciones con detalles para el admin"""
+    orgs = await db.organizaciones.find(
+        {"propietario_id": {"$ne": "admin"}}
+    ).sort("fecha_creacion", -1).to_list(1000)
+    
+    result = []
+    for org in orgs:
+        propietario = await db.usuarios.find_one({"_id": org["propietario_id"]})
+        uso = await get_uso_actual(org["_id"])
+        
+        result.append({
+            "id": org["_id"],
+            "nombre": org["nombre"],
+            "codigo_tienda": org.get("codigo_tienda"),
+            "plan": org.get("plan", "gratis"),
+            "plan_inicio": org.get("plan_inicio"),
+            "plan_vencimiento": org.get("plan_vencimiento"),
+            "propietario_id": org["propietario_id"],
+            "propietario_nombre": propietario["nombre"] if propietario else "N/A",
+            "propietario_email": propietario.get("email", "N/A") if propietario else "N/A",
+            "fecha_creacion": org.get("fecha_creacion"),
+            "ultima_actividad": org.get("ultima_actividad"),
+            "uso": uso
+        })
+    
+    return result
+
+@app.put("/api/superadmin/organizaciones/{org_id}/plan")
+async def cambiar_plan_organizacion(org_id: str, request: CambiarPlanRequest, current_user: dict = Depends(get_super_admin)):
+    """Cambia el plan de una organización (super admin)"""
+    org = await db.organizaciones.find_one({"_id": org_id})
+    if not org:
+        raise HTTPException(status_code=404, detail="Organización no encontrada")
+    
+    plan = await db.planes.find_one({"id": request.plan_id})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan no encontrado")
+    
+    # Actualizar plan
+    ahora = datetime.now(timezone.utc)
+    vencimiento = ahora + timedelta(days=30)  # 30 días por defecto
+    
+    await db.organizaciones.update_one(
+        {"_id": org_id},
+        {"$set": {
+            "plan": request.plan_id,
+            "plan_inicio": ahora.isoformat(),
+            "plan_vencimiento": vencimiento.isoformat(),
+            "facturas_mes_actual": 0  # Reiniciar contador
+        }}
+    )
+    
+    return {
+        "message": f"Plan cambiado a '{plan['nombre']}' exitosamente",
+        "plan_id": request.plan_id,
+        "vencimiento": vencimiento.isoformat()
+    }
+
 # ============ PROXY PARA BACKEND DE FACTURACIÓN ELECTRÓNICA ============
 # Redirige todas las peticiones /api/fe/* al backend-fe (puerto 8002)
 
