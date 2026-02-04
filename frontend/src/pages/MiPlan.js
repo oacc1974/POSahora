@@ -18,6 +18,7 @@ export default function MiPlan() {
   const [planesDisponibles, setPlanesDisponibles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [processingPlan, setProcessingPlan] = useState(null);
 
   const token = sessionStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
