@@ -175,7 +175,7 @@ function AppRouter() {
               ['cajero', 'mesero'].includes(user.rol) ? 
                 <Navigate to="/pos" replace /> : 
                 <Navigate to="/dashboard" replace />
-            ) : <Navigate to="/login" replace />
+            ) : <Navigate to="/landing" replace />
           }
         />
         <Route
