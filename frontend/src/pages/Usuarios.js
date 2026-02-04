@@ -197,7 +197,18 @@ export default function Usuarios() {
       resetUserForm();
       fetchUsuarios();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Error al guardar empleado');
+      // Manejar error de límite de plan
+      if (error.response?.status === 403 && error.response?.data?.detail?.code === 'PLAN_LIMIT') {
+        toast.error(error.response.data.detail.message, {
+          duration: 5000,
+          action: {
+            label: 'Ver Planes',
+            onClick: () => window.location.href = '/mi-plan'
+          }
+        });
+      } else {
+        toast.error(error.response?.data?.detail || 'Error al guardar empleado');
+      }
     }
   };
 
