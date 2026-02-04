@@ -122,6 +122,20 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
       show: user.rol === 'propietario',
     },
     {
+      name: 'Mi Plan',
+      href: '/mi-plan',
+      icon: LayoutDashboard,
+      testId: 'nav-mi-plan',
+      show: user.rol === 'propietario' && user.id !== 'admin',
+    },
+    {
+      name: 'Super Admin',
+      href: '/superadmin',
+      icon: Building2,
+      testId: 'nav-superadmin',
+      show: user.id === 'admin',
+    },
+    {
       name: 'Organizaciones',
       href: '/organizaciones',
       icon: Building2,
