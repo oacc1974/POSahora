@@ -362,6 +362,35 @@ function AppRouter() {
             )
           }
         />
+        {/* Rutas de Planes y Super Admin */}
+        <Route
+          path="/landing"
+          element={<LandingPage />}
+        />
+        <Route
+          path="/superadmin"
+          element={
+            user && user.id === 'admin' ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <SuperAdminPanel />
+              </Layout>
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
+        />
+        <Route
+          path="/mi-plan"
+          element={
+            user && user.rol === 'propietario' ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <MiPlan />
+              </Layout>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
       </Routes>
     </>
   );
