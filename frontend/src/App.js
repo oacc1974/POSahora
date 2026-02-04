@@ -29,6 +29,7 @@ import NotasCredito from './pages/fe/NotasCredito';
 import LandingPage from './pages/LandingPage';
 import SuperAdminPanel from './pages/SuperAdminPanel';
 import MiPlan from './pages/MiPlan';
+import SuscripcionExito from './pages/SuscripcionExito';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
