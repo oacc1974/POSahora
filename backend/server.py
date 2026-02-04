@@ -4647,6 +4647,11 @@ async def get_clientes(current_user: dict = Depends(get_current_user)):
 
 @app.post("/api/clientes", response_model=ClienteResponse)
 async def create_cliente(cliente: ClienteCreate, current_user: dict = Depends(get_current_user)):
+    # Verificar límite de clientes del plan
+    puede, mensaje, _, _ = await verificar_limite_plan(current_user["organizacion_id"], "clientes")
+    if not puede:
+        raise HTTPException(status_code=403, detail={"code": "PLAN_LIMIT", "message": mensaje})
+    
     cliente_id = str(uuid.uuid4())
     
     # Validar cédula/RUC única si se proporciona
