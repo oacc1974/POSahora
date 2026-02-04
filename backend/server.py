@@ -2183,6 +2183,11 @@ async def get_usuarios(current_user: dict = Depends(get_propietario_user)):
 
 @app.post("/api/usuarios", response_model=UserResponse)
 async def create_usuario(user: UserCreate, current_user: dict = Depends(get_propietario_user)):
+    # Verificar límite de usuarios del plan
+    puede, mensaje, _, _ = await verificar_limite_plan(current_user["organizacion_id"], "usuarios")
+    if not puede:
+        raise HTTPException(status_code=403, detail={"code": "PLAN_LIMIT", "message": mensaje})
+    
     # Verificar que el username sea único DENTRO de la organización
     existing = await db.usuarios.find_one({
         "username": user.username,
