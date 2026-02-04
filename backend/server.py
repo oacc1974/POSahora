@@ -5309,6 +5309,11 @@ async def cerrar_caja_admin(caja_id: str, cierre: CajaCierre, current_user: dict
 
 @app.post("/api/facturas", response_model=InvoiceResponse)
 async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(get_current_user)):
+    # Verificar límite de facturas del plan
+    puede, mensaje, _, _ = await verificar_limite_plan(current_user["organizacion_id"], "facturas")
+    if not puede:
+        raise HTTPException(status_code=403, detail={"code": "PLAN_LIMIT", "message": mensaje})
+    
     caja_activa = await db.cajas.find_one({
         "usuario_id": current_user["_id"],
         "estado": "abierta"
