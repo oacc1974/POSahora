@@ -19,6 +19,8 @@ import {
   ChevronDown,
   ChevronRight,
   FileX,
+  Crown,
+  Shield,
 } from 'lucide-react';
 import { Button } from './ui/button';
 
