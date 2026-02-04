@@ -6327,6 +6327,266 @@ async def cambiar_plan_organizacion(org_id: str, request: CambiarPlanRequest, cu
         "vencimiento": vencimiento.isoformat()
     }
 
+# ============ ENDPOINTS DE SUSCRIPCIÓN Y PAGOS (STRIPE) ============
+
+class CreateSubscriptionRequest(BaseModel):
+    plan_id: str
+    origin_url: str
+
+class PaymentStatusResponse(BaseModel):
+    status: str
+    payment_status: str
+    plan_id: Optional[str] = None
+    message: str
+
+# Definición de precios de planes (server-side)
+PLAN_PRICES = {
+    "gratis": 0.00,
+    "basico": 15.00,
+    "pro": 35.00,
+    "enterprise": 75.00
+}
+
+@app.post("/api/suscripcion/crear")
+async def crear_suscripcion(request_data: CreateSubscriptionRequest, request: Request, current_user: dict = Depends(get_current_user)):
+    """Crea una sesión de checkout de Stripe para suscribirse a un plan"""
+    
+    # Verificar que el plan existe
+    plan = await db.planes.find_one({"id": request_data.plan_id})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan no encontrado")
+    
+    # Obtener precio del plan (server-side, nunca del frontend)
+    precio = plan.get("precio", PLAN_PRICES.get(request_data.plan_id, 0))
+    
+    if precio <= 0:
+        raise HTTPException(status_code=400, detail="Este plan es gratuito, no requiere pago")
+    
+    # Configurar Stripe
+    stripe_api_key = os.environ.get("STRIPE_API_KEY")
+    if not stripe_api_key:
+        raise HTTPException(status_code=500, detail="Stripe no configurado")
+    
+    host_url = str(request.base_url).rstrip('/')
+    webhook_url = f"{host_url}/api/webhook/stripe"
+    
+    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
+    
+    # Construir URLs dinámicas
+    origin = request_data.origin_url.rstrip('/')
+    success_url = f"{origin}/suscripcion/exito?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{origin}/mi-plan"
+    
+    # Metadata para identificar la transacción
+    metadata = {
+        "org_id": current_user["organizacion_id"],
+        "user_id": current_user["_id"],
+        "plan_id": request_data.plan_id,
+        "plan_nombre": plan["nombre"],
+        "tipo": "suscripcion"
+    }
+    
+    try:
+        # Crear sesión de checkout
+        checkout_request = CheckoutSessionRequest(
+            amount=float(precio),
+            currency="usd",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata=metadata
+        )
+        
+        session = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        # Crear registro de transacción ANTES del redirect
+        transaction_id = str(uuid.uuid4())
+        await db.payment_transactions.insert_one({
+            "_id": transaction_id,
+            "session_id": session.session_id,
+            "organizacion_id": current_user["organizacion_id"],
+            "user_id": current_user["_id"],
+            "plan_id": request_data.plan_id,
+            "amount": precio,
+            "currency": "usd",
+            "status": "pending",
+            "payment_status": "initiated",
+            "metadata": metadata,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        })
+        
+        return {
+            "checkout_url": session.url,
+            "session_id": session.session_id,
+            "transaction_id": transaction_id
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al crear sesión de pago: {str(e)}")
+
+@app.get("/api/suscripcion/estado/{session_id}")
+async def verificar_estado_pago(session_id: str, current_user: dict = Depends(get_current_user)):
+    """Verifica el estado de un pago y actualiza el plan si es exitoso"""
+    
+    # Buscar transacción
+    transaction = await db.payment_transactions.find_one({"session_id": session_id})
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transacción no encontrada")
+    
+    # Verificar que la transacción pertenece al usuario o su organización
+    if transaction["organizacion_id"] != current_user["organizacion_id"]:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    
+    # Si ya está completado, no volver a procesar
+    if transaction.get("payment_status") == "paid":
+        return PaymentStatusResponse(
+            status="completed",
+            payment_status="paid",
+            plan_id=transaction.get("plan_id"),
+            message="El pago ya fue procesado exitosamente"
+        )
+    
+    # Consultar estado en Stripe
+    stripe_api_key = os.environ.get("STRIPE_API_KEY")
+    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url="")
+    
+    try:
+        checkout_status = await stripe_checkout.get_checkout_status(session_id)
+        
+        # Actualizar transacción
+        await db.payment_transactions.update_one(
+            {"session_id": session_id},
+            {"$set": {
+                "status": checkout_status.status,
+                "payment_status": checkout_status.payment_status,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # Si el pago fue exitoso, activar el plan
+        if checkout_status.payment_status == "paid":
+            plan_id = transaction.get("plan_id")
+            org_id = transaction.get("organizacion_id")
+            
+            # Actualizar plan de la organización
+            ahora = datetime.now(timezone.utc)
+            vencimiento = ahora + timedelta(days=30)
+            
+            await db.organizaciones.update_one(
+                {"_id": org_id},
+                {"$set": {
+                    "plan": plan_id,
+                    "plan_inicio": ahora.isoformat(),
+                    "plan_vencimiento": vencimiento.isoformat(),
+                    "facturas_mes_actual": 0
+                }}
+            )
+            
+            return PaymentStatusResponse(
+                status="completed",
+                payment_status="paid",
+                plan_id=plan_id,
+                message=f"¡Pago exitoso! Tu plan ha sido actualizado."
+            )
+        
+        elif checkout_status.status == "expired":
+            return PaymentStatusResponse(
+                status="expired",
+                payment_status=checkout_status.payment_status,
+                plan_id=None,
+                message="La sesión de pago ha expirado. Por favor, intenta de nuevo."
+            )
+        
+        else:
+            return PaymentStatusResponse(
+                status=checkout_status.status,
+                payment_status=checkout_status.payment_status,
+                plan_id=None,
+                message="Pago en proceso..."
+            )
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al verificar pago: {str(e)}")
+
+@app.post("/api/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Webhook para recibir eventos de Stripe"""
+    stripe_api_key = os.environ.get("STRIPE_API_KEY")
+    if not stripe_api_key:
+        raise HTTPException(status_code=500, detail="Stripe no configurado")
+    
+    host_url = str(request.base_url).rstrip('/')
+    webhook_url = f"{host_url}/api/webhook/stripe"
+    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
+    
+    try:
+        body = await request.body()
+        signature = request.headers.get("Stripe-Signature")
+        
+        webhook_response = await stripe_checkout.handle_webhook(body, signature)
+        
+        # Buscar y actualizar la transacción
+        if webhook_response.session_id:
+            transaction = await db.payment_transactions.find_one({"session_id": webhook_response.session_id})
+            
+            if transaction and transaction.get("payment_status") != "paid":
+                # Actualizar transacción
+                await db.payment_transactions.update_one(
+                    {"session_id": webhook_response.session_id},
+                    {"$set": {
+                        "status": webhook_response.event_type,
+                        "payment_status": webhook_response.payment_status,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                
+                # Si el pago fue exitoso, activar el plan
+                if webhook_response.payment_status == "paid":
+                    metadata = webhook_response.metadata
+                    plan_id = metadata.get("plan_id")
+                    org_id = metadata.get("org_id")
+                    
+                    if plan_id and org_id:
+                        ahora = datetime.now(timezone.utc)
+                        vencimiento = ahora + timedelta(days=30)
+                        
+                        await db.organizaciones.update_one(
+                            {"_id": org_id},
+                            {"$set": {
+                                "plan": plan_id,
+                                "plan_inicio": ahora.isoformat(),
+                                "plan_vencimiento": vencimiento.isoformat(),
+                                "facturas_mes_actual": 0
+                            }}
+                        )
+        
+        return {"received": True}
+        
+    except Exception as e:
+        print(f"Error en webhook de Stripe: {str(e)}")
+        return {"received": True, "error": str(e)}
+
+@app.get("/api/mis-pagos")
+async def obtener_mis_pagos(current_user: dict = Depends(get_current_user)):
+    """Obtiene el historial de pagos de la organización"""
+    pagos = await db.payment_transactions.find(
+        {"organizacion_id": current_user["organizacion_id"]}
+    ).sort("created_at", -1).to_list(50)
+    
+    return [
+        {
+            "id": p["_id"],
+            "plan_id": p.get("plan_id"),
+            "amount": p.get("amount"),
+            "currency": p.get("currency", "usd"),
+            "status": p.get("status"),
+            "payment_status": p.get("payment_status"),
+            "created_at": p.get("created_at"),
+            "updated_at": p.get("updated_at")
+        }
+        for p in pagos
+    ]
+
 # ============ PROXY PARA BACKEND DE FACTURACIÓN ELECTRÓNICA ============
 # Redirige todas las peticiones /api/fe/* al backend-fe (puerto 8002)
 
