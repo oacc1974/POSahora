@@ -4,9 +4,10 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
+import { toast } from 'sonner';
 import { 
   Receipt, Users, Package, Store, UserCheck, Clock, 
-  TrendingUp, AlertTriangle, Crown, Zap, Check
+  TrendingUp, AlertTriangle, Crown, Zap, Check, Loader2
 } from 'lucide-react';
 import axios from 'axios';
 
