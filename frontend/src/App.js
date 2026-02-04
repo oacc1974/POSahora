@@ -392,6 +392,16 @@ function AppRouter() {
             )
           }
         />
+        <Route
+          path="/suscripcion/exito"
+          element={
+            user ? (
+              <SuscripcionExito />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
       </Routes>
     </>
   );
