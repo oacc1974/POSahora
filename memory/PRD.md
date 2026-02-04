@@ -404,3 +404,111 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 ## Bases de Datos
 - **pos_db:** Base de datos principal del POS
 - **fe_db:** Base de datos de facturación electrónica (tenants, stores, configs_fiscal, certificates, documents, document_xml, counters, document_events)
+
+---
+
+## Sistema de Planes de Suscripción SaaS (Implementado 4 Febrero 2026)
+
+### Descripción
+Sistema completo para monetizar la aplicación mediante planes de suscripción pagados.
+
+### Planes Disponibles
+| Plan | Precio | Facturas | Usuarios | Productos | TPV | Clientes | Historial |
+|------|--------|----------|----------|-----------|-----|----------|-----------|
+| **Gratis** | $0/mes | 50 | 1 | 50 | 1 | 20 | 7 días |
+| **Básico** | $15/mes | 300 | 3 | 200 | 2 | 100 | 30 días |
+| **Pro** ⭐ | $35/mes | ∞ | 10 | ∞ | 5 | ∞ | 180 días |
+| **Enterprise** | $75/mes | ∞ | ∞ | ∞ | ∞ | ∞ | ∞ |
+
+### Funciones por Plan
+- **Facturación Electrónica:** Pro, Enterprise
+- **Reportes Avanzados:** Básico, Pro, Enterprise
+- **Tickets Abiertos:** Pro, Enterprise
+- **Multi-Tienda:** Pro, Enterprise
+- **Logo en Ticket:** Básico, Pro, Enterprise
+- **Exportar Excel:** Pro, Enterprise
+- **Soporte Prioritario:** Enterprise
+
+### Componentes Implementados
+
+#### Backend (`/app/backend/server.py`)
+- **Colección `planes`:** Define límites y funciones de cada plan
+- **Colección `payment_transactions`:** Registro de transacciones de pago
+- **Funciones helper:**
+  - `get_plan_organizacion()` - Obtiene plan actual
+  - `get_uso_actual()` - Calcula uso de recursos
+  - `verificar_limite_plan()` - Valida límites antes de crear recursos
+  - `verificar_funcion_plan()` - Valida disponibilidad de funciones
+
+#### Endpoints de Planes
+- `GET /api/planes` - Planes públicos para landing page
+- `GET /api/mi-plan` - Plan y uso actual del usuario
+- `GET /api/verificar-limite/{recurso}` - Verificar límite específico
+
+#### Endpoints de Super Admin
+- `GET /api/superadmin/dashboard` - Métricas globales
+- `GET /api/superadmin/planes` - Todos los planes (incluyendo ocultos)
+- `POST /api/superadmin/planes` - Crear plan
+- `PUT /api/superadmin/planes/{id}` - Actualizar plan
+- `DELETE /api/superadmin/planes/{id}` - Eliminar plan
+- `GET /api/superadmin/organizaciones` - Lista de organizaciones
+- `PUT /api/superadmin/organizaciones/{id}/plan` - Cambiar plan
+
+#### Endpoints de Suscripción (Stripe)
+- `POST /api/suscripcion/crear` - Crear sesión de checkout
+- `GET /api/suscripcion/estado/{session_id}` - Verificar estado del pago
+- `POST /api/webhook/stripe` - Webhook de Stripe
+- `GET /api/mis-pagos` - Historial de pagos
+
+### Frontend
+
+#### Landing Page (`/landing`)
+- Hero section con llamada a acción
+- Grid de características principales
+- Tabla de precios con los 4 planes
+- Sección CTA final
+- Footer con enlaces
+
+#### Panel Super Admin (`/superadmin`)
+- **Dashboard:** Métricas de organizaciones, usuarios, facturas, ingresos
+- **Planes:** CRUD completo de planes con funciones y límites
+- **Organizaciones:** Lista con uso actual, opción de cambiar plan
+
+#### Mi Plan (`/mi-plan`)
+- Información del plan actual con badge de precio
+- Barras de progreso de uso de recursos
+- Alertas cuando se acercan a los límites
+- Grid de funciones disponibles/no disponibles
+- Diálogo de upgrade con integración Stripe
+
+#### Página de Éxito (`/suscripcion/exito`)
+- Polling automático del estado del pago
+- Mensajes de éxito/error/expiración
+- Activación automática del plan al pagar
+
+### Validaciones Automáticas
+Los siguientes endpoints verifican límites antes de crear recursos:
+- `POST /api/productos` - Límite de productos
+- `POST /api/usuarios` - Límite de usuarios
+- `POST /api/clientes` - Límite de clientes
+- `POST /api/tpv` - Límite de TPV
+- `POST /api/facturas` - Límite mensual de facturas
+
+### Errores de Límite
+Cuando se alcanza un límite, el endpoint devuelve:
+```json
+{
+  "detail": {
+    "code": "PLAN_LIMIT",
+    "message": "Has alcanzado el límite de productos (50/50) de tu plan Gratis. Actualiza tu plan para continuar."
+  }
+}
+```
+
+### Test Reports
+- `/app/test_reports/iteration_11.json` - Tests del Sistema de Planes - 100% passed (20/20 backend, frontend OK)
+
+### Credenciales de Prueba
+- **Super Admin:** usuario `admin`, contraseña `admin123`
+- **Stripe:** `sk_test_emergent` (clave de prueba)
+
