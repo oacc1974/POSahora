@@ -6002,7 +6002,7 @@ async def get_empleados_filtro(current_user: dict = Depends(get_current_user)):
 
 @app.get("/api/")
 async def root():
-    return {"message": "Sistema de Facturación API"}
+    return {"message": "POS Ahora API"}
 
 # ============ ENDPOINTS DE PLANES Y SUSCRIPCIONES ============
 
