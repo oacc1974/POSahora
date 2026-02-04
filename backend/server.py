@@ -4272,6 +4272,11 @@ async def upload_logo(
 
 @app.post("/api/productos", response_model=ProductResponse)
 async def create_producto(product: ProductCreate, current_user: dict = Depends(get_propietario_or_admin)):
+    # Verificar límite de productos del plan
+    puede, mensaje, _, _ = await verificar_limite_plan(current_user["organizacion_id"], "productos")
+    if not puede:
+        raise HTTPException(status_code=403, detail={"code": "PLAN_LIMIT", "message": mensaje})
+    
     import uuid
     product_id = str(uuid.uuid4())
     
