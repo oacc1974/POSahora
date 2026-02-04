@@ -25,6 +25,11 @@ import ConfiguracionFE from './pages/fe/ConfiguracionFE';
 import DocumentosElectronicos from './pages/fe/DocumentosElectronicos';
 import NotasCredito from './pages/fe/NotasCredito';
 
+// Importar páginas de Planes y Super Admin
+import LandingPage from './pages/LandingPage';
+import SuperAdminPanel from './pages/SuperAdminPanel';
+import MiPlan from './pages/MiPlan';
+
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 function AuthChecker() {
