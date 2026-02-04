@@ -164,7 +164,7 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
               <Store size={24} className="text-white" />
             </div>
-            <h1 className="text-lg font-bold text-slate-900">Sistema POS</h1>
+            <h1 className="text-lg font-bold text-slate-900">POS Ahora</h1>
           </div>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -188,7 +188,7 @@ export default function Layout({ children, user, onLogout, hideSidebar = false }
               <Store size={24} className="text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-900">Sistema POS</h1>
+              <h1 className="text-lg font-bold text-slate-900">POS Ahora</h1>
             </div>
           </div>
         </div>

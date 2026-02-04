@@ -74,7 +74,7 @@ export default function LandingPage() {
       <section className="pt-32 pb-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <Badge className="mb-4 bg-blue-500/20 text-blue-400 border-blue-500/30">
-            Sistema POS para Ecuador
+            POS para Ecuador
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
             El Punto de Venta que tu negocio necesita

@@ -83,7 +83,7 @@ export default function Login({ onLogin }) {
         <div className="relative z-10 flex flex-col items-center justify-center w-full text-white p-12">
           <Store size={64} className="mb-6" />
           <h1 className="text-5xl font-bold mb-4 tracking-tight">
-            Sistema POS
+            POS Ahora
           </h1>
           <p className="text-xl text-center">
             Gestiona tu negocio de forma profesional
