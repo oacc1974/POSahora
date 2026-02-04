@@ -4,10 +4,12 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
+import { Alert, AlertDescription } from '../components/ui/alert';
 import { toast } from 'sonner';
 import { 
   Receipt, Users, Package, Store, UserCheck, Clock, 
-  TrendingUp, AlertTriangle, Crown, Zap, Check, Loader2
+  AlertTriangle, Crown, Zap, Check, Loader2, XCircle,
+  CreditCard, Calendar, RefreshCw, History
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -15,16 +17,23 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function MiPlan() {
   const [plan, setPlan] = useState(null);
+  const [subscription, setSubscription] = useState(null);
   const [planesDisponibles, setPlanesDisponibles] = useState([]);
+  const [pagos, setPagos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [processingPlan, setProcessingPlan] = useState(null);
+  const [canceling, setCanceling] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
 
   const token = sessionStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
     fetchMiPlan();
+    fetchSubscription();
     fetchPlanes();
   }, []);
 
@@ -39,12 +48,32 @@ export default function MiPlan() {
     }
   };
 
+  const fetchSubscription = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/suscripcion/actual`, { headers });
+      setSubscription(response.data);
+    } catch (error) {
+      console.error('Error al cargar suscripción:', error);
+    }
+  };
+
   const fetchPlanes = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/planes`);
       setPlanesDisponibles(response.data);
     } catch (error) {
       console.error('Error al cargar planes:', error);
+    }
+  };
+
+  const fetchPagos = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/mis-pagos`, { headers });
+      setPagos(response.data);
+      setShowHistoryDialog(true);
+    } catch (error) {
+      console.error('Error al cargar pagos:', error);
+      toast.error('Error al cargar historial de pagos');
     }
   };
 
@@ -56,7 +85,6 @@ export default function MiPlan() {
         origin_url: window.location.origin
       }, { headers });
       
-      // Redirigir a Stripe Checkout
       if (response.data.checkout_url) {
         window.location.href = response.data.checkout_url;
       }
@@ -67,8 +95,43 @@ export default function MiPlan() {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    setCanceling(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/suscripcion/cancelar`, {
+        cancel_at_period_end: true
+      }, { headers });
+      
+      toast.success(response.data.message);
+      setShowCancelDialog(false);
+      fetchSubscription();
+      fetchMiPlan();
+    } catch (error) {
+      console.error('Error al cancelar:', error);
+      toast.error(error.response?.data?.detail || 'Error al cancelar suscripción');
+    } finally {
+      setCanceling(false);
+    }
+  };
+
+  const handleReactivateSubscription = async () => {
+    setReactivating(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/suscripcion/reactivar`, {}, { headers });
+      
+      toast.success(response.data.message);
+      fetchSubscription();
+      fetchMiPlan();
+    } catch (error) {
+      console.error('Error al reactivar:', error);
+      toast.error(error.response?.data?.detail || 'Error al reactivar suscripción');
+    } finally {
+      setReactivating(false);
+    }
+  };
+
   const calcularPorcentaje = (uso, limite) => {
-    if (limite === -1) return 0; // Ilimitado
+    if (limite === -1) return 0;
     if (limite === 0) return 100;
     return Math.min((uso / limite) * 100, 100);
   };
@@ -84,12 +147,28 @@ export default function MiPlan() {
     return limite.toLocaleString();
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    return new Date(dateStr).toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
   const planColors = {
     gratis: 'bg-slate-500',
     basico: 'bg-blue-500',
     pro: 'bg-purple-500',
     enterprise: 'bg-amber-500',
     premium: 'bg-emerald-500'
+  };
+
+  const statusLabels = {
+    active: { label: 'Activa', color: 'bg-green-500' },
+    canceled: { label: 'Cancelada', color: 'bg-red-500' },
+    past_due: { label: 'Pago pendiente', color: 'bg-amber-500' },
+    trialing: { label: 'Prueba', color: 'bg-blue-500' }
   };
 
   if (loading) {
@@ -111,46 +190,17 @@ export default function MiPlan() {
   }
 
   const recursos = [
-    { 
-      key: 'facturas', 
-      label: 'Facturas este mes', 
-      uso: plan.uso_actual.facturas_mes, 
-      limite: plan.limites.facturas,
-      icon: Receipt 
-    },
-    { 
-      key: 'usuarios', 
-      label: 'Empleados', 
-      uso: plan.uso_actual.usuarios, 
-      limite: plan.limites.usuarios,
-      icon: Users 
-    },
-    { 
-      key: 'productos', 
-      label: 'Productos', 
-      uso: plan.uso_actual.productos, 
-      limite: plan.limites.productos,
-      icon: Package 
-    },
-    { 
-      key: 'tpv', 
-      label: 'Puntos de Venta', 
-      uso: plan.uso_actual.tpvs, 
-      limite: plan.limites.tpv,
-      icon: Store 
-    },
-    { 
-      key: 'clientes', 
-      label: 'Clientes', 
-      uso: plan.uso_actual.clientes, 
-      limite: plan.limites.clientes,
-      icon: UserCheck 
-    }
+    { key: 'facturas', label: 'Facturas este mes', uso: plan.uso_actual.facturas_mes, limite: plan.limites.facturas, icon: Receipt },
+    { key: 'usuarios', label: 'Empleados', uso: plan.uso_actual.usuarios, limite: plan.limites.usuarios, icon: Users },
+    { key: 'productos', label: 'Productos', uso: plan.uso_actual.productos, limite: plan.limites.productos, icon: Package },
+    { key: 'tpv', label: 'Puntos de Venta', uso: plan.uso_actual.tpvs, limite: plan.limites.tpv, icon: Store },
+    { key: 'clientes', label: 'Clientes', uso: plan.uso_actual.clientes, limite: plan.limites.clientes, icon: UserCheck }
   ];
 
-  const hayAlerta = recursos.some(r => 
-    r.limite !== -1 && calcularPorcentaje(r.uso, r.limite) >= 80
-  );
+  const hayAlerta = recursos.some(r => r.limite !== -1 && calcularPorcentaje(r.uso, r.limite) >= 80);
+  const isPlanGratis = plan.plan_id === 'gratis';
+  const hasActiveSubscription = subscription?.has_subscription && subscription?.status === 'active';
+  const isCanceled = subscription?.cancel_at_period_end;
 
   return (
     <div className="space-y-6" data-testid="mi-plan">
@@ -163,34 +213,86 @@ export default function MiPlan() {
                 <Crown className="w-6 h-6 text-white" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-xl font-bold">{plan.plan_nombre}</h2>
                   <Badge className={planColors[plan.plan_id] || 'bg-slate-500'}>
                     ${plan.plan_precio}/{plan.plan_periodo}
                   </Badge>
+                  {subscription?.has_subscription && (
+                    <Badge className={statusLabels[subscription.status]?.color || 'bg-slate-500'}>
+                      {statusLabels[subscription.status]?.label || subscription.status}
+                    </Badge>
+                  )}
                 </div>
-                {plan.dias_restantes && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {plan.dias_restantes > 0 
-                      ? `${plan.dias_restantes} días restantes` 
-                      : 'Plan vencido'}
-                  </p>
+                {subscription?.has_subscription && (
+                  <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {isCanceled ? 'Activo hasta:' : 'Próxima renovación:'} {formatDate(subscription.current_period_end)}
+                    </span>
+                    {subscription.days_remaining !== null && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {subscription.days_remaining} días restantes
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
             
-            <Button onClick={() => setShowUpgradeDialog(true)}>
-              <Zap className="w-4 h-4 mr-2" />
-              Mejorar Plan
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={fetchPagos}>
+                <History className="w-4 h-4 mr-2" />
+                Historial
+              </Button>
+              {isPlanGratis ? (
+                <Button onClick={() => setShowUpgradeDialog(true)}>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Mejorar Plan
+                </Button>
+              ) : hasActiveSubscription && !isCanceled ? (
+                <Button variant="destructive" onClick={() => setShowCancelDialog(true)}>
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+              ) : isCanceled ? (
+                <Button onClick={handleReactivateSubscription} disabled={reactivating}>
+                  {reactivating ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                  )}
+                  Reactivar
+                </Button>
+              ) : (
+                <Button onClick={() => setShowUpgradeDialog(true)}>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Suscribirse
+                </Button>
+              )}
+            </div>
           </div>
 
-          {hayAlerta && (
-            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 text-amber-700">
-              <AlertTriangle className="w-5 h-5" />
-              <span>Estás cerca de alcanzar algunos límites de tu plan. Considera actualizar para seguir creciendo.</span>
-            </div>
+          {/* Alerta de cancelación programada */}
+          {isCanceled && (
+            <Alert className="mt-4 border-amber-200 bg-amber-50">
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertDescription className="text-amber-700">
+                Tu suscripción está cancelada y terminará el <strong>{formatDate(subscription.current_period_end)}</strong>. 
+                Después de esa fecha, tu plan cambiará a Gratis. Puedes reactivar tu suscripción en cualquier momento.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Alerta de límites */}
+          {hayAlerta && !isCanceled && (
+            <Alert className="mt-4 border-amber-200 bg-amber-50">
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertDescription className="text-amber-700">
+                Estás cerca de alcanzar algunos límites de tu plan. Considera actualizar para seguir creciendo.
+              </AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>
@@ -274,13 +376,14 @@ export default function MiPlan() {
           <DialogHeader>
             <DialogTitle>Mejorar tu Plan</DialogTitle>
             <DialogDescription>
-              Elige el plan que mejor se adapte a las necesidades de tu negocio
+              Elige el plan que mejor se adapte a las necesidades de tu negocio. 
+              Cobro mensual automático, cancela cuando quieras.
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
             {planesDisponibles
-              .filter(p => p.precio > plan.plan_precio)
+              .filter(p => p.precio > 0)
               .map((planOp) => (
                 <Card 
                   key={planOp.id} 
@@ -295,7 +398,7 @@ export default function MiPlan() {
                       </Badge>
                       <div className="mt-2">
                         <span className="text-2xl font-bold">${planOp.precio}</span>
-                        <span className="text-muted-foreground">/{planOp.periodo}</span>
+                        <span className="text-muted-foreground">/mes</span>
                       </div>
                     </div>
                     
@@ -326,7 +429,10 @@ export default function MiPlan() {
                           Procesando...
                         </>
                       ) : (
-                        'Seleccionar'
+                        <>
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Suscribirse
+                        </>
                       )}
                     </Button>
                   </CardContent>
@@ -336,9 +442,95 @@ export default function MiPlan() {
           
           <DialogFooter>
             <p className="text-sm text-muted-foreground">
-              ¿Necesitas ayuda? Contáctanos en soporte@posahora.com
+              Pago seguro con Stripe. Cancela cuando quieras.
             </p>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Cancelación */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Cancelar suscripción?</DialogTitle>
+            <DialogDescription>
+              Tu suscripción seguirá activa hasta el final del período actual 
+              ({formatDate(subscription?.current_period_end)}). Después de esa fecha, 
+              tu plan cambiará a Gratis y perderás acceso a las funciones premium.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <Alert className="border-amber-200 bg-amber-50">
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertDescription className="text-amber-700">
+                Puedes reactivar tu suscripción en cualquier momento antes de que termine el período.
+              </AlertDescription>
+            </Alert>
+          </div>
+          
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
+              Mantener suscripción
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleCancelSubscription}
+              disabled={canceling}
+            >
+              {canceling ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Cancelando...
+                </>
+              ) : (
+                'Sí, cancelar'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Historial de Pagos */}
+      <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Historial de Pagos</DialogTitle>
+          </DialogHeader>
+          
+          <div className="max-h-96 overflow-y-auto">
+            {pagos.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                No hay pagos registrados
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {pagos.map((pago) => (
+                  <div key={pago.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div>
+                      <p className="font-medium">
+                        {pago.type === 'renewal' ? 'Renovación' : 
+                         pago.type === 'cancellation' ? 'Cancelación' : 
+                         pago.type === 'subscription' ? 'Suscripción' : 'Pago'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatDate(pago.created_at)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      {pago.amount && (
+                        <p className="font-medium">${pago.amount} {pago.currency?.toUpperCase()}</p>
+                      )}
+                      <Badge variant={pago.status === 'paid' ? 'default' : 'secondary'}>
+                        {pago.status === 'paid' ? 'Pagado' : 
+                         pago.status === 'canceled' ? 'Cancelado' : pago.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
