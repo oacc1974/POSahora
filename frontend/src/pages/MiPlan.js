@@ -48,6 +48,25 @@ export default function MiPlan() {
     }
   };
 
+  const handleSubscribePlan = async (planId) => {
+    setProcessingPlan(planId);
+    try {
+      const response = await axios.post(`${API_URL}/api/suscripcion/crear`, {
+        plan_id: planId,
+        origin_url: window.location.origin
+      }, { headers });
+      
+      // Redirigir a Stripe Checkout
+      if (response.data.checkout_url) {
+        window.location.href = response.data.checkout_url;
+      }
+    } catch (error) {
+      console.error('Error al crear suscripción:', error);
+      toast.error(error.response?.data?.detail || 'Error al procesar la suscripción');
+      setProcessingPlan(null);
+    }
+  };
+
   const calcularPorcentaje = (uso, limite) => {
     if (limite === -1) return 0; // Ilimitado
     if (limite === 0) return 100;
