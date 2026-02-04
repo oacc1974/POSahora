@@ -79,7 +79,18 @@ export default function Clientes() {
       resetForm();
       fetchClientes();
     } catch (error) {
-      toast.error('Error al guardar cliente');
+      // Manejar error de límite de plan
+      if (error.response?.status === 403 && error.response?.data?.detail?.code === 'PLAN_LIMIT') {
+        toast.error(error.response.data.detail.message, {
+          duration: 5000,
+          action: {
+            label: 'Ver Planes',
+            onClick: () => window.location.href = '/mi-plan'
+          }
+        });
+      } else {
+        toast.error('Error al guardar cliente');
+      }
     }
   };
 
