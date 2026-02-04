@@ -6265,12 +6265,15 @@ async def delete_plan(plan_id: str, current_user: dict = Depends(get_super_admin
 async def get_all_organizaciones_admin(current_user: dict = Depends(get_super_admin)):
     """Obtiene todas las organizaciones con detalles para el admin"""
     orgs = await db.organizaciones.find(
-        {"propietario_id": {"$ne": "admin"}}
+        {"propietario_id": {"$ne": "admin", "$exists": True}}
     ).sort("fecha_creacion", -1).to_list(1000)
     
     result = []
     for org in orgs:
-        propietario = await db.usuarios.find_one({"_id": org["propietario_id"]})
+        propietario_id = org.get("propietario_id")
+        propietario = None
+        if propietario_id:
+            propietario = await db.usuarios.find_one({"_id": propietario_id})
         uso = await get_uso_actual(org["_id"])
         
         result.append({
@@ -6280,7 +6283,7 @@ async def get_all_organizaciones_admin(current_user: dict = Depends(get_super_ad
             "plan": org.get("plan", "gratis"),
             "plan_inicio": org.get("plan_inicio"),
             "plan_vencimiento": org.get("plan_vencimiento"),
-            "propietario_id": org["propietario_id"],
+            "propietario_id": propietario_id,
             "propietario_nombre": propietario["nombre"] if propietario else "N/A",
             "propietario_email": propietario.get("email", "N/A") if propietario else "N/A",
             "fecha_creacion": org.get("fecha_creacion"),
