@@ -543,6 +543,205 @@ class DescuentoResponse(BaseModel):
     organizacion_id: str
     creado: str
 
+# ============ MODELOS PARA SISTEMA DE PLANES Y SUSCRIPCIONES ============
+
+class PlanFunciones(BaseModel):
+    facturacion_electronica: bool = False
+    reportes_avanzados: bool = False
+    tickets_abiertos: bool = False
+    multi_tienda: bool = False
+    logo_ticket: bool = False
+    exportar_excel: bool = False
+    soporte_prioritario: bool = False
+
+class PlanResponse(BaseModel):
+    id: str
+    nombre: str
+    descripcion: str
+    precio: float
+    moneda: str = "USD"
+    periodo: str = "mensual"
+    limite_facturas: int
+    limite_usuarios: int
+    limite_productos: int
+    limite_tpv: int
+    limite_clientes: int
+    dias_historial: int
+    funciones: PlanFunciones
+    visible_en_web: bool = True
+    orden: int = 1
+    activo: bool = True
+    destacado: bool = False
+    color: str = "#3b82f6"
+
+class PlanCreate(BaseModel):
+    id: str
+    nombre: str
+    descripcion: str
+    precio: float
+    moneda: str = "USD"
+    periodo: str = "mensual"
+    limite_facturas: int = 50
+    limite_usuarios: int = 1
+    limite_productos: int = 50
+    limite_tpv: int = 1
+    limite_clientes: int = 20
+    dias_historial: int = 7
+    funciones: PlanFunciones = PlanFunciones()
+    visible_en_web: bool = True
+    orden: int = 1
+    activo: bool = True
+    destacado: bool = False
+    color: str = "#3b82f6"
+
+class MiPlanResponse(BaseModel):
+    plan_id: str
+    plan_nombre: str
+    plan_precio: float
+    plan_periodo: str
+    limites: dict
+    uso_actual: dict
+    funciones: dict
+    fecha_inicio: Optional[str] = None
+    fecha_vencimiento: Optional[str] = None
+    dias_restantes: Optional[int] = None
+
+class CambiarPlanRequest(BaseModel):
+    plan_id: str
+
+class SuperAdminDashboard(BaseModel):
+    total_organizaciones: int
+    total_usuarios: int
+    total_facturas: int
+    organizaciones_por_plan: dict
+    ingresos_mensuales: float
+
+# ============ FUNCIONES HELPER PARA VERIFICACIÓN DE LÍMITES ============
+
+async def get_plan_organizacion(organizacion_id: str) -> dict:
+    """Obtiene el plan actual de una organización"""
+    org = await db.organizaciones.find_one({"_id": organizacion_id})
+    if not org:
+        return None
+    
+    plan_id = org.get("plan", "gratis")
+    plan = await db.planes.find_one({"id": plan_id})
+    
+    if not plan:
+        # Plan por defecto si no existe
+        plan = {
+            "id": "gratis",
+            "nombre": "Gratis",
+            "limite_facturas": 50,
+            "limite_usuarios": 1,
+            "limite_productos": 50,
+            "limite_tpv": 1,
+            "limite_clientes": 20,
+            "dias_historial": 7,
+            "funciones": {
+                "facturacion_electronica": False,
+                "reportes_avanzados": False,
+                "tickets_abiertos": False,
+                "multi_tienda": False,
+                "logo_ticket": False,
+                "exportar_excel": False,
+                "soporte_prioritario": False
+            }
+        }
+    
+    return plan
+
+async def get_uso_actual(organizacion_id: str) -> dict:
+    """Obtiene el uso actual de recursos de una organización"""
+    # Contar facturas del mes actual
+    inicio_mes = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    facturas_mes = await db.facturas.count_documents({
+        "organizacion_id": organizacion_id,
+        "fecha": {"$gte": inicio_mes.isoformat()}
+    })
+    
+    # Contar usuarios (excluyendo propietario)
+    usuarios = await db.usuarios.count_documents({
+        "organizacion_id": organizacion_id,
+        "rol": {"$ne": "propietario"}
+    })
+    
+    # Contar productos
+    productos = await db.productos.count_documents({"organizacion_id": organizacion_id})
+    
+    # Contar TPVs
+    tpvs = await db.tpv.count_documents({"organizacion_id": organizacion_id})
+    
+    # Contar clientes
+    clientes = await db.clientes.count_documents({"organizacion_id": organizacion_id})
+    
+    # Contar tiendas
+    tiendas = await db.tiendas.count_documents({"organizacion_id": organizacion_id})
+    
+    return {
+        "facturas_mes": facturas_mes,
+        "usuarios": usuarios,
+        "productos": productos,
+        "tpvs": tpvs,
+        "clientes": clientes,
+        "tiendas": tiendas
+    }
+
+async def verificar_limite_plan(organizacion_id: str, recurso: str, cantidad_adicional: int = 1) -> tuple:
+    """
+    Verifica si se puede crear un nuevo recurso según el plan.
+    Retorna (puede_crear: bool, mensaje: str, uso_actual: int, limite: int)
+    """
+    plan = await get_plan_organizacion(organizacion_id)
+    if not plan:
+        return False, "Organización no encontrada", 0, 0
+    
+    uso = await get_uso_actual(organizacion_id)
+    
+    # Mapeo de recursos a límites y uso
+    mapeo = {
+        "facturas": ("limite_facturas", "facturas_mes"),
+        "usuarios": ("limite_usuarios", "usuarios"),
+        "productos": ("limite_productos", "productos"),
+        "tpv": ("limite_tpv", "tpvs"),
+        "clientes": ("limite_clientes", "clientes"),
+        "tiendas": ("limite_tpv", "tiendas")  # Usar mismo límite que TPV para tiendas
+    }
+    
+    if recurso not in mapeo:
+        return True, "", 0, -1
+    
+    limite_key, uso_key = mapeo[recurso]
+    limite = plan.get(limite_key, -1)
+    uso_actual = uso.get(uso_key, 0)
+    
+    # -1 significa ilimitado
+    if limite == -1:
+        return True, "", uso_actual, -1
+    
+    if uso_actual + cantidad_adicional > limite:
+        plan_nombre = plan.get("nombre", "actual")
+        return False, f"Has alcanzado el límite de {recurso} ({uso_actual}/{limite}) de tu plan {plan_nombre}. Actualiza tu plan para continuar.", uso_actual, limite
+    
+    return True, "", uso_actual, limite
+
+async def verificar_funcion_plan(organizacion_id: str, funcion: str) -> tuple:
+    """
+    Verifica si una función está disponible en el plan.
+    Retorna (disponible: bool, mensaje: str)
+    """
+    plan = await get_plan_organizacion(organizacion_id)
+    if not plan:
+        return False, "Organización no encontrada"
+    
+    funciones = plan.get("funciones", {})
+    
+    if not funciones.get(funcion, False):
+        plan_nombre = plan.get("nombre", "actual")
+        return False, f"La función '{funcion}' no está disponible en tu plan {plan_nombre}. Actualiza tu plan para acceder a esta función."
+    
+    return True, ""
+
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
