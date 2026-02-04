@@ -3809,6 +3809,11 @@ async def create_tpv(tpv: TPVCreate, current_user: dict = Depends(get_current_us
     if current_user["rol"] not in ["propietario", "administrador"]:
         raise HTTPException(status_code=403, detail="No tienes permiso")
     
+    # Verificar límite de TPV del plan
+    puede, mensaje, _, _ = await verificar_limite_plan(current_user["organizacion_id"], "tpv")
+    if not puede:
+        raise HTTPException(status_code=403, detail={"code": "PLAN_LIMIT", "message": mensaje})
+    
     # Validar que la tienda existe
     tienda = await db.tiendas.find_one({
         "id": tpv.tienda_id,
