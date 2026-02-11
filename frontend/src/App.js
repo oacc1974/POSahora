@@ -31,6 +31,10 @@ import SuperAdminPanel from './pages/SuperAdminPanel';
 import MiPlan from './pages/MiPlan';
 import SuscripcionExito from './pages/SuscripcionExito';
 
+// Importar páginas de Configuración
+import ConfigFunciones from './pages/config/ConfigFunciones';
+import ConfigImpresorasCocina from './pages/config/ConfigImpresorasCocina';
+
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 function AuthChecker() {
