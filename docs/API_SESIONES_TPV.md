@@ -701,40 +701,88 @@ if (enabled) {
 // Para usar con QZ Tray en PC Windows/Mac
 // Requiere qz-tray instalado: https://qz.io/
 
+const API_URL = 'https://tu-api.com';
+let token = 'tu_jwt_token';
+
+// Configuración de impresoras por grupo
+// El usuario configura esto en la interfaz local
+const printerConfigs = {
+  'grupo_cocina_id': 'EPSON TM-T20II',
+  'grupo_bar_id': 'Star TSP100'
+};
+
 async function setupQZTray() {
   // Conectar a QZ Tray
   await qz.websocket.connect();
   
-  // Configurar impresora
-  const config = qz.configs.create('EPSON TM-T20II');
-  
-  // Función para imprimir
-  async function printToKitchen(content) {
+  // Función para imprimir en una impresora específica
+  async function printToKitchen(printerName, content) {
+    const config = qz.configs.create(printerName);
     const data = [
       { type: 'raw', format: 'plain', data: content }
     ];
     await qz.print(config, data);
   }
   
+  // Formatear ticket de cocina
+  function formatTicket(grupoNombre, orden) {
+    let text = '';
+    text += `*** ${grupoNombre.toUpperCase()} ***\n`;
+    text += '\n';
+    if (orden.mesa) text += `Mesa: ${orden.mesa}\n`;
+    if (orden.mesero) text += `Mesero: ${orden.mesero}\n`;
+    text += `Hora: ${new Date(orden.creado).toLocaleTimeString()}\n`;
+    if (orden.notas) text += `Notas: ${orden.notas}\n`;
+    text += '\n';
+    
+    for (const item of orden.items) {
+      text += `${item.cantidad}x ${item.nombre}\n`;
+      if (item.notas) text += `   -> ${item.notas}\n`;
+    }
+    
+    text += '\n';
+    text += `#${orden.numero}\n`;
+    text += '\n\n\n';
+    
+    return text;
+  }
+  
   // Polling al servidor
   setInterval(async () => {
-    const response = await fetch('https://tu-api.com/api/impresion/ordenes-pendientes', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const { ordenes } = await response.json();
-    
-    for (const orden of ordenes) {
-      const ticket = formatKitchenTicket(orden);
-      await printToKitchen(ticket);
-      
-      // Marcar como impresa
-      await fetch(`https://tu-api.com/api/impresion/marcar-impresa/${orden.id}`, {
-        method: 'POST',
+    try {
+      const response = await fetch(`${API_URL}/api/impresion/ordenes-pendientes`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      const { grupos } = await response.json();
+      
+      for (const grupo of grupos) {
+        const printerName = printerConfigs[grupo.grupo_id];
+        if (!printerName) {
+          console.warn(`Sin impresora para grupo: ${grupo.grupo_nombre}`);
+          continue;
+        }
+        
+        for (const orden of grupo.ordenes) {
+          const ticket = formatTicket(grupo.grupo_nombre, orden);
+          await printToKitchen(printerName, ticket);
+          
+          // Marcar como impresa
+          await fetch(`${API_URL}/api/impresion/marcar-impresa/${orden.ticket_id}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          console.log(`Impreso ticket ${orden.ticket_id} en ${printerName}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error en polling:', error);
     }
   }, 3000);
 }
+
+// Iniciar cuando la página cargue
+setupQZTray();
 ```
 
 ---
