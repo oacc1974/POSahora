@@ -6411,7 +6411,7 @@ async def get_ordenes_pendientes_impresion(current_user: dict = Depends(get_curr
             "ordenes": list(data["ordenes"].values())
         })
     
-    return {"grupos": resultado}
+    return {"grupos": resultado, "timestamp": datetime.now(timezone.utc).isoformat()}
 
 @app.post("/api/impresion/marcar-impresa/{ticket_id}")
 async def marcar_orden_impresa(ticket_id: str, grupo_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
