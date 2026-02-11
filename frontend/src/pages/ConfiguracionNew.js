@@ -30,12 +30,13 @@ export default function ConfiguracionNew() {
     tickets_abiertos: false,
     tipo_pedido: false,
     impresoras_cocina: false,
+    facturacion_electronica: false,
   });
 
   const fetchFuncionesConfig = React.useCallback(async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/api/config/funciones`, {
+      const response = await axios.get(`${API_URL}/api/funciones`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setFuncionesConfig(response.data);
