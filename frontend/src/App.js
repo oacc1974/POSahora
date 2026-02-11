@@ -291,6 +291,30 @@ function AppRouter() {
           }
         />
         <Route
+          path="/configuracion/funciones"
+          element={
+            user && user.rol === 'propietario' ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <ConfigFunciones />
+              </Layout>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/configuracion/impresoras-cocina"
+          element={
+            user && user.rol === 'propietario' ? (
+              <Layout user={user} onLogout={handleLogout}>
+                <ConfigImpresorasCocina />
+              </Layout>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
           path="/caja"
           element={
             user ? (
