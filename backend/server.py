@@ -6209,7 +6209,8 @@ async def get_grupos_impresora(current_user: dict = Depends(get_current_user)):
     categorias = await db.categorias.find(
         {"organizacion_id": current_user["organizacion_id"]}
     ).to_list(1000)
-    cat_dict = {c["id"]: c["nombre"] for c in categorias}
+    # Usar _id como key ya que es el campo que MongoDB usa internamente
+    cat_dict = {str(c["_id"]): c["nombre"] for c in categorias}
     
     return [
         {
