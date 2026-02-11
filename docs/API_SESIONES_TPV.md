@@ -385,33 +385,72 @@ GET /api/impresion/ordenes-pendientes
 Authorization: Bearer {token}
 ```
 
-**Respuesta:**
+**Respuesta (estructura por grupos):**
 ```json
 {
-  "ordenes": [
+  "grupos": [
     {
-      "id": "orden_uuid",
-      "grupo_impresora_id": "a5198f78-2b16-4c01-a936-1f03a3194f68",
+      "grupo_id": "a5198f78-2b16-4c01-a936-1f03a3194f68",
       "grupo_nombre": "Cocina Principal",
-      "items": [
+      "ordenes": [
         {
-          "cantidad": 2,
-          "nombre": "Hamburguesa Clásica",
-          "notas": "Sin cebolla"
-        },
-        {
-          "cantidad": 1,
-          "nombre": "Papas Fritas",
-          "notas": ""
+          "ticket_id": "ticket_uuid",
+          "numero": 123,
+          "mesa": "Mesa 5",
+          "mesero": "Juan Pérez",
+          "notas": "Cliente VIP",
+          "creado": "2026-02-11T12:30:00Z",
+          "items": [
+            {
+              "producto_id": "prod_uuid",
+              "nombre": "Hamburguesa Clásica",
+              "cantidad": 2,
+              "notas": "Sin cebolla",
+              "modificadores": []
+            },
+            {
+              "producto_id": "prod_uuid2",
+              "nombre": "Papas Fritas",
+              "cantidad": 1,
+              "notas": "",
+              "modificadores": []
+            }
+          ]
         }
-      ],
-      "mesa": "Mesa 5",
-      "mesero": "Juan Pérez",
-      "hora": "2026-02-11T12:30:00Z",
-      "tipo_pedido": "Para cenar aquí",
-      "numero_ticket": "001-001-000000123"
+      ]
+    },
+    {
+      "grupo_id": "b6289g89-3c27-5d12-b047-2g14b4205g79",
+      "grupo_nombre": "Bar",
+      "ordenes": [
+        {
+          "ticket_id": "ticket_uuid2",
+          "numero": 124,
+          "mesa": "Barra",
+          "mesero": "María López",
+          "notas": null,
+          "creado": "2026-02-11T12:35:00Z",
+          "items": [
+            {
+              "producto_id": "bebida_uuid",
+              "nombre": "Cerveza Artesanal",
+              "cantidad": 3,
+              "notas": "",
+              "modificadores": []
+            }
+          ]
+        }
+      ]
     }
   ],
+  "timestamp": "2026-02-11T12:30:05Z"
+}
+```
+
+**Respuesta vacía (sin órdenes pendientes):**
+```json
+{
+  "grupos": [],
   "timestamp": "2026-02-11T12:30:05Z"
 }
 ```
