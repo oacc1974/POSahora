@@ -6155,6 +6155,317 @@ async def verificar_limite(recurso: str, current_user: dict = Depends(get_curren
         "ilimitado": limite == -1
     }
 
+# ============ ENDPOINTS DE CONFIGURACIÓN DE FUNCIONES ============
+
+@app.get("/api/config/funciones")
+async def get_config_funciones(current_user: dict = Depends(get_current_user)):
+    """Obtiene la configuración de funciones de la organización"""
+    config = await db.config_funciones.find_one({"organizacion_id": current_user["organizacion_id"]})
+    
+    if not config:
+        # Configuración por defecto
+        return {
+            "cierres_caja_turnos": False,
+            "funcion_reloj": False,
+            "tickets_abiertos": True,
+            "impresoras_cocina": False
+        }
+    
+    return {
+        "cierres_caja_turnos": config.get("cierres_caja_turnos", False),
+        "funcion_reloj": config.get("funcion_reloj", False),
+        "tickets_abiertos": config.get("tickets_abiertos", True),
+        "impresoras_cocina": config.get("impresoras_cocina", False)
+    }
+
+@app.put("/api/config/funciones")
+async def update_config_funciones(config: ConfigFunciones, current_user: dict = Depends(get_current_user)):
+    """Actualiza la configuración de funciones"""
+    if current_user.get("rol") != "propietario":
+        raise HTTPException(status_code=403, detail="Solo el propietario puede modificar las funciones")
+    
+    config_data = config.model_dump()
+    config_data["organizacion_id"] = current_user["organizacion_id"]
+    config_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.config_funciones.update_one(
+        {"organizacion_id": current_user["organizacion_id"]},
+        {"$set": config_data},
+        upsert=True
+    )
+    
+    return {"message": "Configuración actualizada", "config": config_data}
+
+# ============ ENDPOINTS DE GRUPOS DE IMPRESORA ============
+
+@app.get("/api/grupos-impresora")
+async def get_grupos_impresora(current_user: dict = Depends(get_current_user)):
+    """Obtiene todos los grupos de impresora de la organización"""
+    grupos = await db.grupos_impresora.find(
+        {"organizacion_id": current_user["organizacion_id"]}
+    ).to_list(100)
+    
+    # Obtener nombres de categorías
+    categorias = await db.categorias.find(
+        {"organizacion_id": current_user["organizacion_id"]}
+    ).to_list(1000)
+    cat_dict = {c["id"]: c["nombre"] for c in categorias}
+    
+    return [
+        {
+            "id": g["id"],
+            "nombre": g["nombre"],
+            "categorias": g.get("categorias", []),
+            "categorias_nombres": [cat_dict.get(cat_id, cat_id) for cat_id in g.get("categorias", [])],
+            "organizacion_id": g["organizacion_id"],
+            "creado": g.get("creado", "")
+        }
+        for g in grupos
+    ]
+
+@app.post("/api/grupos-impresora")
+async def create_grupo_impresora(grupo: GrupoImpresoraCreate, current_user: dict = Depends(get_current_user)):
+    """Crea un nuevo grupo de impresora"""
+    if current_user.get("rol") not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para crear grupos de impresora")
+    
+    grupo_id = str(uuid.uuid4())
+    grupo_data = {
+        "id": grupo_id,
+        "nombre": grupo.nombre,
+        "categorias": grupo.categorias,
+        "organizacion_id": current_user["organizacion_id"],
+        "creado": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.grupos_impresora.insert_one(grupo_data)
+    
+    return {"message": "Grupo de impresora creado", "id": grupo_id, "grupo": grupo_data}
+
+@app.put("/api/grupos-impresora/{grupo_id}")
+async def update_grupo_impresora(grupo_id: str, grupo: GrupoImpresoraUpdate, current_user: dict = Depends(get_current_user)):
+    """Actualiza un grupo de impresora"""
+    if current_user.get("rol") not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para modificar grupos de impresora")
+    
+    existing = await db.grupos_impresora.find_one({
+        "id": grupo_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if not existing:
+        raise HTTPException(status_code=404, detail="Grupo de impresora no encontrado")
+    
+    update_data = {}
+    if grupo.nombre is not None:
+        update_data["nombre"] = grupo.nombre
+    if grupo.categorias is not None:
+        update_data["categorias"] = grupo.categorias
+    
+    if update_data:
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.grupos_impresora.update_one(
+            {"id": grupo_id, "organizacion_id": current_user["organizacion_id"]},
+            {"$set": update_data}
+        )
+    
+    return {"message": "Grupo de impresora actualizado"}
+
+@app.delete("/api/grupos-impresora/{grupo_id}")
+async def delete_grupo_impresora(grupo_id: str, current_user: dict = Depends(get_current_user)):
+    """Elimina un grupo de impresora"""
+    if current_user.get("rol") not in ["propietario", "administrador"]:
+        raise HTTPException(status_code=403, detail="No tienes permiso para eliminar grupos de impresora")
+    
+    result = await db.grupos_impresora.delete_one({
+        "id": grupo_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Grupo de impresora no encontrado")
+    
+    return {"message": "Grupo de impresora eliminado"}
+
+# ============ ENDPOINTS PARA APK / QZ TRAY (IMPRESIÓN) ============
+
+@app.get("/api/impresion/config")
+async def get_impresion_config(current_user: dict = Depends(get_current_user)):
+    """Obtiene la configuración de impresión para APK/QZ Tray"""
+    # Verificar si impresoras_cocina está activo
+    config = await db.config_funciones.find_one({"organizacion_id": current_user["organizacion_id"]})
+    impresoras_activas = config.get("impresoras_cocina", False) if config else False
+    
+    # Obtener grupos de impresora
+    grupos = await db.grupos_impresora.find(
+        {"organizacion_id": current_user["organizacion_id"]}
+    ).to_list(100)
+    
+    # Obtener categorías
+    categorias = await db.categorias.find(
+        {"organizacion_id": current_user["organizacion_id"]}
+    ).to_list(1000)
+    cat_dict = {c["id"]: c["nombre"] for c in categorias}
+    
+    return {
+        "impresoras_cocina_activas": impresoras_activas,
+        "grupos": [
+            {
+                "id": g["id"],
+                "nombre": g["nombre"],
+                "categorias": g.get("categorias", []),
+                "categorias_nombres": [cat_dict.get(cat_id, cat_id) for cat_id in g.get("categorias", [])]
+            }
+            for g in grupos
+        ]
+    }
+
+@app.get("/api/impresion/ordenes-pendientes")
+async def get_ordenes_pendientes_impresion(current_user: dict = Depends(get_current_user)):
+    """Obtiene órdenes pendientes de impresión para APK/QZ Tray"""
+    # Verificar si impresoras_cocina está activo
+    config = await db.config_funciones.find_one({"organizacion_id": current_user["organizacion_id"]})
+    if not config or not config.get("impresoras_cocina", False):
+        return {"ordenes": []}
+    
+    # Obtener grupos de impresora
+    grupos = await db.grupos_impresora.find(
+        {"organizacion_id": current_user["organizacion_id"]}
+    ).to_list(100)
+    
+    if not grupos:
+        return {"ordenes": []}
+    
+    # Crear mapeo de categoría -> grupos
+    categoria_grupos = {}
+    for grupo in grupos:
+        for cat_id in grupo.get("categorias", []):
+            if cat_id not in categoria_grupos:
+                categoria_grupos[cat_id] = []
+            categoria_grupos[cat_id].append({
+                "grupo_id": grupo["id"],
+                "grupo_nombre": grupo["nombre"]
+            })
+    
+    # Obtener tickets abiertos pendientes de impresión
+    tickets = await db.tickets_abiertos.find({
+        "organizacion_id": current_user["organizacion_id"],
+        "estado": {"$in": ["abierto", "pendiente"]},
+        "$or": [
+            {"impreso_cocina": {"$exists": False}},
+            {"impreso_cocina": False},
+            {"items_pendientes_impresion": {"$exists": True, "$ne": []}}
+        ]
+    }).sort("creado", 1).to_list(100)
+    
+    ordenes_por_grupo = {}
+    
+    for ticket in tickets:
+        items = ticket.get("items", [])
+        items_pendientes = ticket.get("items_pendientes_impresion", items)
+        
+        for item in items_pendientes:
+            categoria_id = item.get("categoria_id", "sin_categoria")
+            grupos_destino = categoria_grupos.get(categoria_id, [])
+            
+            for grupo_info in grupos_destino:
+                grupo_id = grupo_info["grupo_id"]
+                
+                if grupo_id not in ordenes_por_grupo:
+                    ordenes_por_grupo[grupo_id] = {
+                        "grupo_id": grupo_id,
+                        "grupo_nombre": grupo_info["grupo_nombre"],
+                        "ordenes": {}
+                    }
+                
+                ticket_id = ticket["id"]
+                if ticket_id not in ordenes_por_grupo[grupo_id]["ordenes"]:
+                    ordenes_por_grupo[grupo_id]["ordenes"][ticket_id] = {
+                        "ticket_id": ticket_id,
+                        "numero": ticket.get("numero", 0),
+                        "mesa": ticket.get("mesa"),
+                        "mesero": ticket.get("mesero_nombre"),
+                        "notas": ticket.get("notas"),
+                        "creado": ticket.get("creado"),
+                        "items": []
+                    }
+                
+                ordenes_por_grupo[grupo_id]["ordenes"][ticket_id]["items"].append({
+                    "producto_id": item.get("producto_id"),
+                    "nombre": item.get("nombre"),
+                    "cantidad": item.get("cantidad", 1),
+                    "notas": item.get("notas"),
+                    "modificadores": item.get("modificadores", [])
+                })
+    
+    # Convertir a lista
+    resultado = []
+    for grupo_id, data in ordenes_por_grupo.items():
+        resultado.append({
+            "grupo_id": data["grupo_id"],
+            "grupo_nombre": data["grupo_nombre"],
+            "ordenes": list(data["ordenes"].values())
+        })
+    
+    return {"grupos": resultado}
+
+@app.post("/api/impresion/marcar-impresa/{ticket_id}")
+async def marcar_orden_impresa(ticket_id: str, grupo_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Marca una orden/ticket como impresa (llamado por APK/QZ Tray)"""
+    ticket = await db.tickets_abiertos.find_one({
+        "id": ticket_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    
+    update_data = {
+        "impreso_cocina": True,
+        "fecha_impresion_cocina": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if grupo_id:
+        # Marcar solo para un grupo específico
+        grupos_impresos = ticket.get("grupos_impresos", [])
+        if grupo_id not in grupos_impresos:
+            grupos_impresos.append(grupo_id)
+        update_data["grupos_impresos"] = grupos_impresos
+    
+    # Limpiar items pendientes de impresión
+    update_data["items_pendientes_impresion"] = []
+    
+    await db.tickets_abiertos.update_one(
+        {"id": ticket_id},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Orden marcada como impresa", "ticket_id": ticket_id}
+
+@app.post("/api/impresion/agregar-pendiente/{ticket_id}")
+async def agregar_items_pendientes_impresion(ticket_id: str, items: List[dict], current_user: dict = Depends(get_current_user)):
+    """Agrega items pendientes de impresión a un ticket (cuando se agregan productos nuevos)"""
+    ticket = await db.tickets_abiertos.find_one({
+        "id": ticket_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
+    
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    
+    items_pendientes = ticket.get("items_pendientes_impresion", [])
+    items_pendientes.extend(items)
+    
+    await db.tickets_abiertos.update_one(
+        {"id": ticket_id},
+        {"$set": {
+            "items_pendientes_impresion": items_pendientes,
+            "impreso_cocina": False
+        }}
+    )
+    
+    return {"message": "Items agregados a pendientes de impresión"}
+
 # ============ ENDPOINTS DE SUPER ADMINISTRADOR ============
 
 async def get_super_admin(current_user: dict = Depends(get_current_user)):
