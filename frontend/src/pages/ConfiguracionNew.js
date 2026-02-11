@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/card';
-import { Settings, CreditCard, Receipt, FileText, ClipboardList, ShoppingBag, Store, Monitor, ChevronDown, ChevronRight } from 'lucide-react';
+import { Settings, CreditCard, Receipt, FileText, ClipboardList, ShoppingBag, Store, Monitor, ChevronDown, ChevronRight, Printer } from 'lucide-react';
 import axios from 'axios';
 import ConfigRecibo from './config/ConfigRecibo';
 import ConfigFunciones from './config/ConfigFunciones';
@@ -11,6 +11,7 @@ import ConfigTicketsAbiertos from './config/ConfigTicketsAbiertos';
 import ConfigTipoPedido from './config/ConfigTipoPedido';
 import ConfigTiendas from './config/ConfigTiendas';
 import ConfigTPV from './config/ConfigTPV';
+import ConfigImpresorasCocina from './config/ConfigImpresorasCocina';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
