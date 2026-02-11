@@ -6330,7 +6330,7 @@ async def get_ordenes_pendientes_impresion(current_user: dict = Depends(get_curr
     # Verificar si impresoras_cocina está activo
     config = await db.config_funciones.find_one({"organizacion_id": current_user["organizacion_id"]})
     if not config or not config.get("impresoras_cocina", False):
-        return {"ordenes": []}
+        return {"grupos": [], "timestamp": datetime.now(timezone.utc).isoformat()}
     
     # Obtener grupos de impresora
     grupos = await db.grupos_impresora.find(
@@ -6338,7 +6338,7 @@ async def get_ordenes_pendientes_impresion(current_user: dict = Depends(get_curr
     ).to_list(100)
     
     if not grupos:
-        return {"ordenes": []}
+        return {"grupos": [], "timestamp": datetime.now(timezone.utc).isoformat()}
     
     # Crear mapeo de categoría -> grupos
     categoria_grupos = {}
