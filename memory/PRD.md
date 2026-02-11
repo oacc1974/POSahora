@@ -512,3 +512,94 @@ Cuando se alcanza un límite, el endpoint devuelve:
 - **Super Admin:** usuario `admin`, contraseña `admin123`
 - **Stripe:** `sk_test_emergent` (clave de prueba)
 
+---
+
+## Sistema de Suscripciones Recurrentes con Stripe (Implementado 11 Febrero 2026)
+
+### Descripción
+Sistema de pagos recurrentes mensuales automáticos mediante Stripe Billing.
+
+### Endpoints de Suscripción Recurrente
+- `POST /api/suscripcion/crear` - Crea sesión de checkout Stripe
+- `GET /api/suscripcion/actual` - Estado actual de la suscripción
+- `POST /api/suscripcion/cancelar` - Cancela suscripción (efectiva al final del período)
+- `POST /api/suscripcion/reactivar` - Reactiva suscripción antes de que termine
+- `POST /api/webhook/stripe` - Maneja eventos del ciclo de vida de Stripe
+
+### Campos en `organizaciones`
+- `stripe_customer_id` - ID del cliente en Stripe
+- `stripe_subscription_id` - ID de la suscripción en Stripe
+- `subscription_status` - Estado: `active`, `canceled`, `past_due`, etc.
+- `subscription_end_date` - Fecha de fin del período actual
+
+### Campos en `planes`
+- `stripe_price_id` - ID del precio recurrente en Stripe
+- `destacado` - Boolean para resaltar plan en landing page
+
+### Comportamiento de Cancelación
+- La cancelación NO es inmediata
+- El acceso se mantiene hasta el final del período de facturación pagado
+- El usuario puede reactivar antes de que termine
+- Al final del período, se degrada automáticamente al plan Gratis
+
+---
+
+## Sistema de Impresoras de Cocina (Implementado 11 Febrero 2026)
+
+### Descripción
+Sistema híbrido para enviar comandas de pedidos a impresoras de cocina locales desde un servidor en la nube.
+
+### Arquitectura
+- **Backend en la nube:** Expone endpoints REST para que clientes locales consulten órdenes pendientes
+- **Puente local (APK/QZ Tray):** Aplicación en PC/Android que consulta al backend y envía a impresoras locales
+- La configuración de IP/Puerto de impresoras se hace en el cliente local, NO en la web
+
+### Endpoints de Configuración
+- `GET /api/funciones` - Obtener configuración de funciones (incluye `impresoras_cocina`)
+- `PUT /api/funciones` - Activar/desactivar función de impresoras de cocina
+- `GET /api/grupos-impresora` - Listar grupos de impresora
+- `POST /api/grupos-impresora` - Crear grupo de impresora
+- `PUT /api/grupos-impresora/{id}` - Actualizar grupo
+- `DELETE /api/grupos-impresora/{id}` - Eliminar grupo
+
+### Endpoints para Puente de Impresión (APK/QZ Tray)
+- `GET /api/impresion/ordenes-pendientes` - Consulta órdenes pendientes de impresión
+- (Futuro) Endpoint para marcar órdenes como impresas
+
+### Colección `config_funciones`
+```json
+{
+  "organizacion_id": "uuid",
+  "cierres_caja": true,
+  "tickets_abiertos": false,
+  "tipo_pedido": false,
+  "venta_con_stock": true,
+  "funcion_reloj": false,
+  "impresoras_cocina": true,
+  "pantalla_clientes": false,
+  "mesas_por_mesero": false,
+  "facturacion_electronica": false
+}
+```
+
+### Colección `grupos_impresora`
+```json
+{
+  "id": "uuid",
+  "nombre": "Cocina Principal",
+  "categorias": ["uuid-cat-1", "uuid-cat-2"],
+  "organizacion_id": "uuid",
+  "creado": "2026-02-11T04:27:12Z"
+}
+```
+
+### Interfaz de Usuario
+- **Configuración → Funciones:** Toggle para activar/desactivar impresoras de cocina
+- **Configuración → Impresoras de cocina:** (Visible solo cuando está activa) 
+  - Lista de grupos de impresora en tabla
+  - Crear/Editar grupos con nombre y categorías asignadas
+  - Eliminar grupos
+
+### Test Reports
+- `/app/test_reports/iteration_12.json` - Tests del Sistema de Funciones e Impresoras de Cocina - 100% passed (13/13 backend, frontend OK)
+
