@@ -360,15 +360,17 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 - [x] ~~Paginación en reporte de Recibos~~ ✓ Completado 15 Enero 2026
 - [x] ~~Mostrar logo de organización en el recibo impreso~~ ✓ Completado 15 Enero 2026
 - [x] ~~Módulo de Seguridad para Empleados (Perfiles y Permisos)~~ ✓ Completado 28 Enero 2026
+- [x] ~~Configuración de Impresoras de Cocina~~ ✓ Completado 11 Febrero 2026
 - [ ] Crear NC automática al reembolsar venta con factura autorizada (P1)
 - [ ] Verificar número de autorización SRI en ticket de POS después de FE asíncrona (P1)
 - [ ] Lógica interna de "Función de reloj" (UI de fichaje)
-- [ ] Lógica interna de "Impresoras de cocina"
 - [ ] Lógica interna de "Pantalla para clientes"
+- [ ] Proporcionar ejemplo de código de polling para APK/QZ Tray (P1)
 
 ### P2 - Futuras
 - [ ] Búsqueda por rango de montos en recibos
 - [ ] Enviar recibo por email
+- [ ] Convertir aplicación a PWA (Progressive Web App)
 
 ## Credenciales de Prueba
 - **Usuario:** admin
