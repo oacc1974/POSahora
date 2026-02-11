@@ -620,6 +620,41 @@ class SuperAdminDashboard(BaseModel):
     organizaciones_por_plan: dict
     ingresos_mensuales: float
 
+# ============ MODELOS PARA FUNCIONES Y GRUPOS DE IMPRESORA ============
+
+class ConfigFunciones(BaseModel):
+    cierres_caja_turnos: bool = False
+    funcion_reloj: bool = False
+    tickets_abiertos: bool = True
+    impresoras_cocina: bool = False
+
+class GrupoImpresoraCreate(BaseModel):
+    nombre: str
+    categorias: List[str] = []  # IDs de categorías
+
+class GrupoImpresoraUpdate(BaseModel):
+    nombre: Optional[str] = None
+    categorias: Optional[List[str]] = None
+
+class GrupoImpresoraResponse(BaseModel):
+    id: str
+    nombre: str
+    categorias: List[str]
+    categorias_nombres: List[str] = []
+    organizacion_id: str
+    creado: str
+
+class OrdenPendienteImpresion(BaseModel):
+    orden_id: str
+    numero_orden: int
+    grupo_impresora_id: str
+    grupo_impresora_nombre: str
+    items: List[dict]
+    mesa: Optional[str] = None
+    mesero: Optional[str] = None
+    notas: Optional[str] = None
+    creado: str
+
 # ============ FUNCIONES HELPER PARA VERIFICACIÓN DE LÍMITES ============
 
 async def get_plan_organizacion(organizacion_id: str) -> dict:
