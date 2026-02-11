@@ -6240,6 +6240,9 @@ async def create_grupo_impresora(grupo: GrupoImpresoraCreate, current_user: dict
     
     await db.grupos_impresora.insert_one(grupo_data)
     
+    # Remover _id que MongoDB agrega automáticamente
+    grupo_data.pop('_id', None)
+    
     return {"message": "Grupo de impresora creado", "id": grupo_id, "grupo": grupo_data}
 
 @app.put("/api/grupos-impresora/{grupo_id}")
