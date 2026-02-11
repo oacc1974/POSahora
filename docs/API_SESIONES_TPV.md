@@ -566,7 +566,7 @@ class KitchenPrintService {
     return await response.json();
   }
 
-  // Consultar órdenes pendientes
+  // Consultar órdenes pendientes (agrupadas por grupo de impresora)
   async getPendingOrders() {
     const response = await fetch(`${this.apiUrl}/api/impresion/ordenes-pendientes`, {
       headers: { 'Authorization': `Bearer ${this.token}` }
@@ -574,9 +574,9 @@ class KitchenPrintService {
     return await response.json();
   }
 
-  // Marcar orden como impresa
-  async markAsPrinted(ordenId) {
-    await fetch(`${this.apiUrl}/api/impresion/marcar-impresa/${ordenId}`, {
+  // Marcar ticket como impreso
+  async markAsPrinted(ticketId) {
+    await fetch(`${this.apiUrl}/api/impresion/marcar-impresa/${ticketId}`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${this.token}` }
     });
@@ -590,15 +590,19 @@ class KitchenPrintService {
   }
 
   // Formatear comanda para impresión
-  formatKitchenTicket(orden) {
+  formatKitchenTicket(grupoNombre, orden) {
     let text = '';
-    text += `*** ${orden.grupo_nombre.toUpperCase()} ***\n`;
+    text += `*** ${grupoNombre.toUpperCase()} ***\n`;
     text += '\n';
-    text += `Mesa: ${orden.mesa}\n`;
-    text += `Mesero: ${orden.mesero}\n`;
-    text += `Hora: ${new Date(orden.hora).toLocaleTimeString()}\n`;
-    if (orden.tipo_pedido) {
-      text += `Tipo: ${orden.tipo_pedido}\n`;
+    if (orden.mesa) {
+      text += `Mesa: ${orden.mesa}\n`;
+    }
+    if (orden.mesero) {
+      text += `Mesero: ${orden.mesero}\n`;
+    }
+    text += `Hora: ${new Date(orden.creado).toLocaleTimeString()}\n`;
+    if (orden.notas) {
+      text += `Notas: ${orden.notas}\n`;
     }
     text += '\n';
     
@@ -607,33 +611,38 @@ class KitchenPrintService {
       if (item.notas) {
         text += `   → ${item.notas}\n`;
       }
+      if (item.modificadores && item.modificadores.length > 0) {
+        for (const mod of item.modificadores) {
+          text += `   + ${mod}\n`;
+        }
+      }
     }
     
     text += '\n';
-    text += `#${orden.numero_ticket}\n`;
+    text += `#${orden.numero}\n`;
     text += '\n\n\n'; // Espacio para corte
     
     return text;
   }
 
-  // Procesar una orden
-  async processOrder(orden) {
-    const config = this.printerConfigs[orden.grupo_impresora_id];
+  // Procesar órdenes de un grupo
+  async processGrupo(grupo) {
+    const config = this.printerConfigs[grupo.grupo_id];
     
     if (!config) {
-      console.warn(`No hay impresora configurada para ${orden.grupo_nombre}`);
-      return false;
+      console.warn(`No hay impresora configurada para ${grupo.grupo_nombre}`);
+      return;
     }
 
-    try {
-      const content = this.formatKitchenTicket(orden);
-      await this.printToThermal(config.ip, config.port, content);
-      await this.markAsPrinted(orden.id);
-      console.log(`Orden ${orden.id} impresa en ${orden.grupo_nombre}`);
-      return true;
-    } catch (error) {
-      console.error(`Error imprimiendo orden ${orden.id}:`, error);
-      return false;
+    for (const orden of grupo.ordenes) {
+      try {
+        const content = this.formatKitchenTicket(grupo.grupo_nombre, orden);
+        await this.printToThermal(config.ip, config.port, content);
+        await this.markAsPrinted(orden.ticket_id);
+        console.log(`Ticket ${orden.ticket_id} impreso en ${grupo.grupo_nombre}`);
+      } catch (error) {
+        console.error(`Error imprimiendo ticket ${orden.ticket_id}:`, error);
+      }
     }
   }
 
@@ -645,10 +654,12 @@ class KitchenPrintService {
 
     this.pollingInterval = setInterval(async () => {
       try {
-        const { ordenes } = await this.getPendingOrders();
+        const { grupos } = await this.getPendingOrders();
         
-        for (const orden of ordenes) {
-          await this.processOrder(orden);
+        for (const grupo of grupos) {
+          if (grupo.ordenes && grupo.ordenes.length > 0) {
+            await this.processGrupo(grupo);
+          }
         }
       } catch (error) {
         console.error('Error en polling:', error);
