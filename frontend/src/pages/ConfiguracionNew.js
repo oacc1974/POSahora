@@ -96,6 +96,8 @@ export default function ConfiguracionNew() {
         return <ConfigTiendas />;
       case 'dispositivos-tpv':
         return <ConfigTPV />;
+      case 'impresoras-cocina':
+        return <ConfigImpresorasCocina />;
       default:
         return <ConfigFunciones />;
     }
