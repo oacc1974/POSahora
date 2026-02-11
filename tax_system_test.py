@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 class TaxSystemTester:
-    def __init__(self, base_url="https://factupos-1.preview.emergentagent.com"):
+    def __init__(self, base_url="https://pos-kitchen-print.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.admin_user = None
