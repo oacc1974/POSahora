@@ -1,4 +1,18 @@
-# API de Sesiones y TPV - Documentación
+# API de Sesiones, TPV e Impresión de Cocina - Documentación para APK
+
+**Última actualización:** 11 Febrero 2026
+
+---
+
+## Índice
+1. [Flujo de Autenticación POS](#flujo-de-autenticación-pos)
+2. [Endpoints de Autenticación](#endpoints-de-autenticación)
+3. [Estados de Sesión y TPV](#estados-de-sesión-y-tpv)
+4. [Reglas de Negocio](#reglas-de-negocio)
+5. [Sistema de Impresoras de Cocina](#sistema-de-impresoras-de-cocina) ⭐ NUEVO
+6. [Ejemplo de Implementación APK](#ejemplo-de-implementación-apk)
+
+---
 
 ## Flujo de Autenticación POS
 
@@ -22,7 +36,7 @@
 
 ---
 
-## Endpoints
+## Endpoints de Autenticación
 
 ### 1. Verificar Código de Tienda
 
@@ -146,7 +160,7 @@ Content-Type: application/json
   "codigo_tienda": "TIEN-7A31",
   "tpv_id": "tpv_uuid",
   "forzar_cierre": false,
-  "dispositivo": "Computadora"
+  "dispositivo": "APK Android"
 }
 ```
 
@@ -210,7 +224,9 @@ Authorization: Bearer {token}
 
 ---
 
-## Estados de Sesión
+## Estados de Sesión y TPV
+
+### Estados de Sesión
 
 | Estado | Descripción |
 |--------|-------------|
@@ -219,9 +235,7 @@ Authorization: Bearer {token}
 | `cerrada` | Sesión terminada correctamente |
 | `cerrada_por_admin` | Admin forzó el cierre del TPV |
 
----
-
-## Estados de TPV
+### Estados de TPV
 
 | Estado | Descripción |
 |--------|-------------|
@@ -257,44 +271,511 @@ Authorization: Bearer {token_admin}
 
 ---
 
-## Ejemplo de Implementación (APK/Mobile)
+## Sistema de Impresoras de Cocina
 
-```javascript
-// 1. Verificar tienda
-const tienda = await fetch(`${API}/api/tienda/verificar/${codigo}`);
+⭐ **NUEVO - Febrero 2026**
 
-// 2. Validar PIN y obtener TPVs
-const validacion = await fetch(`${API}/api/auth/validar-pin`, {
-  method: 'POST',
-  body: JSON.stringify({ pin, codigo_tienda })
-});
+### Arquitectura
 
-// 3. Mostrar selector de TPV al usuario
-const tpvs = validacion.tpvs_disponibles;
-// Si sesion_pausada != null, ir directo al TPV reservado
+El sistema usa una arquitectura **cloud-to-local** donde:
+1. El **backend en la nube** almacena las órdenes de impresión pendientes
+2. La **APK/QZ Tray local** consulta (polling) las órdenes pendientes
+3. La **APK/QZ Tray** envía los datos a las impresoras locales (IP o USB)
 
-// 4. Login con TPV seleccionado
-const login = await fetch(`${API}/api/auth/login-pin`, {
-  method: 'POST',
-  body: JSON.stringify({ 
-    pin, 
-    codigo_tienda, 
-    tpv_id: selectedTpv.id,
-    dispositivo: 'APK Android'
-  })
-});
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                ARQUITECTURA DE IMPRESIÓN                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   ┌──────────────┐         ┌──────────────┐                    │
+│   │  Backend     │ ◄────── │  APK/QZ Tray │                    │
+│   │  (Nube)      │ polling │  (Local)     │                    │
+│   └──────────────┘         └──────┬───────┘                    │
+│         │                         │                             │
+│         │ Guarda órdenes          │ Envía a impresora          │
+│         ▼                         ▼                             │
+│   ┌──────────────┐         ┌──────────────┐                    │
+│   │  MongoDB     │         │  Impresora   │                    │
+│   │  (Nube)      │         │  (Local)     │                    │
+│   └──────────────┘         └──────────────┘                    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-// 5. Guardar token y session_id
-localStorage.setItem('token', login.access_token);
-localStorage.setItem('session_id', login.session_id);
-localStorage.setItem('tpv_asignado', JSON.stringify(login.tpv));
+### Configuración en la Web
+
+El propietario configura desde `Configuración → Funciones`:
+1. Activar toggle "Impresoras de cocina"
+2. Ir a `Configuración → Impresoras de cocina`
+3. Crear "Grupos de Impresora" asociando categorías de productos
+
+**Importante:** La configuración de IP/Puerto de las impresoras se hace EN LA APK LOCAL, no en la web.
+
+---
+
+### Endpoints para la APK
+
+#### 1. Verificar si impresoras de cocina están habilitadas
+
+```http
+GET /api/funciones
+Authorization: Bearer {token}
+```
+
+**Respuesta:**
+```json
+{
+  "cierres_caja": true,
+  "tickets_abiertos": false,
+  "tipo_pedido": false,
+  "venta_con_stock": true,
+  "funcion_reloj": false,
+  "impresoras_cocina": true,   // ← VERIFICAR ESTO
+  "pantalla_clientes": false,
+  "mesas_por_mesero": false,
+  "facturacion_electronica": false,
+  "tickets_abiertos_count": 0
+}
+```
+
+Si `impresoras_cocina` es `false`, no mostrar funcionalidad de impresión.
+
+---
+
+#### 2. Obtener grupos de impresora configurados
+
+```http
+GET /api/grupos-impresora
+Authorization: Bearer {token}
+```
+
+**Respuesta:**
+```json
+[
+  {
+    "id": "a5198f78-2b16-4c01-a936-1f03a3194f68",
+    "nombre": "Cocina Principal",
+    "categorias": ["uuid-categoria-1", "uuid-categoria-2"],
+    "categorias_nombres": ["Platos Principales", "Entradas"],
+    "organizacion_id": "org_uuid",
+    "creado": "2026-02-11T04:27:12Z"
+  },
+  {
+    "id": "b6289g89-3c27-5d12-b047-2g14b4205g79",
+    "nombre": "Bar",
+    "categorias": ["uuid-categoria-bebidas"],
+    "categorias_nombres": ["Bebidas"],
+    "organizacion_id": "org_uuid",
+    "creado": "2026-02-11T05:00:00Z"
+  }
+]
+```
+
+La APK debe:
+1. Obtener esta lista al iniciar
+2. Permitir al usuario configurar IP/Puerto para cada grupo
+3. Guardar la configuración localmente
+
+---
+
+#### 3. Consultar órdenes pendientes de impresión (POLLING)
+
+```http
+GET /api/impresion/ordenes-pendientes
+Authorization: Bearer {token}
+```
+
+**Respuesta:**
+```json
+{
+  "ordenes": [
+    {
+      "id": "orden_uuid",
+      "grupo_impresora_id": "a5198f78-2b16-4c01-a936-1f03a3194f68",
+      "grupo_nombre": "Cocina Principal",
+      "items": [
+        {
+          "cantidad": 2,
+          "nombre": "Hamburguesa Clásica",
+          "notas": "Sin cebolla"
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Papas Fritas",
+          "notas": ""
+        }
+      ],
+      "mesa": "Mesa 5",
+      "mesero": "Juan Pérez",
+      "hora": "2026-02-11T12:30:00Z",
+      "tipo_pedido": "Para cenar aquí",
+      "numero_ticket": "001-001-000000123"
+    }
+  ],
+  "timestamp": "2026-02-11T12:30:05Z"
+}
+```
+
+**Frecuencia de polling recomendada:** Cada 3-5 segundos
+
+---
+
+#### 4. Marcar orden como impresa
+
+```http
+POST /api/impresion/marcar-impresa/{orden_id}
+Authorization: Bearer {token}
+```
+
+**Respuesta:**
+```json
+{
+  "message": "Orden marcada como impresa",
+  "orden_id": "orden_uuid"
+}
 ```
 
 ---
 
-## Notas para APK
+### Flujo de Impresión en la APK
 
-1. **Guardar session_id**: Necesario para verificar si la sesión sigue activa
-2. **Guardar tpv_asignado**: El TPV ya viene asignado, no pedir al abrir caja
-3. **Manejar código 409**: Mostrar diálogo de conflicto de sesión
-4. **Logout automático**: Si `GET /api/auth/verificar-sesion` retorna `valida: false`, cerrar sesión local
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              FLUJO DE IMPRESIÓN EN APK                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. AL INICIAR LA APK:                                          │
+│     - Verificar que impresoras_cocina esté activo               │
+│     - Obtener lista de grupos de impresora                      │
+│     - Cargar configuración local de IPs/Puertos                 │
+│                                                                 │
+│  2. CONFIGURACIÓN (pantalla de ajustes):                        │
+│     - Mostrar lista de grupos                                   │
+│     - Permitir configurar IP/Puerto para cada grupo             │
+│     - Opción de prueba de impresora                            │
+│     - Guardar configuración localmente                          │
+│                                                                 │
+│  3. SERVICIO DE POLLING (en background):                        │
+│     - Cada 3-5 segundos: GET /api/impresion/ordenes-pendientes  │
+│     - Si hay órdenes nuevas:                                    │
+│       a. Buscar configuración de impresora para el grupo        │
+│       b. Enviar comanda a la impresora                         │
+│       c. POST /api/impresion/marcar-impresa/{orden_id}         │
+│                                                                 │
+│  4. FORMATO DE COMANDA:                                         │
+│     ┌────────────────────────────┐                             │
+│     │   *** COCINA ***           │                             │
+│     │                            │                             │
+│     │   Mesa: Mesa 5             │                             │
+│     │   Mesero: Juan Pérez       │                             │
+│     │   Hora: 12:30              │                             │
+│     │   Tipo: Para cenar aquí    │                             │
+│     │                            │                             │
+│     │   2x Hamburguesa Clásica   │                             │
+│     │      → Sin cebolla         │                             │
+│     │   1x Papas Fritas          │                             │
+│     │                            │                             │
+│     │   #001-001-000000123       │                             │
+│     └────────────────────────────┘                             │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Ejemplo de Código de Polling (JavaScript/React Native)
+
+```javascript
+// KitchenPrintService.js
+
+class KitchenPrintService {
+  constructor(apiUrl, token) {
+    this.apiUrl = apiUrl;
+    this.token = token;
+    this.printerConfigs = {}; // { grupoId: { ip, port } }
+    this.pollingInterval = null;
+  }
+
+  // Cargar configuración de impresoras desde storage local
+  async loadPrinterConfigs() {
+    const saved = await AsyncStorage.getItem('printer_configs');
+    if (saved) {
+      this.printerConfigs = JSON.parse(saved);
+    }
+  }
+
+  // Guardar configuración de impresora para un grupo
+  async savePrinterConfig(grupoId, ip, port) {
+    this.printerConfigs[grupoId] = { ip, port };
+    await AsyncStorage.setItem('printer_configs', JSON.stringify(this.printerConfigs));
+  }
+
+  // Verificar si impresoras de cocina están activas
+  async isKitchenPrintingEnabled() {
+    const response = await fetch(`${this.apiUrl}/api/funciones`, {
+      headers: { 'Authorization': `Bearer ${this.token}` }
+    });
+    const data = await response.json();
+    return data.impresoras_cocina === true;
+  }
+
+  // Obtener grupos de impresora
+  async getPrinterGroups() {
+    const response = await fetch(`${this.apiUrl}/api/grupos-impresora`, {
+      headers: { 'Authorization': `Bearer ${this.token}` }
+    });
+    return await response.json();
+  }
+
+  // Consultar órdenes pendientes
+  async getPendingOrders() {
+    const response = await fetch(`${this.apiUrl}/api/impresion/ordenes-pendientes`, {
+      headers: { 'Authorization': `Bearer ${this.token}` }
+    });
+    return await response.json();
+  }
+
+  // Marcar orden como impresa
+  async markAsPrinted(ordenId) {
+    await fetch(`${this.apiUrl}/api/impresion/marcar-impresa/${ordenId}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${this.token}` }
+    });
+  }
+
+  // Enviar a impresora térmica (implementar según tu librería)
+  async printToThermal(ip, port, content) {
+    // Usar librería como react-native-thermal-printer
+    // o enviar por socket TCP al puerto de la impresora
+    console.log(`Imprimiendo en ${ip}:${port}`, content);
+  }
+
+  // Formatear comanda para impresión
+  formatKitchenTicket(orden) {
+    let text = '';
+    text += `*** ${orden.grupo_nombre.toUpperCase()} ***\n`;
+    text += '\n';
+    text += `Mesa: ${orden.mesa}\n`;
+    text += `Mesero: ${orden.mesero}\n`;
+    text += `Hora: ${new Date(orden.hora).toLocaleTimeString()}\n`;
+    if (orden.tipo_pedido) {
+      text += `Tipo: ${orden.tipo_pedido}\n`;
+    }
+    text += '\n';
+    
+    for (const item of orden.items) {
+      text += `${item.cantidad}x ${item.nombre}\n`;
+      if (item.notas) {
+        text += `   → ${item.notas}\n`;
+      }
+    }
+    
+    text += '\n';
+    text += `#${orden.numero_ticket}\n`;
+    text += '\n\n\n'; // Espacio para corte
+    
+    return text;
+  }
+
+  // Procesar una orden
+  async processOrder(orden) {
+    const config = this.printerConfigs[orden.grupo_impresora_id];
+    
+    if (!config) {
+      console.warn(`No hay impresora configurada para ${orden.grupo_nombre}`);
+      return false;
+    }
+
+    try {
+      const content = this.formatKitchenTicket(orden);
+      await this.printToThermal(config.ip, config.port, content);
+      await this.markAsPrinted(orden.id);
+      console.log(`Orden ${orden.id} impresa en ${orden.grupo_nombre}`);
+      return true;
+    } catch (error) {
+      console.error(`Error imprimiendo orden ${orden.id}:`, error);
+      return false;
+    }
+  }
+
+  // Iniciar servicio de polling
+  startPolling(intervalMs = 3000) {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
+
+    this.pollingInterval = setInterval(async () => {
+      try {
+        const { ordenes } = await this.getPendingOrders();
+        
+        for (const orden of ordenes) {
+          await this.processOrder(orden);
+        }
+      } catch (error) {
+        console.error('Error en polling:', error);
+      }
+    }, intervalMs);
+
+    console.log(`Polling iniciado cada ${intervalMs}ms`);
+  }
+
+  // Detener servicio de polling
+  stopPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+    console.log('Polling detenido');
+  }
+}
+
+// Uso en la APK:
+const printService = new KitchenPrintService(
+  'https://tu-dominio.com',
+  'jwt_token_aqui'
+);
+
+// Al iniciar la app
+await printService.loadPrinterConfigs();
+const enabled = await printService.isKitchenPrintingEnabled();
+if (enabled) {
+  printService.startPolling(3000);
+}
+```
+
+---
+
+### Ejemplo para QZ Tray (Windows/Mac)
+
+```javascript
+// Para usar con QZ Tray en PC Windows/Mac
+// Requiere qz-tray instalado: https://qz.io/
+
+async function setupQZTray() {
+  // Conectar a QZ Tray
+  await qz.websocket.connect();
+  
+  // Configurar impresora
+  const config = qz.configs.create('EPSON TM-T20II');
+  
+  // Función para imprimir
+  async function printToKitchen(content) {
+    const data = [
+      { type: 'raw', format: 'plain', data: content }
+    ];
+    await qz.print(config, data);
+  }
+  
+  // Polling al servidor
+  setInterval(async () => {
+    const response = await fetch('https://tu-api.com/api/impresion/ordenes-pendientes', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const { ordenes } = await response.json();
+    
+    for (const orden of ordenes) {
+      const ticket = formatKitchenTicket(orden);
+      await printToKitchen(ticket);
+      
+      // Marcar como impresa
+      await fetch(`https://tu-api.com/api/impresion/marcar-impresa/${orden.id}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    }
+  }, 3000);
+}
+```
+
+---
+
+## Ejemplo Completo de Implementación APK
+
+```javascript
+// app.js - Ejemplo completo
+
+// =====================
+// 1. AUTENTICACIÓN
+// =====================
+
+// 1.1 Verificar tienda
+const tienda = await fetch(`${API}/api/tienda/verificar/${codigo}`);
+
+// 1.2 Validar PIN y obtener TPVs
+const validacion = await fetch(`${API}/api/auth/validar-pin`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ pin, codigo_tienda })
+});
+
+// 1.3 Si hay sesión pausada, ir directo al TPV reservado
+if (validacion.sesion_pausada) {
+  selectedTpvId = validacion.sesion_pausada.tpv_id;
+} else {
+  // Mostrar selector de TPV al usuario
+  const tpvs = validacion.tpvs_disponibles;
+  selectedTpvId = await showTpvSelector(tpvs);
+}
+
+// 1.4 Login con TPV seleccionado
+const login = await fetch(`${API}/api/auth/login-pin`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ 
+    pin, 
+    codigo_tienda, 
+    tpv_id: selectedTpvId,
+    dispositivo: 'APK Android v1.0'
+  })
+});
+
+// 1.5 Guardar credenciales
+const { access_token, session_id, tpv } = login;
+await AsyncStorage.setItem('token', access_token);
+await AsyncStorage.setItem('session_id', session_id);
+await AsyncStorage.setItem('tpv_asignado', JSON.stringify(tpv));
+
+// =====================
+// 2. IMPRESIÓN DE COCINA
+// =====================
+
+// 2.1 Verificar si está habilitada
+const funciones = await fetch(`${API}/api/funciones`, {
+  headers: { 'Authorization': `Bearer ${access_token}` }
+});
+const { impresoras_cocina } = await funciones.json();
+
+if (impresoras_cocina) {
+  // 2.2 Cargar grupos de impresora
+  const grupos = await fetch(`${API}/api/grupos-impresora`, {
+    headers: { 'Authorization': `Bearer ${access_token}` }
+  });
+  
+  // 2.3 Iniciar servicio de polling
+  const printService = new KitchenPrintService(API, access_token);
+  await printService.loadPrinterConfigs();
+  printService.startPolling(3000);
+}
+```
+
+---
+
+## Notas Importantes para la APK
+
+1. **Token de autenticación:** Usar `access_token` (no `token`) del login
+2. **Guardar session_id:** Necesario para verificar si la sesión sigue activa
+3. **Guardar tpv_asignado:** El TPV ya viene asignado, no pedir al abrir caja
+4. **Manejar código 409:** Mostrar diálogo de conflicto de sesión
+5. **Logout automático:** Si `GET /api/auth/verificar-sesion` retorna `valida: false`, cerrar sesión local
+6. **Polling de impresión:** Solo iniciar si `impresoras_cocina` está activo
+7. **Configuración de impresoras:** Las IPs y puertos se configuran y guardan localmente en la APK
+8. **Reconexión:** Si el polling falla, reintentar con backoff exponencial
+
+---
+
+## Changelog
+
+| Fecha | Cambio |
+|-------|--------|
+| 11 Feb 2026 | Añadida documentación de Sistema de Impresoras de Cocina |
+| 30 Ene 2026 | Documento inicial con flujo de autenticación y sesiones |
