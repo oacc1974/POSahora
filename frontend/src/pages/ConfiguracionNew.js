@@ -58,6 +58,7 @@ export default function ConfiguracionNew() {
         { id: 'recibo', label: 'Recibo', icon: Receipt, alwaysShow: true },
         { id: 'tickets-abiertos', label: 'Tickets abiertos', icon: ClipboardList, showWhen: 'tickets_abiertos' },
         { id: 'tipo-pedido', label: 'Tipo de pedido', icon: ShoppingBag, showWhen: 'tipo_pedido' },
+        { id: 'impresoras-cocina', label: 'Impresoras de cocina', icon: Printer, showWhen: 'impresoras_cocina' },
       ]
     },
     {
