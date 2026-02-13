@@ -146,6 +146,46 @@
         let printerConfigs = JSON.parse(localStorage.getItem('printerConfigs') || '{}');
         let availablePrinters = [];
 
+        // ============ CONFIGURAR SEGURIDAD QZ TRAY ============
+        // Esto permite que QZ Tray acepte solicitudes sin firma
+        qz.security.setCertificatePromise(function(resolve, reject) {
+            // Usar certificado demo - QZ Tray lo aceptará después de confirmación del usuario
+            resolve("-----BEGIN CERTIFICATE-----\n" +
+                "MIIFAzCCAuugAwIBAgICEAIwDQYJKoZIhvcNAQEFBQAwgZgxCzAJBgNVBAYTAlVT\n" +
+                "MQswCQYDVQQIDAJOWTEbMBkGA1UECgwSUVogSW5kdXN0cmllcywgTExDMRswGQYD\n" +
+                "VQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMxGTAXBgNVBAMMEHF6aW5kdXN0cmllcy5j\n" +
+                "b20xJzAlBgkqhkiG9w0BCQEWGHN1cHBvcnRAcXppbmR1c3RyaWVzLmNvbTAeFw0x\n" +
+                "NTAzMTkwMjM4NDVaFw0yNTAzMTkwMjM4NDVaMHMxCzAJBgNVBAYTAkFBMRMwEQYD\n" +
+                "VQQIDApTb21lIFN0YXRlMQ0wCwYDVQQKDAREZW1vMQ0wCwYDVQQLDAREZW1vMRIw\n" +
+                "EAYDVQQDDAlsb2NhbGhvc3QxHTAbBgkqhkiG9w0BCQEWDmRlbW9AZGVtby5jb20w\n" +
+                "ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCFdJJpKl6gbyOqvkDA5IJU\n" +
+                "B5cdPBLBVGlmpMgBf8jPi7QFdv6jQwm+YPZW4K8ZSn5U2QF0MgZPiqrqfgXpHNBy\n" +
+                "hJIGRYLmDCl/vqwxLlWN1E7IzdlGNqLnUHWJL3E/x3iYFDpG1I/8gNqvpdJAvW+j\n" +
+                "WgCLDsLsD5hN8s8m+pZK+IcIz9zNaV4nNlz1N4E2TmmX9kkYlSJ2sK0I+zXRQFJd\n" +
+                "vwRLmNOPy6LLNWN/OloXNjgZ/c5SWCw7P57hj7P9Nk7f2RkXYVJTMQdBqTMXEPO2\n" +
+                "R7Lj9i7w8XKqVx6DhOPO7W5/lpKr6m8C/VZb+B6dF6q4Mjmh+MkPqh7iFKpzp8R8\n" +
+                "pAgMBAAGjezB5MAkGA1UdEwQCMAAwLAYJYIZIAYb4QgENBB8WHU9wZW5TU0wgR2Vu\n" +
+                "ZXJhdGVkIENlcnRpZmljYXRlMB0GA1UdDgQWBBTQpw7LU+W5LHNwCDbLPvRDxWiy\n" +
+                "szAfBgNVHSMEGDAWgBTDjPx3yG7sKWMJhHxMEPC8ksO3cTANBgkqhkiG9w0BAQUF\n" +
+                "AAOCAgEAKqxfMUe2RLTsh2T9LPZZLG7bOaNC1k0yrVY8I4E0kjLAMb5Y7d+Xx/O9\n" +
+                "B8aB3JqMkP1EGP+1jX/ACoG0AJWF8J9FxKTQPqVZ8Q1B0Z+4gW8amRg9W4N7gQNV\n" +
+                "VGlOqG1lEEnquDcPf9WKPWxAYFJEKVYN0gqhk7eSYnMJwVHDPhpQ05zQs4gMhgfl\n" +
+                "9TdRWmPnQ9RF/z7e1sE9hSudD1e6uyGdA1pmWL+B3u7I5C+YhdWJC+jjlXF4bPyK\n" +
+                "9A7DLGO4lQYzdmZNHK8XLE4rTHfJn1MBm8z1SB6f8Y7eHK/jJWGAiLEVSJ3EGMNm\n" +
+                "E0JMxB2qEq7ISO0XJ7ag9JWYgrVr6jBmCK3pm+0RdMRnPJTD1rdMGahXBh3jPPAz\n" +
+                "pInBOGe3q9I7N+gn0JKT8EUhMPJHfDPNXL8B4WxNkh7DQZk4gXJDfX6R5D2g2Y4F\n" +
+                "2sB+FfLmJNCgPn2EQaw=\n" +
+                "-----END CERTIFICATE-----");
+        });
+
+        // Para firma - devolver promesa vacía (QZ pedirá confirmación manual)
+        qz.security.setSignaturePromise(function(toSign) {
+            return function(resolve, reject) {
+                // Sin firma - QZ Tray pedirá confirmación al usuario
+                resolve();
+            };
+        });
+
         // Logging
         function log(message, type = 'info') {
             const logArea = document.getElementById('logArea');
