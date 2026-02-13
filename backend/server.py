@@ -4226,6 +4226,7 @@ async def get_producto_by_barcode(codigo: str, current_user: dict = Depends(get_
         descripcion=producto.get("descripcion"),
         stock=producto.get("stock", 0),
         categoria=producto.get("categoria"),
+        categoria_id=producto.get("categoria_id"),
         modificadores_activos=producto.get("modificadores_activos", []),
         imagen=producto.get("imagen"),
         organizacion_id=producto["organizacion_id"],
