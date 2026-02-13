@@ -614,6 +614,7 @@ export default function POS() {
             subtotal: precioFinal,
             max_stock: productoConModificadores.stock,
             modificadores: modsSeleccionados,
+            categoria_id: productoConModificadores.categoria_id || null,
           },
         ]);
       } else {
