@@ -359,15 +359,27 @@
             let text = '\n================================\n';
             text += '  *** ' + grupoNombre.toUpperCase() + ' ***\n';
             text += '================================\n\n';
+            
+            // Info de mesa
             if (orden.mesa) text += 'Mesa: ' + orden.mesa + '\n';
+            
+            // Info del personal que atendió
             if (orden.mesero) text += 'Mesero: ' + orden.mesero + '\n';
+            if (orden.cajero) text += 'Cajero: ' + orden.cajero + '\n';
+            
+            // Si no hay mesero ni cajero, indicar "Sistema"
+            if (!orden.mesero && !orden.cajero) text += 'Creado por: Sistema\n';
+            
             text += 'Hora: ' + new Date(orden.creado).toLocaleTimeString() + '\n';
             if (orden.notas) text += 'Notas: ' + orden.notas + '\n';
             text += '--------------------------------\n';
+            
+            // Items
             for (const item of orden.items) {
                 text += item.cantidad + 'x ' + item.nombre + '\n';
                 if (item.notas) text += '   >> ' + item.notas + '\n';
             }
+            
             text += '--------------------------------\n';
             text += '#' + (orden.numero || orden.ticket_id.slice(-8)) + '\n';
             text += '\n\n\n\n';
