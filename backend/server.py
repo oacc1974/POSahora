@@ -6468,6 +6468,58 @@ async def get_ordenes_pendientes_impresion(current_user: dict = Depends(get_curr
             "ordenes": list(data["ordenes"].values())
         })
     
+    # ============ TAMBIÉN BUSCAR ÓRDENES DE VENTAS DIRECTAS ============
+    ordenes_directas = await db.ordenes_cocina.find({
+        "organizacion_id": current_user["organizacion_id"],
+        "impreso": False
+    }).sort("creado", 1).to_list(100)
+    
+    for orden in ordenes_directas:
+        # Agrupar items por grupo
+        items_por_grupo = {}
+        for item in orden.get("items", []):
+            grupo_id = item.get("grupo_id")
+            grupo_nombre = item.get("grupo_nombre", "Cocina")
+            
+            if grupo_id not in items_por_grupo:
+                items_por_grupo[grupo_id] = {
+                    "grupo_id": grupo_id,
+                    "grupo_nombre": grupo_nombre,
+                    "items": []
+                }
+            items_por_grupo[grupo_id]["items"].append({
+                "producto_id": item.get("producto_id"),
+                "nombre": item.get("nombre"),
+                "cantidad": item.get("cantidad", 1),
+                "notas": item.get("notas", ""),
+                "modificadores": []
+            })
+        
+        # Agregar cada grupo al resultado
+        for grupo_id, grupo_data in items_por_grupo.items():
+            # Buscar si ya existe este grupo en resultado
+            grupo_existente = next((g for g in resultado if g["grupo_id"] == grupo_id), None)
+            
+            orden_data = {
+                "ticket_id": orden["id"],
+                "numero": orden.get("numero", ""),
+                "mesa": orden.get("mesa"),
+                "mesero": orden.get("mesero"),
+                "notas": None,
+                "creado": orden.get("creado"),
+                "items": grupo_data["items"],
+                "tipo": "venta_directa"
+            }
+            
+            if grupo_existente:
+                grupo_existente["ordenes"].append(orden_data)
+            else:
+                resultado.append({
+                    "grupo_id": grupo_id,
+                    "grupo_nombre": grupo_data["grupo_nombre"],
+                    "ordenes": [orden_data]
+                })
+    
     return {"grupos": resultado, "timestamp": datetime.now(timezone.utc).isoformat()}
 
 @app.post("/api/impresion/marcar-impresa/{ticket_id}")
