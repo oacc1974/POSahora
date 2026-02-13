@@ -12,6 +12,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [planes, setPlanes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [billingPeriod, setBillingPeriod] = useState('mensual'); // 'mensual' o 'anual'
 
   useEffect(() => {
     const fetchPlanes = async () => {
@@ -30,6 +31,28 @@ export default function LandingPage() {
   const formatLimite = (limite) => {
     if (limite === -1) return 'Ilimitado';
     return limite.toLocaleString();
+  };
+
+  const getPrecio = (plan) => {
+    if (billingPeriod === 'anual' && plan.precio_anual) {
+      return plan.precio_anual;
+    }
+    return plan.precio;
+  };
+
+  const getPeriodoTexto = () => {
+    return billingPeriod === 'anual' ? 'año' : 'mes';
+  };
+
+  const getAhorro = (plan) => {
+    if (plan.precio_anual && plan.precio > 0) {
+      const precioAnualSinDescuento = plan.precio * 12;
+      const ahorro = precioAnualSinDescuento - plan.precio_anual;
+      if (ahorro > 0) {
+        return Math.round((ahorro / precioAnualSinDescuento) * 100);
+      }
+    }
+    return 0;
   };
 
   const features = [
