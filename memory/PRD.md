@@ -605,3 +605,38 @@ Sistema híbrido para enviar comandas de pedidos a impresoras de cocina locales 
 ### Test Reports
 - `/app/test_reports/iteration_12.json` - Tests del Sistema de Funciones e Impresoras de Cocina - 100% passed (13/13 backend, frontend OK)
 
+### Mejoras de Impresión de Cocina (13 Febrero 2026)
+
+#### Formato Mejorado del Ticket de Cocina
+- **Nombre del personal:** El ticket ahora muestra tanto el mesero como el cajero que procesó la orden
+- **Campo `cajero` agregado:** Las órdenes de ventas directas ahora incluyen el nombre del cajero
+- **Lógica inteligente:** Si hay mesero se muestra, si hay cajero se muestra, si ninguno se muestra "Sistema"
+- **Archivos modificados:** 
+  - `server.py` - Endpoint `/api/impresion/ordenes-pendientes` incluye campo `cajero`
+  - `qz-kitchen-direct.html` - Función `formatTicket()` actualizada
+
+#### Instrucciones para QZ Tray Site Manager
+- **Nueva sección de ayuda:** En la página `qz-kitchen-direct.html` se agregaron instrucciones paso a paso
+- **Resuelve el pop-up "Allow":** Guía para agregar el sitio al Site Manager de QZ Tray y marcarlo como "Trusted"
+
+---
+
+## Tareas Pendientes
+
+### P1 - Alta Prioridad
+- [ ] **Flujo de login de mesero inestable** - Reportado como inconsistente
+- [ ] **Verificar "Precuenta" para cajeros** - Confirmar funcionamiento
+
+### P2 - Media Prioridad
+- [ ] **Apertura de caja registradora** - No se abre al imprimir
+- [ ] **Renombrar directorio `backend`** - Mejor estructura de proyecto
+- [ ] **Consolidar documentación APK** - Unificar docs para desarrollo futuro
+
+### Backlog / Futuro
+- [ ] **Reloj checador** - Control de tiempo para empleados
+- [ ] **Convertir a PWA** - Progressive Web App
+- [ ] **Búsqueda por rango de monto en Recibos**
+- [ ] **Envío de recibo por email**
+
+---
+
