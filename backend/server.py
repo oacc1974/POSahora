@@ -367,6 +367,7 @@ class ProductResponse(BaseModel):
     descripcion: Optional[str] = None
     stock: int = 0
     categoria: Optional[str] = None
+    categoria_id: Optional[str] = None
     modificadores_activos: Optional[List[str]] = []
     imagen: Optional[str] = None
     organizacion_id: str
