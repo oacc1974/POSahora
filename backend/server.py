@@ -6352,9 +6352,9 @@ async def get_ordenes_pendientes_impresion(current_user: dict = Depends(get_curr
             })
     
     # Obtener tickets abiertos pendientes de impresión
+    # Buscar tickets que no han sido impresos en cocina (sin importar el campo estado)
     tickets = await db.tickets_abiertos.find({
         "organizacion_id": current_user["organizacion_id"],
-        "estado": {"$in": ["abierto", "pendiente"]},
         "$or": [
             {"impreso_cocina": {"$exists": False}},
             {"impreso_cocina": False},
