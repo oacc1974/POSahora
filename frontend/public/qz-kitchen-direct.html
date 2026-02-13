@@ -443,9 +443,10 @@
             let html = '';
             for (const grupo of grupos) {
                 for (const orden of grupo.ordenes || []) {
+                    const personal = orden.mesero ? `Mesero: ${orden.mesero}` : (orden.cajero ? `Cajero: ${orden.cajero}` : 'Sistema');
                     html += `<div class="orden-card">
                         <h4>🍳 ${grupo.grupo_nombre} - ${orden.mesa || 'Sin mesa'}</h4>
-                        <p><small>Mesero: ${orden.mesero || 'N/A'} | ${new Date(orden.creado).toLocaleTimeString()}</small></p>
+                        <p><small>${personal} | ${new Date(orden.creado).toLocaleTimeString()}</small></p>
                         ${orden.items.map(i => `<div>• ${i.cantidad}x ${i.nombre}</div>`).join('')}
                     </div>`;
                 }
