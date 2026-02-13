@@ -153,9 +153,36 @@ export default function LandingPage() {
             <h2 className="text-3xl font-bold text-white mb-4">
               Planes para cada tipo de negocio
             </h2>
-            <p className="text-slate-400">
+            <p className="text-slate-400 mb-8">
               Elige el plan que mejor se adapte a tus necesidades. Sin contratos, cancela cuando quieras.
             </p>
+            
+            {/* Toggle Mensual/Anual */}
+            <div className="inline-flex items-center gap-3 bg-slate-800 rounded-full p-1">
+              <button
+                onClick={() => setBillingPeriod('mensual')}
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                  billingPeriod === 'mensual'
+                    ? 'bg-blue-500 text-white shadow-lg'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Mensual
+              </button>
+              <button
+                onClick={() => setBillingPeriod('anual')}
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                  billingPeriod === 'anual'
+                    ? 'bg-blue-500 text-white shadow-lg'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Anual
+                <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  Ahorra 20%
+                </span>
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -176,14 +203,24 @@ export default function LandingPage() {
                       <Badge className="bg-blue-500 text-white">Más Popular</Badge>
                     </div>
                   )}
+                  {billingPeriod === 'anual' && getAhorro(plan) > 0 && (
+                    <div className="absolute -top-3 right-4">
+                      <Badge className="bg-green-500 text-white">-{getAhorro(plan)}%</Badge>
+                    </div>
+                  )}
                   <CardHeader className="text-center pb-2">
                     <CardTitle className="text-white">{plan.nombre}</CardTitle>
                     <CardDescription className="text-slate-400">{plan.descripcion}</CardDescription>
                   </CardHeader>
                   <CardContent className="flex-1 pt-4">
                     <div className="text-center mb-6">
-                      <span className="text-4xl font-bold text-white">${plan.precio}</span>
-                      <span className="text-slate-400">/{plan.periodo}</span>
+                      <span className="text-4xl font-bold text-white">${getPrecio(plan)}</span>
+                      <span className="text-slate-400">/{getPeriodoTexto()}</span>
+                      {billingPeriod === 'anual' && plan.precio > 0 && (
+                        <div className="text-sm text-slate-500 line-through mt-1">
+                          ${plan.precio * 12}/año
+                        </div>
+                      )}
                     </div>
                     <ul className="space-y-3">
                       <li className="flex items-center gap-2 text-slate-300">
