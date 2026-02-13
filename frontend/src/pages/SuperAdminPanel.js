@@ -563,9 +563,9 @@ function PlanFormDialog({ open, onOpenChange, plan, onSave, headers }) {
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Precio</Label>
+              <Label>Precio Mensual</Label>
               <Input
                 type="number"
                 value={formData.precio}
@@ -574,6 +574,25 @@ function PlanFormDialog({ open, onOpenChange, plan, onSave, headers }) {
                 step="0.01"
               />
             </div>
+            <div>
+              <Label>Precio Anual (opcional)</Label>
+              <Input
+                type="number"
+                value={formData.precio_anual || ''}
+                onChange={(e) => setFormData({ ...formData, precio_anual: e.target.value ? parseFloat(e.target.value) : null })}
+                min="0"
+                step="0.01"
+                placeholder="Ej: 144 (en vez de 180)"
+              />
+              {formData.precio > 0 && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Sin descuento: ${(formData.precio * 12).toFixed(2)}/año
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Periodo</Label>
               <Select value={formData.periodo} onValueChange={(v) => setFormData({ ...formData, periodo: v })}>
