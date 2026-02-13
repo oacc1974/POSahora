@@ -667,6 +667,7 @@ export default function POS() {
             subtotal: producto.precio,
             max_stock: producto.stock,
             modificadores: [],
+            categoria_id: producto.categoria_id || null,
           },
         ]);
         // Vibración háptica en móvil
