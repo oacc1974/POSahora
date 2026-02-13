@@ -98,6 +98,22 @@
         Configura la IP y puerto de cada impresora térmica. Cada grupo (Cocina, Bebidas, etc.) puede tener su propia impresora.
     </div>
 
+    <!-- Instrucciones QZ Tray Site Manager -->
+    <div class="card" style="background: #fef3c7; border-left: 4px solid #f59e0b;">
+        <h3>⚠️ ¿Te aparece "Allow" cada vez que imprimes?</h3>
+        <p style="margin-bottom: 15px;">Para evitar que QZ Tray pida permiso en cada impresión, debes agregar este sitio al <strong>Site Manager</strong>:</p>
+        <ol style="line-height: 1.8; margin-left: 20px;">
+            <li><strong>Clic derecho</strong> en el icono de QZ Tray (bandeja del sistema, cerca del reloj)</li>
+            <li>Selecciona <strong>"Advanced" → "Site Manager"</strong></li>
+            <li>Clic en el botón <strong>"+" (Add)</strong></li>
+            <li>Escribe: <code style="background: #fff; padding: 2px 6px; border-radius: 3px;">pos-hybrid-printing.preview.emergentagent.com</code></li>
+            <li>Presiona <strong>Enter</strong> para agregar</li>
+            <li>Selecciona el sitio recién agregado y marca la casilla <strong>"Trusted"</strong> (o similar)</li>
+            <li><strong>Reinicia QZ Tray</strong> (clic derecho → Exit, luego ábrelo de nuevo)</li>
+        </ol>
+        <p style="margin-top: 15px; color: #92400e;"><strong>Después de esto, ya no debería aparecer el pop-up "Allow".</strong></p>
+    </div>
+
     <!-- QZ Tray -->
     <div class="card">
         <h3>1. Conexión QZ Tray</h3>
