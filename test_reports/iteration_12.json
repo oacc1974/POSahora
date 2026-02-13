@@ -68,7 +68,7 @@
   
   "test_credentials": {
     "propietario": {"username": "oscarcastrocantos@gmail.com", "password": "oscar123"},
-    "api_url": "https://pos-kitchen-print.preview.emergentagent.com"
+    "api_url": "https://pos-hybrid-printing.preview.emergentagent.com"
   },
   
   "seed_data_creation": "Existing 'Cocina Principal' printer group with 'Platos Principales' category was used for testing. Test groups created during testing were cleaned up.",

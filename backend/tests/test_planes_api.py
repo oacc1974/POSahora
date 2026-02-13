@@ -10,7 +10,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pos-kitchen-print.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pos-hybrid-printing.preview.emergentagent.com')
 
 class TestPublicPlanesAPI:
     """Tests for public planes endpoint (no auth required)"""

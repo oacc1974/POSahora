@@ -78,7 +78,7 @@
   
   "test_credentials": {
     "super_admin": {"username": "admin", "password": "admin123"},
-    "api_url": "https://pos-kitchen-print.preview.emergentagent.com"
+    "api_url": "https://pos-hybrid-printing.preview.emergentagent.com"
   },
   
   "seed_data_creation": "Test plans created and deleted during API tests (cleanup successful)",
