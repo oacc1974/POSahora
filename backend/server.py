@@ -4200,6 +4200,7 @@ async def get_productos(current_user: dict = Depends(get_current_user)):
             descripcion=p.get("descripcion"),
             stock=p.get("stock", 0),
             categoria=p.get("categoria"),
+            categoria_id=p.get("categoria_id"),
             modificadores_activos=p.get("modificadores_activos", []),
             imagen=p.get("imagen"),
             organizacion_id=p["organizacion_id"],
