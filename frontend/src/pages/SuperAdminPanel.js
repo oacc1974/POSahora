@@ -442,6 +442,7 @@ function PlanFormDialog({ open, onOpenChange, plan, onSave, headers }) {
     nombre: '',
     descripcion: '',
     precio: 0,
+    precio_anual: null,
     moneda: 'USD',
     periodo: 'mensual',
     limite_facturas: 50,
@@ -471,6 +472,7 @@ function PlanFormDialog({ open, onOpenChange, plan, onSave, headers }) {
     if (plan) {
       setFormData({
         ...plan,
+        precio_anual: plan.precio_anual || null,
         funciones: plan.funciones || {}
       });
     } else {
@@ -479,6 +481,7 @@ function PlanFormDialog({ open, onOpenChange, plan, onSave, headers }) {
         nombre: '',
         descripcion: '',
         precio: 0,
+        precio_anual: null,
         moneda: 'USD',
         periodo: 'mensual',
         limite_facturas: 50,
