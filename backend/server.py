@@ -378,6 +378,8 @@ class InvoiceItem(BaseModel):
     precio: float
     cantidad: int
     subtotal: float
+    categoria_id: Optional[str] = None
+    notas: Optional[str] = None
 
 class DescuentoDetalle(BaseModel):
     tipo: str  # 'porcentaje' o 'monto'
