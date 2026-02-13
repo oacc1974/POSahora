@@ -572,6 +572,7 @@ class PlanResponse(BaseModel):
     nombre: str
     descripcion: str
     precio: float
+    precio_anual: Optional[float] = None
     moneda: str = "USD"
     periodo: str = "mensual"
     limite_facturas: int
@@ -592,6 +593,7 @@ class PlanCreate(BaseModel):
     nombre: str
     descripcion: str
     precio: float
+    precio_anual: Optional[float] = None
     moneda: str = "USD"
     periodo: str = "mensual"
     limite_facturas: int = 50
