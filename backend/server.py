@@ -5575,6 +5575,61 @@ async def create_factura(invoice: InvoiceCreate, current_user: dict = Depends(ge
     }
     await db.facturas.insert_one(new_invoice)
     
+    # ============ ENVIAR A IMPRESORAS DE COCINA ============
+    # Verificar si la función de impresoras de cocina está activa
+    config_funciones = await db.config_funciones.find_one({"organizacion_id": current_user["organizacion_id"]})
+    if config_funciones and config_funciones.get("impresoras_cocina", False):
+        # Obtener grupos de impresora
+        grupos_impresora = await db.grupos_impresora.find(
+            {"organizacion_id": current_user["organizacion_id"]}
+        ).to_list(100)
+        
+        if grupos_impresora:
+            # Crear mapeo de categoría -> grupos
+            categoria_grupos = {}
+            for grupo in grupos_impresora:
+                for cat_id in grupo.get("categorias", []):
+                    if cat_id not in categoria_grupos:
+                        categoria_grupos[cat_id] = []
+                    categoria_grupos[cat_id].append({
+                        "grupo_id": grupo["id"],
+                        "grupo_nombre": grupo["nombre"]
+                    })
+            
+            # Crear orden de impresión para cocina (venta directa)
+            orden_cocina = {
+                "id": str(uuid.uuid4()),
+                "factura_id": invoice_id,
+                "numero": numero_factura,
+                "mesa": invoice.comentarios if invoice.comentarios else None,
+                "mesero": invoice.mesero_nombre if invoice.mesero_nombre else current_user["nombre"],
+                "items": [],
+                "organizacion_id": current_user["organizacion_id"],
+                "impreso": False,
+                "creado": datetime.now(timezone.utc).isoformat(),
+                "tipo": "venta_directa"
+            }
+            
+            # Agregar items con sus grupos de destino
+            for item in invoice.items:
+                item_dict = item.model_dump() if hasattr(item, 'model_dump') else item
+                categoria_id = item_dict.get("categoria_id")
+                if categoria_id and categoria_id in categoria_grupos:
+                    for grupo_destino in categoria_grupos[categoria_id]:
+                        orden_cocina["items"].append({
+                            "producto_id": item_dict.get("producto_id"),
+                            "nombre": item_dict.get("nombre"),
+                            "cantidad": item_dict.get("cantidad"),
+                            "notas": item_dict.get("notas", ""),
+                            "grupo_id": grupo_destino["grupo_id"],
+                            "grupo_nombre": grupo_destino["grupo_nombre"]
+                        })
+            
+            # Solo guardar si hay items para imprimir
+            if orden_cocina["items"]:
+                await db.ordenes_cocina.insert_one(orden_cocina)
+    # ============ FIN IMPRESORAS DE COCINA ============
+    
     await db.cajas.update_one(
         {"_id": caja_activa["_id"]},
         {
