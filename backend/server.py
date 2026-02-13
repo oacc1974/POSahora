@@ -6525,35 +6525,50 @@ async def get_ordenes_pendientes_impresion(current_user: dict = Depends(get_curr
 @app.post("/api/impresion/marcar-impresa/{ticket_id}")
 async def marcar_orden_impresa(ticket_id: str, grupo_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """Marca una orden/ticket como impresa (llamado por APK/QZ Tray)"""
+    
+    # Primero buscar en tickets_abiertos
     ticket = await db.tickets_abiertos.find_one({
         "id": ticket_id,
         "organizacion_id": current_user["organizacion_id"]
     })
     
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    if ticket:
+        update_data = {
+            "impreso_cocina": True,
+            "fecha_impresion_cocina": datetime.now(timezone.utc).isoformat()
+        }
+        
+        if grupo_id:
+            grupos_impresos = ticket.get("grupos_impresos", [])
+            if grupo_id not in grupos_impresos:
+                grupos_impresos.append(grupo_id)
+            update_data["grupos_impresos"] = grupos_impresos
+        
+        update_data["items_pendientes_impresion"] = []
+        
+        await db.tickets_abiertos.update_one(
+            {"id": ticket_id},
+            {"$set": update_data}
+        )
+        return {"message": "Orden marcada como impresa", "ticket_id": ticket_id}
     
-    update_data = {
-        "impreso_cocina": True,
-        "fecha_impresion_cocina": datetime.now(timezone.utc).isoformat()
-    }
+    # Si no está en tickets_abiertos, buscar en ordenes_cocina (ventas directas)
+    orden_cocina = await db.ordenes_cocina.find_one({
+        "id": ticket_id,
+        "organizacion_id": current_user["organizacion_id"]
+    })
     
-    if grupo_id:
-        # Marcar solo para un grupo específico
-        grupos_impresos = ticket.get("grupos_impresos", [])
-        if grupo_id not in grupos_impresos:
-            grupos_impresos.append(grupo_id)
-        update_data["grupos_impresos"] = grupos_impresos
+    if orden_cocina:
+        await db.ordenes_cocina.update_one(
+            {"id": ticket_id},
+            {"$set": {
+                "impreso": True,
+                "fecha_impresion": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        return {"message": "Orden de venta directa marcada como impresa", "ticket_id": ticket_id}
     
-    # Limpiar items pendientes de impresión
-    update_data["items_pendientes_impresion"] = []
-    
-    await db.tickets_abiertos.update_one(
-        {"id": ticket_id},
-        {"$set": update_data}
-    )
-    
-    return {"message": "Orden marcada como impresa", "ticket_id": ticket_id}
+    raise HTTPException(status_code=404, detail="Ticket/Orden no encontrado")
 
 @app.post("/api/impresion/agregar-pendiente/{ticket_id}")
 async def agregar_items_pendientes_impresion(ticket_id: str, items: List[dict], current_user: dict = Depends(get_current_user)):
