@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Ahora - Impresoras de Cocina</title>
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #2563eb; }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.connected { background: #d1fae5; color: #065f46; }
+        .status.disconnected { background: #fee2e2; color: #991b1b; }
+        .status.warning { background: #fef3c7; color: #92400e; }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover { background: #1d4ed8; }
+        button:disabled { background: #9ca3af; cursor: not-allowed; }
+        button.danger { background: #dc2626; }
+        button.success { background: #16a34a; }
+        input, select {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            margin: 5px;
+            font-size: 14px;
+        }
+        input[type="text"], input[type="password"] { width: 300px; }
+        .printer-config {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .log-area {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .orden-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: #fffbeb;
+        }
+        .orden-card h4 { margin: 0 0 10px 0; color: #92400e; }
+        .orden-item { padding: 5px 0; border-bottom: 1px dashed #e5e7eb; }
+        #ordenesPendientes { min-height: 100px; }
+    </style>
+</head>
+<body>
+    <h1>🖨️ POS Ahora - Impresoras de Cocina</h1>
+
+    <!-- Sección de Conexión -->
+    <div class="card">
+        <h3>1. Conexión QZ Tray</h3>
+        <div id="qzStatus" class="status disconnected">⚪ No conectado a QZ Tray</div>
+        <button onclick="connectQZ()">Conectar QZ Tray</button>
+        <button onclick="listPrinters()">Ver Impresoras</button>
+    </div>
+
+    <!-- Sección de Login -->
+    <div class="card">
+        <h3>2. Credenciales POS Ahora</h3>
+        <div>
+            <input type="text" id="username" placeholder="Usuario" value="oscarcastrocantos@gmail.com">
+            <input type="password" id="password" placeholder="Contraseña" value="oscar123">
+            <button onclick="loginPOS()">Iniciar Sesión</button>
+        </div>
+        <div id="loginStatus" class="status disconnected">⚪ No autenticado</div>
+    </div>
+
+    <!-- Sección de Impresoras -->
+    <div class="card">
+        <h3>3. Configurar Impresoras por Grupo</h3>
+        <p>Selecciona qué impresora usar para cada grupo de cocina:</p>
+        <div id="printerConfigs">
+            <p style="color: #6b7280;">Inicia sesión para ver los grupos de impresora...</p>
+        </div>
+        <button onclick="savePrinterConfig()">💾 Guardar Configuración</button>
+        <button onclick="testPrint()">🧪 Imprimir Prueba</button>
+    </div>
+
+    <!-- Sección de Polling -->
+    <div class="card">
+        <h3>4. Servicio de Impresión</h3>
+        <button class="success" onclick="startPolling()" id="btnStart">▶️ Iniciar Servicio</button>
+        <button class="danger" onclick="stopPolling()" id="btnStop" disabled>⏹️ Detener Servicio</button>
+        <span id="pollingStatus" style="margin-left: 20px; color: #6b7280;">Detenido</span>
+        
+        <h4 style="margin-top: 20px;">Órdenes Pendientes:</h4>
+        <div id="ordenesPendientes">
+            <p style="color: #6b7280;">Sin órdenes pendientes</p>
+        </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="card">
+        <h3>📋 Logs</h3>
+        <div id="logArea" class="log-area"></div>
+        <button onclick="document.getElementById('logArea').innerHTML = ''">Limpiar Logs</button>
+    </div>
+
+    <script>
+        // Configuración
+        const API_URL = 'https://pos-kitchen-print.preview.emergentagent.com';
+        let token = null;
+        let pollingInterval = null;
+        let printerGroups = [];
+        let printerConfigs = JSON.parse(localStorage.getItem('printerConfigs') || '{}');
+        let availablePrinters = [];
+
+        // Logging
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const time = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#60a5fa';
+            logArea.innerHTML += `<div style="color: ${color}">[${time}] ${message}</div>`;
+            logArea.scrollTop = logArea.scrollHeight;
+            console.log(`[${type}] ${message}`);
+        }
+
+        // ============ QZ TRAY ============
+        async function connectQZ() {
+            try {
+                log('Conectando a QZ Tray...');
+                
+                if (qz.websocket.isActive()) {
+                    log('Ya conectado a QZ Tray', 'success');
+                    updateQZStatus(true);
+                    return;
+                }
+
+                await qz.websocket.connect();
+                log('✅ Conectado a QZ Tray', 'success');
+                updateQZStatus(true);
+                await listPrinters();
+            } catch (err) {
+                log('❌ Error conectando a QZ Tray: ' + err.message, 'error');
+                log('Asegúrate de que QZ Tray esté corriendo (icono en la bandeja del sistema)', 'error');
+                updateQZStatus(false);
+            }
+        }
+
+        function updateQZStatus(connected) {
+            const el = document.getElementById('qzStatus');
+            if (connected) {
+                el.className = 'status connected';
+                el.textContent = '🟢 Conectado a QZ Tray';
+            } else {
+                el.className = 'status disconnected';
+                el.textContent = '🔴 No conectado a QZ Tray';
+            }
+        }
+
+        async function listPrinters() {
+            try {
+                if (!qz.websocket.isActive()) {
+                    await connectQZ();
+                }
+                availablePrinters = await qz.printers.find();
+                log('Impresoras encontradas: ' + availablePrinters.join(', '), 'success');
+                updatePrinterSelects();
+            } catch (err) {
+                log('Error listando impresoras: ' + err.message, 'error');
+            }
+        }
+
+        // ============ LOGIN POS ============
+        async function loginPOS() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                log('Iniciando sesión en POS Ahora...');
+                const response = await fetch(`${API_URL}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.access_token) {
+                    token = data.access_token;
+                    log('✅ Sesión iniciada: ' + data.user.nombre, 'success');
+                    updateLoginStatus(true, data.user.nombre);
+                    await loadPrinterGroups();
+                } else {
+                    throw new Error(data.detail || 'Error de autenticación');
+                }
+            } catch (err) {
+                log('❌ Error de login: ' + err.message, 'error');
+                updateLoginStatus(false);
+            }
+        }
+
+        function updateLoginStatus(loggedIn, userName = '') {
+            const el = document.getElementById('loginStatus');
+            if (loggedIn) {
+                el.className = 'status connected';
+                el.textContent = '🟢 Autenticado como: ' + userName;
+            } else {
+                el.className = 'status disconnected';
+                el.textContent = '🔴 No autenticado';
+            }
+        }
+
+        // ============ GRUPOS DE IMPRESORA ============
+        async function loadPrinterGroups() {
+            try {
+                // Verificar si impresoras_cocina está activo
+                const funcResponse = await fetch(`${API_URL}/api/funciones`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const funciones = await funcResponse.json();
+
+                if (!funciones.impresoras_cocina) {
+                    log('⚠️ Impresoras de cocina NO está activado en el POS', 'error');
+                    document.getElementById('printerConfigs').innerHTML = 
+                        '<p style="color: #dc2626;">⚠️ Activa "Impresoras de cocina" en Configuración → Funciones</p>';
+                    return;
+                }
+
+                // Obtener grupos
+                const response = await fetch(`${API_URL}/api/grupos-impresora`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                printerGroups = await response.json();
+
+                log('Grupos de impresora cargados: ' + printerGroups.length, 'success');
+                updatePrinterSelects();
+            } catch (err) {
+                log('Error cargando grupos: ' + err.message, 'error');
+            }
+        }
+
+        function updatePrinterSelects() {
+            const container = document.getElementById('printerConfigs');
+
+            if (printerGroups.length === 0) {
+                container.innerHTML = '<p style="color: #6b7280;">No hay grupos de impresora configurados</p>';
+                return;
+            }
+
+            let html = '';
+            for (const grupo of printerGroups) {
+                const savedPrinter = printerConfigs[grupo.id] || '';
+                html += `
+                    <div class="printer-config">
+                        <strong>${grupo.nombre}</strong>
+                        <span style="color: #6b7280;">(${grupo.categorias_nombres?.join(', ') || 'Sin categorías'})</span>
+                        <select id="printer_${grupo.id}" onchange="updateConfig('${grupo.id}', this.value)">
+                            <option value="">-- Seleccionar impresora --</option>
+                            ${availablePrinters.map(p => `<option value="${p}" ${p === savedPrinter ? 'selected' : ''}>${p}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function updateConfig(grupoId, printerName) {
+            printerConfigs[grupoId] = printerName;
+        }
+
+        function savePrinterConfig() {
+            localStorage.setItem('printerConfigs', JSON.stringify(printerConfigs));
+            log('✅ Configuración guardada', 'success');
+        }
+
+        // ============ IMPRESIÓN ============
+        async function testPrint() {
+            try {
+                if (!qz.websocket.isActive()) {
+                    throw new Error('QZ Tray no conectado');
+                }
+
+                const testPrinter = availablePrinters[0];
+                if (!testPrinter) {
+                    throw new Error('No hay impresoras disponibles');
+                }
+
+                const config = qz.configs.create(testPrinter);
+                const data = [{
+                    type: 'raw',
+                    format: 'plain',
+                    data: '\n*** PRUEBA POS AHORA ***\n\nImpresora: ' + testPrinter + '\nFecha: ' + new Date().toLocaleString() + '\n\n\n\n'
+                }];
+
+                await qz.print(config, data);
+                log('✅ Prueba de impresión enviada a: ' + testPrinter, 'success');
+            } catch (err) {
+                log('❌ Error en prueba: ' + err.message, 'error');
+            }
+        }
+
+        function formatTicket(grupoNombre, orden) {
+            let text = '\n';
+            text += '================================\n';
+            text += `    *** ${grupoNombre.toUpperCase()} ***\n`;
+            text += '================================\n';
+            text += '\n';
+            if (orden.mesa) text += `Mesa: ${orden.mesa}\n`;
+            if (orden.mesero) text += `Mesero: ${orden.mesero}\n`;
+            text += `Hora: ${new Date(orden.creado).toLocaleTimeString()}\n`;
+            if (orden.notas) text += `Notas: ${orden.notas}\n`;
+            text += '--------------------------------\n';
+
+            for (const item of orden.items) {
+                text += `${item.cantidad}x ${item.nombre}\n`;
+                if (item.notas) text += `   >> ${item.notas}\n`;
+            }
+
+            text += '--------------------------------\n';
+            text += `#${orden.numero || orden.ticket_id.slice(-8)}\n`;
+            text += '\n\n\n\n';
+
+            return text;
+        }
+
+        async function printOrden(grupoId, grupoNombre, orden) {
+            const printerName = printerConfigs[grupoId];
+            if (!printerName) {
+                log(`⚠️ No hay impresora para ${grupoNombre}`, 'error');
+                return false;
+            }
+
+            try {
+                const config = qz.configs.create(printerName);
+                const ticketContent = formatTicket(grupoNombre, orden);
+                const data = [{ type: 'raw', format: 'plain', data: ticketContent }];
+
+                await qz.print(config, data);
+                log(`✅ Impreso ticket ${orden.ticket_id.slice(-8)} en ${printerName}`, 'success');
+
+                // Marcar como impreso en el servidor
+                await fetch(`${API_URL}/api/impresion/marcar-impresa/${orden.ticket_id}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                return true;
+            } catch (err) {
+                log(`❌ Error imprimiendo: ${err.message}`, 'error');
+                return false;
+            }
+        }
+
+        // ============ POLLING ============
+        async function checkPendingOrders() {
+            try {
+                const response = await fetch(`${API_URL}/api/impresion/ordenes-pendientes`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                updateOrdenesPendientes(data.grupos);
+
+                for (const grupo of data.grupos) {
+                    if (grupo.ordenes && grupo.ordenes.length > 0) {
+                        for (const orden of grupo.ordenes) {
+                            await printOrden(grupo.grupo_id, grupo.grupo_nombre, orden);
+                        }
+                    }
+                }
+            } catch (err) {
+                log('Error en polling: ' + err.message, 'error');
+            }
+        }
+
+        function updateOrdenesPendientes(grupos) {
+            const container = document.getElementById('ordenesPendientes');
+
+            if (!grupos || grupos.length === 0) {
+                container.innerHTML = '<p style="color: #6b7280;">Sin órdenes pendientes</p>';
+                return;
+            }
+
+            let html = '';
+            for (const grupo of grupos) {
+                for (const orden of grupo.ordenes || []) {
+                    html += `
+                        <div class="orden-card">
+                            <h4>🍳 ${grupo.grupo_nombre} - ${orden.mesa || 'Sin mesa'}</h4>
+                            <p><strong>Mesero:</strong> ${orden.mesero || 'N/A'}</p>
+                            ${orden.items.map(i => `<div class="orden-item">${i.cantidad}x ${i.nombre} ${i.notas ? '(' + i.notas + ')' : ''}</div>`).join('')}
+                        </div>
+                    `;
+                }
+            }
+            container.innerHTML = html || '<p style="color: #6b7280;">Sin órdenes pendientes</p>';
+        }
+
+        function startPolling() {
+            if (!token) {
+                log('⚠️ Primero inicia sesión', 'error');
+                return;
+            }
+            if (!qz.websocket.isActive()) {
+                log('⚠️ Primero conecta QZ Tray', 'error');
+                return;
+            }
+
+            pollingInterval = setInterval(checkPendingOrders, 3000);
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('btnStop').disabled = false;
+            document.getElementById('pollingStatus').textContent = '🟢 Corriendo (cada 3 seg)';
+            document.getElementById('pollingStatus').style.color = '#16a34a';
+            log('▶️ Servicio de polling iniciado', 'success');
+
+            // Primera consulta inmediata
+            checkPendingOrders();
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('btnStop').disabled = true;
+            document.getElementById('pollingStatus').textContent = 'Detenido';
+            document.getElementById('pollingStatus').style.color = '#6b7280';
+            log('⏹️ Servicio de polling detenido', 'success');
+        }
+
+        // Inicialización
+        window.onload = function() {
+            log('Página cargada. Sigue los pasos 1-4 para configurar.');
+        };
+    </script>
+</body>
+</html>
