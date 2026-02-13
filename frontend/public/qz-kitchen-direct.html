@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS Ahora - Impresoras de Cocina (Socket Directo)</title>
+    <title>POS Ahora - Impresoras de Cocina</title>
     <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
     <style>
         * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 900px;
+            max-width: 950px;
             margin: 0 auto;
             padding: 20px;
             background: #f5f5f5;
@@ -44,36 +44,36 @@
         button:disabled { background: #9ca3af; cursor: not-allowed; }
         button.danger { background: #dc2626; }
         button.success { background: #16a34a; }
+        button.small { padding: 5px 10px; font-size: 12px; }
         input {
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #d1d5db;
             border-radius: 5px;
-            margin: 5px;
             font-size: 14px;
         }
-        .printer-config {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .grupo-config {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
             padding: 15px;
-            background: #f9fafb;
-            border-radius: 5px;
             margin: 10px 0;
-            flex-wrap: wrap;
+            background: #f9fafb;
         }
-        .printer-config label { font-weight: bold; min-width: 150px; }
+        .grupo-config h4 { margin: 0 0 10px 0; color: #1f2937; }
+        .grupo-config .categorias { color: #6b7280; font-size: 13px; margin-bottom: 10px; }
+        .grupo-config .ip-config { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .grupo-config .ip-config label { font-weight: 500; }
         .log-area {
             background: #1f2937;
             color: #10b981;
             padding: 15px;
             border-radius: 5px;
-            height: 200px;
+            height: 180px;
             overflow-y: auto;
             font-family: monospace;
             font-size: 12px;
         }
         .orden-card {
-            border: 1px solid #e5e7eb;
+            border: 1px solid #fbbf24;
             border-radius: 8px;
             padding: 15px;
             margin: 10px 0;
@@ -86,6 +86,7 @@
             border-radius: 5px;
             padding: 15px;
             margin: 10px 0;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -93,44 +94,43 @@
     <h1>🖨️ POS Ahora - Impresoras de Cocina</h1>
     
     <div class="info-box">
-        <strong>ℹ️ Modo Socket Directo</strong><br>
-        Esta versión envía directamente a la IP de la impresora térmica (puerto 9100) sin pasar por Windows Print Spooler.
+        <strong>ℹ️ Modo Socket Directo (IP:Puerto)</strong><br>
+        Configura la IP y puerto de cada impresora térmica. Cada grupo (Cocina, Bebidas, etc.) puede tener su propia impresora.
     </div>
 
-    <!-- Sección de Conexión QZ -->
+    <!-- QZ Tray -->
     <div class="card">
         <h3>1. Conexión QZ Tray</h3>
         <div id="qzStatus" class="status disconnected">⚪ No conectado a QZ Tray</div>
         <button onclick="connectQZ()">Conectar QZ Tray</button>
     </div>
 
-    <!-- Sección de Login -->
+    <!-- Login -->
     <div class="card">
         <h3>2. Credenciales POS Ahora</h3>
         <div>
             <input type="text" id="username" placeholder="Usuario" value="oscarcastrocantos@gmail.com" style="width: 250px;">
-            <input type="password" id="password" placeholder="Contraseña" value="oscar123">
+            <input type="password" id="password" placeholder="Contraseña" value="oscar123" style="width: 150px;">
             <button onclick="loginPOS()">Iniciar Sesión</button>
         </div>
         <div id="loginStatus" class="status disconnected">⚪ No autenticado</div>
     </div>
 
-    <!-- Sección de Impresora IP -->
+    <!-- Grupos de Impresora -->
     <div class="card">
-        <h3>3. Configurar Impresora por IP</h3>
-        <div class="printer-config">
-            <label>IP de la impresora:</label>
-            <input type="text" id="printerIP" value="192.168.1.135" placeholder="192.168.1.135" style="width: 150px;">
-            <label>Puerto:</label>
-            <input type="number" id="printerPort" value="9100" placeholder="9100" style="width: 80px;">
-            <button onclick="testDirectPrint()">🧪 Imprimir Prueba</button>
+        <h3>3. Configurar Impresoras por Grupo</h3>
+        <p style="color: #6b7280; margin-bottom: 15px;">Configura la IP y puerto de la impresora para cada grupo de cocina:</p>
+        <div id="gruposContainer">
+            <p style="color: #6b7280;">Inicia sesión para cargar los grupos...</p>
         </div>
-        <button onclick="saveIPConfig()">💾 Guardar Configuración</button>
+        <div style="margin-top: 15px;">
+            <button onclick="saveAllConfigs()">💾 Guardar Todas las Configuraciones</button>
+        </div>
     </div>
 
-    <!-- Sección de Polling -->
+    <!-- Polling -->
     <div class="card">
-        <h3>4. Servicio de Impresión</h3>
+        <h3>4. Servicio de Impresión Automática</h3>
         <button class="success" onclick="startPolling()" id="btnStart">▶️ Iniciar Servicio</button>
         <button class="danger" onclick="stopPolling()" id="btnStop" disabled>⏹️ Detener Servicio</button>
         <span id="pollingStatus" style="margin-left: 20px; color: #6b7280;">Detenido</span>
@@ -145,22 +145,19 @@
     <div class="card">
         <h3>📋 Logs</h3>
         <div id="logArea" class="log-area"></div>
-        <button onclick="document.getElementById('logArea').innerHTML = ''">Limpiar Logs</button>
+        <button onclick="document.getElementById('logArea').innerHTML = ''">Limpiar</button>
     </div>
 
     <script>
-        // Configuración
         const API_URL = 'https://pos-kitchen-print.preview.emergentagent.com';
         let token = null;
         let pollingInterval = null;
+        let printerGroups = [];
+        
+        // Cargar configuraciones guardadas {grupoId: {ip, port}}
+        let grupoConfigs = JSON.parse(localStorage.getItem('grupoConfigs') || '{}');
 
-        // Cargar configuración guardada
-        let printerIP = localStorage.getItem('printerIP') || '192.168.1.135';
-        let printerPort = localStorage.getItem('printerPort') || '9100';
-        document.getElementById('printerIP').value = printerIP;
-        document.getElementById('printerPort').value = printerPort;
-
-        // ============ CONFIGURAR SEGURIDAD QZ TRAY ============
+        // ============ SEGURIDAD QZ TRAY ============
         qz.security.setCertificatePromise(function(resolve, reject) {
             resolve("-----BEGIN CERTIFICATE-----\n" +
                 "MIIFAzCCAuugAwIBAgICEAIwDQYJKoZIhvcNAQEFBQAwgZgxCzAJBgNVBAYTAlVT\n" +
@@ -189,12 +186,11 @@
                 "2sB+FfLmJNCgPn2EQaw=\n" +
                 "-----END CERTIFICATE-----");
         });
-
         qz.security.setSignaturePromise(function(toSign) {
             return function(resolve, reject) { resolve(); };
         });
 
-        // Logging
+        // ============ LOGGING ============
         function log(message, type = 'info') {
             const logArea = document.getElementById('logArea');
             const time = new Date().toLocaleTimeString();
@@ -208,7 +204,7 @@
             try {
                 log('Conectando a QZ Tray...');
                 if (qz.websocket.isActive()) {
-                    log('Ya conectado a QZ Tray', 'success');
+                    log('✅ Ya conectado a QZ Tray', 'success');
                     updateQZStatus(true);
                     return;
                 }
@@ -243,108 +239,154 @@
                     token = data.access_token;
                     log('✅ Sesión iniciada: ' + data.user.nombre, 'success');
                     document.getElementById('loginStatus').className = 'status connected';
-                    document.getElementById('loginStatus').textContent = '🟢 Autenticado: ' + data.user.nombre;
+                    document.getElementById('loginStatus').textContent = '🟢 ' + data.user.nombre;
+                    await loadPrinterGroups();
                 } else {
-                    throw new Error(data.detail || 'Error');
+                    throw new Error(data.detail || 'Error de autenticación');
                 }
             } catch (err) {
                 log('❌ Error: ' + err.message, 'error');
             }
         }
 
-        // ============ IMPRESIÓN DIRECTA POR SOCKET ============
-        function saveIPConfig() {
-            printerIP = document.getElementById('printerIP').value;
-            printerPort = document.getElementById('printerPort').value;
-            localStorage.setItem('printerIP', printerIP);
-            localStorage.setItem('printerPort', printerPort);
-            log('✅ Configuración guardada: ' + printerIP + ':' + printerPort, 'success');
+        // ============ GRUPOS DE IMPRESORA ============
+        async function loadPrinterGroups() {
+            try {
+                // Verificar si la función está activa
+                const funcResp = await fetch(`${API_URL}/api/funciones`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const funciones = await funcResp.json();
+                
+                if (!funciones.impresoras_cocina) {
+                    document.getElementById('gruposContainer').innerHTML = 
+                        '<p style="color: #dc2626;">⚠️ Activa "Impresoras de cocina" en Configuración → Funciones del POS</p>';
+                    return;
+                }
+
+                // Cargar grupos
+                const response = await fetch(`${API_URL}/api/grupos-impresora`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                printerGroups = await response.json();
+                log('✅ Cargados ' + printerGroups.length + ' grupos de impresora', 'success');
+                renderGrupos();
+            } catch (err) {
+                log('❌ Error cargando grupos: ' + err.message, 'error');
+            }
         }
 
-        async function testDirectPrint() {
-            const ip = document.getElementById('printerIP').value;
-            const port = document.getElementById('printerPort').value;
+        function renderGrupos() {
+            const container = document.getElementById('gruposContainer');
             
+            if (printerGroups.length === 0) {
+                container.innerHTML = '<p style="color: #6b7280;">No hay grupos configurados. Ve a Configuración → Impresoras de cocina en el POS para crear grupos.</p>';
+                return;
+            }
+
+            let html = '';
+            for (const grupo of printerGroups) {
+                const config = grupoConfigs[grupo.id] || { ip: '192.168.1.135', port: '9100' };
+                const categoriasStr = grupo.categorias_nombres ? grupo.categorias_nombres.join(', ') : 'Sin categorías';
+                
+                html += `
+                    <div class="grupo-config">
+                        <h4>🖨️ ${grupo.nombre}</h4>
+                        <div class="categorias">Categorías: ${categoriasStr}</div>
+                        <div class="ip-config">
+                            <label>IP:</label>
+                            <input type="text" id="ip_${grupo.id}" value="${config.ip}" placeholder="192.168.1.x" style="width: 130px;">
+                            <label>Puerto:</label>
+                            <input type="number" id="port_${grupo.id}" value="${config.port}" placeholder="9100" style="width: 70px;">
+                            <button class="small" onclick="testGrupoPrint('${grupo.id}', '${grupo.nombre}')">🧪 Probar</button>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function saveAllConfigs() {
+            for (const grupo of printerGroups) {
+                const ip = document.getElementById('ip_' + grupo.id).value;
+                const port = document.getElementById('port_' + grupo.id).value;
+                grupoConfigs[grupo.id] = { ip, port };
+            }
+            localStorage.setItem('grupoConfigs', JSON.stringify(grupoConfigs));
+            log('✅ Configuraciones guardadas', 'success');
+        }
+
+        // ============ IMPRESIÓN ============
+        async function testGrupoPrint(grupoId, grupoNombre) {
             if (!qz.websocket.isActive()) {
                 log('❌ Primero conecta QZ Tray', 'error');
                 return;
             }
 
-            try {
-                log('Enviando prueba a ' + ip + ':' + port + '...');
-                
-                // Configurar para imprimir directamente al socket
-                const config = qz.configs.create(null, {
-                    host: ip,
-                    port: parseInt(port)
-                });
+            const ip = document.getElementById('ip_' + grupoId).value;
+            const port = document.getElementById('port_' + grupoId).value;
 
-                const testText = '\n' +
-                    '================================\n' +
-                    '    *** PRUEBA POS AHORA ***    \n' +
-                    '================================\n' +
-                    '\n' +
+            if (!ip || !port) {
+                log('❌ Configura IP y Puerto para ' + grupoNombre, 'error');
+                return;
+            }
+
+            try {
+                log('Enviando prueba a ' + grupoNombre + ' (' + ip + ':' + port + ')...');
+                
+                // Usar socket directo
+                const config = qz.configs.create({ host: ip, port: { type: 'socket', port: parseInt(port) } });
+
+                const testText = 
+                    '\n================================\n' +
+                    '  *** PRUEBA: ' + grupoNombre.toUpperCase() + ' ***\n' +
+                    '================================\n\n' +
                     'IP: ' + ip + '\n' +
                     'Puerto: ' + port + '\n' +
-                    'Fecha: ' + new Date().toLocaleString() + '\n' +
-                    '\n' +
+                    'Fecha: ' + new Date().toLocaleString() + '\n\n' +
                     'Si ves esto, la impresora\n' +
-                    'funciona correctamente!\n' +
+                    'esta configurada correctamente!\n' +
                     '\n\n\n\n';
 
-                const data = [{
-                    type: 'raw',
-                    format: 'plain',
-                    data: testText
-                }];
-
-                await qz.print(config, data);
-                log('✅ Prueba enviada correctamente!', 'success');
+                await qz.print(config, [{ type: 'raw', format: 'plain', data: testText }]);
+                log('✅ Prueba enviada a ' + grupoNombre, 'success');
             } catch (err) {
-                log('❌ Error: ' + err.message, 'error');
+                log('❌ Error en ' + grupoNombre + ': ' + err.message, 'error');
             }
         }
 
-        // Formatear ticket de cocina
-        function formatKitchenTicket(grupoNombre, orden) {
-            let text = '\n';
-            text += '================================\n';
-            text += '    *** ' + grupoNombre.toUpperCase() + ' ***\n';
-            text += '================================\n';
-            text += '\n';
+        function formatTicket(grupoNombre, orden) {
+            let text = '\n================================\n';
+            text += '  *** ' + grupoNombre.toUpperCase() + ' ***\n';
+            text += '================================\n\n';
             if (orden.mesa) text += 'Mesa: ' + orden.mesa + '\n';
             if (orden.mesero) text += 'Mesero: ' + orden.mesero + '\n';
             text += 'Hora: ' + new Date(orden.creado).toLocaleTimeString() + '\n';
             if (orden.notas) text += 'Notas: ' + orden.notas + '\n';
             text += '--------------------------------\n';
-
             for (const item of orden.items) {
                 text += item.cantidad + 'x ' + item.nombre + '\n';
                 if (item.notas) text += '   >> ' + item.notas + '\n';
             }
-
             text += '--------------------------------\n';
             text += '#' + (orden.numero || orden.ticket_id.slice(-8)) + '\n';
             text += '\n\n\n\n';
             return text;
         }
 
-        // Imprimir orden directamente
-        async function printOrden(grupoNombre, orden) {
-            const ip = document.getElementById('printerIP').value;
-            const port = document.getElementById('printerPort').value;
+        async function printOrden(grupoId, grupoNombre, orden) {
+            const config = grupoConfigs[grupoId];
+            if (!config || !config.ip || !config.port) {
+                log('⚠️ No hay impresora configurada para ' + grupoNombre, 'error');
+                return false;
+            }
 
             try {
-                const config = qz.configs.create(null, {
-                    host: ip,
-                    port: parseInt(port)
-                });
-
-                const ticketContent = formatKitchenTicket(grupoNombre, orden);
-                const data = [{ type: 'raw', format: 'plain', data: ticketContent }];
-
-                await qz.print(config, data);
-                log('✅ Impreso: ' + grupoNombre + ' - #' + (orden.numero || orden.ticket_id.slice(-8)), 'success');
+                const qzConfig = qz.configs.create({ host: config.ip, port: { type: 'socket', port: parseInt(config.port) } });
+                const ticketContent = formatTicket(grupoNombre, orden);
+                await qz.print(qzConfig, [{ type: 'raw', format: 'plain', data: ticketContent }]);
+                
+                log('✅ Impreso en ' + grupoNombre + ': #' + (orden.numero || orden.ticket_id.slice(-8)), 'success');
 
                 // Marcar como impreso
                 await fetch(`${API_URL}/api/impresion/marcar-impresa/${orden.ticket_id}`, {
@@ -353,7 +395,7 @@
                 });
                 return true;
             } catch (err) {
-                log('❌ Error imprimiendo: ' + err.message, 'error');
+                log('❌ Error imprimiendo en ' + grupoNombre + ': ' + err.message, 'error');
                 return false;
             }
         }
@@ -369,17 +411,20 @@
 
                 for (const grupo of data.grupos || []) {
                     for (const orden of grupo.ordenes || []) {
-                        await printOrden(grupo.grupo_nombre, orden);
+                        await printOrden(grupo.grupo_id, grupo.grupo_nombre, orden);
                     }
                 }
             } catch (err) {
-                log('Error polling: ' + err.message, 'error');
+                // Solo logear si es un error real, no polling vacío
+                if (err.message !== 'Failed to fetch') {
+                    log('Error: ' + err.message, 'error');
+                }
             }
         }
 
         function updateOrdenesPendientes(grupos) {
             const container = document.getElementById('ordenesPendientes');
-            if (!grupos || grupos.length === 0) {
+            if (!grupos || grupos.length === 0 || grupos.every(g => !g.ordenes || g.ordenes.length === 0)) {
                 container.innerHTML = '<p style="color: #6b7280;">Sin órdenes pendientes</p>';
                 return;
             }
@@ -388,8 +433,8 @@
                 for (const orden of grupo.ordenes || []) {
                     html += `<div class="orden-card">
                         <h4>🍳 ${grupo.grupo_nombre} - ${orden.mesa || 'Sin mesa'}</h4>
-                        <p><strong>Mesero:</strong> ${orden.mesero || 'N/A'}</p>
-                        ${orden.items.map(i => `<div>${i.cantidad}x ${i.nombre}</div>`).join('')}
+                        <p><small>Mesero: ${orden.mesero || 'N/A'} | ${new Date(orden.creado).toLocaleTimeString()}</small></p>
+                        ${orden.items.map(i => `<div>• ${i.cantidad}x ${i.nombre}</div>`).join('')}
                     </div>`;
                 }
             }
@@ -399,13 +444,16 @@
         function startPolling() {
             if (!token) { log('⚠️ Primero inicia sesión', 'error'); return; }
             if (!qz.websocket.isActive()) { log('⚠️ Primero conecta QZ Tray', 'error'); return; }
+            
+            // Guardar configs antes de iniciar
+            saveAllConfigs();
 
             pollingInterval = setInterval(checkPendingOrders, 3000);
             document.getElementById('btnStart').disabled = true;
             document.getElementById('btnStop').disabled = false;
-            document.getElementById('pollingStatus').textContent = '🟢 Corriendo';
+            document.getElementById('pollingStatus').textContent = '🟢 Activo (cada 3s)';
             document.getElementById('pollingStatus').style.color = '#16a34a';
-            log('▶️ Servicio iniciado', 'success');
+            log('▶️ Servicio de impresión iniciado', 'success');
             checkPendingOrders();
         }
 
@@ -419,7 +467,8 @@
             log('⏹️ Servicio detenido', 'success');
         }
 
-        log('Página cargada. IP configurada: ' + printerIP + ':' + printerPort);
+        // Inicialización
+        log('Página cargada. Sigue los pasos 1-4 para configurar.');
     </script>
 </body>
 </html>
