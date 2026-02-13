@@ -6509,6 +6509,7 @@ async def get_ordenes_pendientes_impresion(current_user: dict = Depends(get_curr
                 "numero": orden.get("numero", ""),
                 "mesa": orden.get("mesa"),
                 "mesero": orden.get("mesero"),
+                "cajero": orden.get("cajero"),
                 "notas": None,
                 "creado": orden.get("creado"),
                 "items": grupo_data["items"],
