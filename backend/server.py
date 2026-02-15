@@ -6124,6 +6124,7 @@ async def get_planes_publicos():
             "nombre": p["nombre"],
             "descripcion": p.get("descripcion", ""),
             "precio": p["precio"],
+            "precio_anual": p.get("precio_anual"),
             "moneda": p.get("moneda", "USD"),
             "periodo": p.get("periodo", "mensual"),
             "limite_facturas": p["limite_facturas"],
