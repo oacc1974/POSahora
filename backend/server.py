@@ -6689,6 +6689,7 @@ async def get_all_planes(current_user: dict = Depends(get_super_admin)):
             "nombre": p["nombre"],
             "descripcion": p.get("descripcion", ""),
             "precio": p["precio"],
+            "precio_anual": p.get("precio_anual"),
             "moneda": p.get("moneda", "USD"),
             "periodo": p.get("periodo", "mensual"),
             "limite_facturas": p["limite_facturas"],
