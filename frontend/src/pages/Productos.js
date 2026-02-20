@@ -648,17 +648,35 @@ export default function Productos() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {productosFiltrados.map((producto) => (
             <Card key={producto.id} data-testid={`product-card-${producto.id}`} className="p-4 hover:shadow-lg transition-shadow">
-              {/* Imagen del producto */}
-              {producto.imagen && (
-                <div className="w-full h-32 mb-3 rounded-lg overflow-hidden bg-slate-100">
+              {/* Representación Visual del producto */}
+              <div className="w-full h-32 mb-3 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center">
+                {producto.representacion_tipo === 'imagen' && producto.imagen ? (
                   <img 
-                    src={`${API_URL}${producto.imagen}`} 
+                    src={producto.imagen.startsWith('data:') ? producto.imagen : `${API_URL}${producto.imagen}`} 
                     alt={producto.nombre}
                     className="w-full h-full object-cover"
                     onError={(e) => { e.target.style.display = 'none'; }}
                   />
-                </div>
-              )}
+                ) : (
+                  <div 
+                    className={`w-20 h-20 flex items-center justify-center text-white font-bold text-xl shadow-md ${
+                      producto.representacion_forma === 'circulo' ? 'rounded-full' :
+                      producto.representacion_forma === 'estrella' ? 'rounded-lg' :
+                      producto.representacion_forma === 'hexagono' ? 'rounded-xl' : 'rounded-lg'
+                    }`}
+                    style={{ 
+                      backgroundColor: producto.representacion_color || '#F3F4F6',
+                      clipPath: producto.representacion_forma === 'estrella' 
+                        ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
+                        : producto.representacion_forma === 'hexagono'
+                        ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
+                        : 'none'
+                    }}
+                  >
+                    {producto.nombre.substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </div>
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
                   <h3 className="font-bold text-slate-900">{producto.nombre}</h3>
