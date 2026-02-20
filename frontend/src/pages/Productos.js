@@ -1338,10 +1338,14 @@ export default function Productos() {
               <Label htmlFor="nombre">Nombre *</Label>
               <Input id="nombre" value={formData.nombre} onChange={(e) => setFormData({ ...formData, nombre: e.target.value })} required />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="precio">Precio *</Label>
                 <Input id="precio" type="number" step="0.01" value={formData.precio} onChange={(e) => setFormData({ ...formData, precio: e.target.value })} required />
+              </div>
+              <div>
+                <Label htmlFor="costo">Costo</Label>
+                <Input id="costo" type="number" step="0.01" value={formData.costo} onChange={(e) => setFormData({ ...formData, costo: e.target.value })} placeholder="0.00" />
               </div>
               <div>
                 <Label htmlFor="stock">Stock *</Label>
