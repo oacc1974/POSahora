@@ -16,6 +16,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from '../components/ui/dialog';
 import { 
   Plus, Pencil, Trash2, Package, ShoppingBasket, List, Tag, 
