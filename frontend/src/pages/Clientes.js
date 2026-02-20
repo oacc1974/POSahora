@@ -280,8 +280,99 @@ export default function Clientes() {
             </Button>
           )}
         </Card>
+      ) : viewMode === 'list' ? (
+        // ============ VISTA DE LISTA ============
+        <Card className="overflow-hidden" data-testid="clientes-list-view">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Cliente</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Cédula/RUC</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Contacto</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Ubicación</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {clientesFiltrados.map((cliente) => (
+                  <tr 
+                    key={cliente.id} 
+                    data-testid={`cliente-row-${cliente.id}`}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    {/* Nombre */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Users size={18} className="text-blue-600" />
+                        </div>
+                        <span className="font-medium text-slate-900">{cliente.nombre}</span>
+                      </div>
+                    </td>
+                    {/* Cédula/RUC */}
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-slate-600 font-mono">{cliente.cedula_ruc || '-'}</span>
+                    </td>
+                    {/* Contacto */}
+                    <td className="px-4 py-3">
+                      <div className="text-sm">
+                        {cliente.email && (
+                          <div className="flex items-center gap-1 text-slate-600">
+                            <Mail size={12} />
+                            <span className="truncate max-w-[150px]">{cliente.email}</span>
+                          </div>
+                        )}
+                        {cliente.telefono && (
+                          <div className="flex items-center gap-1 text-slate-500">
+                            <Phone size={12} />
+                            <span>{cliente.telefono}</span>
+                          </div>
+                        )}
+                        {!cliente.email && !cliente.telefono && <span className="text-slate-400">-</span>}
+                      </div>
+                    </td>
+                    {/* Ubicación */}
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-slate-600">
+                        {[cliente.ciudad, cliente.region].filter(Boolean).join(', ') || '-'}
+                      </span>
+                    </td>
+                    {/* Acciones */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button 
+                          onClick={() => openDialog(cliente)} 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          title="Editar"
+                        >
+                          <Pencil size={14} />
+                        </Button>
+                        <Button 
+                          onClick={() => handleDelete(cliente.id)} 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          title="Eliminar"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-3 bg-slate-50 border-t text-sm text-slate-600">
+            Mostrando {clientesFiltrados.length} cliente(s)
+          </div>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        // ============ VISTA DE TARJETAS ============
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6" data-testid="clientes-grid-view">
           {clientesFiltrados.map((cliente) => (
             <Card
               key={cliente.id}
