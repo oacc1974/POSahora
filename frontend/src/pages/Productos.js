@@ -1145,7 +1145,7 @@ export default function Productos() {
                       {[
                         { forma: 'cuadrado', icon: '⬜', name: 'Cuadrado' },
                         { forma: 'circulo', icon: '⚪', name: 'Círculo' },
-                        { forma: 'estrella', icon: '⭐', name: 'Estrella' },
+                        { forma: 'pentagono', icon: '⬠', name: 'Pentágono' },
                         { forma: 'hexagono', icon: '⬡', name: 'Hexágono' },
                       ].map((f) => (
                         <button
