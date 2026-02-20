@@ -4508,15 +4508,31 @@ async def importar_productos(
     creados = 0
     actualizados = 0
     errores = []
+    detalles_actualizados = []
+    detalles_creados = []
+    
+    # Mapeo de columnas alternativas (para diferentes formatos de CSV)
+    def get_value(row, *keys):
+        for key in keys:
+            if key in row and row[key]:
+                return row[key]
+        return ""
     
     for i, row in enumerate(rows):
         try:
-            nombre = row.get("Nombre", "").strip()
+            # Soportar diferentes nombres de columnas
+            nombre = get_value(row, "Nombre", "nombre", "Name", "NOMBRE", "Producto", "producto").strip()
             if not nombre:
                 continue
             
-            codigo_barras = row.get("Codigo_Barras", "").strip()
-            categoria_nombre = row.get("Categoria", "").strip()
+            codigo_barras = get_value(row, "Codigo_Barras", "codigo_barras", "CodigoBarras", "Barcode", "SKU", "REF", "Ref").strip()
+            categoria_nombre = get_value(row, "Categoria", "categoria", "Category", "CATEGORIA").strip()
+            descripcion = get_value(row, "Descripcion", "descripcion", "Description", "DESCRIPCION").strip()
+            precio_str = get_value(row, "Precio", "precio", "Price", "PRECIO", "Precio de venta")
+            stock_str = get_value(row, "Stock", "stock", "Cantidad", "cantidad", "STOCK")
+            color = get_value(row, "Color", "color", "COLOR").strip() or "#F3F4F6"
+            forma = get_value(row, "Forma", "forma", "Shape", "FORMA").strip().lower() or "cuadrado"
+            activo_str = get_value(row, "Activo", "activo", "Active", "ACTIVO") or "Y"
             
             # Buscar categoría o crearla
             categoria_id = None
@@ -4538,21 +4554,21 @@ async def importar_productos(
             
             # Precio
             try:
-                precio = float(row.get("Precio", "0").replace(",", "."))
+                precio = float(precio_str.replace(",", ".").replace("$", "").strip()) if precio_str else 0.0
             except:
                 precio = 0.0
             
             # Stock
             try:
-                stock = int(float(row.get("Stock", "0")))
+                stock = int(float(stock_str)) if stock_str else 0
             except:
                 stock = 0
             
-            # Representación visual
-            color = row.get("Color", "#F3F4F6").strip()
+            # Validar color
             if not color.startswith("#"):
                 color = "#F3F4F6"
-            forma = row.get("Forma", "cuadrado").strip().lower()
+            
+            # Validar forma
             if forma not in ["cuadrado", "circulo", "pentagono", "hexagono"]:
                 forma = "cuadrado"
             
@@ -4561,13 +4577,13 @@ async def importar_productos(
                 "nombre": nombre,
                 "precio": precio,
                 "codigo_barras": codigo_barras,
-                "descripcion": row.get("Descripcion", "").strip(),
+                "descripcion": descripcion,
                 "stock": stock,
                 "categoria": categoria_id,
                 "representacion_tipo": "color_forma",
                 "representacion_color": color,
                 "representacion_forma": forma,
-                "activo": row.get("Activo", "Y").upper() == "Y"
+                "activo": activo_str.upper() in ["Y", "SI", "YES", "1", "TRUE"]
             }
             
             # Verificar si existe por código de barras o nombre
@@ -4578,12 +4594,33 @@ async def importar_productos(
                 producto_existente = productos_por_nombre[nombre.lower()]
             
             if producto_existente:
+                # Detectar cambios
+                cambios = []
+                if producto_existente.get("precio") != precio:
+                    cambios.append(f"Precio: ${producto_existente.get('precio', 0):.2f} → ${precio:.2f}")
+                if producto_existente.get("stock") != stock:
+                    cambios.append(f"Stock: {producto_existente.get('stock', 0)} → {stock}")
+                if producto_existente.get("descripcion", "") != descripcion:
+                    cambios.append("Descripción actualizada")
+                if producto_existente.get("categoria") != categoria_id:
+                    cambios.append(f"Categoría: {categoria_nombre}")
+                if producto_existente.get("representacion_color") != color:
+                    cambios.append(f"Color: {color}")
+                if producto_existente.get("representacion_forma") != forma:
+                    cambios.append(f"Forma: {forma}")
+                
                 # Actualizar
                 await db.productos.update_one(
                     {"_id": producto_existente["_id"]},
                     {"$set": producto_data}
                 )
                 actualizados += 1
+                
+                if cambios:
+                    detalles_actualizados.append({
+                        "nombre": nombre,
+                        "cambios": cambios
+                    })
             else:
                 # Crear nuevo
                 puede, mensaje, _, _ = await verificar_limite_plan(current_user["organizacion_id"], "productos")
@@ -4599,6 +4636,11 @@ async def importar_productos(
                 
                 await db.productos.insert_one(producto_data)
                 creados += 1
+                detalles_creados.append({
+                    "nombre": nombre,
+                    "precio": precio,
+                    "categoria": categoria_nombre
+                })
                 
                 # Agregar al mapa para evitar duplicados en el mismo import
                 productos_por_nombre[nombre.lower()] = producto_data
@@ -4612,7 +4654,9 @@ async def importar_productos(
         "message": f"Importación completada: {creados} creados, {actualizados} actualizados",
         "creados": creados,
         "actualizados": actualizados,
-        "errores": errores[:10]  # Solo los primeros 10 errores
+        "errores": errores[:10],
+        "detalles_creados": detalles_creados[:20],
+        "detalles_actualizados": detalles_actualizados[:20]
     }
 
 # ============ ENDPOINTS CATEGORÍAS ============
