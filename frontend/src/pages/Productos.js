@@ -55,6 +55,7 @@ export default function Productos() {
   // Estado de búsqueda
   const [busqueda, setBusqueda] = useState('');
   const [showBusqueda, setShowBusqueda] = useState(false);
+  const [categoriaFiltro, setCategoriaFiltro] = useState('todas');
   
   // Estados para Productos
   const [productos, setProductos] = useState([]);
@@ -75,6 +76,12 @@ export default function Productos() {
     representacion_forma: 'cuadrado',
   });
   const [uploadingImage, setUploadingImage] = useState(false);
+  
+  // Estados para importar/exportar
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importando, setImportando] = useState(false);
+  const [exportando, setExportando] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Estados para escáner de código de barras
   const [showScanner, setShowScanner] = useState(false);
