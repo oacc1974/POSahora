@@ -18,6 +18,17 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ## Funcionalidades Implementadas
 
+### Completadas (20 Febrero 2026)
+
+- [x] **VISTA DE LISTA PARA PRODUCTOS - COMPLETADO**
+  - **Botones de alternar vista:** Toggle entre vista de tarjetas (grid) y vista de lista (tabla) en la página de productos
+  - **Vista de lista compacta:** Tabla con columnas Producto, Categoría, Precio, Costo, Stock, Acciones
+  - **Mini representación visual:** Cada fila muestra el color/forma o imagen miniatura del producto
+  - **Acciones rápidas:** Botones de editar y eliminar en cada fila
+  - **Contador:** Muestra "Mostrando X producto(s)" al pie de la tabla
+  - **Nuevo campo Costo:** Agregado campo "Costo" al modelo de producto y al formulario (Precio, Costo, Stock en una fila)
+  - **Archivos modificados:** `Productos.js`, `server.py`
+
 ### Completadas (30 Enero 2026)
 
 - [x] **MEJORAS P0 - IMPRESIÓN Y DATOS DE CLIENTE - COMPLETADO**
