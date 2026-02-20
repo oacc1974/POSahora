@@ -59,6 +59,9 @@ export default function Productos() {
   const [showBusqueda, setShowBusqueda] = useState(false);
   const [categoriaFiltro, setCategoriaFiltro] = useState('todas');
   
+  // Estado del modo de vista (tarjetas o lista)
+  const [viewMode, setViewMode] = useState('card'); // 'card' | 'list'
+  
   // Estados para Productos
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
