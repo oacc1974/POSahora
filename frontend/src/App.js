@@ -35,6 +35,10 @@ import SuscripcionExito from './pages/SuscripcionExito';
 import ConfigFunciones from './pages/config/ConfigFunciones';
 import ConfigImpresorasCocina from './pages/config/ConfigImpresorasCocina';
 
+// Importar páginas de recuperación de contraseña
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 function AuthChecker() {
