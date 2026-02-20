@@ -186,6 +186,7 @@ export default function Productos() {
       const data = {
         ...formData,
         precio: parseFloat(formData.precio),
+        costo: parseFloat(formData.costo) || 0,
         stock: parseInt(formData.stock),
       };
 
