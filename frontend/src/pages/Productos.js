@@ -70,6 +70,7 @@ export default function Productos() {
   const [formData, setFormData] = useState({
     nombre: '',
     precio: '',
+    costo: '',
     codigo_barras: '',
     descripcion: '',
     stock: '',
