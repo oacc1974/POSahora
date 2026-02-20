@@ -2516,7 +2516,7 @@ export default function POS() {
                   className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden cursor-pointer hover:shadow-lg hover:border-blue-400 transition-all group"
                 >
                   {/* Representación visual del producto */}
-                  <div className="aspect-square relative overflow-hidden flex items-center justify-center">
+                  <div className="aspect-square relative overflow-hidden flex items-center justify-center bg-slate-100">
                     {producto.representacion_tipo === 'imagen' && producto.imagen ? (
                       <>
                         <img 
@@ -2531,51 +2531,40 @@ export default function POS() {
                       </>
                     ) : (
                       <>
-                        {/* Forma con color */}
-                        <div 
-                          className={`w-full h-full flex items-center justify-center ${
-                            producto.representacion_forma === 'circulo' ? '' :
-                            producto.representacion_forma === 'estrella' ? '' :
-                            producto.representacion_forma === 'hexagono' ? '' : ''
-                          }`}
-                          style={{ 
-                            backgroundColor: producto.representacion_color || '#F3F4F6',
-                          }}
-                        >
-                          {/* Forma interior */}
-                          {producto.representacion_forma === 'estrella' && (
-                            <div 
-                              className="w-3/4 h-3/4"
-                              style={{
-                                backgroundColor: producto.representacion_color || '#F3F4F6',
-                                clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-                                filter: 'brightness(0.9)'
-                              }}
-                            />
-                          )}
-                          {producto.representacion_forma === 'hexagono' && (
-                            <div 
-                              className="w-3/4 h-3/4"
-                              style={{
-                                backgroundColor: producto.representacion_color || '#F3F4F6',
-                                clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-                                filter: 'brightness(0.9)'
-                              }}
-                            />
-                          )}
-                          {producto.representacion_forma === 'circulo' && (
-                            <div 
-                              className="w-3/4 h-3/4 rounded-full"
-                              style={{
-                                backgroundColor: producto.representacion_color || '#F3F4F6',
-                                filter: 'brightness(0.9)'
-                              }}
-                            />
-                          )}
-                        </div>
-                        {/* Nombre sobre la forma */}
-                        <div className="absolute bottom-0 left-0 right-0 p-2 text-center">
-                          <p className="text-slate-800 text-sm font-bold drop-shadow-sm truncate">{producto.nombre}</p>
+                        {/* Solo la figura con color */}
+                        {producto.representacion_forma === 'cuadrado' && (
+                          <div 
+                            className="w-3/5 h-3/5 rounded-lg shadow-md"
+                            style={{ backgroundColor: producto.representacion_color || '#F3F4F6' }}
+                          />
+                        )}
+                        {producto.representacion_forma === 'circulo' && (
+                          <div 
+                            className="w-3/5 h-3/5 rounded-full shadow-md"
+                            style={{ backgroundColor: producto.representacion_color || '#F3F4F6' }}
+                          />
+                        )}
+                        {producto.representacion_forma === 'estrella' && (
+                          <div 
+                            className="w-3/5 h-3/5 shadow-md"
+                            style={{
+                              backgroundColor: producto.representacion_color || '#F3F4F6',
+                              clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
+                            }}
+                          />
+                        )}
+                        {producto.representacion_forma === 'hexagono' && (
+                          <div 
+                            className="w-3/5 h-3/5 shadow-md"
+                            style={{
+                              backgroundColor: producto.representacion_color || '#F3F4F6',
+                              clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
+                            }}
+                          />
+                        )}
+                        {/* Nombre debajo de la forma */}
+                        <div className="absolute bottom-0 left-0 right-0 p-2 text-center bg-white/80">
+                          <p className="text-slate-800 text-sm font-bold truncate">{producto.nombre}</p>
                         </div>
                       </>
                     )}
