@@ -160,6 +160,17 @@ export default function Login({ onLogin }) {
             >
               {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>
+            
+            {/* Enlace de recuperación de contraseña */}
+            <div className="text-center mt-3">
+              <a 
+                href="/forgot-password" 
+                className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                data-testid="forgot-password-link"
+              >
+                ¿Olvidaste tu contraseña?
+              </a>
+            </div>
           </form>
 
           <div className="mt-6">
