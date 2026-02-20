@@ -242,6 +242,7 @@ export default function Productos() {
       setFormData({
         nombre: product.nombre,
         precio: product.precio.toString(),
+        costo: (product.costo || 0).toString(),
         codigo_barras: product.codigo_barras || '',
         descripcion: product.descripcion || '',
         stock: product.stock.toString(),
@@ -263,6 +264,7 @@ export default function Productos() {
     setFormData({
       nombre: '',
       precio: '',
+      costo: '',
       codigo_barras: '',
       descripcion: '',
       stock: '',
