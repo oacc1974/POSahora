@@ -1837,6 +1837,151 @@ async def verificar_sesion(request: Request, current_user: dict = Depends(get_cu
     
     return {"valida": True}
 
+# ============ RECUPERACIÓN DE CONTRASEÑA ============
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
+
+@app.post("/api/auth/forgot-password")
+async def forgot_password(request: PasswordResetRequest):
+    """Solicita un enlace de recuperación de contraseña"""
+    # Buscar usuario por email (solo propietarios)
+    usuario = await db.usuarios.find_one({
+        "username": request.email,
+        "rol": "propietario"
+    })
+    
+    # Siempre devolver éxito (seguridad: no revelar si el email existe)
+    if not usuario:
+        return {"message": "Si el email existe, recibirás un enlace de recuperación"}
+    
+    # Generar token único
+    reset_token = secrets.token_urlsafe(32)
+    expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    # Guardar token en la base de datos
+    await db.password_resets.delete_many({"email": request.email})  # Eliminar tokens anteriores
+    await db.password_resets.insert_one({
+        "email": request.email,
+        "token": reset_token,
+        "expiry": expiry.isoformat(),
+        "used": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Obtener URL base del frontend
+    frontend_url = os.environ.get('FRONTEND_URL', 'https://posapp-ecuador.preview.emergentagent.com')
+    reset_link = f"{frontend_url}/reset-password?token={reset_token}"
+    
+    # Enviar email
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">POS Ahora</h1>
+        </div>
+        <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
+            <h2 style="color: #1f2937; margin-top: 0;">Recuperar Contraseña</h2>
+            <p style="color: #4b5563; line-height: 1.6;">
+                Hemos recibido una solicitud para restablecer la contraseña de tu cuenta.
+            </p>
+            <p style="color: #4b5563; line-height: 1.6;">
+                Haz clic en el siguiente botón para crear una nueva contraseña:
+            </p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{reset_link}" 
+                   style="background: #3B82F6; color: white; padding: 14px 32px; text-decoration: none; 
+                          border-radius: 8px; font-weight: bold; display: inline-block;">
+                    Restablecer Contraseña
+                </a>
+            </div>
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.5;">
+                Este enlace expirará en <strong>1 hora</strong>.
+            </p>
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.5;">
+                Si no solicitaste este cambio, puedes ignorar este mensaje.
+            </p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                Este correo fue enviado automáticamente. Por favor no respondas a este mensaje.
+            </p>
+        </div>
+    </div>
+    """
+    
+    try:
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [request.email],
+            "subject": "Recuperar contraseña - POS Ahora",
+            "html": html_content
+        }
+        await asyncio.to_thread(resend.Emails.send, params)
+    except Exception as e:
+        print(f"Error enviando email: {e}")
+        # No revelar el error al usuario
+    
+    return {"message": "Si el email existe, recibirás un enlace de recuperación"}
+
+@app.post("/api/auth/reset-password")
+async def reset_password(request: PasswordResetConfirm):
+    """Restablece la contraseña usando el token de recuperación"""
+    # Buscar token válido
+    reset_data = await db.password_resets.find_one({
+        "token": request.token,
+        "used": False
+    })
+    
+    if not reset_data:
+        raise HTTPException(status_code=400, detail="Token inválido o ya utilizado")
+    
+    # Verificar expiración
+    expiry = datetime.fromisoformat(reset_data["expiry"].replace('Z', '+00:00'))
+    if datetime.now(timezone.utc) > expiry:
+        raise HTTPException(status_code=400, detail="El enlace ha expirado. Solicita uno nuevo.")
+    
+    # Validar contraseña
+    if len(request.new_password) < 6:
+        raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 6 caracteres")
+    
+    # Actualizar contraseña del usuario
+    hashed_password = pwd_context.hash(request.new_password)
+    result = await db.usuarios.update_one(
+        {"username": reset_data["email"]},
+        {"$set": {"password": hashed_password}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="No se pudo actualizar la contraseña")
+    
+    # Marcar token como usado
+    await db.password_resets.update_one(
+        {"token": request.token},
+        {"$set": {"used": True, "used_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Contraseña actualizada correctamente"}
+
+@app.get("/api/auth/verify-reset-token/{token}")
+async def verify_reset_token(token: str):
+    """Verifica si un token de recuperación es válido"""
+    reset_data = await db.password_resets.find_one({
+        "token": token,
+        "used": False
+    })
+    
+    if not reset_data:
+        return {"valid": False, "message": "Token inválido o ya utilizado"}
+    
+    expiry = datetime.fromisoformat(reset_data["expiry"].replace('Z', '+00:00'))
+    if datetime.now(timezone.utc) > expiry:
+        return {"valid": False, "message": "El enlace ha expirado"}
+    
+    return {"valid": True, "email": reset_data["email"]}
+
 @app.get("/api/config")
 async def get_config(current_user: dict = Depends(get_current_user)):
     config = await db.configuraciones.find_one({"_id": current_user["organizacion_id"]})
