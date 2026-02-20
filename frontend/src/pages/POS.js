@@ -2513,30 +2513,80 @@ export default function POS() {
                   key={producto.id}
                   data-testid={`pos-product-${producto.id}`}
                   onClick={(e) => handleProductoClick(producto, e)}
-                  className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden cursor-pointer hover:shadow-md hover:border-blue-400 transition-all group"
+                  className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden cursor-pointer hover:shadow-lg hover:border-blue-400 transition-all group"
                 >
-                  {/* Imagen del producto */}
-                  <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center relative overflow-hidden">
-                    {producto.imagen ? (
-                      <img 
-                        src={producto.imagen} 
-                        alt={producto.nombre}
-                        className="w-full h-full object-cover"
-                      />
+                  {/* Representación visual del producto */}
+                  <div className="aspect-square relative overflow-hidden flex items-center justify-center">
+                    {producto.representacion_tipo === 'imagen' && producto.imagen ? (
+                      <>
+                        <img 
+                          src={producto.imagen.startsWith('http') || producto.imagen.startsWith('data:') ? producto.imagen : `${API_URL}${producto.imagen}`} 
+                          alt={producto.nombre}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Nombre sobre la imagen */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                          <p className="text-white text-sm font-semibold truncate">{producto.nombre}</p>
+                        </div>
+                      </>
                     ) : (
-                      <span className="text-3xl font-bold text-slate-300">
-                        {producto.nombre.charAt(0).toUpperCase()}
-                      </span>
+                      <>
+                        {/* Forma con color */}
+                        <div 
+                          className={`w-full h-full flex items-center justify-center ${
+                            producto.representacion_forma === 'circulo' ? '' :
+                            producto.representacion_forma === 'estrella' ? '' :
+                            producto.representacion_forma === 'hexagono' ? '' : ''
+                          }`}
+                          style={{ 
+                            backgroundColor: producto.representacion_color || '#F3F4F6',
+                          }}
+                        >
+                          {/* Forma interior */}
+                          {producto.representacion_forma === 'estrella' && (
+                            <div 
+                              className="w-3/4 h-3/4"
+                              style={{
+                                backgroundColor: producto.representacion_color || '#F3F4F6',
+                                clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+                                filter: 'brightness(0.9)'
+                              }}
+                            />
+                          )}
+                          {producto.representacion_forma === 'hexagono' && (
+                            <div 
+                              className="w-3/4 h-3/4"
+                              style={{
+                                backgroundColor: producto.representacion_color || '#F3F4F6',
+                                clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+                                filter: 'brightness(0.9)'
+                              }}
+                            />
+                          )}
+                          {producto.representacion_forma === 'circulo' && (
+                            <div 
+                              className="w-3/4 h-3/4 rounded-full"
+                              style={{
+                                backgroundColor: producto.representacion_color || '#F3F4F6',
+                                filter: 'brightness(0.9)'
+                              }}
+                            />
+                          )}
+                        </div>
+                        {/* Nombre sobre la forma */}
+                        <div className="absolute bottom-0 left-0 right-0 p-2 text-center">
+                          <p className="text-slate-800 text-sm font-bold drop-shadow-sm truncate">{producto.nombre}</p>
+                        </div>
+                      </>
                     )}
-                    {producto.stock <= 5 && (
-                      <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] px-1 rounded">
+                    {producto.stock <= 5 && producto.stock >= 0 && (
+                      <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                         Bajo stock
                       </span>
                     )}
                   </div>
-                  {/* Info del producto */}
-                  <div className="p-2 bg-slate-800 text-white">
-                    <p className="text-xs font-medium truncate">{producto.nombre}</p>
+                  {/* Precio */}
+                  <div className="p-2 bg-slate-800 text-white text-center">
                     <p className="text-sm font-bold text-blue-400">${producto.precio.toFixed(2)}</p>
                   </div>
                 </div>
