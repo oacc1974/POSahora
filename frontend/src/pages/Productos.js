@@ -69,6 +69,9 @@ export default function Productos() {
     categoria: '',
     modificadores_activos: [],
     imagen: '',
+    representacion_tipo: 'color_forma',
+    representacion_color: '#F3F4F6',
+    representacion_forma: 'cuadrado',
   });
   const [uploadingImage, setUploadingImage] = useState(false);
 
