@@ -2544,12 +2544,12 @@ export default function POS() {
                             style={{ backgroundColor: producto.representacion_color || '#F3F4F6' }}
                           />
                         )}
-                        {producto.representacion_forma === 'estrella' && (
+                        {producto.representacion_forma === 'pentagono' && (
                           <div 
                             className="w-3/5 h-3/5 shadow-md"
                             style={{
                               backgroundColor: producto.representacion_color || '#F3F4F6',
-                              clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
+                              clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)'
                             }}
                           />
                         )}
