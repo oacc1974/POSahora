@@ -20,6 +20,13 @@ Sistema de Punto de Venta (POS) multi-tenant con las siguientes características
 
 ### Completadas (20 Febrero 2026)
 
+- [x] **RECUPERACIÓN DE CONTRASEÑA POR EMAIL - COMPLETADO**
+  - **Backend:** Endpoints `/api/auth/forgot-password`, `/api/auth/reset-password`, `/api/auth/verify-reset-token`
+  - **Frontend:** Páginas `ForgotPassword.js` y `ResetPassword.js`
+  - **Email:** Integración con Resend para envío de enlaces de recuperación
+  - **Seguridad:** Tokens con expiración de 1 hora, single-use
+  - **REQUIERE:** Configurar `RESEND_API_KEY` en producción (ver instrucciones abajo)
+
 - [x] **VISTA DE LISTA PARA PRODUCTOS, CLIENTES Y EMPLEADOS - COMPLETADO**
   - **Productos:** Vista de lista por defecto con columnas Producto, Categoría, Precio, Costo, Stock, Acciones
   - **Clientes:** Toggle vista tarjetas/lista (tarjetas por defecto) con columnas Cliente, Cédula/RUC, Contacto, Ubicación, Acciones
