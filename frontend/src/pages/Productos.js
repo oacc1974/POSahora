@@ -1017,52 +1017,166 @@ export default function Productos() {
               <Input id="descripcion" value={formData.descripcion} onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })} />
             </div>
 
-            {/* Imagen del producto */}
-            <div>
-              <Label>Imagen del Producto</Label>
-              <div className="mt-2 space-y-3">
-                {formData.imagen && (
-                  <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-slate-200">
-                    <img 
-                      src={`${API_URL}${formData.imagen}`} 
-                      alt="Preview" 
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, imagen: '' }))}
-                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                )}
-                <div className="flex items-center gap-3">
-                  <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/gif,image/webp"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      disabled={uploadingImage}
-                    />
-                    <div className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${uploadingImage ? 'bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700'}`}>
-                      {uploadingImage ? (
-                        <>
-                          <span className="animate-spin">⏳</span>
-                          Subiendo...
-                        </>
-                      ) : (
-                        <>
-                          <Plus size={16} />
-                          {formData.imagen ? 'Cambiar imagen' : 'Subir imagen'}
-                        </>
-                      )}
-                    </div>
-                  </label>
-                  <span className="text-xs text-slate-500">JPG, PNG, GIF o WebP (máx. 5MB)</span>
-                </div>
+            {/* Representación Visual del Producto */}
+            <div className="border-t pt-4">
+              <Label className="text-base font-semibold mb-3 block">Representación Visual</Label>
+              
+              {/* Toggle Tipo de Representación */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, representacion_tipo: 'color_forma', imagen: '' }))}
+                  className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${
+                    formData.representacion_tipo === 'color_forma'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  🎨 Color y Forma
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, representacion_tipo: 'imagen' }))}
+                  className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${
+                    formData.representacion_tipo === 'imagen'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  📷 Imagen
+                </button>
               </div>
+
+              {/* Opción: Color y Forma */}
+              {formData.representacion_tipo === 'color_forma' && (
+                <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                  {/* Preview */}
+                  <div className="flex justify-center">
+                    <div 
+                      className={`w-24 h-24 flex items-center justify-center text-white font-bold text-lg shadow-md ${
+                        formData.representacion_forma === 'circulo' ? 'rounded-full' :
+                        formData.representacion_forma === 'estrella' ? 'rounded-lg' :
+                        formData.representacion_forma === 'hexagono' ? 'rounded-xl' : 'rounded-lg'
+                      }`}
+                      style={{ 
+                        backgroundColor: formData.representacion_color,
+                        clipPath: formData.representacion_forma === 'estrella' 
+                          ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
+                          : formData.representacion_forma === 'hexagono'
+                          ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
+                          : 'none'
+                      }}
+                    >
+                      {formData.nombre ? formData.nombre.substring(0, 2).toUpperCase() : 'AB'}
+                    </div>
+                  </div>
+                  
+                  {/* Selector de Color */}
+                  <div>
+                    <Label className="text-sm mb-2 block">Color</Label>
+                    <div className="grid grid-cols-9 gap-2">
+                      {[
+                        { color: '#F3F4F6', name: 'Blanco' },
+                        { color: '#FCA5A5', name: 'Rosa claro' },
+                        { color: '#F9A8D4', name: 'Rosa' },
+                        { color: '#FDBA74', name: 'Naranja' },
+                        { color: '#FDE047', name: 'Amarillo' },
+                        { color: '#BBF7D0', name: 'Verde' },
+                        { color: '#93C5FD', name: 'Azul' },
+                        { color: '#DDD6FE', name: 'Lila' },
+                        { color: '#E879F9', name: 'Morado' },
+                      ].map((c) => (
+                        <button
+                          key={c.color}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, representacion_color: c.color }))}
+                          className={`w-8 h-8 rounded-full border-2 transition-all ${
+                            formData.representacion_color === c.color 
+                              ? 'border-blue-500 scale-110 shadow-lg' 
+                              : 'border-slate-300 hover:scale-105'
+                          }`}
+                          style={{ backgroundColor: c.color }}
+                          title={c.name}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Selector de Forma */}
+                  <div>
+                    <Label className="text-sm mb-2 block">Forma</Label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { forma: 'cuadrado', icon: '⬜', name: 'Cuadrado' },
+                        { forma: 'circulo', icon: '⚪', name: 'Círculo' },
+                        { forma: 'estrella', icon: '⭐', name: 'Estrella' },
+                        { forma: 'hexagono', icon: '⬡', name: 'Hexágono' },
+                      ].map((f) => (
+                        <button
+                          key={f.forma}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, representacion_forma: f.forma }))}
+                          className={`py-2 px-3 rounded-lg border-2 flex items-center justify-center gap-2 transition-all ${
+                            formData.representacion_forma === f.forma 
+                              ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                              : 'border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <span className="text-xl">{f.icon}</span>
+                          <span className="text-sm">{f.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Opción: Imagen */}
+              {formData.representacion_tipo === 'imagen' && (
+                <div className="space-y-3 p-4 bg-slate-50 rounded-lg">
+                  {formData.imagen && (
+                    <div className="relative w-32 h-32 mx-auto rounded-lg overflow-hidden border border-slate-200">
+                      <img 
+                        src={formData.imagen.startsWith('data:') ? formData.imagen : `${API_URL}${formData.imagen}`} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, imagen: '' }))}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center gap-3">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={uploadingImage}
+                      />
+                      <div className={`px-4 py-2 border rounded-lg flex items-center gap-2 ${uploadingImage ? 'bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700'}`}>
+                        {uploadingImage ? (
+                          <>
+                            <span className="animate-spin">⏳</span>
+                            Subiendo...
+                          </>
+                        ) : (
+                          <>
+                            <Camera size={16} />
+                            {formData.imagen ? 'Cambiar imagen' : 'Subir imagen'}
+                          </>
+                        )}
+                      </div>
+                    </label>
+                    <span className="text-xs text-slate-500">JPG, PNG, GIF o WebP (máx. 5MB)</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Sección de Modificadores */}
