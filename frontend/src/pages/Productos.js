@@ -809,38 +809,68 @@ export default function Productos() {
         </div>
       </div>
 
-      {/* Filtro por categoría */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        <button
-          onClick={() => setCategoriaFiltro('todas')}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-            categoriaFiltro === 'todas'
-              ? 'bg-blue-500 text-white'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          Todas ({productos.length})
-        </button>
-        {categorias.map((cat) => {
-          const count = productos.filter(p => p.categoria === cat.id).length;
-          return (
-            <button
-              key={cat.id}
-              onClick={() => setCategoriaFiltro(cat.id)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${
-                categoriaFiltro === cat.id
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <span 
-                className="w-2 h-2 rounded-full" 
-                style={{ backgroundColor: cat.color }}
-              />
-              {cat.nombre} ({count})
-            </button>
-          );
-        })}
+      {/* Filtro por categoría y selector de vista */}
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setCategoriaFiltro('todas')}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+              categoriaFiltro === 'todas'
+                ? 'bg-blue-500 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Todas ({productos.length})
+          </button>
+          {categorias.map((cat) => {
+            const count = productos.filter(p => p.categoria === cat.id).length;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setCategoriaFiltro(cat.id)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${
+                  categoriaFiltro === cat.id
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <span 
+                  className="w-2 h-2 rounded-full" 
+                  style={{ backgroundColor: cat.color }}
+                />
+                {cat.nombre} ({count})
+              </button>
+            );
+          })}
+        </div>
+        
+        {/* Selector de vista */}
+        <div className="flex border rounded-lg overflow-hidden" data-testid="view-mode-toggle">
+          <button
+            onClick={() => setViewMode('card')}
+            className={`p-2 transition-all ${
+              viewMode === 'card'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-50'
+            }`}
+            title="Vista de tarjetas"
+            data-testid="view-mode-card"
+          >
+            <LayoutGrid size={18} />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-2 transition-all ${
+              viewMode === 'list'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-50'
+            }`}
+            title="Vista de lista"
+            data-testid="view-mode-list"
+          >
+            <LayoutList size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Indicador de búsqueda */}
