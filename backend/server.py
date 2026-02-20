@@ -364,6 +364,10 @@ class ProductCreate(BaseModel):
     categoria: Optional[str] = None
     modificadores_activos: Optional[List[str]] = []
     imagen: Optional[str] = None
+    # Representación visual (color y forma)
+    representacion_tipo: Optional[str] = "color_forma"  # "color_forma" o "imagen"
+    representacion_color: Optional[str] = "#F3F4F6"  # Color hex
+    representacion_forma: Optional[str] = "cuadrado"  # cuadrado, circulo, estrella, hexagono
 
 class ProductResponse(BaseModel):
     id: str
@@ -378,6 +382,10 @@ class ProductResponse(BaseModel):
     imagen: Optional[str] = None
     organizacion_id: str
     creado: str
+    # Representación visual
+    representacion_tipo: Optional[str] = "color_forma"
+    representacion_color: Optional[str] = "#F3F4F6"
+    representacion_forma: Optional[str] = "cuadrado"
 
 class InvoiceItem(BaseModel):
     producto_id: str
