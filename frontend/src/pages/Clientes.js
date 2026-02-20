@@ -172,6 +172,34 @@ export default function Clientes() {
           <p className="text-slate-600">Gestiona tu cartera de clientes</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Selector de vista */}
+          <div className="flex border rounded-lg overflow-hidden" data-testid="view-mode-toggle">
+            <button
+              onClick={() => setViewMode('card')}
+              className={`p-2 transition-all ${
+                viewMode === 'card'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-white text-slate-600 hover:bg-slate-50'
+              }`}
+              title="Vista de tarjetas"
+              data-testid="view-mode-card"
+            >
+              <LayoutGrid size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 transition-all ${
+                viewMode === 'list'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-white text-slate-600 hover:bg-slate-50'
+              }`}
+              title="Vista de lista"
+              data-testid="view-mode-list"
+            >
+              <LayoutList size={18} />
+            </button>
+          </div>
+          
           {/* Buscador */}
           {showBusqueda ? (
             <div className="flex items-center gap-2">
