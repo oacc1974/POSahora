@@ -361,40 +361,39 @@ export default function Productos() {
     setImportando(true);
     try {
       const text = await file.text();
-      const lines = text.split('\n').filter(line => line.trim());
+      const lines = text.split(/\r?\n/).filter(line => line.trim());
       
       if (lines.length < 2) {
         toast.error('El archivo está vacío o no tiene datos');
+        setImportando(false);
         return;
       }
       
-      // Parsear headers
-      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      // Parsear headers - soportar diferentes separadores
+      const separator = lines[0].includes(';') ? ';' : ',';
+      const headers = parseCSVLine(lines[0], separator);
+      
+      console.log('Headers encontrados:', headers);
       
       // Parsear filas
       const rows = [];
       for (let i = 1; i < lines.length; i++) {
-        const values = [];
-        let current = '';
-        let inQuotes = false;
+        if (!lines[i].trim()) continue;
         
-        for (const char of lines[i]) {
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
-            values.push(current.trim());
-            current = '';
-          } else {
-            current += char;
-          }
-        }
-        values.push(current.trim());
-        
+        const values = parseCSVLine(lines[i], separator);
         const row = {};
         headers.forEach((h, idx) => {
-          row[h] = values[idx] || '';
+          row[h.trim()] = values[idx]?.trim() || '';
         });
         rows.push(row);
+      }
+      
+      console.log('Filas parseadas:', rows.length, rows[0]);
+      
+      if (rows.length === 0) {
+        toast.error('No se encontraron filas válidas en el archivo');
+        setImportando(false);
+        return;
       }
       
       // Enviar al backend
@@ -404,9 +403,32 @@ export default function Productos() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      toast.success(response.data.message);
-      if (response.data.errores?.length > 0) {
-        response.data.errores.forEach(err => toast.error(err));
+      const { creados, actualizados, errores, detalles_creados, detalles_actualizados } = response.data;
+      
+      // Mostrar resultado principal
+      if (creados > 0 || actualizados > 0) {
+        toast.success(`✅ ${creados} productos creados, ${actualizados} actualizados`);
+      } else {
+        toast.warning('No se realizaron cambios. Verifica el formato del archivo.');
+      }
+      
+      // Mostrar detalles de creados
+      if (detalles_creados?.length > 0) {
+        detalles_creados.slice(0, 5).forEach(p => {
+          toast.info(`➕ Nuevo: ${p.nombre} - $${p.precio}`);
+        });
+      }
+      
+      // Mostrar detalles de actualizados
+      if (detalles_actualizados?.length > 0) {
+        detalles_actualizados.slice(0, 5).forEach(p => {
+          toast.info(`✏️ ${p.nombre}: ${p.cambios.join(', ')}`);
+        });
+      }
+      
+      // Mostrar errores
+      if (errores?.length > 0) {
+        errores.forEach(err => toast.error(err));
       }
       
       // Recargar productos
@@ -423,6 +445,34 @@ export default function Productos() {
         fileInputRef.current.value = '';
       }
     }
+  };
+
+  // Función helper para parsear líneas CSV correctamente
+  const parseCSVLine = (line, separator = ',') => {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === separator && !inQuotes) {
+        values.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current);
+    
+    return values.map(v => v.replace(/^"|"$/g, ''));
   };
 
   const toggleModificador = (modId) => {
