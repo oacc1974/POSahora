@@ -18,9 +18,11 @@ import random
 import base64
 import io
 import asyncio
+import secrets
 from PIL import Image
 from dotenv import load_dotenv
 from pathlib import Path
+import resend
 
 # Stripe integration
 import stripe
