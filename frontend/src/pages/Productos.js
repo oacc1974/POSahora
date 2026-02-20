@@ -607,12 +607,70 @@ export default function Productos() {
               </svg>
             </button>
           )}
+          
+          {/* Botones de importar/exportar */}
+          <div className="flex gap-1">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleExportar}
+              disabled={exportando}
+              className="gap-1"
+            >
+              <Download size={16} />
+              <span className="hidden md:inline">{exportando ? 'Exportando...' : 'Exportar'}</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowImportDialog(true)}
+              className="gap-1"
+            >
+              <Upload size={16} />
+              <span className="hidden md:inline">Importar</span>
+            </Button>
+          </div>
+          
           <Button onClick={() => openDialog()} data-testid="create-product-button" className="gap-2">
             <Plus size={18} />
             <span className="hidden sm:inline">Nuevo Producto</span>
             <span className="sm:hidden">Nuevo</span>
           </Button>
         </div>
+      </div>
+
+      {/* Filtro por categoría */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button
+          onClick={() => setCategoriaFiltro('todas')}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+            categoriaFiltro === 'todas'
+              ? 'bg-blue-500 text-white'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          }`}
+        >
+          Todas ({productos.length})
+        </button>
+        {categorias.map((cat) => {
+          const count = productos.filter(p => p.categoria === cat.id).length;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setCategoriaFiltro(cat.id)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${
+                categoriaFiltro === cat.id
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <span 
+                className="w-2 h-2 rounded-full" 
+                style={{ backgroundColor: cat.color }}
+              />
+              {cat.nombre} ({count})
+            </button>
+          );
+        })}
       </div>
 
       {/* Indicador de búsqueda */}
