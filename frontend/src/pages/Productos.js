@@ -1068,26 +1068,44 @@ export default function Productos() {
               {/* Opción: Color y Forma */}
               {formData.representacion_tipo === 'color_forma' && (
                 <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
-                  {/* Preview */}
+                  {/* Preview - Fondo gris, solo figura con color */}
                   <div className="flex justify-center">
-                    <div 
-                      className={`w-24 h-24 flex items-center justify-center text-white font-bold text-lg shadow-md ${
-                        formData.representacion_forma === 'circulo' ? 'rounded-full' :
-                        formData.representacion_forma === 'estrella' ? 'rounded-lg' :
-                        formData.representacion_forma === 'hexagono' ? 'rounded-xl' : 'rounded-lg'
-                      }`}
-                      style={{ 
-                        backgroundColor: formData.representacion_color,
-                        clipPath: formData.representacion_forma === 'estrella' 
-                          ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
-                          : formData.representacion_forma === 'hexagono'
-                          ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
-                          : 'none'
-                      }}
-                    >
-                      {formData.nombre ? formData.nombre.substring(0, 2).toUpperCase() : 'AB'}
+                    <div className="w-28 h-28 bg-slate-200 rounded-lg flex items-center justify-center shadow-inner">
+                      {formData.representacion_forma === 'cuadrado' && (
+                        <div 
+                          className="w-16 h-16 rounded-lg shadow-md"
+                          style={{ backgroundColor: formData.representacion_color }}
+                        />
+                      )}
+                      {formData.representacion_forma === 'circulo' && (
+                        <div 
+                          className="w-16 h-16 rounded-full shadow-md"
+                          style={{ backgroundColor: formData.representacion_color }}
+                        />
+                      )}
+                      {formData.representacion_forma === 'estrella' && (
+                        <div 
+                          className="w-16 h-16 shadow-md"
+                          style={{ 
+                            backgroundColor: formData.representacion_color,
+                            clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
+                          }}
+                        />
+                      )}
+                      {formData.representacion_forma === 'hexagono' && (
+                        <div 
+                          className="w-16 h-16 shadow-md"
+                          style={{ 
+                            backgroundColor: formData.representacion_color,
+                            clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
+                  <p className="text-center text-sm text-slate-600">
+                    {formData.nombre || 'Nombre del producto'}
+                  </p>
                   
                   {/* Selector de Color */}
                   <div>
