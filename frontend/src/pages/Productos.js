@@ -918,8 +918,126 @@ export default function Productos() {
             Crear Producto
           </Button>
         </Card>
+      ) : viewMode === 'list' ? (
+        // ============ VISTA DE LISTA ============
+        <Card className="overflow-hidden" data-testid="products-list-view">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Producto</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Categoría</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Precio</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Costo</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Stock</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {productosFiltrados.map((producto) => (
+                  <tr 
+                    key={producto.id} 
+                    data-testid={`product-row-${producto.id}`}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    {/* Nombre con representación visual */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {/* Mini representación visual */}
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center flex-shrink-0">
+                          {producto.representacion_tipo === 'imagen' && producto.imagen ? (
+                            <img 
+                              src={producto.imagen.startsWith('data:') ? producto.imagen : `${API_URL}${producto.imagen}`} 
+                              alt={producto.nombre}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div 
+                              className={`w-7 h-7 flex items-center justify-center text-white font-bold text-xs ${
+                                producto.representacion_forma === 'circulo' ? 'rounded-full' : 'rounded'
+                              }`}
+                              style={{ 
+                                backgroundColor: producto.representacion_color || '#F3F4F6',
+                                clipPath: producto.representacion_forma === 'pentagono' 
+                                  ? 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)'
+                                  : producto.representacion_forma === 'hexagono'
+                                  ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
+                                  : 'none'
+                              }}
+                            >
+                              {producto.nombre.substring(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-slate-900 truncate">{producto.nombre}</p>
+                          {producto.codigo_barras && (
+                            <p className="text-xs text-slate-400 truncate">{producto.codigo_barras}</p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    {/* Categoría */}
+                    <td className="px-4 py-3">
+                      {producto.categoria ? (
+                        <span className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                          {producto.categoria}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">Sin categoría</span>
+                      )}
+                    </td>
+                    {/* Precio */}
+                    <td className="px-4 py-3 text-right">
+                      <span className="font-semibold text-blue-600">${producto.precio.toFixed(2)}</span>
+                    </td>
+                    {/* Costo */}
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-slate-600">${(producto.costo || 0).toFixed(2)}</span>
+                    </td>
+                    {/* Stock */}
+                    <td className="px-4 py-3 text-right">
+                      <span className={`font-medium ${producto.stock <= 5 ? 'text-red-600' : 'text-green-600'}`}>
+                        {producto.stock}
+                      </span>
+                    </td>
+                    {/* Acciones */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button 
+                          onClick={() => openDialog(producto)} 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          title="Editar"
+                        >
+                          <Pencil size={14} />
+                        </Button>
+                        <Button 
+                          onClick={() => handleDelete(producto.id)} 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          title="Eliminar"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Resumen al pie */}
+          <div className="px-4 py-3 bg-slate-50 border-t text-sm text-slate-600">
+            Mostrando {productosFiltrados.length} producto(s)
+          </div>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        // ============ VISTA DE TARJETAS ============
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="products-grid-view">
           {productosFiltrados.map((producto) => (
             <Card key={producto.id} data-testid={`product-card-${producto.id}`} className="p-4 hover:shadow-lg transition-shadow">
               {/* Representación Visual del producto */}
