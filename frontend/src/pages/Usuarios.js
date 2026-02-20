@@ -83,6 +83,7 @@ const getRolInfo = (rol) => {
 
 export default function Usuarios() {
   const [activeTab, setActiveTab] = useState('empleados');
+  const [viewMode, setViewMode] = useState('card'); // 'card' | 'list'
   
   // Estados para Empleados
   const [usuarios, setUsuarios] = useState([]);
