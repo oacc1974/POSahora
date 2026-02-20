@@ -367,7 +367,7 @@ class ProductCreate(BaseModel):
     # Representación visual (color y forma)
     representacion_tipo: Optional[str] = "color_forma"  # "color_forma" o "imagen"
     representacion_color: Optional[str] = "#F3F4F6"  # Color hex
-    representacion_forma: Optional[str] = "cuadrado"  # cuadrado, circulo, estrella, hexagono
+    representacion_forma: Optional[str] = "cuadrado"  # cuadrado, circulo, pentagono, hexagono
 
 class ProductResponse(BaseModel):
     id: str
