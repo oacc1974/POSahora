@@ -23,6 +23,7 @@ export default function Clientes() {
   const [editingCliente, setEditingCliente] = useState(null);
   const [busqueda, setBusqueda] = useState('');
   const [showBusqueda, setShowBusqueda] = useState(false);
+  const [viewMode, setViewMode] = useState('card'); // 'card' | 'list'
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
