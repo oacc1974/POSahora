@@ -3473,15 +3473,39 @@ export default function POS() {
                       setShowMobileSearch(false);
                       setSearchQuery('');
                     }}
-                    className="bg-white border rounded-lg p-3 hover:shadow-md transition-shadow text-left"
+                    className="bg-white border rounded-xl overflow-hidden hover:shadow-md transition-shadow text-left"
                   >
-                    <p className="font-medium text-sm mb-1 line-clamp-2">{producto.nombre}</p>
-                    <p className="text-lg font-bold text-blue-600">
-                      ${producto.precio.toFixed(2)}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Stock: {producto.stock}
-                    </p>
+                    {/* Representación visual */}
+                    <div className="aspect-square relative flex items-center justify-center">
+                      {producto.representacion_tipo === 'imagen' && producto.imagen ? (
+                        <>
+                          <img 
+                            src={producto.imagen.startsWith('http') || producto.imagen.startsWith('data:') ? producto.imagen : `${API_URL}${producto.imagen}`} 
+                            alt={producto.nombre}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                            <p className="text-white text-sm font-semibold truncate">{producto.nombre}</p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div 
+                            className="w-full h-full"
+                            style={{ backgroundColor: producto.representacion_color || '#F3F4F6' }}
+                          />
+                          <div className="absolute bottom-0 left-0 right-0 p-2 text-center">
+                            <p className="text-slate-800 text-sm font-bold truncate">{producto.nombre}</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    {/* Precio */}
+                    <div className="p-2 bg-slate-800">
+                      <p className="text-lg font-bold text-blue-400 text-center">
+                        ${producto.precio.toFixed(2)}
+                      </p>
+                    </div>
                   </button>
                 ))}
               </div>
