@@ -1083,12 +1083,12 @@ export default function Productos() {
                           style={{ backgroundColor: formData.representacion_color }}
                         />
                       )}
-                      {formData.representacion_forma === 'estrella' && (
+                      {formData.representacion_forma === 'pentagono' && (
                         <div 
                           className="w-16 h-16 shadow-md"
                           style={{ 
                             backgroundColor: formData.representacion_color,
-                            clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
+                            clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)'
                           }}
                         />
                       )}
