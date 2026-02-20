@@ -4219,6 +4219,9 @@ async def get_productos(current_user: dict = Depends(get_current_user)):
             categoria_id=p.get("categoria_id"),
             modificadores_activos=p.get("modificadores_activos", []),
             imagen=p.get("imagen"),
+            representacion_tipo=p.get("representacion_tipo", "color_forma"),
+            representacion_color=p.get("representacion_color", "#F3F4F6"),
+            representacion_forma=p.get("representacion_forma", "cuadrado"),
             organizacion_id=p["organizacion_id"],
             creado=p["creado"]
         )
@@ -4245,6 +4248,9 @@ async def get_producto_by_barcode(codigo: str, current_user: dict = Depends(get_
         categoria_id=producto.get("categoria_id"),
         modificadores_activos=producto.get("modificadores_activos", []),
         imagen=producto.get("imagen"),
+        representacion_tipo=producto.get("representacion_tipo", "color_forma"),
+        representacion_color=producto.get("representacion_color", "#F3F4F6"),
+        representacion_forma=producto.get("representacion_forma", "cuadrado"),
         organizacion_id=producto["organizacion_id"],
         creado=producto["creado"]
     )
