@@ -387,70 +387,184 @@ export default function Usuarios() {
 
         {/* ============ TAB EMPLEADOS ============ */}
         <TabsContent value="empleados" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            {/* Selector de vista */}
+            <div className="flex border rounded-lg overflow-hidden" data-testid="empleados-view-mode-toggle">
+              <button
+                onClick={() => setViewMode('card')}
+                className={`p-2 transition-all ${
+                  viewMode === 'card'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+                title="Vista de tarjetas"
+              >
+                <LayoutGrid size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 transition-all ${
+                  viewMode === 'list'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+                title="Vista de lista"
+              >
+                <LayoutList size={18} />
+              </button>
+            </div>
+            
             <Button onClick={() => { resetUserForm(); setEditingUser(null); setShowUserDialog(true); }}>
               <Plus size={16} className="mr-2" />
               Nuevo Empleado
             </Button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {usuarios.map((user) => {
-              const rolInfo = getRolInfo(user.rol);
-              const RolIcon = rolInfo.icon;
-              
-              return (
-                <Card key={user.id} className="p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${rolInfo.color}`}>
-                        <RolIcon size={20} />
+          {viewMode === 'list' ? (
+            // ============ VISTA DE LISTA ============
+            <Card className="overflow-hidden" data-testid="empleados-list-view">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50 border-b">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Empleado</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Usuario</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Rol/Perfil</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">PIN</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {usuarios.map((user) => {
+                      const rolInfo = getRolInfo(user.rol);
+                      const RolIcon = rolInfo.icon;
+                      
+                      return (
+                        <tr 
+                          key={user.id} 
+                          data-testid={`empleado-row-${user.id}`}
+                          className="hover:bg-slate-50 transition-colors"
+                        >
+                          {/* Nombre */}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-1.5 rounded-lg ${rolInfo.color}`}>
+                                <RolIcon size={16} />
+                              </div>
+                              <span className="font-medium text-slate-900">{user.nombre}</span>
+                            </div>
+                          </td>
+                          {/* Username */}
+                          <td className="px-4 py-3">
+                            <span className="text-sm text-slate-600">@{user.username}</span>
+                          </td>
+                          {/* Rol/Perfil */}
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded-full text-xs text-white ${rolInfo.badgeColor}`}>
+                              {user.perfil_nombre || rolInfo.text}
+                            </span>
+                          </td>
+                          {/* PIN */}
+                          <td className="px-4 py-3">
+                            {user.pin ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="font-mono bg-slate-100 px-2 py-0.5 rounded">
+                                  {showPin[user.id] ? user.pin : '••••'}
+                                </span>
+                                <button
+                                  onClick={() => setShowPin({ ...showPin, [user.id]: !showPin[user.id] })}
+                                  className="text-slate-400 hover:text-slate-600"
+                                >
+                                  {showPin[user.id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-slate-400">-</span>
+                            )}
+                          </td>
+                          {/* Acciones */}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-1">
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => handleEditUser(user)}>
+                                <Pencil size={14} />
+                              </Button>
+                              {user.rol !== 'propietario' && (
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDeleteUser(user.id)}>
+                                  <Trash2 size={14} />
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-3 bg-slate-50 border-t text-sm text-slate-600">
+                Mostrando {usuarios.length} empleado(s)
+              </div>
+            </Card>
+          ) : (
+            // ============ VISTA DE TARJETAS ============
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-testid="empleados-grid-view">
+              {usuarios.map((user) => {
+                const rolInfo = getRolInfo(user.rol);
+                const RolIcon = rolInfo.icon;
+                
+                return (
+                  <Card key={user.id} className="p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${rolInfo.color}`}>
+                          <RolIcon size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-slate-800">{user.nombre}</h3>
+                          <p className="text-sm text-slate-500">@{user.username}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-slate-800">{user.nombre}</h3>
-                        <p className="text-sm text-slate-500">@{user.username}</p>
+                      
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
+                          <Pencil size={14} />
+                        </Button>
+                        {user.rol !== 'propietario' && (
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)}>
+                            <Trash2 size={14} className="text-red-500" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                     
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
-                        <Pencil size={14} />
-                      </Button>
-                      {user.rol !== 'propietario' && (
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)}>
-                          <Trash2 size={14} className="text-red-500" />
-                        </Button>
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs text-white ${rolInfo.badgeColor}`}>
+                          {user.perfil_nombre || rolInfo.text}
+                        </span>
+                      </div>
+                      
+                      {user.pin && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Key size={14} className="text-slate-400" />
+                          <span className="text-slate-600">PIN:</span>
+                          <span className="font-mono bg-slate-100 px-2 py-0.5 rounded">
+                            {showPin[user.id] ? user.pin : '••••'}
+                          </span>
+                          <button
+                            onClick={() => setShowPin({ ...showPin, [user.id]: !showPin[user.id] })}
+                            className="text-slate-400 hover:text-slate-600"
+                          >
+                            {showPin[user.id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                        </div>
                       )}
                     </div>
-                  </div>
-                  
-                  <div className="mt-3 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded-full text-xs text-white ${rolInfo.badgeColor}`}>
-                        {user.perfil_nombre || rolInfo.text}
-                      </span>
-                    </div>
-                    
-                    {user.pin && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Key size={14} className="text-slate-400" />
-                        <span className="text-slate-600">PIN:</span>
-                        <span className="font-mono bg-slate-100 px-2 py-0.5 rounded">
-                          {showPin[user.id] ? user.pin : '••••'}
-                        </span>
-                        <button
-                          onClick={() => setShowPin({ ...showPin, [user.id]: !showPin[user.id] })}
-                          className="text-slate-400 hover:text-slate-600"
-                        >
-                          {showPin[user.id] ? <EyeOff size={14} /> : <Eye size={14} />}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
 
         {/* ============ TAB PERFILES ============ */}
