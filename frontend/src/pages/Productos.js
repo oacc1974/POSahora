@@ -308,6 +308,121 @@ export default function Productos() {
     }
   };
 
+  // ============ IMPORTAR / EXPORTAR ============
+  const handleExportar = async () => {
+    setExportando(true);
+    try {
+      const token = sessionStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/productos/exportar`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const { headers, rows } = response.data;
+      
+      // Crear CSV
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => headers.map(h => {
+          const value = row[h] || '';
+          // Escapar comillas y envolver en comillas si contiene coma
+          if (value.toString().includes(',') || value.toString().includes('"')) {
+            return `"${value.toString().replace(/"/g, '""')}"`;
+          }
+          return value;
+        }).join(','))
+      ].join('\n');
+      
+      // Descargar
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `productos_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success(`${rows.length} productos exportados`);
+    } catch (error) {
+      console.error('Error al exportar:', error);
+      toast.error('Error al exportar productos');
+    } finally {
+      setExportando(false);
+    }
+  };
+
+  const handleImportarArchivo = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setImportando(true);
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        toast.error('El archivo está vacío o no tiene datos');
+        return;
+      }
+      
+      // Parsear headers
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      
+      // Parsear filas
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (const char of lines[i]) {
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            values.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        values.push(current.trim());
+        
+        const row = {};
+        headers.forEach((h, idx) => {
+          row[h] = values[idx] || '';
+        });
+        rows.push(row);
+      }
+      
+      // Enviar al backend
+      const token = sessionStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/api/productos/importar`, 
+        { rows },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast.success(response.data.message);
+      if (response.data.errores?.length > 0) {
+        response.data.errores.forEach(err => toast.error(err));
+      }
+      
+      // Recargar productos
+      fetchProductos();
+      fetchCategorias();
+      setShowImportDialog(false);
+      
+    } catch (error) {
+      console.error('Error al importar:', error);
+      toast.error(error.response?.data?.detail || 'Error al importar productos');
+    } finally {
+      setImportando(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const toggleModificador = (modId) => {
     setFormData(prev => {
       const activos = prev.modificadores_activos || [];
