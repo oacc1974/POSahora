@@ -621,10 +621,143 @@ Authorization: Bearer {token}
     "activo": true,
     "impuesto_id": "imp_uuid",
     "impuesto_nombre": "IVA 15%",
-    "impuesto_porcentaje": 15
+    "impuesto_porcentaje": 15,
+    "representacion": {
+      "tipo": "color_forma",
+      "color": "#FCA5A5",
+      "forma": "cuadrado"
+    }
   }
 ]
 ```
+
+### Representación Visual del Producto en TPV
+
+Cada producto puede tener una representación visual de dos tipos:
+
+#### Opción 1: Color y Forma (sin imagen)
+
+Cuando no quieres subir una imagen, puedes usar una combinación de color y forma geométrica:
+
+**Colores disponibles:**
+| Color | Código Hex |
+|-------|------------|
+| Blanco | `#F3F4F6` |
+| Rosa claro | `#FCA5A5` |
+| Rosa | `#F9A8D4` |
+| Naranja | `#FDBA74` |
+| Amarillo | `#FDE047` |
+| Verde claro | `#BBF7D0` |
+| Azul claro | `#93C5FD` |
+| Lila | `#DDD6FE` |
+| Morado | `#E879F9` |
+
+**Formas disponibles:**
+| Forma | Valor |
+|-------|-------|
+| Cuadrado | `cuadrado` |
+| Círculo/Óvalo | `circulo` |
+| Estrella | `estrella` |
+| Hexágono | `hexagono` |
+
+**Ejemplo de producto con color y forma:**
+```json
+{
+  "id": "prod_uuid",
+  "nombre": "Café Americano",
+  "precio": 2.50,
+  "imagen_url": null,
+  "representacion": {
+    "tipo": "color_forma",
+    "color": "#FDBA74",
+    "forma": "circulo"
+  }
+}
+```
+
+#### Opción 2: Imagen
+
+Cuando subes una imagen del producto:
+
+```json
+{
+  "id": "prod_uuid",
+  "nombre": "Pastel de Chocolate",
+  "precio": 15.00,
+  "imagen_url": "/uploads/productos/pastel-chocolate.jpg",
+  "representacion": {
+    "tipo": "imagen",
+    "color": null,
+    "forma": null
+  }
+}
+```
+
+### Crear/Actualizar Producto
+
+```http
+POST /api/productos
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Body con Color y Forma:**
+```json
+{
+  "nombre": "Café Americano",
+  "descripcion": "Café de grano molido",
+  "precio": 2.50,
+  "categoria_id": "cat_uuid",
+  "impuesto_id": "imp_uuid",
+  "codigo_barras": "",
+  "stock": -1,
+  "activo": true,
+  "representacion_tipo": "color_forma",
+  "representacion_color": "#FDBA74",
+  "representacion_forma": "circulo"
+}
+```
+
+**Body con Imagen:**
+```json
+{
+  "nombre": "Pastel de Chocolate",
+  "descripcion": "Delicioso pastel",
+  "precio": 15.00,
+  "categoria_id": "cat_uuid",
+  "impuesto_id": "imp_uuid",
+  "representacion_tipo": "imagen"
+}
+```
+*(La imagen se sube por separado con multipart/form-data)*
+
+### Renderizado en el TPV (APK)
+
+```javascript
+// Ejemplo de cómo renderizar el producto en el TPV
+function renderProducto(producto) {
+  if (producto.representacion?.tipo === 'imagen' && producto.imagen_url) {
+    // Mostrar imagen
+    return <Image source={{ uri: API_URL + producto.imagen_url }} />;
+  } else {
+    // Mostrar color y forma
+    const color = producto.representacion?.color || '#F3F4F6';
+    const forma = producto.representacion?.forma || 'cuadrado';
+    
+    return (
+      <View style={{ 
+        backgroundColor: color,
+        borderRadius: forma === 'circulo' ? 50 : (forma === 'hexagono' ? 10 : 0),
+        // Aplicar forma según el tipo
+      }}>
+        <Text>{producto.nombre}</Text>
+      </View>
+    );
+  }
+}
+```
+
+---
 
 ### Buscar Producto por Código de Barras
 
