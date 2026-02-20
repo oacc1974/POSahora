@@ -4360,6 +4360,9 @@ async def create_producto(product: ProductCreate, current_user: dict = Depends(g
         "categoria": product.categoria,
         "modificadores_activos": product.modificadores_activos or [],
         "imagen": product.imagen,
+        "representacion_tipo": product.representacion_tipo or "color_forma",
+        "representacion_color": product.representacion_color or "#F3F4F6",
+        "representacion_forma": product.representacion_forma or "cuadrado",
         "organizacion_id": current_user["organizacion_id"],
         "creado": datetime.now(timezone.utc).isoformat()
     }
@@ -4375,6 +4378,9 @@ async def create_producto(product: ProductCreate, current_user: dict = Depends(g
         categoria=product.categoria,
         modificadores_activos=product.modificadores_activos or [],
         imagen=product.imagen,
+        representacion_tipo=product.representacion_tipo or "color_forma",
+        representacion_color=product.representacion_color or "#F3F4F6",
+        representacion_forma=product.representacion_forma or "cuadrado",
         organizacion_id=current_user["organizacion_id"],
         creado=new_product["creado"]
     )
