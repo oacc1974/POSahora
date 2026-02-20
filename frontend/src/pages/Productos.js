@@ -19,7 +19,8 @@ import {
 } from '../components/ui/dialog';
 import { 
   Plus, Pencil, Trash2, Package, ShoppingBasket, List, Tag, 
-  Layers, Percent, ChevronDown, ChevronRight, X, ScanLine, Camera, Volume2
+  Layers, Percent, ChevronDown, ChevronRight, X, ScanLine, Camera, Volume2,
+  Download, Upload, Filter
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
