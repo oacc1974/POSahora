@@ -60,7 +60,7 @@ export default function Productos() {
   const [categoriaFiltro, setCategoriaFiltro] = useState('todas');
   
   // Estado del modo de vista (tarjetas o lista)
-  const [viewMode, setViewMode] = useState('card'); // 'card' | 'list'
+  const [viewMode, setViewMode] = useState('list'); // 'card' | 'list'
   
   // Estados para Productos
   const [productos, setProductos] = useState([]);
