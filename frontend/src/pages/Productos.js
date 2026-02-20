@@ -1613,61 +1613,73 @@ export default function Productos() {
 
       {/* Diálogo de Importar */}
       <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Importar Productos</DialogTitle>
             <DialogDescription>
-              Sube un archivo CSV con tus productos. Si un producto ya existe (por código de barras o nombre), se actualizará.
+              Sube un archivo CSV con tus productos. Si un producto ya existe (por código de barras o nombre), se actualizará automáticamente.
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             {/* Formato esperado */}
             <div className="bg-slate-50 p-4 rounded-lg text-sm">
-              <p className="font-medium mb-2">Columnas del CSV:</p>
-              <ul className="text-slate-600 space-y-1 text-xs">
-                <li><strong>Nombre</strong> - Nombre del producto (requerido)</li>
-                <li><strong>Categoria</strong> - Nombre de la categoría</li>
-                <li><strong>Descripcion</strong> - Descripción del producto</li>
-                <li><strong>Precio</strong> - Precio de venta</li>
-                <li><strong>Codigo_Barras</strong> - Código de barras</li>
-                <li><strong>Stock</strong> - Cantidad en stock</li>
-                <li><strong>Color</strong> - Color hex (ej: #FCA5A5)</li>
-                <li><strong>Forma</strong> - cuadrado, circulo, pentagono, hexagono</li>
-                <li><strong>Activo</strong> - Y o N</li>
-              </ul>
+              <p className="font-medium mb-2">📋 Columnas soportadas:</p>
+              <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                <div><strong>Nombre</strong> - Requerido</div>
+                <div><strong>Precio</strong> - Número</div>
+                <div><strong>Categoria</strong> - Se crea si no existe</div>
+                <div><strong>Stock</strong> - Cantidad</div>
+                <div><strong>Descripcion</strong> - Opcional</div>
+                <div><strong>Codigo_Barras</strong> - Para identificar</div>
+                <div><strong>Color</strong> - Hex (#FCA5A5)</div>
+                <div><strong>Forma</strong> - cuadrado, circulo, etc</div>
+              </div>
+              <p className="mt-3 text-xs text-blue-600">
+                💡 El sistema detecta automáticamente diferentes formatos de CSV (coma o punto y coma)
+              </p>
             </div>
             
             {/* Input de archivo */}
-            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+            <div 
+              className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer"
+              onClick={() => !importando && fileInputRef.current?.click()}
+            >
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv"
+                accept=".csv,.txt"
                 onChange={handleImportarArchivo}
                 className="hidden"
                 disabled={importando}
               />
-              <Upload size={40} className="mx-auto mb-3 text-slate-400" />
-              <p className="text-sm text-slate-600 mb-3">
-                Arrastra un archivo CSV o haz clic para seleccionar
-              </p>
-              <Button 
-                onClick={() => fileInputRef.current?.click()}
-                disabled={importando}
-                variant="outline"
-              >
-                {importando ? 'Importando...' : 'Seleccionar archivo CSV'}
-              </Button>
+              {importando ? (
+                <>
+                  <div className="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+                  <p className="text-sm text-blue-600">Importando productos...</p>
+                </>
+              ) : (
+                <>
+                  <Upload size={40} className="mx-auto mb-3 text-slate-400" />
+                  <p className="text-sm text-slate-600 mb-2">
+                    Haz clic o arrastra un archivo CSV aquí
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Formato: .csv o .txt separado por comas
+                  </p>
+                </>
+              )}
             </div>
             
             {/* Descargar plantilla */}
-            <div className="text-center">
+            <div className="flex justify-between items-center text-sm">
               <button
                 onClick={handleExportar}
-                className="text-sm text-blue-600 hover:underline"
+                disabled={exportando}
+                className="text-blue-600 hover:underline flex items-center gap-1"
               >
-                Descargar plantilla CSV con productos actuales
+                <Download size={14} />
+                {exportando ? 'Descargando...' : 'Descargar productos actuales como plantilla'}
               </button>
             </div>
           </div>
