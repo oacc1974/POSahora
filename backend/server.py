@@ -358,6 +358,7 @@ class TPVResponse(BaseModel):
 class ProductCreate(BaseModel):
     nombre: str
     precio: float
+    costo: Optional[float] = 0  # Costo del producto
     codigo_barras: Optional[str] = None
     descripcion: Optional[str] = None
     stock: Optional[int] = 0
@@ -373,6 +374,7 @@ class ProductResponse(BaseModel):
     id: str
     nombre: str
     precio: float
+    costo: Optional[float] = 0  # Costo del producto
     codigo_barras: Optional[str] = None
     descripcion: Optional[str] = None
     stock: int = 0
