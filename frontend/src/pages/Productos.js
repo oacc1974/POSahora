@@ -633,14 +633,22 @@ export default function Productos() {
       )}
 
       {(() => {
-        const productosFiltrados = busqueda 
-          ? productos.filter(p => 
-              p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-              (p.categoria || '').toLowerCase().includes(busqueda.toLowerCase()) ||
-              (p.codigo_barras || '').toLowerCase().includes(busqueda.toLowerCase()) ||
-              (p.descripcion || '').toLowerCase().includes(busqueda.toLowerCase())
-            )
-          : productos;
+        let productosFiltrados = productos;
+        
+        // Filtrar por categoría
+        if (categoriaFiltro && categoriaFiltro !== 'todas') {
+          productosFiltrados = productosFiltrados.filter(p => p.categoria === categoriaFiltro);
+        }
+        
+        // Filtrar por búsqueda
+        if (busqueda) {
+          productosFiltrados = productosFiltrados.filter(p => 
+            p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+            (p.categoria || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+            (p.codigo_barras || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+            (p.descripcion || '').toLowerCase().includes(busqueda.toLowerCase())
+          );
+        }
         
         return productosFiltrados.length === 0 ? (
         <Card className="p-12 text-center">
