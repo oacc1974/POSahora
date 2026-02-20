@@ -22,7 +22,7 @@ import {
 import { 
   Plus, Trash2, Users as UsersIcon, Shield, User, Key, 
   RefreshCw, Pencil, Eye, EyeOff, ShieldCheck, Settings,
-  Store, FileText, ChevronDown, ChevronUp, Check, X
+  Store, FileText, ChevronDown, ChevronUp, Check, X, LayoutGrid, LayoutList
 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
