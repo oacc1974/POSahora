@@ -177,6 +177,14 @@ function AppRouter() {
           element={<GoogleCallback />}
         />
         <Route
+          path="/forgot-password"
+          element={user ? <Navigate to="/dashboard" replace /> : <ForgotPassword />}
+        />
+        <Route
+          path="/reset-password"
+          element={user ? <Navigate to="/dashboard" replace /> : <ResetPassword />}
+        />
+        <Route
           path="/"
           element={
             user ? (
