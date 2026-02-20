@@ -4444,6 +4444,177 @@ async def delete_producto(product_id: str, current_user: dict = Depends(get_prop
     
     return {"message": "Producto eliminado correctamente"}
 
+# ============ IMPORTAR / EXPORTAR PRODUCTOS ============
+@app.get("/api/productos/exportar")
+async def exportar_productos(current_user: dict = Depends(get_propietario_or_admin)):
+    """Exportar todos los productos a CSV"""
+    productos = await db.productos.find({"organizacion_id": current_user["organizacion_id"]}).to_list(10000)
+    categorias = await db.categorias.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
+    
+    # Crear mapa de categorías
+    cat_map = {cat["_id"]: cat["nombre"] for cat in categorias}
+    
+    # Headers del CSV
+    headers = [
+        "Handle", "REF", "Nombre", "Categoria", "Descripcion", "Precio", "Costo",
+        "Codigo_Barras", "Stock", "Color", "Forma", "Activo"
+    ]
+    
+    rows = []
+    for i, p in enumerate(productos):
+        cat_nombre = cat_map.get(p.get("categoria"), p.get("categoria", ""))
+        row = {
+            "Handle": p.get("nombre", "").lower().replace(" ", "-"),
+            "REF": str(10000 + i),
+            "Nombre": p.get("nombre", ""),
+            "Categoria": cat_nombre,
+            "Descripcion": p.get("descripcion", ""),
+            "Precio": str(p.get("precio", 0)),
+            "Costo": "0.00",
+            "Codigo_Barras": p.get("codigo_barras", ""),
+            "Stock": str(p.get("stock", 0)),
+            "Color": p.get("representacion_color", "#F3F4F6"),
+            "Forma": p.get("representacion_forma", "cuadrado"),
+            "Activo": "Y" if p.get("activo", True) else "N"
+        }
+        rows.append(row)
+    
+    return {"headers": headers, "rows": rows}
+
+@app.post("/api/productos/importar")
+async def importar_productos(
+    data: dict,
+    current_user: dict = Depends(get_propietario_or_admin)
+):
+    """Importar productos desde CSV - actualiza si existe, crea si no"""
+    import uuid
+    
+    rows = data.get("rows", [])
+    if not rows:
+        raise HTTPException(status_code=400, detail="No hay datos para importar")
+    
+    # Obtener categorías existentes
+    categorias = await db.categorias.find({"organizacion_id": current_user["organizacion_id"]}).to_list(1000)
+    cat_map = {cat["nombre"].lower(): cat["_id"] for cat in categorias}
+    
+    # Obtener productos existentes por nombre y código de barras
+    productos_existentes = await db.productos.find(
+        {"organizacion_id": current_user["organizacion_id"]}
+    ).to_list(10000)
+    
+    productos_por_nombre = {p["nombre"].lower(): p for p in productos_existentes}
+    productos_por_codigo = {p["codigo_barras"]: p for p in productos_existentes if p.get("codigo_barras")}
+    
+    creados = 0
+    actualizados = 0
+    errores = []
+    
+    for i, row in enumerate(rows):
+        try:
+            nombre = row.get("Nombre", "").strip()
+            if not nombre:
+                continue
+            
+            codigo_barras = row.get("Codigo_Barras", "").strip()
+            categoria_nombre = row.get("Categoria", "").strip()
+            
+            # Buscar categoría o crearla
+            categoria_id = None
+            if categoria_nombre:
+                if categoria_nombre.lower() in cat_map:
+                    categoria_id = cat_map[categoria_nombre.lower()]
+                else:
+                    # Crear categoría
+                    new_cat_id = str(uuid.uuid4())
+                    await db.categorias.insert_one({
+                        "_id": new_cat_id,
+                        "nombre": categoria_nombre,
+                        "color": "#3B82F6",
+                        "organizacion_id": current_user["organizacion_id"],
+                        "creado": datetime.now(timezone.utc).isoformat()
+                    })
+                    cat_map[categoria_nombre.lower()] = new_cat_id
+                    categoria_id = new_cat_id
+            
+            # Precio
+            try:
+                precio = float(row.get("Precio", "0").replace(",", "."))
+            except:
+                precio = 0.0
+            
+            # Stock
+            try:
+                stock = int(float(row.get("Stock", "0")))
+            except:
+                stock = 0
+            
+            # Representación visual
+            color = row.get("Color", "#F3F4F6").strip()
+            if not color.startswith("#"):
+                color = "#F3F4F6"
+            forma = row.get("Forma", "cuadrado").strip().lower()
+            if forma not in ["cuadrado", "circulo", "pentagono", "hexagono"]:
+                forma = "cuadrado"
+            
+            # Datos del producto
+            producto_data = {
+                "nombre": nombre,
+                "precio": precio,
+                "codigo_barras": codigo_barras,
+                "descripcion": row.get("Descripcion", "").strip(),
+                "stock": stock,
+                "categoria": categoria_id,
+                "representacion_tipo": "color_forma",
+                "representacion_color": color,
+                "representacion_forma": forma,
+                "activo": row.get("Activo", "Y").upper() == "Y"
+            }
+            
+            # Verificar si existe por código de barras o nombre
+            producto_existente = None
+            if codigo_barras and codigo_barras in productos_por_codigo:
+                producto_existente = productos_por_codigo[codigo_barras]
+            elif nombre.lower() in productos_por_nombre:
+                producto_existente = productos_por_nombre[nombre.lower()]
+            
+            if producto_existente:
+                # Actualizar
+                await db.productos.update_one(
+                    {"_id": producto_existente["_id"]},
+                    {"$set": producto_data}
+                )
+                actualizados += 1
+            else:
+                # Crear nuevo
+                puede, mensaje, _, _ = await verificar_limite_plan(current_user["organizacion_id"], "productos")
+                if not puede:
+                    errores.append(f"Fila {i+1}: Límite de productos alcanzado")
+                    continue
+                
+                product_id = str(uuid.uuid4())
+                producto_data["_id"] = product_id
+                producto_data["organizacion_id"] = current_user["organizacion_id"]
+                producto_data["creado"] = datetime.now(timezone.utc).isoformat()
+                producto_data["modificadores_activos"] = []
+                
+                await db.productos.insert_one(producto_data)
+                creados += 1
+                
+                # Agregar al mapa para evitar duplicados en el mismo import
+                productos_por_nombre[nombre.lower()] = producto_data
+                if codigo_barras:
+                    productos_por_codigo[codigo_barras] = producto_data
+                
+        except Exception as e:
+            errores.append(f"Fila {i+1}: {str(e)}")
+    
+    return {
+        "message": f"Importación completada: {creados} creados, {actualizados} actualizados",
+        "creados": creados,
+        "actualizados": actualizados,
+        "errores": errores[:10]  # Solo los primeros 10 errores
+    }
+
 # ============ ENDPOINTS CATEGORÍAS ============
 @app.get("/api/categorias", response_model=List[CategoriaResponse])
 async def get_categorias(current_user: dict = Depends(get_current_user)):
