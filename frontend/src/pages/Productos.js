@@ -661,7 +661,7 @@ export default function Productos() {
                   <div 
                     className={`w-20 h-20 flex items-center justify-center text-white font-bold text-xl shadow-md ${
                       producto.representacion_forma === 'circulo' ? 'rounded-full' :
-                      producto.representacion_forma === 'estrella' ? 'rounded-lg' :
+                      producto.representacion_forma === 'pentagono' ? 'rounded-lg' :
                       producto.representacion_forma === 'hexagono' ? 'rounded-xl' : 'rounded-lg'
                     }`}
                     style={{ 
