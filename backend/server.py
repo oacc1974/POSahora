@@ -41,6 +41,10 @@ db = client[os.environ['DB_NAME']]
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# Configuración de Resend para emails
+resend.api_key = os.environ.get('RESEND_API_KEY', '')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+
 # Función para generar PIN único de 4 dígitos
 async def generar_pin_unico(organizacion_id: str) -> str:
     """Genera un PIN único de 4 dígitos para la organización"""
