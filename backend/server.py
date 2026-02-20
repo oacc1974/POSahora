@@ -4407,6 +4407,7 @@ async def update_producto(product_id: str, product: ProductCreate, current_user:
     updated_product = {
         "nombre": product.nombre,
         "precio": product.precio,
+        "costo": product.costo or 0,
         "codigo_barras": product.codigo_barras,
         "descripcion": product.descripcion,
         "stock": product.stock or 0,
@@ -4424,6 +4425,7 @@ async def update_producto(product_id: str, product: ProductCreate, current_user:
         id=product_id,
         nombre=product.nombre,
         precio=product.precio,
+        costo=product.costo or 0,
         codigo_barras=product.codigo_barras,
         descripcion=product.descripcion,
         stock=product.stock or 0,
