@@ -666,8 +666,8 @@ export default function Productos() {
                     }`}
                     style={{ 
                       backgroundColor: producto.representacion_color || '#F3F4F6',
-                      clipPath: producto.representacion_forma === 'estrella' 
-                        ? 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
+                      clipPath: producto.representacion_forma === 'pentagono' 
+                        ? 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)'
                         : producto.representacion_forma === 'hexagono'
                         ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
                         : 'none'
