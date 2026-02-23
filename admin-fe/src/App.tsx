@@ -8,6 +8,7 @@ import EmpresasPage from '@/pages/empresas/EmpresasPage'
 import EmpresaDetailPage from '@/pages/empresas/EmpresaDetailPage'
 import UsuariosPage from '@/pages/usuarios/UsuariosPage'
 import IntegracionesPage from '@/pages/integraciones/IntegracionesPage'
+import DocumentosPage from '@/pages/documentos/DocumentosPage'
 import Layout from '@/components/layout/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -40,6 +41,7 @@ function App() {
           <Route path="empresas/:tenantId" element={<EmpresaDetailPage />} />
           <Route path="usuarios" element={<UsuariosPage />} />
           <Route path="integraciones" element={<IntegracionesPage />} />
+          <Route path="documentos" element={<DocumentosPage />} />
         </Route>
       </Routes>
       <Toaster />

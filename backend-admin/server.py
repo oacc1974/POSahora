@@ -19,6 +19,7 @@ from routes.users import router as users_router
 from routes.empresas import router as empresas_router
 from routes.integrations import router as integrations_router
 from routes.dashboard import router as dashboard_router
+from routes.documents import router as documents_router
 
 # Configuración
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
@@ -184,6 +185,7 @@ app.include_router(users_router)
 app.include_router(empresas_router)
 app.include_router(integrations_router)
 app.include_router(dashboard_router)
+app.include_router(documents_router)
 
 # Ruta raíz
 @app.get("/")

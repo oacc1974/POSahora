@@ -3,7 +3,8 @@ import {
   LayoutDashboard, 
   Building2, 
   Users, 
-  Plug
+  Plug,
+  FileText
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
@@ -11,6 +12,7 @@ import { useAuthStore } from '@/stores/authStore'
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard:read' },
   { name: 'Empresas', href: '/empresas', icon: Building2, permission: 'empresas:read' },
+  { name: 'Documentos', href: '/documentos', icon: FileText, permission: 'documents:read' },
   { name: 'Usuarios', href: '/usuarios', icon: Users, permission: 'users:read' },
   { name: 'Integraciones', href: '/integraciones', icon: Plug, permission: 'integrations:read' },
 ]
