@@ -92,18 +92,17 @@ async def lifespan(app: FastAPI):
 
 async def create_default_admin(db):
     """Crea usuario admin por defecto si no existe"""
-    from passlib.context import CryptContext
+    import bcrypt
     from datetime import datetime, timezone
-    
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     
     existing = await db.users.find_one({"email": "admin@admin.com"})
     if not existing:
         now = datetime.now(timezone.utc)
+        password_hash = bcrypt.hashpw("admin123".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         admin_user = {
             "email": "admin@admin.com",
             "username": "admin",
-            "password_hash": pwd_context.hash("admin123"),
+            "password_hash": password_hash,
             "full_name": "Administrador",
             "role": "admin",
             "is_active": True,
