@@ -3,6 +3,7 @@ Rutas de Integraciones
 - Configuración de integraciones por empresa
 - Loyverse: sincronización de ventas
 """
+import os
 from fastapi import APIRouter, HTTPException, Request, Depends, Query
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
@@ -21,6 +22,115 @@ router = APIRouter(prefix="/integrations", tags=["Integraciones"])
 
 # Loyverse API Base URL
 LOYVERSE_API_URL = "https://api.loyverse.com/v1.0"
+
+# Backend FE URL (para crear facturas)
+BACKEND_FE_URL = os.environ.get("BACKEND_FE_URL", "http://localhost:8000")
+
+
+async def prepare_invoice_from_loyverse(receipt: dict, tenant_id: str, fe_db) -> Optional[dict]:
+    """
+    Convierte un recibo de Loyverse a formato de factura para backend-fe
+    """
+    # Obtener configuración de la empresa
+    tenant = await fe_db.tenants.find_one({"tenant_id": tenant_id})
+    if not tenant:
+        return None
+    
+    # Obtener items del recibo
+    line_items = receipt.get("line_items", [])
+    if not line_items:
+        return None
+    
+    # Preparar items para la factura
+    items = []
+    for item in line_items:
+        # Calcular precio unitario (Loyverse puede enviar con descuento ya aplicado)
+        quantity = float(item.get("quantity", 1))
+        total_money = float(item.get("total_money", 0))
+        discount_money = float(item.get("total_discount_money", 0))
+        
+        # Precio unitario antes de descuento
+        if quantity > 0:
+            unit_price = (total_money + discount_money) / quantity
+        else:
+            unit_price = 0
+        
+        items.append({
+            "code": item.get("item_id", "PROD")[:25],
+            "description": item.get("item_name", "Producto")[:300],
+            "quantity": quantity,
+            "unit_price": round(unit_price, 2),
+            "discount": round(discount_money, 2),
+            "iva_rate": 15  # IVA por defecto Ecuador
+        })
+    
+    # Datos del cliente (consumidor final si no hay datos)
+    customer = receipt.get("customer", {})
+    customer_id = customer.get("id") if customer else None
+    
+    buyer_data = {
+        "id_type": "07",  # Consumidor final
+        "id_number": "9999999999999",
+        "name": "CONSUMIDOR FINAL",
+        "address": "S/N",
+        "email": None,
+        "phone": None
+    }
+    
+    # Si hay cliente en Loyverse, intentar obtener sus datos
+    if customer_id and customer:
+        buyer_data["name"] = customer.get("name", "CONSUMIDOR FINAL")[:300]
+        if customer.get("email"):
+            buyer_data["email"] = customer.get("email")
+        if customer.get("phone_number"):
+            buyer_data["phone"] = customer.get("phone_number")
+        # Si tiene identificación fiscal
+        if customer.get("customer_code"):
+            code = customer.get("customer_code", "")
+            if len(code) == 13:
+                buyer_data["id_type"] = "04"  # RUC
+                buyer_data["id_number"] = code
+            elif len(code) == 10:
+                buyer_data["id_type"] = "05"  # Cédula
+                buyer_data["id_number"] = code
+    
+    # Preparar pagos
+    payments = []
+    receipt_payments = receipt.get("payments", [])
+    for payment in receipt_payments:
+        payment_type = payment.get("payment_type_id", "")
+        # Mapear tipos de pago de Loyverse a SRI
+        # 01 = Efectivo, 19 = Tarjeta, 20 = Otros
+        if "cash" in payment_type.lower():
+            method = "01"
+        elif "card" in payment_type.lower():
+            method = "19"
+        else:
+            method = "20"
+        
+        payments.append({
+            "method": method,
+            "total": float(payment.get("money_amount", 0))
+        })
+    
+    # Si no hay pagos, asumir efectivo
+    if not payments:
+        total = sum(float(item.get("total_money", 0)) for item in line_items)
+        payments.append({
+            "method": "01",
+            "total": total
+        })
+    
+    # Construir factura
+    invoice = {
+        "store_code": "001",
+        "emission_point": "001",
+        "buyer": buyer_data,
+        "items": items,
+        "payments": payments
+    }
+    
+    return invoice
 
 
 @router.get("")
@@ -336,14 +446,31 @@ async def sync_loyverse_sales(
                 if existing_doc:
                     continue  # Ya procesado
                 
-                # Preparar datos para factura
-                # Nota: Aquí se llamaría al backend-fe para crear la factura
-                # Por ahora solo registramos el intento
+                # Preparar datos para factura desde recibo Loyverse
+                invoice_data = await prepare_invoice_from_loyverse(receipt, tenant_id, fe_db)
                 
-                # TODO: Implementar llamada a backend-fe /fe/documents/invoice
-                # con los datos del recibo de Loyverse
-                
-                records_success += 1
+                if invoice_data:
+                    # Llamar a backend-fe para crear la factura
+                    async with httpx.AsyncClient(timeout=30.0) as fe_client:
+                        fe_response = await fe_client.post(
+                            f"{BACKEND_FE_URL}/fe/documents/invoice",
+                            json=invoice_data,
+                            headers={"X-Tenant-ID": tenant_id}
+                        )
+                        
+                        if fe_response.status_code in [200, 201]:
+                            # Marcar como procesado guardando referencia
+                            result = fe_response.json()
+                            await fe_db.documents.update_one(
+                                {"_id": result.get("document_id")},
+                                {"$set": {"external_reference": f"loyverse:{receipt['receipt_number']}"}}
+                            )
+                            records_success += 1
+                        else:
+                            raise Exception(f"Error creando factura: {fe_response.text}")
+                else:
+                    # Recibo sin items válidos, saltar
+                    continue
                 
             except Exception as e:
                 records_failed += 1

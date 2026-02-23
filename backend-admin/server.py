@@ -24,6 +24,7 @@ from routes.dashboard import router as dashboard_router
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 ADMIN_DB_NAME = os.environ.get("ADMIN_DB_NAME", "admin_db")
 FE_DB_NAME = os.environ.get("FE_DB_NAME", "fe_db")
+BACKEND_FE_URL = os.environ.get("BACKEND_FE_URL", "http://localhost:8000")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
