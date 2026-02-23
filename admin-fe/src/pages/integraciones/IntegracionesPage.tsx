@@ -12,7 +12,7 @@ import api from '@/lib/api'
 export default function IntegracionesPage() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  const user = useAuthStore((state) => state.user)
+  const _user = useAuthStore((state) => state.user)
   
   const [selectedEmpresa, setSelectedEmpresa] = useState<string>('')
   const [showConfig, setShowConfig] = useState(false)
@@ -30,7 +30,7 @@ export default function IntegracionesPage() {
     },
   })
 
-  const { data: integrations } = useQuery({
+  const { data: _integrations } = useQuery({
     queryKey: ['integrations', selectedEmpresa],
     queryFn: async () => {
       if (!selectedEmpresa) return null

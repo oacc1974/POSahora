@@ -4,7 +4,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://TU-BACKEND-RENDER.onrender.com/admin/:splat"
+  to = "https://backend-admin-users.onrender.com/admin/:splat"
   status = 200
   force = true
 

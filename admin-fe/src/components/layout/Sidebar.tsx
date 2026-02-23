@@ -3,9 +3,7 @@ import {
   LayoutDashboard, 
   Building2, 
   Users, 
-  Plug, 
-  FileText,
-  Settings
+  Plug
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
