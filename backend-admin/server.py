@@ -77,6 +77,9 @@ async def lifespan(app: FastAPI):
     # Crear roles por defecto si no existen
     await create_default_roles(admin_db)
     
+    # Crear usuario admin por defecto si no existe
+    await create_default_admin(admin_db)
+    
     print("✅ Backend Admin iniciado en puerto 8003")
     
     yield
@@ -85,6 +88,31 @@ async def lifespan(app: FastAPI):
     print("🛑 Cerrando conexiones...")
     client.close()
     print("✅ Backend Admin cerrado")
+
+
+async def create_default_admin(db):
+    """Crea usuario admin por defecto si no existe"""
+    from passlib.context import CryptContext
+    from datetime import datetime, timezone
+    
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    
+    existing = await db.users.find_one({"email": "admin@admin.com"})
+    if not existing:
+        now = datetime.now(timezone.utc)
+        admin_user = {
+            "email": "admin@admin.com",
+            "username": "admin",
+            "password_hash": pwd_context.hash("admin123"),
+            "full_name": "Administrador",
+            "role": "admin",
+            "is_active": True,
+            "created_at": now,
+            "updated_at": now,
+            "last_login": None
+        }
+        await db.users.insert_one(admin_user)
+        print("  ✓ Usuario admin@admin.com creado (password: admin123)")
 
 
 async def create_default_roles(db):
@@ -139,7 +167,12 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Frontend dev
+    allow_origins=[
+        "http://localhost:5173", 
+        "http://localhost:3000",
+        "https://*.netlify.app",  # Netlify previews
+    ],
+    allow_origin_regex=r"https://.*\.netlify\.app",  # Cualquier subdominio de netlify
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
