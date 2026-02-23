@@ -17,6 +17,47 @@ from utils.security import get_current_user, require_permission
 router = APIRouter(prefix="/documents", tags=["Documentos"])
 
 
+@router.get("/debug")
+async def debug_documents(
+    request: Request,
+    current_user: dict = Depends(require_permission("documents:read"))
+):
+    """
+    Endpoint de diagnóstico para verificar documentos en fe_db
+    """
+    fe_db = request.app.state.fe_db
+    
+    # Contar documentos totales
+    total_docs = await fe_db.documents.count_documents({})
+    
+    # Obtener tenant_ids únicos
+    tenant_ids = await fe_db.documents.distinct("tenant_id")
+    
+    # Obtener muestra de documento
+    sample = await fe_db.documents.find_one({})
+    sample_info = None
+    if sample:
+        sample_info = {
+            "id": str(sample.get("_id")),
+            "tenant_id": sample.get("tenant_id"),
+            "doc_number": sample.get("doc_number"),
+            "status": sample.get("status")
+        }
+    
+    # Contar tenants en fe_db
+    total_tenants = await fe_db.tenants.count_documents({})
+    tenant_list = await fe_db.tenants.distinct("tenant_id")
+    
+    return {
+        "total_documents": total_docs,
+        "document_tenant_ids": tenant_ids,
+        "total_tenants": total_tenants,
+        "tenant_ids": tenant_list,
+        "sample_document": sample_info,
+        "db_name": fe_db.name
+    }
+
+
 @router.get("")
 async def list_documents(
     request: Request,
@@ -34,6 +75,17 @@ async def list_documents(
     Lista documentos electrónicos de una empresa
     """
     fe_db = request.app.state.fe_db
+    
+    # Debug: contar todos los documentos sin filtro
+    total_all = await fe_db.documents.count_documents({})
+    print(f"DEBUG: Total documentos en fe_db (sin filtro): {total_all}")
+    print(f"DEBUG: Buscando tenant_id: {tenant_id}")
+    
+    # Debug: listar tenant_ids únicos
+    if total_all > 0:
+        sample = await fe_db.documents.find_one({})
+        if sample:
+            print(f"DEBUG: Ejemplo de documento - tenant_id: {sample.get('tenant_id')}")
     
     query = {"tenant_id": tenant_id}
     
