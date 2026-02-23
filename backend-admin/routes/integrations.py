@@ -296,8 +296,8 @@ async def sync_loyverse_sales(
         async with httpx.AsyncClient(timeout=30.0) as client:
             while True:
                 params = {
-                    "created_at_min": from_date.isoformat(),
-                    "created_at_max": to_date.isoformat(),
+                    "created_at_min": from_date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                    "created_at_max": to_date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
                     "limit": 250
                 }
                 if cursor:
