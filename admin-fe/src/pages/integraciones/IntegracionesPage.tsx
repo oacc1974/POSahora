@@ -6,13 +6,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
-import { useAuthStore } from '@/stores/authStore'
 import api from '@/lib/api'
 
 export default function IntegracionesPage() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  const _user = useAuthStore((state) => state.user)
   
   const [selectedEmpresa, setSelectedEmpresa] = useState<string>('')
   const [showConfig, setShowConfig] = useState(false)
@@ -28,16 +26,6 @@ export default function IntegracionesPage() {
       const response = await api.get('/empresas')
       return response.data.empresas
     },
-  })
-
-  const { data: _integrations } = useQuery({
-    queryKey: ['integrations', selectedEmpresa],
-    queryFn: async () => {
-      if (!selectedEmpresa) return null
-      const response = await api.get(`/integrations/empresa/${selectedEmpresa}`)
-      return response.data
-    },
-    enabled: !!selectedEmpresa,
   })
 
   const { data: loyverseStatus } = useQuery({
