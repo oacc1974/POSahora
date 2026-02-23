@@ -46,10 +46,16 @@ export default function IntegracionesPage() {
       queryClient.invalidateQueries({ queryKey: ['loyverse-status', selectedEmpresa] })
     },
     onError: (error: any) => {
+      const detail = error.response?.data?.detail
+      const message = typeof detail === 'string' 
+        ? detail 
+        : Array.isArray(detail) 
+          ? detail.map((e: any) => e.msg).join(', ')
+          : 'Error al configurar integración'
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.response?.data?.detail || 'Error al configurar integración',
+        description: message,
       })
     },
   })
@@ -64,10 +70,16 @@ export default function IntegracionesPage() {
       queryClient.invalidateQueries({ queryKey: ['loyverse-status', selectedEmpresa] })
     },
     onError: (error: any) => {
+      const detail = error.response?.data?.detail
+      const message = typeof detail === 'string' 
+        ? detail 
+        : Array.isArray(detail) 
+          ? detail.map((e: any) => e.msg).join(', ')
+          : 'Error en sincronización'
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.response?.data?.detail || 'Error en sincronización',
+        description: message,
       })
     },
   })
