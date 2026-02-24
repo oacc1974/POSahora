@@ -2893,21 +2893,26 @@ async def login_con_pin(pin_login: PINLogin):
         })
         
         if sesion_existente:
-            if not getattr(pin_login, 'forzar_cierre', False):
-                raise HTTPException(
-                    status_code=409,
-                    detail={
-                        "code": "SESSION_ACTIVE",
-                        "message": "Este usuario ya tiene una sesión activa",
-                        "session_info": {
-                            "usuario_nombre": user.get("nombre", "Usuario"),
-                            "usuario_rol": user.get("rol", ""),
-                            "dispositivo": sesion_existente.get("dispositivo", "Desconocido"),
-                            "tpv_nombre": sesion_existente.get("tpv_nombre", ""),
-                            "iniciada": sesion_existente.get("fecha_inicio", ""),
-                            "ultima_actividad": sesion_existente.get("ultima_actividad", "")
-                        }
-                    }
+            # Cerrar sesión anterior automáticamente (ya no lanzamos error 409)
+            # Esto permite que el usuario entre desde otro dispositivo sin problemas
+            await db.sesiones_pos.update_one(
+                {"_id": sesion_existente["_id"]},
+                {"$set": {
+                    "activa": False,
+                    "estado": "cerrada_por_nuevo_login",
+                    "fecha_cierre": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            # Liberar TPV anterior si lo tenía
+            tpv_anterior = sesion_existente.get("tpv_id")
+            if tpv_anterior:
+                await db.tpv.update_one(
+                    {"id": tpv_anterior},
+                    {"$set": {
+                        "estado_sesion": "disponible",
+                        "usuario_reservado_id": None,
+                        "usuario_reservado_nombre": None
+                    }}
                 )
     
     # Variable para rastrear sesión pausada (solo para no-meseros)
@@ -3046,6 +3051,32 @@ async def login_con_pin(pin_login: PINLogin):
     # Obtener nombre de la tienda para mostrar
     tienda_nombre = tienda["nombre"] if tienda else "Tienda Principal"
     
+    # Obtener permisos del perfil del usuario
+    permisos_response = None
+    perfil_id = user.get("perfil_id")
+    if perfil_id:
+        perfil = await db.perfiles.find_one({"_id": perfil_id})
+        if perfil:
+            permisos_response = {
+                "perfil_nombre": perfil.get("nombre", ""),
+                "permisos_pos": perfil.get("permisos_pos", {}),
+                "permisos_backoffice": perfil.get("permisos_backoffice", {})
+            }
+    
+    # Si no tiene perfil asignado, usar permisos por defecto según el rol
+    if not permisos_response:
+        rol = user.get("rol", "cajero")
+        perfil_default = await db.perfiles.find_one({
+            "organizacion_id": organizacion_id,
+            "nombre": rol.capitalize()
+        })
+        if perfil_default:
+            permisos_response = {
+                "perfil_nombre": perfil_default.get("nombre", rol.capitalize()),
+                "permisos_pos": perfil_default.get("permisos_pos", {}),
+                "permisos_backoffice": perfil_default.get("permisos_backoffice", {})
+            }
+    
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -3066,7 +3097,8 @@ async def login_con_pin(pin_login: PINLogin):
         "tpv": {
             "id": tpv_id_seleccionado,
             "nombre": tpv_nombre if 'tpv_nombre' in dir() else ""
-        }
+        },
+        "permisos": permisos_response
     }
 
 @app.get("/api/tienda/verificar/{codigo}")
