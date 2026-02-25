@@ -2937,15 +2937,13 @@ async def login_con_pin(pin_login: PINLogin):
             tpv_info = await db.tpv.find_one({"id": tpv_reservado}) if tpv_reservado else None
             tpv_nombre = tpv_info.get("nombre", "TPV") if tpv_info else "TPV"
             
-            # Obtener monto de la caja (buscar por múltiples formatos de ID)
+            # Verificar si realmente tiene caja abierta
             caja = None
             monto_caja = 0
             if caja_id:
                 try:
-                    # Intentar primero con ObjectId
-                    caja = await db.cajas.find_one({"_id": ObjectId(caja_id)})
+                    caja = await db.cajas.find_one({"_id": ObjectId(caja_id), "estado": "abierta"})
                 except:
-                    # Si falla, buscar como string o por usuario
                     caja = await db.cajas.find_one({
                         "usuario_id": user_id,
                         "estado": "abierta"
@@ -2953,7 +2951,28 @@ async def login_con_pin(pin_login: PINLogin):
                 if caja:
                     monto_caja = caja.get("monto_actual", 0)
             
-            if not getattr(pin_login, 'forzar_cierre', False):
+            # Si NO tiene caja abierta, cerrar sesión pausada automáticamente
+            if not caja:
+                await db.sesiones_pos.update_one(
+                    {"_id": sesion_pausada["_id"]},
+                    {"$set": {
+                        "estado": "cerrada_por_nuevo_login",
+                        "fecha_cierre": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                # Liberar TPV
+                if tpv_reservado:
+                    await db.tpv.update_one(
+                        {"id": tpv_reservado},
+                        {"$set": {
+                            "estado_sesion": "disponible",
+                            "usuario_reservado_id": None,
+                            "usuario_reservado_nombre": None
+                        }}
+                    )
+                sesion_pausada = None  # Ya no hay sesión pausada
+            elif not getattr(pin_login, 'forzar_cierre', False):
+                # Tiene caja abierta - mostrar error 409
                 raise HTTPException(
                     status_code=409,
                     detail={
@@ -2969,7 +2988,7 @@ async def login_con_pin(pin_login: PINLogin):
                         }
                     }
                 )
-            # Si forzar_cierre=True, continuar y reactivar la sesión en el mismo TPV
+            # Si forzar_cierre=True y tiene caja, continuar y reactivar la sesión en el mismo TPV
         
         # 2. Verificar si el usuario ya tiene una sesión ACTIVA
         sesion_existente = await db.sesiones_pos.find_one({
