@@ -1798,6 +1798,91 @@ async def logout_pos(request: Request, current_user: dict = Depends(get_current_
         
         return {"message": "Sesión cerrada correctamente", "estado": "cerrada"}
 
+@app.post("/api/auth/logout-pos-mobile")
+async def logout_pos_mobile(request: Request, current_user: dict = Depends(get_current_user)):
+    """Cierra la sesión POS del usuario desde la APK móvil - NO libera el TPV
+    
+    Este endpoint es específico para la APK móvil donde el comportamiento es:
+    - "Salir" solo pausa la sesión, mantiene el TPV reservado
+    - El TPV solo se libera cuando el usuario hace "Cerrar Sesión" completa (desasignar tienda)
+    """
+    user_id = str(current_user.get("_id") or current_user.get("user_id"))
+    
+    # Obtener la sesión activa
+    sesion = await db.sesiones_pos.find_one({"user_id": user_id, "activa": True})
+    tpv_id = sesion.get("tpv_id") if sesion else None
+    
+    # Pausar la sesión (NO cerrarla) - mantiene el TPV reservado
+    await db.sesiones_pos.update_many(
+        {"user_id": user_id, "activa": True},
+        {"$set": {
+            "activa": False,
+            "estado": "pausada",
+            "fecha_pausa": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Marcar el TPV como pausado (reservado para este usuario)
+    if tpv_id:
+        await db.tpv.update_one(
+            {"id": tpv_id},
+            {"$set": {
+                "estado_sesion": "pausado",
+                "usuario_reservado_id": user_id,
+                "usuario_reservado_nombre": current_user.get("nombre", "Usuario")
+            }}
+        )
+    
+    return {
+        "message": "Sesión pausada - TPV reservado",
+        "estado": "pausada",
+        "tpv_reservado": tpv_id
+    }
+
+@app.post("/api/auth/logout-pos-completo")
+async def logout_pos_completo(request: Request, current_user: dict = Depends(get_current_user)):
+    """Cierra la sesión POS completamente y LIBERA el TPV
+    
+    Este endpoint se usa cuando el usuario hace "Cerrar Sesión" completa desde la APK.
+    Libera el TPV para que otros usuarios puedan usarlo.
+    """
+    user_id = str(current_user.get("_id") or current_user.get("user_id"))
+    
+    # Obtener la sesión activa o pausada
+    sesion = await db.sesiones_pos.find_one({
+        "user_id": user_id,
+        "$or": [{"activa": True}, {"estado": "pausada"}]
+    })
+    tpv_id = sesion.get("tpv_id") if sesion else None
+    
+    # Cerrar todas las sesiones del usuario (activas y pausadas)
+    await db.sesiones_pos.update_many(
+        {"user_id": user_id, "$or": [{"activa": True}, {"estado": "pausada"}]},
+        {"$set": {
+            "activa": False,
+            "estado": "cerrada",
+            "fecha_cierre": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Liberar el TPV
+    if tpv_id:
+        await db.tpv.update_one(
+            {"id": tpv_id},
+            {"$set": {
+                "estado_sesion": "disponible",
+                "usuario_reservado_id": None,
+                "usuario_reservado_nombre": None,
+                "caja_abierta_id": None
+            }}
+        )
+    
+    return {
+        "message": "Sesión cerrada y TPV liberado",
+        "estado": "cerrada",
+        "tpv_liberado": tpv_id
+    }
+
 @app.get("/api/auth/verificar-sesion")
 async def verificar_sesion(request: Request, current_user: dict = Depends(get_current_user)):
     """Verifica si la sesión actual del usuario sigue siendo válida"""
