@@ -1839,14 +1839,27 @@ async def logout_pos_mobile(request: Request, current_user: dict = Depends(get_c
         "tpv_reservado": tpv_id
     }
 
+class LogoutCompletoRequest(BaseModel):
+    tpv_id: Optional[str] = None
+    dispositivo_id: Optional[str] = None
+
 @app.post("/api/auth/logout-pos-completo")
-async def logout_pos_completo(request: Request, current_user: dict = Depends(get_current_user)):
+async def logout_pos_completo(request: Request, data: LogoutCompletoRequest = None, current_user: dict = Depends(get_current_user)):
     """Cierra la sesión POS completamente y LIBERA el TPV
     
     Este endpoint se usa cuando el usuario hace "Cerrar Sesión" completa desde la APK.
     Libera el TPV para que otros usuarios puedan usarlo.
+    SOLO propietario o administrador pueden liberar el TPV.
     """
     user_id = str(current_user.get("_id") or current_user.get("user_id"))
+    user_rol = current_user.get("rol", "")
+    
+    # Verificar que el usuario sea propietario o administrador
+    if user_rol not in ["propietario", "administrador"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo el propietario o administrador puede cerrar sesión completamente y liberar el TPV"
+        )
     
     # Obtener la sesión activa o pausada
     sesion = await db.sesiones_pos.find_one({
@@ -1854,6 +1867,10 @@ async def logout_pos_completo(request: Request, current_user: dict = Depends(get
         "$or": [{"activa": True}, {"estado": "pausada"}]
     })
     tpv_id = sesion.get("tpv_id") if sesion else None
+    
+    # Si se proporciona tpv_id en el request, usarlo (para liberar TPV reservado por app)
+    if data and data.tpv_id:
+        tpv_id = data.tpv_id
     
     # Cerrar todas las sesiones del usuario (activas y pausadas)
     await db.sesiones_pos.update_many(
@@ -1873,7 +1890,10 @@ async def logout_pos_completo(request: Request, current_user: dict = Depends(get
                 "estado_sesion": "disponible",
                 "usuario_reservado_id": None,
                 "usuario_reservado_nombre": None,
-                "caja_abierta_id": None
+                "caja_abierta_id": None,
+                "dispositivo_id": None,
+                "codigo_tienda_asignada": None,
+                "fecha_reserva": None
             }}
         )
     
@@ -3266,13 +3286,14 @@ async def verificar_codigo_tienda(codigo: str):
     tpvs_disponibles = []
     for t in tpvs:
         estado_sesion = t.get("estado_sesion", "disponible")
-        # TPV disponible si no está ocupado
-        if estado_sesion in ["disponible", None, ""] or estado_sesion == "pausado":
+        # TPV disponible SOLO si estado es "disponible", null o vacío
+        # NO incluir "pausado", "ocupado", "reservado_app" - están reservados
+        if estado_sesion in ["disponible", None, ""]:
             tpvs_disponibles.append({
                 "id": t["id"],
                 "nombre": t["nombre"],
                 "punto_emision": t.get("punto_emision", "001"),
-                "estado": estado_sesion or "disponible"
+                "estado": "disponible"
             })
     
     # Si no hay TPVs, crear uno automáticamente
@@ -3301,6 +3322,85 @@ async def verificar_codigo_tienda(codigo: str):
         "organizacion_nombre": org_nombre,
         "tpvs": tpvs_disponibles
     }
+
+class ReservarTpvApp(BaseModel):
+    tpv_id: str
+    codigo_tienda: str
+    dispositivo_id: str  # Identificador único del dispositivo/app
+
+@app.post("/api/tpv/reservar-app")
+async def reservar_tpv_app(data: ReservarTpvApp):
+    """Reserva un TPV para un dispositivo/app móvil (sin autenticación)
+    
+    Se llama cuando el usuario asigna tienda + TPV en la APK.
+    El TPV queda bloqueado hasta que un propietario/admin cierre sesión completa.
+    Este endpoint es específico para el flujo de la APK móvil.
+    """
+    # Verificar que el TPV existe
+    tpv = await db.tpv.find_one({"id": data.tpv_id})
+    if not tpv:
+        raise HTTPException(status_code=404, detail="TPV no encontrado")
+    
+    # Verificar que está disponible
+    estado = tpv.get("estado_sesion", "disponible")
+    if estado not in ["disponible", None, ""]:
+        raise HTTPException(
+            status_code=409, 
+            detail=f"TPV no disponible. Estado actual: {estado}"
+        )
+    
+    # Marcar TPV como reservado por este dispositivo/app
+    await db.tpv.update_one(
+        {"id": data.tpv_id},
+        {"$set": {
+            "estado_sesion": "reservado_app",
+            "dispositivo_id": data.dispositivo_id,
+            "codigo_tienda_asignada": data.codigo_tienda,
+            "fecha_reserva": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {
+        "success": True, 
+        "message": "TPV reservado para este dispositivo",
+        "tpv_id": data.tpv_id
+    }
+
+@app.post("/api/tpv/liberar-app")
+async def liberar_tpv_app(data: dict):
+    """Libera un TPV reservado por un dispositivo (sin autenticación)
+    
+    Se usa como fallback si el dispositivo necesita liberar el TPV
+    sin tener un usuario autenticado.
+    """
+    tpv_id = data.get("tpv_id")
+    dispositivo_id = data.get("dispositivo_id")
+    
+    if not tpv_id or not dispositivo_id:
+        raise HTTPException(status_code=400, detail="tpv_id y dispositivo_id requeridos")
+    
+    # Verificar que el TPV existe y está reservado por este dispositivo
+    tpv = await db.tpv.find_one({"id": tpv_id})
+    if not tpv:
+        raise HTTPException(status_code=404, detail="TPV no encontrado")
+    
+    if tpv.get("dispositivo_id") != dispositivo_id:
+        raise HTTPException(status_code=403, detail="Este dispositivo no tiene reservado este TPV")
+    
+    # Liberar el TPV
+    await db.tpv.update_one(
+        {"id": tpv_id},
+        {"$set": {
+            "estado_sesion": "disponible",
+            "dispositivo_id": None,
+            "codigo_tienda_asignada": None,
+            "fecha_reserva": None,
+            "usuario_reservado_id": None,
+            "usuario_reservado_nombre": None
+        }}
+    )
+    
+    return {"success": True, "message": "TPV liberado"}
 
 @app.get("/api/config/pin-mode")
 async def get_pin_mode(current_user: dict = Depends(get_current_user)):
