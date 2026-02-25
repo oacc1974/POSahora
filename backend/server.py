@@ -5541,8 +5541,25 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         "estado": "abierta"
     })
     
+    # Si ya tiene caja abierta, retornarla en lugar de error (permite reentrar)
     if caja_abierta:
-        raise HTTPException(status_code=400, detail="Ya tienes una caja abierta")
+        return {
+            "id": str(caja_abierta["_id"]),
+            "numero": caja_abierta.get("numero"),
+            "usuario_id": caja_abierta["usuario_id"],
+            "usuario_nombre": caja_abierta.get("usuario_nombre"),
+            "monto_inicial": caja_abierta.get("monto_inicial", 0),
+            "monto_ventas": caja_abierta.get("monto_ventas", 0),
+            "total_ventas": caja_abierta.get("total_ventas", 0),
+            "fecha_apertura": caja_abierta.get("fecha_apertura"),
+            "estado": caja_abierta["estado"],
+            "tpv_id": caja_abierta.get("tpv_id"),
+            "tpv_nombre": caja_abierta.get("tpv_nombre"),
+            "tienda_id": caja_abierta.get("tienda_id"),
+            "tienda_nombre": caja_abierta.get("tienda_nombre"),
+            "ya_existia": True,
+            "mensaje": "Ya tienes una caja abierta"
+        }
     
     # Verificar configuración de cierres de caja
     funciones_config = await db.funciones_config.find_one({"organizacion_id": current_user["organizacion_id"]}, {"_id": 0})
@@ -5579,28 +5596,26 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
         if not tpv:
             raise HTTPException(status_code=404, detail="TPV no encontrado o no está activo")
         
-        # Obtener user_id del usuario actual
-        user_id = str(current_user.get("_id") or current_user.get("user_id"))
-        
         # Verificar estado de sesión del TPV
         estado_sesion = tpv.get("estado_sesion", "disponible")
-        usuario_reservado = tpv.get("usuario_reservado_id")
+        dispositivo_id = tpv.get("dispositivo_id")
         
-        # Si el TPV está ocupado/reservado por ESTE usuario, permitir
-        if usuario_reservado == user_id:
-            pass  # OK, es su propio TPV
-        elif tpv.get("ocupado") and usuario_reservado and usuario_reservado != user_id:
-            raise HTTPException(status_code=400, detail=f"El TPV ya está ocupado por {tpv.get('usuario_reservado_nombre', 'otro usuario')}")
-        elif estado_sesion == "pausado" and usuario_reservado and usuario_reservado != user_id:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Este TPV está reservado por {tpv.get('usuario_reservado_nombre', 'otro usuario')} que tiene caja abierta"
-            )
-        elif estado_sesion == "ocupado" and usuario_reservado and usuario_reservado != user_id:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Este TPV está siendo usado por {tpv.get('usuario_reservado_nombre', 'otro usuario')}"
-            )
+        # Si el TPV está reservado por un dispositivo (flujo APK móvil), cualquier usuario puede usarlo
+        # El TPV se asigna al dispositivo, no al usuario individual
+        if estado_sesion == "reservado_app" and dispositivo_id:
+            pass  # OK - TPV reservado por dispositivo, cualquier usuario del dispositivo puede usarlo
+        elif estado_sesion in ["disponible", None, ""]:
+            pass  # OK - TPV disponible
+        elif estado_sesion in ["ocupado", "pausado"]:
+            # Solo bloquear si NO tiene dispositivo_id (es decir, es flujo web tradicional)
+            if not dispositivo_id:
+                usuario_reservado = tpv.get("usuario_reservado_id")
+                user_id = str(current_user.get("_id") or current_user.get("user_id"))
+                if usuario_reservado and usuario_reservado != user_id:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Este TPV está siendo usado por {tpv.get('usuario_reservado_nombre', 'otro usuario')}"
+                    )
         
         # Obtener datos de la tienda
         tienda = await db.tiendas.find_one({"id": tpv["tienda_id"]}, {"_id": 0})
