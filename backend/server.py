@@ -3207,7 +3207,11 @@ async def login_con_pin(pin_login: PINLogin):
 
 @app.get("/api/tienda/verificar/{codigo}")
 async def verificar_codigo_tienda(codigo: str):
-    """Verificar si un código de tienda es válido y devolver info básica"""
+    """Verificar si un código de tienda es válido y devolver info básica + TPVs disponibles"""
+    
+    tienda = None
+    organizacion_id = None
+    tienda_id = None
     
     # Primero buscar en tiendas por codigo_tienda (código único de cada tienda)
     tienda = await db.tiendas.find_one({
@@ -3215,43 +3219,82 @@ async def verificar_codigo_tienda(codigo: str):
     })
     
     if tienda:
-        org = await db.organizaciones.find_one({"_id": tienda["organizacion_id"]})
-        return {
-            "valido": True,
-            "tienda_nombre": tienda["nombre"],
-            "organizacion_nombre": org.get("nombre", "Organización") if org else "Organización"
+        organizacion_id = tienda["organizacion_id"]
+        tienda_id = tienda.get("id")
+    else:
+        # Buscar por codigo_establecimiento (compatibilidad)
+        tienda = await db.tiendas.find_one({
+            "codigo_establecimiento": codigo.upper()
+        })
+        
+        if tienda:
+            organizacion_id = tienda["organizacion_id"]
+            tienda_id = tienda.get("id")
+        else:
+            # Buscar en organizaciones por múltiples campos
+            org = await db.organizaciones.find_one({
+                "$or": [
+                    {"codigo": codigo.upper()},
+                    {"codigo_tienda": codigo.upper()},
+                    {"_id": codigo}
+                ]
+            })
+            
+            if org:
+                organizacion_id = org["_id"]
+            else:
+                raise HTTPException(status_code=404, detail="Código de tienda no encontrado")
+    
+    # Obtener info de la organización
+    org = await db.organizaciones.find_one({"_id": organizacion_id})
+    org_nombre = org.get("nombre", "Organización") if org else "Organización"
+    tienda_nombre = tienda["nombre"] if tienda else "Tienda Principal"
+    
+    # Obtener TPVs disponibles para esta tienda/organización
+    tpvs_query = {"organizacion_id": str(organizacion_id)}
+    if tienda_id:
+        tpvs_query["tienda_id"] = tienda_id
+    
+    tpvs = await db.tpv.find(tpvs_query, {"_id": 0}).to_list(100)
+    
+    tpvs_disponibles = []
+    for t in tpvs:
+        estado_sesion = t.get("estado_sesion", "disponible")
+        # TPV disponible si no está ocupado
+        if estado_sesion in ["disponible", None, ""] or estado_sesion == "pausado":
+            tpvs_disponibles.append({
+                "id": t["id"],
+                "nombre": t["nombre"],
+                "punto_emision": t.get("punto_emision", "001"),
+                "estado": estado_sesion or "disponible"
+            })
+    
+    # Si no hay TPVs, crear uno automáticamente
+    if len(tpvs_disponibles) == 0 and len(tpvs) == 0:
+        nuevo_tpv_id = str(uuid.uuid4())
+        nuevo_tpv = {
+            "id": nuevo_tpv_id,
+            "nombre": "Caja 1",
+            "punto_emision": "001",
+            "organizacion_id": str(organizacion_id),
+            "tienda_id": tienda_id or str(organizacion_id),
+            "activo": True,
+            "estado_sesion": "disponible"
         }
+        await db.tpv.insert_one(nuevo_tpv)
+        tpvs_disponibles.append({
+            "id": nuevo_tpv_id,
+            "nombre": "Caja 1",
+            "punto_emision": "001",
+            "estado": "disponible"
+        })
     
-    # Buscar por codigo_establecimiento (compatibilidad)
-    tienda = await db.tiendas.find_one({
-        "codigo_establecimiento": codigo.upper()
-    })
-    
-    if tienda:
-        org = await db.organizaciones.find_one({"_id": tienda["organizacion_id"]})
-        return {
-            "valido": True,
-            "tienda_nombre": tienda["nombre"],
-            "organizacion_nombre": org.get("nombre", "Organización") if org else "Organización"
-        }
-    
-    # Buscar en organizaciones por múltiples campos
-    org = await db.organizaciones.find_one({
-        "$or": [
-            {"codigo": codigo.upper()},
-            {"codigo_tienda": codigo.upper()},
-            {"_id": codigo}
-        ]
-    })
-    
-    if org:
-        return {
-            "valido": True,
-            "tienda_nombre": "Tienda Principal",
-            "organizacion_nombre": org.get("nombre", "Organización")
-        }
-    
-    raise HTTPException(status_code=404, detail="Código de tienda no encontrado")
+    return {
+        "valido": True,
+        "tienda_nombre": tienda_nombre,
+        "organizacion_nombre": org_nombre,
+        "tpvs": tpvs_disponibles
+    }
 
 @app.get("/api/config/pin-mode")
 async def get_pin_mode(current_user: dict = Depends(get_current_user)):
