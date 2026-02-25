@@ -5485,12 +5485,12 @@ async def abrir_caja(apertura: CajaApertura, current_user: dict = Depends(get_cu
             pass  # OK, es su propio TPV
         elif tpv.get("ocupado") and usuario_reservado and usuario_reservado != user_id:
             raise HTTPException(status_code=400, detail=f"El TPV ya está ocupado por {tpv.get('usuario_reservado_nombre', 'otro usuario')}")
-        elif estado_sesion == "pausado" and usuario_reservado:
+        elif estado_sesion == "pausado" and usuario_reservado and usuario_reservado != user_id:
             raise HTTPException(
                 status_code=400, 
                 detail=f"Este TPV está reservado por {tpv.get('usuario_reservado_nombre', 'otro usuario')} que tiene caja abierta"
             )
-        elif estado_sesion == "ocupado" and usuario_reservado:
+        elif estado_sesion == "ocupado" and usuario_reservado and usuario_reservado != user_id:
             raise HTTPException(
                 status_code=400,
                 detail=f"Este TPV está siendo usado por {tpv.get('usuario_reservado_nombre', 'otro usuario')}"
