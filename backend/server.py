@@ -2940,16 +2940,22 @@ async def login_con_pin(pin_login: PINLogin):
             # Verificar si realmente tiene caja abierta
             caja = None
             monto_caja = 0
-            if caja_id:
+            
+            # Buscar caja abierta del usuario (independiente del caja_id guardado)
+            caja = await db.cajas.find_one({
+                "usuario_id": user_id,
+                "estado": "abierta"
+            })
+            
+            # Si no encontró por usuario_id, intentar con el caja_id guardado
+            if not caja and caja_id:
                 try:
                     caja = await db.cajas.find_one({"_id": ObjectId(caja_id), "estado": "abierta"})
                 except:
-                    caja = await db.cajas.find_one({
-                        "usuario_id": user_id,
-                        "estado": "abierta"
-                    })
-                if caja:
-                    monto_caja = caja.get("monto_actual", 0)
+                    pass
+            
+            if caja:
+                monto_caja = caja.get("monto_actual", 0)
             
             # Si NO tiene caja abierta, cerrar sesión pausada automáticamente
             if not caja:
