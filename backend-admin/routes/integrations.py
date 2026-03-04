@@ -4,6 +4,7 @@ Rutas de Integraciones
 - Loyverse: sincronización de ventas
 """
 import os
+import asyncio
 from fastapi import APIRouter, HTTPException, Request, Depends, Query
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
@@ -450,24 +451,34 @@ async def sync_loyverse_sales(
                 invoice_data = await prepare_invoice_from_loyverse(receipt, tenant_id, fe_db)
                 
                 if invoice_data:
-                    # Llamar a backend-fe para crear la factura
-                    async with httpx.AsyncClient(timeout=30.0) as fe_client:
-                        fe_response = await fe_client.post(
-                            f"{BACKEND_FE_URL}/fe/documents/invoice",
-                            json=invoice_data,
-                            headers={"X-Tenant-ID": tenant_id}
-                        )
-                        
-                        if fe_response.status_code in [200, 201]:
-                            # Marcar como procesado guardando referencia
-                            result = fe_response.json()
-                            await fe_db.documents.update_one(
-                                {"_id": result.get("document_id")},
-                                {"$set": {"external_reference": f"loyverse:{receipt['receipt_number']}"}}
+                    # Llamar a backend-fe para crear la factura con retry
+                    max_retries = 3
+                    for attempt in range(max_retries):
+                        async with httpx.AsyncClient(timeout=60.0) as fe_client:
+                            fe_response = await fe_client.post(
+                                f"{BACKEND_FE_URL}/fe/documents/invoice",
+                                json=invoice_data,
+                                headers={"X-Tenant-ID": tenant_id}
                             )
-                            records_success += 1
-                        else:
-                            raise Exception(f"Error creando factura: {fe_response.text}")
+                            
+                            if fe_response.status_code in [200, 201]:
+                                # Marcar como procesado guardando referencia
+                                result = fe_response.json()
+                                await fe_db.documents.update_one(
+                                    {"_id": result.get("document_id")},
+                                    {"$set": {"external_reference": f"loyverse:{receipt['receipt_number']}"}}
+                                )
+                                records_success += 1
+                                break
+                            elif fe_response.status_code == 429:
+                                # Rate limited, esperar y reintentar
+                                if attempt < max_retries - 1:
+                                    await asyncio.sleep(5 * (attempt + 1))
+                                    continue
+                                else:
+                                    raise Exception(f"Rate limit excedido después de {max_retries} intentos")
+                            else:
+                                raise Exception(f"Error creando factura: {fe_response.text}")
                 else:
                     # Recibo sin items válidos, saltar
                     continue

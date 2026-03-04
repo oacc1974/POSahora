@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { FileText, Download, Eye, Search, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { FileText, Download, Eye, Search, CheckCircle, XCircle, Clock, Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useToast } from '@/components/ui/use-toast'
 import api from '@/lib/api'
 
 export default function DocumentosPage() {
@@ -12,6 +13,8 @@ export default function DocumentosPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
 
   const { data: empresas } = useQuery({
     queryKey: ['empresas'],
@@ -107,6 +110,25 @@ export default function DocumentosPage() {
       </span>
     )
   }
+
+  const retryMutation = useMutation({
+    mutationFn: () => api.post(`/documents/retry/${selectedEmpresa}`),
+    onSuccess: (response) => {
+      toast({
+        title: 'Reintento completado',
+        description: response.data.message,
+      })
+      queryClient.invalidateQueries({ queryKey: ['documents', selectedEmpresa] })
+      queryClient.invalidateQueries({ queryKey: ['document-stats', selectedEmpresa] })
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.detail || 'Error al reintentar documentos',
+      })
+    },
+  })
 
   return (
     <div className="space-y-6">
@@ -233,11 +255,24 @@ export default function DocumentosPage() {
 
       {selectedEmpresa && (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Documentos
             </CardTitle>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => retryMutation.mutate()}
+              disabled={retryMutation.isPending}
+            >
+              {retryMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
+              Reintentar Pendientes
+            </Button>
           </CardHeader>
           <CardContent>
             {isLoading ? (

@@ -4,6 +4,9 @@ Rutas de Documentos Electrónicos (lectura desde fe_db)
 - Ver detalle de documento
 - Descargar XML/PDF
 """
+import os
+import httpx
+import asyncio
 from fastapi import APIRouter, HTTPException, Request, Depends, Query
 from fastapi.responses import Response
 from datetime import datetime, timezone
@@ -13,6 +16,8 @@ import base64
 import gzip
 
 from utils.security import get_current_user, require_permission
+
+BACKEND_FE_URL = os.environ.get("BACKEND_FE_URL", "http://localhost:8000")
 
 router = APIRouter(prefix="/documents", tags=["Documentos"])
 
@@ -341,3 +346,126 @@ def get_status_name(status: str) -> str:
         "error": "Error"
     }
     return statuses.get(status, status)
+
+
+@router.post("/retry/{tenant_id}")
+async def retry_pending_documents(
+    request: Request,
+    tenant_id: str,
+    current_user: dict = Depends(require_permission("documents:write"))
+):
+    """
+    Reintenta autorizar documentos pendientes de una empresa
+    """
+    fe_db = request.app.state.fe_db
+    
+    # Buscar documentos pendientes o con error
+    pending_statuses = ["pending", "signed", "sent", "error", "PENDIENTE", "ERROR", "RECIBIDO"]
+    docs = await fe_db.documents.find({
+        "tenant_id": tenant_id,
+        "status": {"$in": pending_statuses}
+    }).to_list(50)
+    
+    if not docs:
+        return {
+            "success": True,
+            "message": "No hay documentos pendientes para reintentar",
+            "processed": 0,
+            "success_count": 0,
+            "failed_count": 0
+        }
+    
+    processed = 0
+    success_count = 0
+    failed_count = 0
+    errors = []
+    
+    for doc in docs:
+        doc_id = str(doc["_id"])
+        try:
+            # Llamar a backend-fe para reintentar autorización
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    f"{BACKEND_FE_URL}/fe/documents/{doc_id}/retry",
+                    headers={"X-Tenant-ID": tenant_id}
+                )
+                
+                if response.status_code in [200, 201]:
+                    success_count += 1
+                elif response.status_code == 429:
+                    # Rate limited, esperar y continuar
+                    await asyncio.sleep(3)
+                    failed_count += 1
+                    errors.append({
+                        "doc_id": doc_id,
+                        "doc_number": doc.get("doc_number"),
+                        "error": "Rate limit - reintentar más tarde"
+                    })
+                else:
+                    failed_count += 1
+                    errors.append({
+                        "doc_id": doc_id,
+                        "doc_number": doc.get("doc_number"),
+                        "error": response.text[:200]
+                    })
+            
+            processed += 1
+            
+            # Pequeña pausa entre documentos para evitar rate limiting
+            await asyncio.sleep(1)
+            
+        except Exception as e:
+            failed_count += 1
+            errors.append({
+                "doc_id": doc_id,
+                "doc_number": doc.get("doc_number"),
+                "error": str(e)
+            })
+    
+    return {
+        "success": True,
+        "message": f"Procesados {processed} documentos: {success_count} exitosos, {failed_count} fallidos",
+        "processed": processed,
+        "success_count": success_count,
+        "failed_count": failed_count,
+        "errors": errors[:10]
+    }
+
+
+@router.post("/{document_id}/retry")
+async def retry_single_document(
+    request: Request,
+    document_id: str,
+    current_user: dict = Depends(require_permission("documents:write"))
+):
+    """
+    Reintenta autorizar un documento específico
+    """
+    fe_db = request.app.state.fe_db
+    
+    doc = await fe_db.documents.find_one({"_id": document_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    
+    tenant_id = doc.get("tenant_id")
+    
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                f"{BACKEND_FE_URL}/fe/documents/{document_id}/retry",
+                headers={"X-Tenant-ID": tenant_id}
+            )
+            
+            if response.status_code in [200, 201]:
+                return {
+                    "success": True,
+                    "message": "Documento reenviado para autorización",
+                    "result": response.json()
+                }
+            else:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Error del SRI: {response.text}"
+                )
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=500, detail=f"Error de conexión: {str(e)}")
