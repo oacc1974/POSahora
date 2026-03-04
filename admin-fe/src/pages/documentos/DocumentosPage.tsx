@@ -84,10 +84,11 @@ export default function DocumentosPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'authorized':
+      case 'AUTORIZADO':
         return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'rejected':
-      case 'error':
+      case 'NO_AUTORIZADO':
+      case 'ERROR':
+      case 'DEVUELTA':
         return <XCircle className="h-4 w-4 text-red-500" />
       default:
         return <Clock className="h-4 w-4 text-yellow-500" />
@@ -96,12 +97,13 @@ export default function DocumentosPage() {
 
   const getStatusBadge = (status: string, statusName: string) => {
     const colors: Record<string, string> = {
-      authorized: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
-      error: 'bg-red-100 text-red-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      signed: 'bg-blue-100 text-blue-800',
-      sent: 'bg-purple-100 text-purple-800'
+      AUTORIZADO: 'bg-green-100 text-green-800',
+      NO_AUTORIZADO: 'bg-red-100 text-red-800',
+      ERROR: 'bg-red-100 text-red-800',
+      DEVUELTA: 'bg-orange-100 text-orange-800',
+      PENDIENTE: 'bg-yellow-100 text-yellow-800',
+      RECIBIDA: 'bg-blue-100 text-blue-800',
+      EN_PROCESO: 'bg-purple-100 text-purple-800'
     }
     return (
       <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
@@ -186,10 +188,11 @@ export default function DocumentosPage() {
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1"
               >
                 <option value="">Todos</option>
-                <option value="authorized">Autorizado</option>
-                <option value="pending">Pendiente</option>
-                <option value="rejected">Rechazado</option>
-                <option value="error">Error</option>
+                <option value="AUTORIZADO">Autorizado</option>
+                <option value="PENDIENTE">Pendiente</option>
+                <option value="NO_AUTORIZADO">No Autorizado</option>
+                <option value="DEVUELTA">Devuelta</option>
+                <option value="ERROR">Error</option>
               </select>
             </div>
           </>
@@ -204,7 +207,7 @@ export default function DocumentosPage() {
                 <div>
                   <p className="text-sm text-gray-500">Autorizados</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {stats.by_status?.authorized?.count || 0}
+                    {stats.by_status?.AUTORIZADO?.count || 0}
                   </p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-500" />
@@ -217,7 +220,7 @@ export default function DocumentosPage() {
                 <div>
                   <p className="text-sm text-gray-500">Pendientes</p>
                   <p className="text-2xl font-bold text-yellow-600">
-                    {stats.by_status?.pending?.count || 0}
+                    {(stats.by_status?.PENDIENTE?.count || 0) + (stats.by_status?.RECIBIDA?.count || 0) + (stats.by_status?.EN_PROCESO?.count || 0)}
                   </p>
                 </div>
                 <Clock className="h-8 w-8 text-yellow-500" />
@@ -230,7 +233,7 @@ export default function DocumentosPage() {
                 <div>
                   <p className="text-sm text-gray-500">Rechazados</p>
                   <p className="text-2xl font-bold text-red-600">
-                    {(stats.by_status?.rejected?.count || 0) + (stats.by_status?.error?.count || 0)}
+                    {(stats.by_status?.NO_AUTORIZADO?.count || 0) + (stats.by_status?.ERROR?.count || 0) + (stats.by_status?.DEVUELTA?.count || 0)}
                   </p>
                 </div>
                 <XCircle className="h-8 w-8 text-red-500" />
@@ -243,7 +246,7 @@ export default function DocumentosPage() {
                 <div>
                   <p className="text-sm text-gray-500">Total Facturado</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    ${(stats.by_status?.authorized?.total || 0).toLocaleString('es-EC', { minimumFractionDigits: 2 })}
+                    ${(stats.by_status?.AUTORIZADO?.total || 0).toLocaleString('es-EC', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
                 <FileText className="h-8 w-8 text-blue-500" />

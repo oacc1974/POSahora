@@ -95,7 +95,7 @@ async def list_documents(
     query = {"tenant_id": tenant_id}
     
     if status:
-        query["status"] = status
+        query["sri_status"] = status.upper()
     
     if doc_type:
         query["doc_type"] = doc_type
@@ -121,8 +121,8 @@ async def list_documents(
         query["$or"] = [
             {"doc_number": {"$regex": search, "$options": "i"}},
             {"access_key": {"$regex": search, "$options": "i"}},
-            {"buyer.name": {"$regex": search, "$options": "i"}},
-            {"buyer.id_number": {"$regex": search, "$options": "i"}}
+            {"customer.name": {"$regex": search, "$options": "i"}},
+            {"customer.identification": {"$regex": search, "$options": "i"}}
         ]
     
     total = await fe_db.documents.count_documents(query)
@@ -139,16 +139,16 @@ async def list_documents(
             "doc_number": doc.get("doc_number"),
             "access_key": doc.get("access_key"),
             "issue_date": doc.get("issue_date"),
-            "buyer_name": doc.get("buyer", {}).get("name", "N/A"),
-            "buyer_id": doc.get("buyer", {}).get("id_number", "N/A"),
+            "buyer_name": doc.get("customer", {}).get("name", "N/A"),
+            "buyer_id": doc.get("customer", {}).get("identification", "N/A"),
             "total": doc.get("totals", {}).get("total", 0),
-            "status": doc.get("status", "pending"),
-            "status_name": get_status_name(doc.get("status", "pending")),
+            "status": doc.get("sri_status", "PENDIENTE"),
+            "status_name": get_status_name(doc.get("sri_status", "PENDIENTE")),
             "sri_status": doc.get("sri_status"),
-            "sri_message": doc.get("sri_message"),
+            "sri_message": (doc.get("sri_messages") or [{}])[0].get("mensaje") if doc.get("sri_messages") else None,
             "created_at": doc.get("created_at"),
-            "has_xml": bool(doc.get("xml_signed")),
-            "has_pdf": bool(doc.get("pdf_ride"))
+            "has_xml": True,
+            "has_pdf": False
         })
     
     return {
@@ -191,16 +191,16 @@ async def get_document(
         "items": doc.get("items", []),
         "totals": doc.get("totals"),
         "payments": doc.get("payments", []),
-        "status": doc.get("status"),
-        "status_name": get_status_name(doc.get("status", "pending")),
+        "status": doc.get("sri_status"),
+        "status_name": get_status_name(doc.get("sri_status", "PENDIENTE")),
         "sri_status": doc.get("sri_status"),
-        "sri_message": doc.get("sri_message"),
+        "sri_message": (doc.get("sri_messages") or [{}])[0].get("mensaje") if doc.get("sri_messages") else None,
         "sri_authorization_date": doc.get("sri_authorization_date"),
         "external_reference": doc.get("external_reference"),
         "created_at": doc.get("created_at"),
         "updated_at": doc.get("updated_at"),
-        "has_xml": bool(doc.get("xml_signed")),
-        "has_pdf": bool(doc.get("pdf_ride"))
+        "has_xml": True,
+        "has_pdf": False
     }
 
 
@@ -290,7 +290,7 @@ async def get_document_stats(
     pipeline = [
         {"$match": {"tenant_id": tenant_id}},
         {"$group": {
-            "_id": "$status",
+            "_id": "$sri_status",
             "count": {"$sum": 1},
             "total": {"$sum": "$totals.total"}
         }}
@@ -336,16 +336,21 @@ def get_doc_type_name(doc_type: str) -> str:
 
 
 def get_status_name(status: str) -> str:
-    """Retorna nombre del estado"""
+    """Retorna nombre del estado (backend-fe usa mayúsculas)"""
     statuses = {
+        "PENDIENTE": "Pendiente",
+        "RECIBIDA": "Recibida",
+        "EN_PROCESO": "En Proceso",
+        "AUTORIZADO": "Autorizado",
+        "NO_AUTORIZADO": "No Autorizado",
+        "DEVUELTA": "Devuelta",
+        "ERROR": "Error",
         "pending": "Pendiente",
-        "signed": "Firmado",
-        "sent": "Enviado",
         "authorized": "Autorizado",
         "rejected": "Rechazado",
         "error": "Error"
     }
-    return statuses.get(status, status)
+    return statuses.get(status, status or "Pendiente")
 
 
 @router.post("/retry/{tenant_id}")
@@ -387,7 +392,7 @@ async def retry_pending_documents(
             # Llamar a backend-fe para reintentar autorización
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(
-                    f"{BACKEND_FE_URL}/fe/documents/{doc_id}/retry",
+                    f"{BACKEND_FE_URL}/fe/documents/{doc_id}/resend",
                     headers={"X-Tenant-ID": tenant_id}
                 )
                 
@@ -453,7 +458,7 @@ async def retry_single_document(
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(
-                f"{BACKEND_FE_URL}/fe/documents/{document_id}/retry",
+                f"{BACKEND_FE_URL}/fe/documents/{document_id}/resend",
                 headers={"X-Tenant-ID": tenant_id}
             )
             

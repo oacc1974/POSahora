@@ -166,17 +166,11 @@ app = FastAPI(
     openapi_url="/admin/openapi.json"
 )
 
-# CORS
+# CORS - permitir todos los orígenes en desarrollo
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", 
-        "http://localhost:3000",
-        "https://admin-fe-pos.netlify.app",
-        "https://pos-ahora-admin.netlify.app",
-    ],
-    allow_origin_regex=r"https://.*\.netlify\.app",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
