@@ -359,11 +359,12 @@ async def retry_pending_documents(
     """
     fe_db = request.app.state.fe_db
     
-    # Buscar documentos pendientes o con error
-    pending_statuses = ["pending", "signed", "sent", "error", "PENDIENTE", "ERROR", "RECIBIDO"]
+    # Buscar documentos NO autorizados (cualquier estado que no sea autorizado)
+    # Excluimos los autorizados en lugar de listar todos los pendientes
+    authorized_statuses = ["authorized", "AUTORIZADO", "Autorizado"]
     docs = await fe_db.documents.find({
         "tenant_id": tenant_id,
-        "status": {"$in": pending_statuses}
+        "status": {"$nin": authorized_statuses}
     }).to_list(50)
     
     if not docs:

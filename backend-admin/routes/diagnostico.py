@@ -136,6 +136,9 @@ async def debug_all(
     # Tenant IDs en tenants
     tenant_ids = await fe_db.tenants.distinct("tenant_id")
     
+    # Estados únicos de documentos
+    doc_statuses = await fe_db.documents.distinct("status")
+    
     # Últimos errores de sync
     recent_errors = await admin_db.sync_logs.find(
         {"status": {"$in": ["failed", "completed"]}, "errors": {"$ne": []}}
@@ -150,6 +153,7 @@ async def debug_all(
         "total_sync_logs": total_sync_logs,
         "document_tenant_ids": doc_tenant_ids,
         "tenant_ids": tenant_ids,
+        "document_statuses": doc_statuses,
         "recent_sync_errors": [
             {
                 "tenant_id": log.get("tenant_id"),
@@ -159,4 +163,54 @@ async def debug_all(
             }
             for log in recent_errors
         ]
+    }
+
+
+@router.get("/document-status-count/{tenant_id}")
+async def get_document_status_count(
+    request: Request,
+    tenant_id: str,
+    current_user: dict = Depends(require_permission("documents:read"))
+):
+    """
+    Cuenta documentos por cada estado para un tenant específico
+    """
+    fe_db = request.app.state.fe_db
+    
+    # Obtener todos los estados únicos para este tenant
+    statuses = await fe_db.documents.distinct("status", {"tenant_id": tenant_id})
+    
+    # Contar por cada estado
+    status_counts = {}
+    for status in statuses:
+        count = await fe_db.documents.count_documents({
+            "tenant_id": tenant_id,
+            "status": status
+        })
+        status_counts[status or "null"] = count
+    
+    # Total
+    total = await fe_db.documents.count_documents({"tenant_id": tenant_id})
+    
+    # Muestra de documento reciente
+    sample = await fe_db.documents.find_one(
+        {"tenant_id": tenant_id},
+        sort=[("created_at", -1)]
+    )
+    
+    sample_info = None
+    if sample:
+        sample_info = {
+            "id": str(sample.get("_id")),
+            "status": sample.get("status"),
+            "doc_number": sample.get("doc_number"),
+            "created_at": str(sample.get("created_at")) if sample.get("created_at") else None
+        }
+    
+    return {
+        "tenant_id": tenant_id,
+        "total_documents": total,
+        "status_counts": status_counts,
+        "all_statuses": statuses,
+        "most_recent_document": sample_info
     }
