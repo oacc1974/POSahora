@@ -20,6 +20,7 @@ from routes.empresas import router as empresas_router
 from routes.integrations import router as integrations_router
 from routes.dashboard import router as dashboard_router
 from routes.documents import router as documents_router
+from routes.diagnostico import router as diagnostico_router
 
 # Configuración
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
@@ -171,9 +172,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173", 
         "http://localhost:3000",
-        "https://*.netlify.app",  # Netlify previews
+        "https://admin-fe-pos.netlify.app",
+        "https://pos-ahora-admin.netlify.app",
     ],
-    allow_origin_regex=r"https://.*\.netlify\.app",  # Cualquier subdominio de netlify
+    allow_origin_regex=r"https://.*\.netlify\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -186,6 +188,7 @@ app.include_router(empresas_router)
 app.include_router(integrations_router)
 app.include_router(dashboard_router)
 app.include_router(documents_router)
+app.include_router(diagnostico_router)
 
 # Ruta raíz
 @app.get("/")

@@ -4,7 +4,8 @@ import {
   Building2, 
   Users, 
   Plug,
-  FileText
+  FileText,
+  Bug
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
@@ -15,6 +16,7 @@ const navigation = [
   { name: 'Documentos', href: '/documentos', icon: FileText, permission: 'documents:read' },
   { name: 'Usuarios', href: '/usuarios', icon: Users, permission: 'users:read' },
   { name: 'Integraciones', href: '/integraciones', icon: Plug, permission: 'integrations:read' },
+  { name: 'Diagnóstico', href: '/diagnostico', icon: Bug, permission: 'documents:read' },
 ]
 
 export default function Sidebar() {
