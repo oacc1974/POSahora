@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plug, CheckCircle, AlertCircle, Settings, RefreshCw, Loader2 } from 'lucide-react'
+import { Plug, CheckCircle, AlertCircle, Settings, RefreshCw, Loader2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -84,6 +84,21 @@ export default function IntegracionesPage() {
     },
   })
 
+  const deleteIntegrationMutation = useMutation({
+    mutationFn: () => api.delete(`/integrations/loyverse/${selectedEmpresa}`),
+    onSuccess: () => {
+      toast({ title: 'Integración eliminada correctamente' })
+      queryClient.invalidateQueries({ queryKey: ['loyverse-status', selectedEmpresa] })
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.detail || 'Error al eliminar integración',
+      })
+    },
+  })
+
   return (
     <div className="space-y-6">
       <div>
@@ -143,7 +158,7 @@ export default function IntegracionesPage() {
                     )}
                   </div>
                   
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -163,6 +178,23 @@ export default function IntegracionesPage() {
                         <RefreshCw className="mr-2 h-4 w-4" />
                       )}
                       Sincronizar Ahora
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm('¿Está seguro de eliminar esta integración?')) {
+                          deleteIntegrationMutation.mutate()
+                        }
+                      }}
+                      disabled={deleteIntegrationMutation.isPending}
+                    >
+                      {deleteIntegrationMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="mr-2 h-4 w-4" />
+                      )}
+                      Eliminar
                     </Button>
                   </div>
                 </>

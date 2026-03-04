@@ -18,6 +18,7 @@ export default function EmpresaDetailPage() {
   const [certFile, setCertFile] = useState<File | null>(null)
   const [certPassword, setCertPassword] = useState('')
   const [isUploading, setIsUploading] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const { data: empresa, isLoading } = useQuery({
     queryKey: ['empresa', tenantId],
@@ -59,6 +60,36 @@ export default function EmpresaDetailPage() {
     onSuccess: () => {
       toast({ title: 'Certificado eliminado' })
       queryClient.invalidateQueries({ queryKey: ['empresa', tenantId] })
+    },
+  })
+
+  const deleteEmpresaMutation = useMutation({
+    mutationFn: () => api.delete(`/empresas/${tenantId}`),
+    onSuccess: () => {
+      toast({ title: 'Empresa eliminada correctamente' })
+      navigate('/empresas')
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.detail || 'Error al eliminar empresa',
+      })
+    },
+  })
+
+  const updateAmbienteMutation = useMutation({
+    mutationFn: (ambiente: string) => api.put(`/empresas/${tenantId}`, { ambiente }),
+    onSuccess: () => {
+      toast({ title: 'Ambiente actualizado correctamente' })
+      queryClient.invalidateQueries({ queryKey: ['empresa', tenantId] })
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.detail || 'Error al actualizar ambiente',
+      })
     },
   })
 
@@ -105,9 +136,18 @@ export default function EmpresaDetailPage() {
               </div>
               <div>
                 <span className="text-gray-500">Ambiente:</span>
-                <p className={`font-medium ${empresa?.ambiente === 'produccion' ? 'text-green-600' : 'text-yellow-600'}`}>
-                  {empresa?.ambiente}
-                </p>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={empresa?.ambiente || 'pruebas'}
+                    onChange={(e) => updateAmbienteMutation.mutate(e.target.value)}
+                    disabled={updateAmbienteMutation.isPending}
+                    className="text-sm border rounded px-2 py-1"
+                  >
+                    <option value="pruebas">Pruebas</option>
+                    <option value="produccion">Producción</option>
+                  </select>
+                  {updateAmbienteMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                </div>
               </div>
               <div>
                 <span className="text-gray-500">Email:</span>
@@ -125,6 +165,43 @@ export default function EmpresaDetailPage() {
                 <span className="text-gray-500">Obligado Contabilidad:</span>
                 <p className="font-medium">{empresa?.obligado_contabilidad}</p>
               </div>
+            </div>
+            
+            <div className="pt-4 border-t">
+              {!showDeleteConfirm ? (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Eliminar Empresa
+                </Button>
+              ) : (
+                <div className="p-4 bg-red-50 rounded-lg space-y-3">
+                  <p className="text-sm text-red-700 font-medium">
+                    ¿Está seguro? Se eliminarán todos los datos de esta empresa incluyendo documentos y certificados.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => deleteEmpresaMutation.mutate()}
+                      disabled={deleteEmpresaMutation.isPending}
+                    >
+                      {deleteEmpresaMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Sí, eliminar
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowDeleteConfirm(false)}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -296,6 +296,39 @@ async def update_empresa(
     return await get_empresa(request, tenant_id, current_user)
 
 
+@router.delete("/{tenant_id}")
+async def delete_empresa(
+    request: Request,
+    tenant_id: str,
+    current_user: dict = Depends(require_permission("empresas:write"))
+):
+    """
+    Elimina una empresa y todos sus datos asociados
+    """
+    fe_db = request.app.state.fe_db
+    admin_db = request.app.state.admin_db
+    
+    tenant = await fe_db.tenants.find_one({"tenant_id": tenant_id})
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Empresa no encontrada")
+    
+    # Eliminar datos de fe_db
+    await fe_db.tenants.delete_one({"tenant_id": tenant_id})
+    await fe_db.configs_fiscal.delete_many({"tenant_id": tenant_id})
+    await fe_db.certificates.delete_many({"tenant_id": tenant_id})
+    await fe_db.documents.delete_many({"tenant_id": tenant_id})
+    await fe_db.sequentials.delete_many({"tenant_id": tenant_id})
+    
+    # Eliminar integraciones de admin_db
+    await admin_db.integrations.delete_many({"tenant_id": tenant_id})
+    await admin_db.sync_logs.delete_many({"tenant_id": tenant_id})
+    
+    return {
+        "success": True,
+        "message": f"Empresa {tenant_id} eliminada correctamente"
+    }
+
+
 @router.post("/{tenant_id}/certificate")
 async def upload_certificate(
     request: Request,
