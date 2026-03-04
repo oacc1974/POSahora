@@ -125,7 +125,7 @@ async def prepare_invoice_from_loyverse(receipt: dict, tenant_id: str, fe_db) ->
     invoice = {
         "store_code": "001",
         "emission_point": "001",
-        "buyer": buyer_data,
+        "customer": buyer_data,
         "items": items,
         "payments": payments
     }
