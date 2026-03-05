@@ -8,7 +8,7 @@ Rutas de Documentos Electrónicos
 """
 from fastapi import APIRouter, HTTPException, Request, Query
 from fastapi.responses import Response
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 import uuid
 import gzip
@@ -143,16 +143,10 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
     # Obtener ambiente configurado
     ambiente = config.get("ambiente", "pruebas")
     
-    if ambiente == "pruebas":
-        # El servidor de pruebas del SRI (celcer) está configurado para nov-dic 2025
-        issue_date_for_sri = datetime(2025, 11, 28, tzinfo=timezone.utc)
-    else:
-        # En producción: usar la fecha de Ecuador (UTC-5)
-        # El SRI valida contra la fecha de Ecuador, no UTC
-        # Convertir UTC a hora de Ecuador restando 5 horas
-        from datetime import timedelta
-        ecuador_offset = timedelta(hours=-5)
-        issue_date_for_sri = now + ecuador_offset
+    # Usar fecha actual de Ecuador (UTC-5) para el SRI
+    # El SRI valida contra la fecha de Ecuador, no UTC
+    ecuador_offset = timedelta(hours=-5)
+    issue_date_for_sri = now + ecuador_offset
     
     # Obtener secuencial atómico
     sequential = await get_next_sequential(
