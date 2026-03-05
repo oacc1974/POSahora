@@ -101,13 +101,10 @@ export default function IntegracionesPage() {
     onSuccess: (response: any) => {
       const data = response.data
       console.log('[TestAPI] Resultado completo:', data)
-      const desc = data.status === 'ok'
-        ? `API OK. Recibos encontrados: ${data.receipts_count}. Keys: ${data.response_keys?.join(', ')}. ` +
-          (data.first_receipt_preview ? `Primer recibo: ${data.first_receipt_preview.receipt_number}` : 'Sin recibos')
-        : `Error: ${data.error}`
       toast({
-        title: 'Test API Loyverse',
-        description: desc,
+        variant: data.status === 'ok' ? 'default' : 'destructive',
+        title: data.status === 'ok' ? 'API Loyverse OK' : 'Error API Loyverse',
+        description: data.message || data.error || 'Sin respuesta',
       })
     },
     onError: (error: any) => {
