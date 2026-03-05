@@ -67,20 +67,6 @@ export default function DocumentosPage() {
     }
   }
 
-  const _handleDownloadPdf = async (docId: string) => {
-    try {
-      const response = await api.get(`/documents/${docId}/pdf`, { responseType: 'blob' })
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `${docId}.pdf`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-    } catch (error) {
-      console.error('Error downloading PDF:', error)
-    }
-  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
