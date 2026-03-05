@@ -265,11 +265,18 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
         ambiente=ambiente
     )
     
-    # Firmar XML usando servicio Java XAdES
+    # Firmar XML
     try:
         cert_password = decrypt_password(certificate["password_encrypted"])
         p12_data = bytes(certificate["file_data"]) if not isinstance(certificate["file_data"], bytes) else certificate["file_data"]
-        xml_signed = await sign_xml_with_java(xml_unsigned, p12_data, cert_password)
+        # Intentar con servicio Java primero, si falla usar firmador Python
+        try:
+            xml_signed = await sign_xml_with_java(xml_unsigned, p12_data, cert_password)
+            print(f"[Firma] Documento {doc_number} firmado con servicio Java")
+        except Exception as java_err:
+            print(f"[Firma] Java signer no disponible ({str(java_err)[:100]}), usando firmador Python")
+            xml_signed = sign_xml_xades_bes(xml_unsigned, p12_data, cert_password)
+            print(f"[Firma] Documento {doc_number} firmado con firmador Python XAdES-BES")
     except Exception as e:
         # Actualizar estado a ERROR
         await db.documents.update_one(
@@ -475,11 +482,17 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
         ambiente=ambiente
     )
     
-    # Firmar XML usando servicio Java XAdES (mismo método que facturas)
+    # Firmar XML
     try:
         cert_password = decrypt_password(certificate["password_encrypted"])
         p12_data = bytes(certificate["file_data"]) if not isinstance(certificate["file_data"], bytes) else certificate["file_data"]
-        xml_signed = await sign_xml_with_java(xml_unsigned, p12_data, cert_password)
+        try:
+            xml_signed = await sign_xml_with_java(xml_unsigned, p12_data, cert_password)
+            print(f"[Firma NC] Nota de crédito {doc_number} firmada con servicio Java")
+        except Exception as java_err:
+            print(f"[Firma NC] Java signer no disponible ({str(java_err)[:100]}), usando firmador Python")
+            xml_signed = sign_xml_xades_bes(xml_unsigned, p12_data, cert_password)
+            print(f"[Firma NC] Nota de crédito {doc_number} firmada con firmador Python XAdES-BES")
     except Exception as e:
         # Actualizar estado a ERROR
         await db.documents.update_one(
