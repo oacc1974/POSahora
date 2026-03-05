@@ -486,3 +486,62 @@ async def retry_single_document(
                 )
     except httpx.RequestError as e:
         raise HTTPException(status_code=500, detail=f"Error de conexión: {str(e)}")
+
+
+@router.delete("/{document_id}")
+async def delete_document(
+    request: Request,
+    document_id: str,
+    current_user: dict = Depends(require_permission("documents:write"))
+):
+    """
+    Elimina un documento y su XML asociado de fe_db
+    """
+    fe_db = request.app.state.fe_db
+
+    doc = await fe_db.documents.find_one({"_id": document_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    if doc.get("sri_status") == "AUTORIZADO":
+        raise HTTPException(status_code=400, detail="No se puede eliminar un documento autorizado")
+
+    await fe_db.documents.delete_one({"_id": document_id})
+    await fe_db.document_xml.delete_many({"document_id": document_id})
+    await fe_db.document_events.delete_many({"document_id": document_id})
+
+    return {"success": True, "message": "Documento eliminado correctamente"}
+
+
+@router.delete("/cleanup/{tenant_id}")
+async def cleanup_test_documents(
+    request: Request,
+    tenant_id: str,
+    current_user: dict = Depends(require_permission("documents:write"))
+):
+    """
+    Elimina todos los documentos NO autorizados de un tenant.
+    Útil para limpiar documentos de prueba antes de un resync desde Loyverse.
+    """
+    fe_db = request.app.state.fe_db
+
+    authorized_statuses = ["AUTORIZADO", "authorized", "Autorizado"]
+    docs = await fe_db.documents.find({
+        "tenant_id": tenant_id,
+        "sri_status": {"$nin": authorized_statuses}
+    }).to_list(1000)
+
+    if not docs:
+        return {"success": True, "deleted": 0, "message": "No hay documentos para eliminar"}
+
+    doc_ids = [doc["_id"] for doc in docs]
+
+    await fe_db.documents.delete_many({"_id": {"$in": doc_ids}})
+    await fe_db.document_xml.delete_many({"document_id": {"$in": doc_ids}})
+    await fe_db.document_events.delete_many({"document_id": {"$in": doc_ids}})
+
+    return {
+        "success": True,
+        "deleted": len(doc_ids),
+        "message": f"Se eliminaron {len(doc_ids)} documentos no autorizados"
+    }

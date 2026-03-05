@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { FileText, Download, Search, CheckCircle, XCircle, Clock, Loader2, RefreshCw } from 'lucide-react'
+import { FileText, Download, Search, CheckCircle, XCircle, Clock, Loader2, RefreshCw, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -141,6 +141,41 @@ export default function DocumentosPage() {
     },
   })
 
+  const deleteDocMutation = useMutation({
+    mutationFn: (docId: string) => api.delete(`/documents/${docId}`),
+    onSuccess: () => {
+      toast({ title: 'Documento eliminado' })
+      queryClient.invalidateQueries({ queryKey: ['documents', selectedEmpresa] })
+      queryClient.invalidateQueries({ queryKey: ['document-stats', selectedEmpresa] })
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error al eliminar',
+        description: error.response?.data?.detail || 'No se pudo eliminar el documento',
+      })
+    },
+  })
+
+  const cleanupMutation = useMutation({
+    mutationFn: () => api.delete(`/documents/cleanup/${selectedEmpresa}`),
+    onSuccess: (response) => {
+      toast({
+        title: 'Limpieza completada',
+        description: response.data.message,
+      })
+      queryClient.invalidateQueries({ queryKey: ['documents', selectedEmpresa] })
+      queryClient.invalidateQueries({ queryKey: ['document-stats', selectedEmpresa] })
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.detail || 'Error al limpiar documentos',
+      })
+    },
+  })
+
   return (
     <div className="space-y-6">
       <div>
@@ -272,19 +307,38 @@ export default function DocumentosPage() {
               <FileText className="h-5 w-5" />
               Documentos
             </CardTitle>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => retryMutation.mutate()}
-              disabled={retryMutation.isPending}
-            >
-              {retryMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="mr-2 h-4 w-4" />
-              )}
-              Reintentar Pendientes
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => retryMutation.mutate()}
+                disabled={retryMutation.isPending}
+              >
+                {retryMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                Reintentar Pendientes
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => {
+                  if (confirm('¿Eliminar TODOS los documentos no autorizados? Esta acción no se puede deshacer.'))
+                    cleanupMutation.mutate()
+                }}
+                disabled={cleanupMutation.isPending}
+                title="Eliminar todos los documentos de prueba (no autorizados)"
+              >
+                {cleanupMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="mr-2 h-4 w-4" />
+                )}
+                Limpiar Pruebas
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -363,6 +417,20 @@ export default function DocumentosPage() {
                                   title="Descargar XML"
                                 >
                                   <Download className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {doc.status !== 'AUTORIZADO' && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    if (confirm('¿Eliminar este documento?'))
+                                      deleteDocMutation.mutate(doc.id)
+                                  }}
+                                  title="Eliminar documento"
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
                               )}
                             </div>
