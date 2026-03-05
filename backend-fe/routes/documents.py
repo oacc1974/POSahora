@@ -121,15 +121,15 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
     
     # Validar configuración completa
     tenant = await db.tenants.find_one({"tenant_id": tenant_id})
-    if not tenant:
+    if tenant is None:
         raise HTTPException(status_code=400, detail="Configuración del emisor no encontrada. Configure primero.")
     
     config = await db.configs_fiscal.find_one({"tenant_id": tenant_id})
-    if not config:
+    if config is None:
         raise HTTPException(status_code=400, detail="Configuración fiscal no encontrada. Configure primero.")
     
     certificate = await db.certificates.find_one({"tenant_id": tenant_id, "is_active": True})
-    if not certificate:
+    if certificate is None:
         raise HTTPException(status_code=400, detail="Certificado no configurado. Suba un certificado primero.")
     
     # Validar certificado no expirado
@@ -618,7 +618,7 @@ async def get_document(request: Request, document_id: str):
     
     document = await db.documents.find_one({"_id": document_id, "tenant_id": tenant_id})
     
-    if not document:
+    if document is None:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
     
     # Obtener eventos
@@ -646,12 +646,12 @@ async def download_xml(request: Request, document_id: str):
     
     # Verificar documento existe
     document = await db.documents.find_one({"_id": document_id, "tenant_id": tenant_id})
-    if not document:
+    if document is None:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
     
     # Obtener XML
     xml_doc = await db.document_xml.find_one({"document_id": document_id, "tenant_id": tenant_id})
-    if not xml_doc:
+    if xml_doc is None:
         raise HTTPException(status_code=404, detail="XML no encontrado")
     
     # Descomprimir si es necesario
@@ -678,7 +678,7 @@ async def download_pdf(request: Request, document_id: str):
     db = request.app.state.db
     
     document = await db.documents.find_one({"_id": document_id, "tenant_id": tenant_id})
-    if not document:
+    if document is None:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
     
     tenant = await db.tenants.find_one({"tenant_id": tenant_id})
@@ -737,7 +737,7 @@ async def resend_document(request: Request, document_id: str):
     db = request.app.state.db
     
     document = await db.documents.find_one({"_id": document_id, "tenant_id": tenant_id})
-    if not document:
+    if document is None:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
     
     if document["sri_status"] == "AUTORIZADO":
@@ -745,7 +745,7 @@ async def resend_document(request: Request, document_id: str):
     
     # Obtener XML
     xml_doc = await db.document_xml.find_one({"document_id": document_id})
-    if not xml_doc:
+    if xml_doc is None:
         raise HTTPException(status_code=404, detail="XML no encontrado")
     
     if xml_doc.get("is_compressed"):
