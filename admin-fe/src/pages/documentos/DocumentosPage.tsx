@@ -113,6 +113,29 @@ export default function DocumentosPage() {
     )
   }
 
+  const [retryingDocId, setRetryingDocId] = useState<string | null>(null)
+
+  const retryDocMutation = useMutation({
+    mutationFn: (docId: string) => api.post(`/documents/${docId}/retry`),
+    onSuccess: (response) => {
+      toast({
+        title: 'Documento reenviado',
+        description: response.data.message || 'Documento enviado al SRI',
+      })
+      queryClient.invalidateQueries({ queryKey: ['documents', selectedEmpresa] })
+      queryClient.invalidateQueries({ queryKey: ['document-stats', selectedEmpresa] })
+      setRetryingDocId(null)
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error al reintentar',
+        description: error.response?.data?.detail || 'No se pudo reenviar el documento',
+      })
+      setRetryingDocId(null)
+    },
+  })
+
   const retryMutation = useMutation({
     mutationFn: () => api.post(`/documents/retry/${selectedEmpresa}`),
     onSuccess: (response) => {
@@ -329,6 +352,23 @@ export default function DocumentosPage() {
                           </td>
                           <td className="py-3 px-2">
                             <div className="flex justify-center gap-1">
+                              {doc.status !== 'AUTORIZADO' && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setRetryingDocId(doc.id)
+                                    retryDocMutation.mutate(doc.id)
+                                  }}
+                                  disabled={retryingDocId === doc.id}
+                                  title="Reintentar autorización"
+                                  className="text-orange-600 hover:text-orange-700"
+                                >
+                                  {retryingDocId === doc.id
+                                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                                    : <RefreshCw className="h-4 w-4" />}
+                                </Button>
+                              )}
                               {doc.has_xml && (
                                 <Button
                                   size="sm"
@@ -337,16 +377,6 @@ export default function DocumentosPage() {
                                   title="Descargar XML"
                                 >
                                   <Download className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {doc.has_pdf && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleDownloadPdf(doc.id)}
-                                  title="Descargar PDF"
-                                >
-                                  <Eye className="h-4 w-4" />
                                 </Button>
                               )}
                             </div>

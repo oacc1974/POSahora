@@ -70,8 +70,8 @@ async def prepare_invoice_from_loyverse(receipt: dict, tenant_id: str, fe_db) ->
     customer_id = customer.get("id") if customer else None
     
     buyer_data = {
-        "id_type": "07",  # Consumidor final
-        "id_number": "9999999999999",
+        "identification_type": "07",  # Consumidor final
+        "identification": "9999999999999",
         "name": "CONSUMIDOR FINAL",
         "address": "S/N",
         "email": None,
@@ -89,11 +89,11 @@ async def prepare_invoice_from_loyverse(receipt: dict, tenant_id: str, fe_db) ->
         if customer.get("customer_code"):
             code = customer.get("customer_code", "")
             if len(code) == 13:
-                buyer_data["id_type"] = "04"  # RUC
-                buyer_data["id_number"] = code
+                buyer_data["identification_type"] = "04"  # RUC
+                buyer_data["identification"] = code
             elif len(code) == 10:
-                buyer_data["id_type"] = "05"  # Cédula
-                buyer_data["id_number"] = code
+                buyer_data["identification_type"] = "05"  # Cédula
+                buyer_data["identification"] = code
     
     # Preparar pagos
     payments = []
@@ -504,10 +504,12 @@ async def sync_loyverse_sales(
         )
         
         # Actualizar última sincronización
+        # Si hubo fallos, retroceder last_sync 1 hora para no perder recibos
+        effective_last_sync = now if records_failed == 0 else (now - timedelta(hours=1))
         await admin_db.integrations.update_one(
             {"_id": integration["_id"]},
             {"$set": {
-                "last_sync": now,
+                "last_sync": effective_last_sync,
                 "last_error": None if records_failed == 0 else f"{records_failed} errores",
                 "status": "active"
             }}
