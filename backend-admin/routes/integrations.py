@@ -86,8 +86,8 @@ async def prepare_invoice_from_loyverse(receipt: dict, tenant_id: str, fe_db) ->
         })
     
     # Datos del cliente (consumidor final si no hay datos)
-    customer = receipt.get("customer", {})
-    customer_id = customer.get("id") if customer else None
+    # Loyverse API devuelve customer_id como campo top-level (string), NO un objeto customer
+    customer_id = receipt.get("customer_id")
     
     buyer_data = {
         "identification_type": "07",  # Consumidor final
@@ -98,29 +98,33 @@ async def prepare_invoice_from_loyverse(receipt: dict, tenant_id: str, fe_db) ->
         "phone": None
     }
     
-    # Si hay cliente en Loyverse, intentar obtener sus datos
-    if customer_id and customer:
-        buyer_data["name"] = customer.get("name", "CONSUMIDOR FINAL")[:300]
-        if customer.get("email"):
-            buyer_data["email"] = customer.get("email")
-        if customer.get("phone_number"):
-            buyer_data["phone"] = customer.get("phone_number")
-        # Si tiene identificación fiscal
-        if customer.get("customer_code"):
-            code = customer.get("customer_code", "")
-            if len(code) == 13:
-                buyer_data["identification_type"] = "04"  # RUC
-                buyer_data["identification"] = code
-            elif len(code) == 10:
-                buyer_data["identification_type"] = "05"  # Cédula
-                buyer_data["identification"] = code
+    # Si hay cliente en Loyverse, obtener sus datos via API
+    if customer_id and fe_db:
+        try:
+            customer_doc = await fe_db.customers.find_one({"loyverse_id": customer_id})
+            if customer_doc:
+                buyer_data["name"] = customer_doc.get("name", "CONSUMIDOR FINAL")[:300]
+                if customer_doc.get("email"):
+                    buyer_data["email"] = customer_doc.get("email")
+                if customer_doc.get("phone"):
+                    buyer_data["phone"] = customer_doc.get("phone")
+                if customer_doc.get("identification"):
+                    code = customer_doc["identification"]
+                    if len(code) == 13:
+                        buyer_data["identification_type"] = "04"  # RUC
+                        buyer_data["identification"] = code
+                    elif len(code) == 10:
+                        buyer_data["identification_type"] = "05"  # Cédula
+                        buyer_data["identification"] = code
+        except Exception:
+            pass  # Si falla, usar consumidor final
     
     # Preparar pagos
     payments = []
     receipt_payments = receipt.get("payments", [])
     for payment in receipt_payments:
-        # Loyverse payment_type_id es UUID; usamos payment_type_name si existe
-        payment_name = payment.get("payment_type_name", "").lower()
+        # Loyverse API: cada payment tiene 'name' (ej: "Cash", "Card") y 'type' (ej: "CASH", "CARD")
+        payment_name = (payment.get("name", "") or payment.get("type", "")).lower()
         if any(k in payment_name for k in ["efectivo", "cash", "dinero"]):
             method = "01"
         elif any(k in payment_name for k in ["tarjeta", "card", "crédito", "débito", "credito", "debito"]):
@@ -365,6 +369,84 @@ async def get_loyverse_status(
     }
 
 
+@router.get("/loyverse/{tenant_id}/test-api")
+async def test_loyverse_api(
+    request: Request,
+    tenant_id: str,
+    current_user: dict = Depends(require_permission("integrations:write"))
+):
+    """
+    Endpoint de diagnóstico: llama a Loyverse API sin filtros de fecha
+    para verificar que la API key funciona y devuelve recibos.
+    """
+    admin_db = request.app.state.admin_db
+    integration = await admin_db.integrations.find_one({
+        "tenant_id": tenant_id,
+        "type": "loyverse",
+        "is_active": True
+    })
+    if not integration:
+        raise HTTPException(status_code=404, detail="Integración Loyverse no configurada")
+    
+    api_key = integration.get("config", {}).get("api_key")
+    if not api_key:
+        raise HTTPException(status_code=400, detail="API Key no configurada")
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Llamar SIN filtros de fecha - solo los últimos 50 recibos
+            response = await client.get(
+                f"{LOYVERSE_API_URL}/receipts",
+                headers={"Authorization": f"Bearer {api_key}"},
+                params={"limit": 50}
+            )
+            
+            raw_body = response.json()
+            response_keys = list(raw_body.keys())
+            
+            # Buscar recibos en cualquier clave del response
+            receipts = raw_body.get("receipts", [])
+            if not receipts:
+                # Probar otras claves posibles
+                for key in response_keys:
+                    if isinstance(raw_body[key], list) and len(raw_body[key]) > 0:
+                        receipts = raw_body[key]
+                        break
+            
+            # Mostrar info del primer recibo si existe
+            first_receipt = None
+            if receipts:
+                r = receipts[0]
+                first_receipt = {
+                    "receipt_number": r.get("receipt_number"),
+                    "receipt_type": r.get("receipt_type"),
+                    "created_at": r.get("created_at"),
+                    "total_money": r.get("total_money"),
+                    "customer_id": r.get("customer_id"),
+                    "line_items_count": len(r.get("line_items", [])),
+                    "payments_count": len(r.get("payments", [])),
+                    "has_customer_object": "customer" in r,
+                    "payment_fields": list(r["payments"][0].keys()) if r.get("payments") else [],
+                }
+            
+            return {
+                "status": "ok",
+                "http_status": response.status_code,
+                "response_keys": response_keys,
+                "receipts_count": len(receipts),
+                "receipts_key_used": "receipts" if "receipts" in raw_body else response_keys[0] if response_keys else None,
+                "first_receipt_preview": first_receipt,
+                "last_sync": integration.get("last_sync"),
+                "raw_keys_sample": {k: type(v).__name__ + (f"[{len(v)}]" if isinstance(v, list) else "") for k, v in raw_body.items()}
+            }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "api_url": f"{LOYVERSE_API_URL}/receipts"
+        }
+
+
 @router.post("/loyverse/{tenant_id}/sync")
 async def sync_loyverse_sales(
     request: Request,
@@ -465,13 +547,51 @@ async def sync_loyverse_sales(
                     raise Exception(f"Error obteniendo recibos de Loyverse (HTTP {response.status_code}): {response.text}")
                 
                 data = response.json()
+                response_keys = list(data.keys())
+                print(f"[Sync] Loyverse response keys: {response_keys}")
+                
                 batch = data.get("receipts", [])
+                # Si no hay receipts, buscar en otras claves (por si la API cambió)
+                if not batch:
+                    for key in response_keys:
+                        if isinstance(data[key], list) and len(data[key]) > 0:
+                            first_item = data[key][0]
+                            if isinstance(first_item, dict) and "receipt_number" in first_item:
+                                print(f"[Sync] Recibos encontrados bajo clave '{key}' en vez de 'receipts'!")
+                                batch = data[key]
+                                break
+                
                 print(f"[Sync] Loyverse devolvió {len(batch)} recibos en este lote")
                 receipts.extend(batch)
                 
                 cursor = data.get("cursor")
                 if not cursor:
                     break
+        
+        # Si no hay recibos con filtro de fecha, intentar SIN filtro como diagnóstico
+        if not receipts and has_custom_date:
+            print(f"[Sync] 0 recibos con filtro de fecha. Probando SIN filtro...")
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                test_response = await client.get(
+                    f"{LOYVERSE_API_URL}/receipts",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    params={"limit": 10}
+                )
+                if test_response.status_code == 200:
+                    test_data = test_response.json()
+                    test_keys = list(test_data.keys())
+                    test_receipts = test_data.get("receipts", [])
+                    if not test_receipts:
+                        for key in test_keys:
+                            if isinstance(test_data[key], list):
+                                test_receipts = test_data[key]
+                                break
+                    print(f"[Sync] SIN filtro: keys={test_keys}, recibos={len(test_receipts)}")
+                    if test_receipts:
+                        first = test_receipts[0]
+                        print(f"[Sync] Primer recibo: number={first.get('receipt_number')}, created_at={first.get('created_at')}")
+                else:
+                    print(f"[Sync] Test sin filtro falló: HTTP {test_response.status_code}")
         
         # Filtrar solo ventas (excluir reembolsos)
         all_receipts = receipts

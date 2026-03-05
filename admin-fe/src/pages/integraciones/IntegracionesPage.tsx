@@ -96,6 +96,25 @@ export default function IntegracionesPage() {
     },
   })
 
+  const testApiMutation = useMutation({
+    mutationFn: () => api.get(`/integrations/loyverse/${selectedEmpresa}/test-api`),
+    onSuccess: (response: any) => {
+      const data = response.data
+      console.log('[TestAPI] Resultado completo:', data)
+      const desc = data.status === 'ok'
+        ? `API OK. Recibos encontrados: ${data.receipts_count}. Keys: ${data.response_keys?.join(', ')}. ` +
+          (data.first_receipt_preview ? `Primer recibo: ${data.first_receipt_preview.receipt_number}` : 'Sin recibos')
+        : `Error: ${data.error}`
+      toast({
+        title: 'Test API Loyverse',
+        description: desc,
+      })
+    },
+    onError: (error: any) => {
+      toast({ variant: 'destructive', title: 'Error', description: error.response?.data?.detail || 'Error testing API' })
+    },
+  })
+
   const deleteIntegrationMutation = useMutation({
     mutationFn: () => api.delete(`/integrations/loyverse/${selectedEmpresa}`),
     onSuccess: () => {
@@ -208,6 +227,18 @@ export default function IntegracionesPage() {
                       onClick={() => setShowDatePicker(!showDatePicker)}
                     >
                       📅
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => testApiMutation.mutate()}
+                      disabled={testApiMutation.isPending}
+                      title="Probar conexión con Loyverse API"
+                    >
+                      {testApiMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : '🔍'}
+                      Test API
                     </Button>
                     <Button
                       size="sm"
