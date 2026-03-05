@@ -99,7 +99,7 @@ async def prepare_invoice_from_loyverse(receipt: dict, tenant_id: str, fe_db) ->
     }
     
     # Si hay cliente en Loyverse, obtener sus datos via API
-    if customer_id and fe_db:
+    if customer_id and fe_db is not None:
         try:
             customer_doc = await fe_db.customers.find_one({"loyverse_id": customer_id})
             if customer_doc is not None:
