@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { FileText, Download, Eye, Search, CheckCircle, XCircle, Clock, Loader2, RefreshCw } from 'lucide-react'
+import { FileText, Download, Search, CheckCircle, XCircle, Clock, Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -67,7 +67,7 @@ export default function DocumentosPage() {
     }
   }
 
-  const handleDownloadPdf = async (docId: string) => {
+  const _handleDownloadPdf = async (docId: string) => {
     try {
       const response = await api.get(`/documents/${docId}/pdf`, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
