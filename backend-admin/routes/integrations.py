@@ -54,7 +54,7 @@ async def prepare_invoice_from_loyverse(receipt: dict, tenant_id: str, fe_db) ->
     """
     # Obtener configuración de la empresa
     tenant = await fe_db.tenants.find_one({"tenant_id": tenant_id})
-    if not tenant:
+    if tenant is None:
         return None
     
     # Obtener items del recibo
@@ -102,7 +102,7 @@ async def prepare_invoice_from_loyverse(receipt: dict, tenant_id: str, fe_db) ->
     if customer_id and fe_db:
         try:
             customer_doc = await fe_db.customers.find_one({"loyverse_id": customer_id})
-            if customer_doc:
+            if customer_doc is not None:
                 buyer_data["name"] = customer_doc.get("name", "CONSUMIDOR FINAL")[:300]
                 if customer_doc.get("email"):
                     buyer_data["email"] = customer_doc.get("email")
@@ -641,7 +641,7 @@ async def sync_loyverse_sales(
                     "external_reference": f"loyverse:{receipt['receipt_number']}"
                 })
                 
-                if existing_doc:
+                if existing_doc is not None:
                     records_skipped += 1
                     print(f"[Sync] Recibo {receipt['receipt_number']} ya existe, saltando")
                     continue  # Ya procesado
@@ -649,7 +649,7 @@ async def sync_loyverse_sales(
                 # Preparar datos para factura desde recibo Loyverse
                 invoice_data = await prepare_invoice_from_loyverse(receipt, tenant_id, fe_db)
                 
-                if invoice_data:
+                if invoice_data is not None:
                     # Pausa entre cada recibo para no saturar backend-fe
                     await asyncio.sleep(3)
                     
