@@ -404,14 +404,25 @@ async def test_loyverse_api(
             raw_body = response.json()
             response_keys = list(raw_body.keys())
             
-            # Buscar recibos en cualquier clave del response
+            # Detectar errores de Loyverse API
+            if "errors" in raw_body:
+                loyverse_errors = raw_body["errors"]
+                error_details = []
+                for err in loyverse_errors:
+                    if isinstance(err, dict):
+                        error_details.append(f"{err.get('code', '?')}: {err.get('details', err.get('message', str(err)))}")
+                    else:
+                        error_details.append(str(err))
+                return {
+                    "status": "api_error",
+                    "http_status": response.status_code,
+                    "loyverse_errors": error_details,
+                    "message": f"Loyverse devolvió error: {'; '.join(error_details)}. Verifica que la API Key tenga permiso RECEIPTS_READ.",
+                    "api_key_preview": f"{api_key[:8]}...{api_key[-4:]}" if len(api_key) > 12 else "***",
+                    "last_sync": integration.get("last_sync"),
+                }
+            
             receipts = raw_body.get("receipts", [])
-            if not receipts:
-                # Probar otras claves posibles
-                for key in response_keys:
-                    if isinstance(raw_body[key], list) and len(raw_body[key]) > 0:
-                        receipts = raw_body[key]
-                        break
             
             # Mostrar info del primer recibo si existe
             first_receipt = None
@@ -425,7 +436,6 @@ async def test_loyverse_api(
                     "customer_id": r.get("customer_id"),
                     "line_items_count": len(r.get("line_items", [])),
                     "payments_count": len(r.get("payments", [])),
-                    "has_customer_object": "customer" in r,
                     "payment_fields": list(r["payments"][0].keys()) if r.get("payments") else [],
                 }
             
@@ -434,10 +444,9 @@ async def test_loyverse_api(
                 "http_status": response.status_code,
                 "response_keys": response_keys,
                 "receipts_count": len(receipts),
-                "receipts_key_used": "receipts" if "receipts" in raw_body else response_keys[0] if response_keys else None,
                 "first_receipt_preview": first_receipt,
                 "last_sync": integration.get("last_sync"),
-                "raw_keys_sample": {k: type(v).__name__ + (f"[{len(v)}]" if isinstance(v, list) else "") for k, v in raw_body.items()}
+                "message": f"API OK. {len(receipts)} recibos encontrados." + (f" Primer recibo: #{first_receipt['receipt_number']}" if first_receipt else ""),
             }
     except Exception as e:
         return {
