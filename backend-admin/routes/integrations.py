@@ -394,11 +394,12 @@ async def test_loyverse_api(
     
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            # Llamar SIN filtros de fecha - solo los últimos 50 recibos
+            # Filtrar solo últimas 24 horas (Loyverse gratis no permite más de 31 días)
+            from_date_test = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
             response = await client.get(
                 f"{LOYVERSE_API_URL}/receipts",
                 headers={"Authorization": f"Bearer {api_key}"},
-                params={"limit": 50}
+                params={"limit": 50, "created_at_min": from_date_test}
             )
             
             raw_body = response.json()
@@ -496,8 +497,8 @@ async def sync_loyverse_sales(
         from_date = integration["last_sync"]
         print(f"[Sync] Usando last_sync: {from_date}")
     else:
-        from_date = now - timedelta(days=7)
-        print(f"[Sync] Sin last_sync, usando 7 días atrás: {from_date}")
+        from_date = now - timedelta(days=1)
+        print(f"[Sync] Sin last_sync, usando 1 día atrás: {from_date}")
     
     to_date = sync_request.to_date if sync_request and sync_request.to_date else now
     
@@ -507,7 +508,19 @@ async def sync_loyverse_sales(
     if to_date.tzinfo is None:
         to_date = to_date.replace(tzinfo=timezone.utc)
     
+    # Protección: Loyverse gratis no permite más de 30 días atrás
+    max_days_back = now - timedelta(days=30)
+    if from_date < max_days_back:
+        print(f"[Sync] from_date {from_date.isoformat()} es más de 30 días atrás, ajustando a {max_days_back.isoformat()}")
+        from_date = max_days_back
+    
     print(f"[Sync] Rango: {from_date.isoformat()} -> {to_date.isoformat()}")
+    
+    # Limpiar syncs anteriores que quedaron en "running" (stuck)
+    await admin_db.sync_logs.update_many(
+        {"tenant_id": tenant_id, "status": "running"},
+        {"$set": {"status": "failed", "errors": ["Cancelado: nueva sincronización iniciada"]}}
+    )
     
     # Crear log de sincronización
     sync_log_id = str(uuid.uuid4())
