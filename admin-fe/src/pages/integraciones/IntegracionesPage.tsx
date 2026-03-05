@@ -14,6 +14,8 @@ export default function IntegracionesPage() {
   
   const [selectedEmpresa, setSelectedEmpresa] = useState<string>('')
   const [showConfig, setShowConfig] = useState(false)
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [syncFromDate, setSyncFromDate] = useState('')
   const [loyverseConfig, setLoyverseConfig] = useState({
     api_key: '',
     sync_interval_minutes: 15,
@@ -61,7 +63,10 @@ export default function IntegracionesPage() {
   })
 
   const syncMutation = useMutation({
-    mutationFn: () => api.post(`/integrations/loyverse/${selectedEmpresa}/sync`),
+    mutationFn: (fromDate?: string) => api.post(
+      `/integrations/loyverse/${selectedEmpresa}/sync`,
+      fromDate ? { from_date: new Date(fromDate).toISOString() } : {}
+    ),
     onSuccess: (response) => {
       toast({
         title: 'Sincronización completada',
@@ -158,6 +163,28 @@ export default function IntegracionesPage() {
                     )}
                   </div>
                   
+                  {showDatePicker && (
+                    <div className="p-3 bg-gray-50 rounded-md border space-y-2">
+                      <p className="text-xs text-gray-500 font-medium">Sincronizar desde fecha específica</p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="datetime-local"
+                          value={syncFromDate}
+                          onChange={(e) => setSyncFromDate(e.target.value)}
+                          className="text-sm border rounded px-2 py-1 flex-1"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { setSyncFromDate(''); setShowDatePicker(false) }}
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-400">Deja vacío para usar la última sync automática</p>
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
@@ -169,7 +196,15 @@ export default function IntegracionesPage() {
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => syncMutation.mutate()}
+                      variant="outline"
+                      title="Sincronizar desde fecha específica"
+                      onClick={() => setShowDatePicker(!showDatePicker)}
+                    >
+                      📅
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => syncMutation.mutate(syncFromDate || undefined)}
                       disabled={syncMutation.isPending}
                     >
                       {syncMutation.isPending ? (
