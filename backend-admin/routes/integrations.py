@@ -451,10 +451,15 @@ async def sync_loyverse_sales(
                 invoice_data = await prepare_invoice_from_loyverse(receipt, tenant_id, fe_db)
                 
                 if invoice_data:
+                    # Pausa entre cada recibo para no saturar backend-fe
+                    await asyncio.sleep(3)
+                    
                     # Llamar a backend-fe para crear la factura con retry
-                    max_retries = 3
+                    max_retries = 5
+                    retry_delays = [15, 30, 60, 90, 120]  # espera progresiva
+                    created = False
                     for attempt in range(max_retries):
-                        async with httpx.AsyncClient(timeout=60.0) as fe_client:
+                        async with httpx.AsyncClient(timeout=120.0) as fe_client:
                             fe_response = await fe_client.post(
                                 f"{BACKEND_FE_URL}/fe/documents/invoice",
                                 json=invoice_data,
@@ -469,16 +474,21 @@ async def sync_loyverse_sales(
                                     {"$set": {"external_reference": f"loyverse:{receipt['receipt_number']}"}}
                                 )
                                 records_success += 1
+                                created = True
                                 break
                             elif fe_response.status_code == 429:
-                                # Rate limited, esperar y reintentar
+                                # Rate limited, esperar tiempo progresivo y reintentar
+                                wait_time = retry_delays[attempt] if attempt < len(retry_delays) else 120
                                 if attempt < max_retries - 1:
-                                    await asyncio.sleep(5 * (attempt + 1))
+                                    await asyncio.sleep(wait_time)
                                     continue
                                 else:
-                                    raise Exception(f"Rate limit excedido después de {max_retries} intentos")
+                                    raise Exception(f"Rate limit excedido después de {max_retries} intentos ({sum(retry_delays[:max_retries])}s de espera total)")
                             else:
                                 raise Exception(f"Error creando factura: {fe_response.text}")
+                    
+                    if not created and not any(True for _ in []):
+                        pass  # excepción ya fue lanzada arriba
                 else:
                     # Recibo sin items válidos, saltar
                     continue
