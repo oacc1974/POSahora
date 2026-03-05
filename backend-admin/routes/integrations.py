@@ -24,6 +24,26 @@ router = APIRouter(prefix="/integrations", tags=["Integraciones"])
 # Loyverse API Base URL
 LOYVERSE_API_URL = "https://api.loyverse.com/v1.0"
 
+
+async def wake_up_backend_fe(url: str, max_wait_seconds: int = 90) -> bool:
+    """
+    Despierta backend-fe (Render Free Tier duerme tras inactividad).
+    Llama al health endpoint hasta que responda 200.
+    """
+    print(f"[Sync] Despertando backend-fe en {url}...")
+    for attempt in range(max_wait_seconds // 5):
+        try:
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                resp = await client.get(f"{url}/fe/health")
+                if resp.status_code == 200:
+                    print(f"[Sync] backend-fe listo tras {attempt * 5}s")
+                    return True
+        except Exception:
+            pass
+        await asyncio.sleep(5)
+    print(f"[Sync] backend-fe no respondio en {max_wait_seconds}s")
+    return False
+
 # Backend FE URL (para crear facturas)
 BACKEND_FE_URL = os.environ.get("BACKEND_FE_URL", "http://localhost:8000")
 
@@ -434,6 +454,10 @@ async def sync_loyverse_sales(
         records_success = 0
         records_failed = 0
         errors = []
+        
+        # Despertar backend-fe antes de procesar (cold start de Render)
+        if receipts:
+            await wake_up_backend_fe(BACKEND_FE_URL)
         
         # Procesar cada recibo y crear factura
         for receipt in receipts:

@@ -369,7 +369,7 @@ async def retry_pending_documents(
     authorized_statuses = ["authorized", "AUTORIZADO", "Autorizado"]
     docs = await fe_db.documents.find({
         "tenant_id": tenant_id,
-        "status": {"$nin": authorized_statuses}
+        "sri_status": {"$nin": authorized_statuses}
     }).to_list(50)
     
     if not docs:
@@ -390,7 +390,7 @@ async def retry_pending_documents(
         doc_id = str(doc["_id"])
         try:
             # Llamar a backend-fe para reintentar autorización
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
                     f"{BACKEND_FE_URL}/fe/documents/{doc_id}/resend",
                     headers={"X-Tenant-ID": tenant_id}
@@ -400,7 +400,7 @@ async def retry_pending_documents(
                     success_count += 1
                 elif response.status_code == 429:
                     # Rate limited, esperar y continuar
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(30)
                     failed_count += 1
                     errors.append({
                         "doc_id": doc_id,
@@ -417,8 +417,8 @@ async def retry_pending_documents(
             
             processed += 1
             
-            # Pequeña pausa entre documentos para evitar rate limiting
-            await asyncio.sleep(1)
+            # Pausa entre documentos para evitar saturar backend-fe
+            await asyncio.sleep(3)
             
         except Exception as e:
             failed_count += 1
@@ -456,7 +456,18 @@ async def retry_single_document(
     tenant_id = doc.get("tenant_id")
     
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        # Despertar backend-fe si está dormido (Render Free Tier)
+        for _ in range(12):  # hasta 60s
+            try:
+                async with httpx.AsyncClient(timeout=8.0) as ping_client:
+                    ping = await ping_client.get(f"{BACKEND_FE_URL}/fe/health")
+                    if ping.status_code == 200:
+                        break
+            except Exception:
+                pass
+            await asyncio.sleep(5)
+
+        async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 f"{BACKEND_FE_URL}/fe/documents/{document_id}/resend",
                 headers={"X-Tenant-ID": tenant_id}
