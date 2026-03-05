@@ -119,15 +119,16 @@ async def prepare_invoice_from_loyverse(receipt: dict, tenant_id: str, fe_db) ->
     payments = []
     receipt_payments = receipt.get("payments", [])
     for payment in receipt_payments:
-        payment_type = payment.get("payment_type_id", "")
-        # Mapear tipos de pago de Loyverse a SRI
-        # 01 = Efectivo, 19 = Tarjeta, 20 = Otros
-        if "cash" in payment_type.lower():
+        # Loyverse payment_type_id es UUID; usamos payment_type_name si existe
+        payment_name = payment.get("payment_type_name", "").lower()
+        if any(k in payment_name for k in ["efectivo", "cash", "dinero"]):
             method = "01"
-        elif "card" in payment_type.lower():
+        elif any(k in payment_name for k in ["tarjeta", "card", "crédito", "débito", "credito", "debito"]):
             method = "19"
-        else:
+        elif any(k in payment_name for k in ["transferencia", "transfer"]):
             method = "20"
+        else:
+            method = "01"  # Por defecto: sin utilización del sistema financiero
         
         payments.append({
             "method": method,
@@ -394,14 +395,28 @@ async def sync_loyverse_sales(
     # Determinar rango de fechas
     now = datetime.now(timezone.utc)
     
+    # Parsear from_date del body
+    has_custom_date = False
     if sync_request and sync_request.from_date:
         from_date = sync_request.from_date
+        has_custom_date = True
+        print(f"[Sync] Usando from_date del request: {from_date}")
     elif integration.get("last_sync"):
         from_date = integration["last_sync"]
+        print(f"[Sync] Usando last_sync: {from_date}")
     else:
-        from_date = now - timedelta(days=1)
+        from_date = now - timedelta(days=7)
+        print(f"[Sync] Sin last_sync, usando 7 días atrás: {from_date}")
     
     to_date = sync_request.to_date if sync_request and sync_request.to_date else now
+    
+    # Asegurar que from_date sea timezone-aware (UTC)
+    if from_date.tzinfo is None:
+        from_date = from_date.replace(tzinfo=timezone.utc)
+    if to_date.tzinfo is None:
+        to_date = to_date.replace(tzinfo=timezone.utc)
+    
+    print(f"[Sync] Rango: {from_date.isoformat()} -> {to_date.isoformat()}")
     
     # Crear log de sincronización
     sync_log_id = str(uuid.uuid4())
@@ -424,11 +439,17 @@ async def sync_loyverse_sales(
         receipts = []
         cursor = None
         
+        # Usar isoformat para fechas (más robusto que strftime manual)
+        from_date_str = from_date.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        to_date_str = to_date.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        
+        print(f"[Sync] Llamando Loyverse API: created_at_min={from_date_str}, created_at_max={to_date_str}")
+        
         async with httpx.AsyncClient(timeout=30.0) as client:
             while True:
                 params = {
-                    "created_at_min": from_date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
-                    "created_at_max": to_date.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                    "created_at_min": from_date_str,
+                    "created_at_max": to_date_str,
                     "limit": 250
                 }
                 if cursor:
@@ -441,18 +462,28 @@ async def sync_loyverse_sales(
                 )
                 
                 if response.status_code != 200:
-                    raise Exception(f"Error obteniendo recibos: {response.text}")
+                    raise Exception(f"Error obteniendo recibos de Loyverse (HTTP {response.status_code}): {response.text}")
                 
                 data = response.json()
-                receipts.extend(data.get("receipts", []))
+                batch = data.get("receipts", [])
+                print(f"[Sync] Loyverse devolvió {len(batch)} recibos en este lote")
+                receipts.extend(batch)
                 
                 cursor = data.get("cursor")
                 if not cursor:
                     break
         
+        # Filtrar solo ventas (excluir reembolsos)
+        all_receipts = receipts
+        receipts = [r for r in all_receipts if r.get("receipt_type", "SALE") == "SALE"]
+        skipped_refunds = len(all_receipts) - len(receipts)
+        
+        print(f"[Sync] Total recibos Loyverse: {len(all_receipts)}, ventas: {len(receipts)}, reembolsos omitidos: {skipped_refunds}")
+        
         records_processed = len(receipts)
         records_success = 0
         records_failed = 0
+        records_skipped = 0
         errors = []
         
         # Despertar backend-fe antes de procesar (cold start de Render)
@@ -469,6 +500,8 @@ async def sync_loyverse_sales(
                 })
                 
                 if existing_doc:
+                    records_skipped += 1
+                    print(f"[Sync] Recibo {receipt['receipt_number']} ya existe, saltando")
                     continue  # Ya procesado
                 
                 # Preparar datos para factura desde recibo Loyverse
@@ -549,13 +582,31 @@ async def sync_loyverse_sales(
             }}
         )
         
+        message_parts = [f"Sincronización completada: {records_success}/{records_processed} exitosos"]
+        if records_skipped > 0:
+            message_parts.append(f"{records_skipped} ya existían")
+        if skipped_refunds > 0:
+            message_parts.append(f"{skipped_refunds} reembolsos omitidos")
+        if records_failed > 0:
+            message_parts.append(f"{records_failed} fallidos")
+        
         return {
             "success": True,
             "sync_log_id": sync_log_id,
             "records_processed": records_processed,
             "records_success": records_success,
             "records_failed": records_failed,
-            "message": f"Sincronización completada: {records_success}/{records_processed} exitosos"
+            "records_skipped": records_skipped,
+            "message": ", ".join(message_parts),
+            "debug": {
+                "from_date": from_date.isoformat(),
+                "to_date": to_date.isoformat(),
+                "custom_date_used": has_custom_date,
+                "loyverse_total_receipts": len(all_receipts),
+                "loyverse_sales": len(receipts),
+                "loyverse_refunds_skipped": skipped_refunds,
+                "errors": errors[:5]
+            }
         }
         
     except Exception as e:

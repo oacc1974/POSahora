@@ -68,9 +68,16 @@ export default function IntegracionesPage() {
       fromDate ? { from_date: new Date(fromDate).toISOString() } : {}
     ),
     onSuccess: (response) => {
+      const data = response.data
+      console.log('[Sync] Resultado:', data)
+      const debug = data.debug
+      let desc = data.message
+      if (debug && data.records_processed === 0 && debug.loyverse_total_receipts === 0) {
+        desc += ` (Loyverse devolvió 0 recibos entre ${debug.from_date} y ${debug.to_date})`
+      }
       toast({
         title: 'Sincronización completada',
-        description: response.data.message,
+        description: desc,
       })
       queryClient.invalidateQueries({ queryKey: ['loyverse-status', selectedEmpresa] })
     },
