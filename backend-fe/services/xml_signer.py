@@ -65,9 +65,10 @@ def get_certificate_info(certificate: x509.Certificate) -> dict:
 
 def canonicalize(element: etree._Element) -> bytes:
     """
-    Canonicaliza elemento XML usando C14N exclusivo
+    Canonicaliza elemento XML usando C14N inclusivo
+    (debe coincidir con el CanonicalizationMethod declarado en SignedInfo)
     """
-    return etree.tostring(element, method="c14n", exclusive=True, with_comments=False)
+    return etree.tostring(element, method="c14n", exclusive=False, with_comments=False)
 
 def sha256_digest(data: bytes) -> str:
     """
@@ -101,8 +102,8 @@ def sign_xml_xades_bes(xml_content: str, p12_data: bytes, password: str) -> str:
     key_info_id = f"KeyInfo{uuid.uuid4().hex[:8]}"
     reference_id = f"Reference{uuid.uuid4().hex[:8]}"
     
-    # Obtener ID del comprobante (generalmente "comprobante")
-    comprobante_id = root.get("id", "comprobante")
+    # Obtener ID del comprobante (SRI usa Id con mayúscula)
+    comprobante_id = root.get("Id") or root.get("id") or "comprobante"
     
     # Crear estructura de firma
     signature = etree.SubElement(root, "{http://www.w3.org/2000/09/xmldsig#}Signature", 

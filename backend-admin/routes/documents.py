@@ -540,8 +540,15 @@ async def cleanup_test_documents(
     await fe_db.document_xml.delete_many({"document_id": {"$in": doc_ids}})
     await fe_db.document_events.delete_many({"document_id": {"$in": doc_ids}})
 
+    # Resetear last_sync de integraciones para permitir re-sync completo
+    admin_db = request.app.state.admin_db
+    await admin_db.integrations.update_many(
+        {"tenant_id": tenant_id},
+        {"$unset": {"last_sync": ""}}
+    )
+
     return {
         "success": True,
         "deleted": len(doc_ids),
-        "message": f"Se eliminaron {len(doc_ids)} documentos no autorizados"
+        "message": f"Se eliminaron {len(doc_ids)} documentos no autorizados. Sincronización reseteada."
     }

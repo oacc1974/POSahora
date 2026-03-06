@@ -27,9 +27,6 @@ def canonicalize_c14n(xml_str: str) -> bytes:
 
 def format_issuer_name(certificate) -> str:
     """Formatea el issuer del certificado según formato SRI"""
-    parts = []
-    # Orden específico que usa el SRI
-    oid_order = ['CN', 'L', 'ST', 'OU', 'O', 'C']
     oid_map = {
         '2.5.4.3': 'CN',
         '2.5.4.7': 'L', 
@@ -37,18 +34,26 @@ def format_issuer_name(certificate) -> str:
         '2.5.4.11': 'OU',
         '2.5.4.10': 'O',
         '2.5.4.6': 'C',
+        '1.2.840.113549.1.9.1': 'EMAILADDRESS',
     }
     
-    issuer_dict = {}
-    for attr in certificate.issuer:
+    # Recorrer atributos en orden inverso (convención SRI: país al final)
+    parts = []
+    attrs = list(certificate.issuer)
+    attrs.reverse()
+    for attr in attrs:
         oid = attr.oid.dotted_string
-        if oid in oid_map:
-            issuer_dict[oid_map[oid]] = attr.value
-    
-    # Construir en orden específico
-    for key in oid_order:
-        if key in issuer_dict:
-            parts.append(f"{key}={issuer_dict[key]}")
+        name = oid_map.get(oid)
+        if name is None:
+            # Usar el nombre OID si está disponible
+            try:
+                name = attr.oid._name
+                # SRI requiere EMAILADDRESS en vez de E o emailAddress
+                if name.lower() in ('e', 'emailaddress', 'email'):
+                    name = 'EMAILADDRESS'
+            except:
+                name = oid
+        parts.append(f"{name}={attr.value}")
     
     return ','.join(parts)
 
@@ -145,7 +150,6 @@ def sign_xml_xades_sri(xml_content: str, p12_data: bytes, password: str) -> str:
     
     # 3. Calcular digests
     # Parsear XML para agregar namespaces si no los tiene
-    xml_clean = xml_content.replace('<?xml version="1.0" encoding="UTF-8"?>', '').strip()
     xml_clean = xml_content.strip()
     
     # SHA1 del comprobante (sin firma)

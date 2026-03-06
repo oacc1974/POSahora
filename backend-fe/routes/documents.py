@@ -21,7 +21,7 @@ from middleware.tenant import get_tenant_id
 from services.sequential import get_next_sequential, format_doc_number
 from services.access_key import generate_access_key
 from services.xml_generator import generate_invoice_xml, generate_credit_note_xml
-from services.xml_signer import sign_xml_xades_bes
+from services.xml_signer_sri import sign_xml_xades_sri
 from services.java_signer_client import sign_xml_with_java
 from services.sri_client import SRIClient
 from services.pdf_generator import generate_ride_pdf
@@ -275,8 +275,8 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
             print(f"[Firma] Documento {doc_number} firmado con servicio Java")
         except Exception as java_err:
             print(f"[Firma] Java signer no disponible ({str(java_err)[:100]}), usando firmador Python")
-            xml_signed = sign_xml_xades_bes(xml_unsigned, p12_data, cert_password)
-            print(f"[Firma] Documento {doc_number} firmado con firmador Python XAdES-BES")
+            xml_signed = sign_xml_xades_sri(xml_unsigned, p12_data, cert_password)
+            print(f"[Firma] Documento {doc_number} firmado con firmador Python XAdES-SRI")
     except Exception as e:
         # Actualizar estado a ERROR
         await db.documents.update_one(
@@ -491,8 +491,8 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
             print(f"[Firma NC] Nota de crédito {doc_number} firmada con servicio Java")
         except Exception as java_err:
             print(f"[Firma NC] Java signer no disponible ({str(java_err)[:100]}), usando firmador Python")
-            xml_signed = sign_xml_xades_bes(xml_unsigned, p12_data, cert_password)
-            print(f"[Firma NC] Nota de crédito {doc_number} firmada con firmador Python XAdES-BES")
+            xml_signed = sign_xml_xades_sri(xml_unsigned, p12_data, cert_password)
+            print(f"[Firma NC] Nota de crédito {doc_number} firmada con firmador Python XAdES-SRI")
     except Exception as e:
         # Actualizar estado a ERROR
         await db.documents.update_one(
