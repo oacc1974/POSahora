@@ -269,19 +269,24 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
     try:
         cert_password = decrypt_password(certificate["password_encrypted"])
         p12_data = bytes(certificate["file_data"]) if not isinstance(certificate["file_data"], bytes) else certificate["file_data"]
+        print(f"[Firma] Certificado cargado OK, p12 size={len(p12_data)} bytes")
         # Intentar con servicio Java primero, si falla usar firmador Python
         try:
             xml_signed = await sign_xml_with_java(xml_unsigned, p12_data, cert_password)
             print(f"[Firma] Documento {doc_number} firmado con servicio Java")
         except Exception as java_err:
-            print(f"[Firma] Java signer no disponible ({str(java_err)[:100]}), usando firmador Python")
+            print(f"[Firma] Java signer no disponible ({type(java_err).__name__}: {str(java_err)[:150]}), usando firmador Python")
             xml_signed = sign_xml_xades_sri(xml_unsigned, p12_data, cert_password)
             print(f"[Firma] Documento {doc_number} firmado con firmador Python XAdES-SRI")
     except Exception as e:
+        import traceback
+        error_detail = f"{type(e).__name__}: {str(e) or repr(e)}"
+        print(f"[Firma ERROR] {doc_number}: {error_detail}")
+        traceback.print_exc()
         # Actualizar estado a ERROR
         await db.documents.update_one(
             {"_id": document_id},
-            {"$set": {"sri_status": "ERROR", "sri_messages": [{"mensaje": f"Error al firmar: {str(e)}"}]}}
+            {"$set": {"sri_status": "ERROR", "sri_messages": [{"mensaje": f"Error al firmar: {error_detail}"}]}}
         )
         await db.document_events.insert_one({
             "_id": str(uuid.uuid4()),
@@ -289,10 +294,10 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
             "tenant_id": tenant_id,
             "event_type": "ERROR",
             "status": "error",
-            "message": f"Error al firmar XML: {str(e)}",
+            "message": f"Error al firmar XML: {error_detail}",
             "created_at": datetime.now(timezone.utc)
         })
-        raise HTTPException(status_code=500, detail=f"Error al firmar documento: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al firmar documento: {error_detail}")
     
     # Guardar XML comprimido
     xml_gzip = gzip.compress(xml_signed.encode('utf-8'))
@@ -486,20 +491,25 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
     try:
         cert_password = decrypt_password(certificate["password_encrypted"])
         p12_data = bytes(certificate["file_data"]) if not isinstance(certificate["file_data"], bytes) else certificate["file_data"]
+        print(f"[Firma NC] Certificado cargado OK, p12 size={len(p12_data)} bytes")
         try:
             xml_signed = await sign_xml_with_java(xml_unsigned, p12_data, cert_password)
             print(f"[Firma NC] Nota de crédito {doc_number} firmada con servicio Java")
         except Exception as java_err:
-            print(f"[Firma NC] Java signer no disponible ({str(java_err)[:100]}), usando firmador Python")
+            print(f"[Firma NC] Java signer no disponible ({type(java_err).__name__}: {str(java_err)[:150]}), usando firmador Python")
             xml_signed = sign_xml_xades_sri(xml_unsigned, p12_data, cert_password)
             print(f"[Firma NC] Nota de crédito {doc_number} firmada con firmador Python XAdES-SRI")
     except Exception as e:
+        import traceback
+        error_detail = f"{type(e).__name__}: {str(e) or repr(e)}"
+        print(f"[Firma NC ERROR] {doc_number}: {error_detail}")
+        traceback.print_exc()
         # Actualizar estado a ERROR
         await db.documents.update_one(
             {"_id": document_id},
-            {"$set": {"sri_status": "ERROR", "sri_messages": [{"mensaje": f"Error al firmar: {str(e)}"}]}}
+            {"$set": {"sri_status": "ERROR", "sri_messages": [{"mensaje": f"Error al firmar: {error_detail}"}]}}
         )
-        raise HTTPException(status_code=500, detail=f"Error al firmar documento: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al firmar documento: {error_detail}")
     
     # Guardar XML
     xml_gzip = gzip.compress(xml_signed.encode('utf-8'))
