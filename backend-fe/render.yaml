@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: backend-fe
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MONGO_URL
+        sync: false
+      - key: FE_DB_NAME
+        value: fe_db
+      - key: ENCRYPTION_KEY
+        sync: false
