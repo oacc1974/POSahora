@@ -713,8 +713,15 @@ async def sync_loyverse_sales(
         )
         
         # Actualizar última sincronización
-        # Si hubo fallos, retroceder last_sync 1 hora para no perder recibos
-        effective_last_sync = now if records_failed == 0 else (now - timedelta(hours=1))
+        # - Todo exitoso: avanzar a now
+        # - Algunos fallos: retroceder 1 hora para re-intentar
+        # - Todo falló: mantener from_date original para re-intentar todo
+        if records_success > 0 and records_failed == 0:
+            effective_last_sync = now
+        elif records_success > 0:
+            effective_last_sync = now - timedelta(hours=1)
+        else:
+            effective_last_sync = from_date
         await admin_db.integrations.update_one(
             {"_id": integration["_id"]},
             {"$set": {
