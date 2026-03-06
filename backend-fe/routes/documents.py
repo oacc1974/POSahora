@@ -13,6 +13,9 @@ from typing import Optional, List
 import uuid
 import gzip
 
+# Timezone Ecuador (UTC-5) - usar en todas las fechas del sistema
+TZ_ECUADOR = timezone(timedelta(hours=-5))
+
 from models.document import (
     InvoiceCreate, CreditNoteCreate, DocumentResponse, 
     DocumentListResponse, DocumentCreateResponse
@@ -137,16 +140,15 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
     if valid_to and valid_to < datetime.now():
         raise HTTPException(status_code=400, detail="El certificado está expirado. Suba uno nuevo.")
     
-    now = datetime.now(timezone.utc)
-    issue_date = invoice.issue_date or now
+    now_utc = datetime.now(timezone.utc)
+    now_ec = datetime.now(TZ_ECUADOR)
+    issue_date = invoice.issue_date or now_ec
     
     # Obtener ambiente configurado
     ambiente = config.get("ambiente", "pruebas")
     
     # Usar fecha actual de Ecuador (UTC-5) para el SRI
-    # El SRI valida contra la fecha de Ecuador, no UTC
-    ecuador_offset = timedelta(hours=-5)
-    issue_date_for_sri = now + ecuador_offset
+    issue_date_for_sri = now_ec
     
     # Obtener secuencial atómico
     sequential = await get_next_sequential(
@@ -220,8 +222,8 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
         "sri_authorization_number": None,
         "sri_authorization_date": None,
         "sri_messages": [],
-        "created_at": now,
-        "updated_at": now,
+        "created_at": now_utc,
+        "updated_at": now_utc,
         "created_by_system": "POS",
         "is_voided": False,
         "has_credit_note": False
@@ -238,7 +240,7 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
         "status": "success",
         "message": "Documento creado",
         "metadata": {},
-        "created_at": now
+        "created_at": now_utc
     })
     
     # Generar XML
@@ -309,7 +311,7 @@ async def create_invoice(request: Request, invoice: InvoiceCreate):
         "is_compressed": True,
         "encoding": "UTF-8",
         "size_bytes": len(xml_signed),
-        "created_at": now
+        "created_at": now_utc
     })
     
     await db.document_events.insert_one({
@@ -405,7 +407,8 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
     if not all([tenant, config, certificate]):
         raise HTTPException(status_code=400, detail="Configuración incompleta")
     
-    now = datetime.now(timezone.utc)
+    now_utc = datetime.now(timezone.utc)
+    now_ec = datetime.now(TZ_ECUADOR)
     store_code = invoice["store"]["code"]
     emission_point = invoice["store"]["emission_point"]
     
@@ -416,7 +419,7 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
     # Generar clave de acceso
     ambiente = config.get("ambiente", "pruebas")
     access_key = generate_access_key(
-        issue_date=now,
+        issue_date=now_ec,
         doc_type="04",
         ruc=tenant["ruc"],
         ambiente=ambiente,
@@ -445,7 +448,7 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
         "doc_number": doc_number,
         "access_key": access_key,
         "store": invoice["store"],
-        "issue_date": now,
+        "issue_date": now_ec,
         "invoice_reference": invoice_reference,
         "customer": invoice["customer"],
         "items": processed_items,
@@ -455,8 +458,8 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
         "sri_authorization_number": None,
         "sri_authorization_date": None,
         "sri_messages": [],
-        "created_at": now,
-        "updated_at": now,
+        "created_at": now_utc,
+        "updated_at": now_utc,
         "created_by_system": "POS",
         "is_voided": False,
         "has_credit_note": False
@@ -480,7 +483,7 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
         items=processed_items,
         totals=totals,
         invoice_reference=invoice_reference,
-        issue_date=now,
+        issue_date=now_ec,
         store_code=store_code,
         emission_point=emission_point,
         sequential=sequential,
@@ -519,7 +522,7 @@ async def create_credit_note(request: Request, credit_note: CreditNoteCreate):
         "tenant_id": tenant_id,
         "xml_gzip": xml_gzip,
         "is_compressed": True,
-        "created_at": now
+        "created_at": now_utc
     })
     
     # Enviar a SRI
